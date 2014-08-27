@@ -90,6 +90,9 @@ sync_on_cef_ui(dispatch_block_t block)
 		CefBrowserSettings cefBrowserSettings;
 		cefBrowserSettings.windowless_frame_rate = browserSettings.fps;
 
+		//TODO Switch to using async browser creation
+		// Less chance of freezes here taking the whole
+		// process down
 		browser = CefBrowserHost::CreateBrowserSync(windowInfo,
 			browserClient.get(), [browserSettings.url UTF8String],
 			cefBrowserSettings, nil);

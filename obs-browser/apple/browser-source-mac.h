@@ -17,59 +17,28 @@
 
 #pragma once
 
-#include <memory>
-
-#include <stdint.h>
-#include <string>
-
-#include <pthread.h>
-
 #include <obs-module.h>
-#include <util/platform.h>
-#include <obs-output.h>
+#include "browser-source.hpp"
 
 class TextureRef;
-class BrowserListener;
 
-class BrowserSource {
-
+class BrowserSource::Impl {
 public:
-	BrowserSource(obs_data_t settings, obs_source_t source);
-	~BrowserSource();
-
+	Impl(BrowserSource *parent);
+	~Impl();
 public:
-	void UpdateSettings(obs_data_t settings);
-	void UpdateBrowser();
-
-public:
-	const std::string& GetUrl() const { return url; }
-	uint32_t GetWidth() const { return width; }
-	uint32_t GetHeight() const { return height; }
-	obs_source_t GetSource() const { return source; }
-
-	int GetBrowserIdentifier() { return browserIdentifier; }
-
-	void LockTexture() { pthread_mutex_lock(&textureLock); }
-	void UnlockTexture() { pthread_mutex_unlock(&textureLock); }
-
-	void RenderActiveTexture();
-	void InvalidateActiveTexture();
-
+	BrowserSource *GetParent() { return parent; }
+	void RenderCurrentTexture();
 	std::shared_ptr<BrowserListener> CreateListener();
-
+	void SetActiveTexture(TextureRef *texture)
+		{ activeTexture = texture; }
 
 private:
-	class Impl;
-	std::unique_ptr<Impl> pimpl;
-
-	obs_source_t source;
-	std::string url;
-	uint32_t width;
-	uint32_t height;
-	uint32_t fps;
-
-	int browserIdentifier;
-
-	pthread_mutex_t textureLock;
+	class Listener;
+	BrowserSource *parent;
+	TextureRef *activeTexture;
+	gs_effect_t drawEffect;
+	gs_samplerstate_t sampler;
+	gs_vertbuffer_t vertexBuffer;
 
 };

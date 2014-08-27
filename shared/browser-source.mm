@@ -15,6 +15,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
+#include <Foundation/Foundation.h>
 #include <map>
 
 #include <obs-module.h>
@@ -25,6 +26,7 @@
 #include "browser-listener.hpp"
 #include "browser-source.hpp"
 #include "browser-settings.hpp"
+#include "browser-types.h"
 
 class TextureRef {
 public:
@@ -93,7 +95,7 @@ public:
 	bool CreateSurface(
 		const int width,
 		const int height,
-		int * const surfaceHandle) override
+		BrowserSurfaceHandle * const surfaceHandle) override
 	{
 		unsigned pixelFormat = 'BGRA';
 		unsigned bytesPerElement = 4;

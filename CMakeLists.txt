@@ -41,31 +41,41 @@ endif(APPLE)
 
 set(obs-browser_SOURCES
 	obs-browser/main.cpp
-	shared/browser-source.mm)
+	obs-browser/main-source.cpp
+	shared/browser-source.cpp
+)
 
 set(obs-browser_HEADERS
 	shared/browser-manager.hpp
 	shared/browser-source.hpp
 	shared/browser-listener.hpp
-	shared/browser-settings.hpp)
+	shared/browser-settings.hpp
+	shared/browser-types.h)
 
 if (APPLE)
 	list(APPEND obs-browser_SOURCES
 		shared-apple/browser-settings-bridge.mm
+		obs-browser/apple/browser-source-mac.mm
 		obs-browser/apple/browser-manager-mac.mm
+		obs-browser/apple/browser-source-listener-mac.mm
 		obs-browser/apple/cef-isolation-service-manager.mm
 		obs-browser/apple/cef-isolation-service.mm
-		obs-browser/apple/client-connection-delegate.mm)
+		obs-browser/apple/client-connection-delegate.mm
+		obs-browser/apple/graphics-helpers.c)
 
 
 	list(APPEND obs-browser_HEADERS
 		shared-apple/cef-logging.h
 		shared-apple/cef-isolation.h
 		shared-apple/browser-settings-bridge.h
+		obs-browser/apple/browser-source-mac.h
 		obs-browser/apple/browser-manager-mac.h
+		obs-browser/apple/browser-source-listener-mac.h
 		obs-browser/apple/cef-isolation-service.h
 		obs-browser/apple/cef-isolation-service-manager.h
-		obs-browser/apple/client-connection-delegate.h)
+		obs-browser/apple/client-connection-delegate.h
+		obs-browser/apple/graphics-helpers.h
+		obs-browser/apple/texture-ref.hpp)
 
 else (APPLE)
 	list(APPEND obs-browser_SOURCES
@@ -137,6 +147,7 @@ if(APPLE)
 		shared/browser-client.hpp
 		shared/browser-task.hpp
 		shared/browser-app.hpp
+		shared/browser-types.h
 		shared-apple/browser-settings-bridge.h)
 
 	add_executable(cef-isolation

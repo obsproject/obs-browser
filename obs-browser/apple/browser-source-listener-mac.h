@@ -17,47 +17,36 @@
 
 #pragma once
 
+#include <memory>
+#include <map>
+#include "browser-listener.hpp"
 #include "browser-types.h"
 
-class BrowserListenerBase
+class Impl;
+
+class BrowserSource::Impl::Listener : public BrowserListener
 {
 public:
-	virtual ~BrowserListenerBase() {}
+	Listener(BrowserSource::Impl * const browserSource)
+	: browserSource(browserSource)
+	{}
 
-	virtual void OnDraw(const int surfaceHandle, const int width,
-		const int height) = 0;
+	~Listener()
+	{}
 
-	virtual bool CreateSurface(const int width, const int height,
-		BrowserSurfaceHandle * const surfaceHandle) = 0;
-	virtual void DestroySurface(const int surfaceHandle) = 0;
+	void OnDraw(
+		    const int surfaceHandle,
+		    const int width,
+		    const int height);
 
-};
+	bool CreateSurface(
+			   const int width,
+			   const int height,
+			   BrowserSurfaceHandle * const surfaceHandle);
 
-class BrowserListener : public BrowserListenerBase
-{
-public:
-	virtual ~BrowserListener() {}
+	void DestroySurface(const BrowserSurfaceHandle surfaceHandle);
 
-	virtual void OnDraw(const int surfaceHandle, const int width,
-		       const int height) override
-	{
-		(void)surfaceHandle;
-		(void)width;
-		(void)height;
-	}
-
-	virtual bool CreateSurface(const int width, const int height,
-		BrowserSurfaceHandle * const surfaceHandle) override
-	{
-		(void)width;
-		(void)height;
-		(void)surfaceHandle;
-
-		return false;
-	}
-
-	virtual void DestroySurface(const int surfaceHandle) override
-	{
-		(void)surfaceHandle;
-	}
+private:
+	BrowserSource::Impl * const browserSource;
+	std::map<int, std::shared_ptr<TextureRef>> textureMap;
 };
