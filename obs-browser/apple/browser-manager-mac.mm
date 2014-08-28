@@ -15,6 +15,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
+#include <obs-module.h>
+
 #import "cef-isolation-service-manager.h"
 #include "browser-manager.hpp"
 #include "browser-settings.hpp"

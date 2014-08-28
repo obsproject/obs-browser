@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
-
+#cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8.12)
 project(cef-isolation)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -38,6 +38,19 @@ if(APPLE)
 	endif(NOT OSX_10_8_SDK)
 
 endif(APPLE)
+
+set(image-source_SOURCES
+	image-source.c)
+
+# Finish this passthrough library
+#if (NOT APPLE)
+#	# This is needed to load the libraries from a 
+#	# separate directory
+#	add_library(obs-browser-facade MODULE
+#		obs-browser-facade/main.c)
+#	target_link_libraries(obs-browser-facade
+#		libobs)
+#endif()
 
 set(obs-browser_SOURCES
 	obs-browser/main.cpp
@@ -78,15 +91,24 @@ if (APPLE)
 		obs-browser/apple/texture-ref.hpp)
 
 else (APPLE)
+	
 	list(APPEND obs-browser_SOURCES
 		shared/browser-client.cpp
 		shared/browser-task.cpp
-		shared/browser-app.cpp)
+		shared/browser-app.cpp
+		obs-browser/browser-source-listener-base.cpp
+		obs-browser/browser-manager-base.cpp
+		obs-browser/browser-render-handler.cpp
+		obs-browser/browser-source-base.cpp)
 
 	list(APPEND obs-browser_HEADERS
 		shared/browser-client.hpp
 		shared/browser-task.hpp
-		shared/browser-app.hpp)
+		shared/browser-app.hpp
+		obs-browser/browser-source-listener-base.hpp
+		obs-browser/browser-manager-base.hpp
+		obs-browser/browser-render-handler.hpp
+		obs-browser/browser-source-base.hpp)
 
 endif(APPLE)
 
@@ -95,7 +117,6 @@ set(obs-browser_LIBRARIES
 
 if (APPLE)
 	list(APPEND obs-browser_LIBRARIES
-		${APPKIT_FRAMEWORK}
 		${IOSURFACE_FRAMEWORK})
 endif(APPLE)
 
@@ -112,18 +133,32 @@ target_include_directories(obs-browser PRIVATE
 if (APPLE)
 	target_include_directories(obs-browser PUBLIC 
 		"shared-apple")
+else(APPLE)
+	target_include_directories_system(obs-browser PUBLIC ${CEF_INCLUDE_DIR})
 endif(APPLE)
 
 if (APPLE)
 	set_xcode_property(obs-browser CLANG_CXX_LIBRARY "libc++")
 endif(APPLE)
 
+if (NOT APPLE)
+	list(APPEND obs-browser_LIBRARIES
+		${CEF_LIBRARIES})
+	if (WIN32)
+		list(APPEND obs-browser_LIBRARIES
+			w32-pthreads)
+	endif(WIN32)
+else(NOT APPLE)
+	list(APPEND obs-browser_LIBRARIES 
+		${COCOA_FRAMEWORK} 
+		${APPKIT_FRAMEWORK}
+		${IOSURFACE_FRAMEWORK})
+endif(NOT APPLE)
+
 target_link_libraries(obs-browser 
-	${obs-browser_LIBRARIES})
+        ${obs-browser_LIBRARIES})
 
 if(APPLE)
-	target_link_libraries(obs-browser ${COCOA_FRAMEWORK} ${IOSURFACE_FRAMEWORK})
-
 	set(cef-isolation_SOURCES
 		cef-isolation/main.mm
 		cef-isolation/cef-isolated-client.mm
@@ -264,11 +299,10 @@ if (APPLE)
 
 endif(APPLE)
 
-install_obs_plugin_with_data(obs-browser data)
-
 if(APPLE)
+	install_obs_plugin_with_data(obs-browser data)
 	install_obs_plugin_bundle(cef-isolation "CEF.app")
 else(APPLE)
-	install_obs_plugin(obs-bootstrap)
+	install_obs_plugin_with_data(obs-browser data)
+	install_obs_plugin(cef-bootstrap)
 endif(APPLE)
-

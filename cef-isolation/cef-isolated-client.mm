@@ -114,7 +114,7 @@ sync_on_cef_ui(dispatch_block_t block)
 	// Not implemented
 }
 
-- (oneway void)destroyBrowser:(const int)browserIdentifier {
+- (void)destroyBrowser:(const int)browserIdentifier {
 	if (map.count(browserIdentifier) == 1) {
 		std::shared_ptr<BrowserHandle> browserHandle =
 			map[browserIdentifier];

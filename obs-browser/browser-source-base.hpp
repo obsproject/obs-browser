@@ -17,12 +17,25 @@
 
 #pragma once
 
-#ifndef __APPLE__
 #include <obs-module.h>
-#endif
+#include "browser-source.hpp"
 
-#ifdef __APPLE__
-typedef int BrowserSurfaceHandle;
-#else
-typedef struct gs_texture * BrowserSurfaceHandle;
-#endif
+class TextureRef;
+
+class BrowserSource::Impl {
+public:
+	Impl(BrowserSource *parent);
+	~Impl();
+public:
+	BrowserSource *GetParent() { return parent; }
+	void RenderCurrentTexture(gs_effect_t effect);
+	std::shared_ptr<BrowserListener> CreateListener();
+	void SetActiveTexture(gs_texture_t texture)
+		{ activeTexture = texture; }
+
+private:
+	class Listener;
+	BrowserSource *parent;
+	gs_texture_t activeTexture;
+
+};

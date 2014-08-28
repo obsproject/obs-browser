@@ -22,11 +22,13 @@
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
 
-extern struct obs_source_info browser_source_info;
+extern struct obs_source_info create_browser_source_info();
+struct obs_source_info browser_source_info;
 
 bool
 obs_module_load(void)
 {
+	browser_source_info = create_browser_source_info();
 
 	BrowserManager::Instance()->Startup();
 	obs_register_source(&browser_source_info);

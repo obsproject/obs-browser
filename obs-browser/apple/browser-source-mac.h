@@ -28,10 +28,11 @@ public:
 	~Impl();
 public:
 	BrowserSource *GetParent() { return parent; }
-	void RenderCurrentTexture();
+	void RenderCurrentTexture(gs_effect_t effect);
 	std::shared_ptr<BrowserListener> CreateListener();
 	void SetActiveTexture(TextureRef *texture)
 		{ activeTexture = texture; }
+	void InvalidateActiveTexture();
 
 private:
 	class Listener;

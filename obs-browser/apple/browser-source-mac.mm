@@ -37,6 +37,7 @@ extern "C" {
 BrowserSource::BrowserSource(obs_data_t settings, obs_source_t source)
 :  pimpl(new Impl(this)), source(source)
 {
+	pthread_mutex_init(&textureLock, NULL);
 	UpdateSettings(settings);
 }
 
@@ -96,14 +97,22 @@ BrowserSource::CreateListener()
 }
 
 void
-BrowserSource::RenderActiveTexture()
+BrowserSource::RenderActiveTexture(gs_effect_t effect)
 {
-	pimpl->RenderCurrentTexture();
+	pimpl->RenderCurrentTexture(effect);
 }
 
 void
-BrowserSource::Impl::RenderCurrentTexture()
+BrowserSource::InvalidateActiveTexture()
 {
+	pimpl->InvalidateActiveTexture();
+}
+
+void
+BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
+{
+	UNUSED_PARAMETER(effect);
+
 	GetParent()->LockTexture();
 
 	build_sprite_rect(
@@ -130,6 +139,12 @@ BrowserSource::Impl::RenderCurrentTexture()
 	}
 	
 	GetParent()->UnlockTexture();
+}
+
+void
+BrowserSource::Impl::InvalidateActiveTexture()
+{
+	activeTexture = nullptr;
 }
 
 std::shared_ptr<BrowserListener>

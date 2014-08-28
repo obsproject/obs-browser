@@ -24,9 +24,9 @@ void
 BrowserSource::UpdateSettings(obs_data_t settings)
 {
 	url = obs_data_get_string(settings, "url");
-	width = obs_data_get_int(settings, "width");
-	height = obs_data_get_int(settings, "height");
-	fps = obs_data_get_int(settings, "fps");
+	width = (uint32_t)obs_data_get_int(settings, "width");
+	height = (uint32_t)obs_data_get_int(settings, "height");
+	fps = (uint32_t)obs_data_get_int(settings, "fps");
 
 	UpdateBrowser();
 }
@@ -35,23 +35,22 @@ void
 BrowserSource::UpdateBrowser()
 {
 	if (browserIdentifier != 0) {
-		obs_enter_graphics();
 		LockTexture();
-		browserIdentifier = 0;
 		BrowserManager::Instance()->DestroyBrowser(browserIdentifier);
+		InvalidateActiveTexture();
+		browserIdentifier = 0;
 		UnlockTexture();
-		obs_leave_graphics();
 	}
 
 	std::shared_ptr<BrowserListener> browserListener(CreateListener());
 
-	BrowserSettings browserSettings {
-		.url = url,
-		.width = width,
-		.height = height,
-		.fps = fps
-	};
-
+	BrowserSettings browserSettings;
+	
+	browserSettings.url = url,
+	browserSettings.width = width;
+	browserSettings.height = height;
+	browserSettings.fps = fps;
+	
 	browserIdentifier = BrowserManager::Instance()->CreateBrowser(
 		browserSettings, browserListener);
 }

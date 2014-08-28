@@ -104,25 +104,31 @@ static void browser_source_render(void *data, gs_effect_t effect)
 		return;
 	}
 
-	bs->RenderActiveTexture();
+	bs->RenderActiveTexture(effect);
 
 }
 
-struct obs_source_info browser_source_info = {
-	.id             = "browser_source",
-	.type           = OBS_SOURCE_TYPE_INPUT,
+struct obs_source_info
+create_browser_source_info() 
+{
+	struct obs_source_info browser_source_info = { 0 };
+
+	browser_source_info.id = "browser_source";
+	browser_source_info.type = OBS_SOURCE_TYPE_INPUT;
 #ifdef __APPLE__
-	.output_flags   = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
+	browser_source_info.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW;
 #else
-	.output_flags	= OBS_SOURCE_ASYNC_VIDEO
+	browser_source_info.output_flags = OBS_SOURCE_ASYNC_VIDEO;
 #endif
-	.get_name       = browser_source_get_name,
-	.create         = browser_source_create,
-	.destroy        = browser_source_destroy,
-	.update         = browser_source_update,
-	.get_width      = browser_source_get_width,
-	.get_height     = browser_source_get_height,
-	.get_properties = browser_source_get_properties,
-	.get_defaults	= browser_source_get_defaults,
-	.video_render   = browser_source_render
-};
+	browser_source_info.get_name = browser_source_get_name;
+	browser_source_info.create = browser_source_create;
+	browser_source_info.destroy = browser_source_destroy;
+	browser_source_info.update = browser_source_update;
+	browser_source_info.get_width = browser_source_get_width;
+	browser_source_info.get_height = browser_source_get_height;
+	browser_source_info.get_properties = browser_source_get_properties;
+	browser_source_info.get_defaults = browser_source_get_defaults;
+	browser_source_info.video_render = browser_source_render;
+
+	return browser_source_info;
+}

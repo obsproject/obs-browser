@@ -24,12 +24,13 @@ class BrowserListenerBase
 public:
 	virtual ~BrowserListenerBase() {}
 
-	virtual void OnDraw(const int surfaceHandle, const int width,
+	virtual void OnDraw(const BrowserSurfaceHandle surfaceHandle, const int width,
 		const int height) = 0;
 
 	virtual bool CreateSurface(const int width, const int height,
 		BrowserSurfaceHandle * const surfaceHandle) = 0;
-	virtual void DestroySurface(const int surfaceHandle) = 0;
+	virtual void DestroySurface(const BrowserSurfaceHandle surfaceHandle) 
+		= 0;
 
 };
 
@@ -38,7 +39,7 @@ class BrowserListener : public BrowserListenerBase
 public:
 	virtual ~BrowserListener() {}
 
-	virtual void OnDraw(const int surfaceHandle, const int width,
+	virtual void OnDraw(const BrowserSurfaceHandle surfaceHandle, const int width,
 		       const int height) override
 	{
 		(void)surfaceHandle;
@@ -56,7 +57,8 @@ public:
 		return false;
 	}
 
-	virtual void DestroySurface(const int surfaceHandle) override
+	virtual void DestroySurface(const BrowserSurfaceHandle surfaceHandle) 
+		override
 	{
 		(void)surfaceHandle;
 	}

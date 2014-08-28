@@ -52,7 +52,7 @@ public:
 	void LockTexture() { pthread_mutex_lock(&textureLock); }
 	void UnlockTexture() { pthread_mutex_unlock(&textureLock); }
 
-	void RenderActiveTexture();
+	void RenderActiveTexture(gs_effect_t effect);
 	void InvalidateActiveTexture();
 
 	std::shared_ptr<BrowserListener> CreateListener();

@@ -36,7 +36,7 @@
 @protocol CEFIsolatedClient
 - (oneway void)registerServer:(id<CEFIsolationService>)server;
 - (int)createBrowser:(BrowserSettingsBridge *)browserSettings;
-- (oneway void)destroyBrowser:(const int)browserIdentifier;
+- (void)destroyBrowser:(const int)browserIdentifier;
 - (oneway void)tickBrowser:(const int)browserIdentifier;
 @end
 

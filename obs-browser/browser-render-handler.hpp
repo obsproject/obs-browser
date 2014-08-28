@@ -17,12 +17,40 @@
 
 #pragma once
 
-#ifndef __APPLE__
-#include <obs-module.h>
-#endif
+#include <vector>
 
-#ifdef __APPLE__
-typedef int BrowserSurfaceHandle;
-#else
-typedef struct gs_texture * BrowserSurfaceHandle;
-#endif
+#include <include/cef_render_handler.h>
+
+#include <obs-module.h>
+
+class BrowserListener;
+
+class BrowserRenderHandler : public CefRenderHandler
+{
+public:
+
+	BrowserRenderHandler(const int width, const int height,
+		const std::shared_ptr<BrowserListener> &browserListener);
+
+	~BrowserRenderHandler();
+
+public: /* CefRenderHandler overrides */
+
+	virtual bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
+		OVERRIDE;
+
+	virtual void OnPaint(CefRefPtr<CefBrowser> browser,
+		PaintElementType type, const RectList &dirtyRects,
+		const void *buffer, int width, int height) OVERRIDE;
+
+private:
+	const int width;
+	const int height;
+	const std::shared_ptr<BrowserListener> browserListener;
+	std::vector<struct gs_texture *> surfaceHandles;
+	int currentSurfaceHandle;
+
+private:
+	IMPLEMENT_REFCOUNTING(BrowserRenderHandler);
+	
+};

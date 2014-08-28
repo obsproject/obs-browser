@@ -19,8 +19,14 @@
 
 #include "browser-app.hpp"
 
-int main(int argc, char *argv[]) {
+int 
+main(int argc, char *argv[]) {
+	
+#ifdef _WIN32
+	CefMainArgs mainArgs(NULL);
+#else
 	CefMainArgs mainArgs(argc, argv);
+#endif
 	CefRefPtr<BrowserApp> mainApp(new BrowserApp());
-	return CefExecuteProcess(mainArgs, mainApp.get(), NULL);
+	return CefExecuteProcess(mainArgs, mainApp.get(), NULL);                   
 }

@@ -11,7 +11,7 @@ find_library(CEF_LIBRARY
 
 find_library(CEFWRAPPER_LIBRARY
 	NAMES cef_dll_wrapper libcef_dll_wrapper
-	PATHS ${CEF_ROOT_DIR} ${CEF_ROOT_DIR}/xcodebuild/Release)
+	PATHS ${CEF_ROOT_DIR} ${CEF_ROOT_DIR}/Release ${CEF_ROOT_DIR}/xcodebuild/Release)
 
 if (NOT CEF_LIBRARY)
 	message(FATAL_ERROR "Could not find the CEF shared library" )

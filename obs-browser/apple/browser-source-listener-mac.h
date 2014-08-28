@@ -35,7 +35,7 @@ public:
 	{}
 
 	void OnDraw(
-		    const int surfaceHandle,
+		    const BrowserSurfaceHandle surfaceHandle,
 		    const int width,
 		    const int height);
 
