@@ -62,43 +62,9 @@ void hookParentDeath() {
 	CFRelease(source);
 }
 
-
-// Stolen from obs code
-id<NSObject> startRequestHighPerformance(const char *reason)
-{
-	@autoreleasepool {
-		NSProcessInfo *pi = [NSProcessInfo processInfo];
-		SEL sel = @selector(beginActivityWithOptions:reason:);
-		if (![pi respondsToSelector:sel])
-			return nil;
-
-		//taken from http://stackoverflow.com/a/20100906
-		id activity = [pi beginActivityWithOptions:0x00FFFFFF
-						    reason:@(reason)];
-
-		return id<NSObject>(CFBridgingRetain(activity));
-	}
-}
-
-// Stolen from obs code
-void endRequestHighPerformance(id<NSObject> token)
-{
-	@autoreleasepool {
-		NSProcessInfo *pi = [NSProcessInfo processInfo];
-		SEL sel = @selector(beginActivityWithOptions:reason:);
-		if (![pi respondsToSelector:sel])
-			return;
-
-		[pi endActivity:CFBridgingRelease(token)];
-	}
-}
-
 int main (int argc, const char * argv[]) {
 
 	hookParentDeath();
-	
-	id<NSObject> token = startRequestHighPerformance("CEF Isolation process"
-		" (obs-browser)");
 
 	@autoreleasepool {
 		if (argc != 2) {
@@ -117,7 +83,7 @@ int main (int argc, const char * argv[]) {
 		CefMainArgs mainArgs;
 		CefSettings settings;
 		
-		settings.log_severity = LOGSEVERITY_VERBOSE;
+		settings.log_severity = LOGSEVERITY_DEFAULT;
 		settings.windowless_rendering_enabled = true;
 
 		CefRefPtr<BrowserApp> app(new BrowserApp());
@@ -145,8 +111,6 @@ int main (int argc, const char * argv[]) {
 
 		[delegate shutdown];
 	}
-
-	endRequestHighPerformance(token);
 
 	return 0;
 }
