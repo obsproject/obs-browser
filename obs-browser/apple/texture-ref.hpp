@@ -29,7 +29,9 @@ public:
 	}
 
 	~TextureRef() {
+		obs_enter_graphics();
 		gs_texture_destroy(texture);
+		obs_leave_graphics();
 		IOSurfaceDecrementUseCount(ioSurfaceRef);
 		CFRelease(ioSurfaceRef);
 	}

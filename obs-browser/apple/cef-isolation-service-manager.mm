@@ -106,8 +106,8 @@ CEFIsolationServiceManager::CreateBrowser(
 	@try {
 		@autoreleasepool {
 			BrowserSettingsBridge *browserSettingsBridge =
-				[BrowserSettingsBridge fromBrowserSettings:
-					browserSettings];
+				[[BrowserSettingsBridge fromBrowserSettings:
+					browserSettings] autorelease];
 
 			browserIdentifier = [cefIsolatedClient createBrowser:
 				browserSettingsBridge];

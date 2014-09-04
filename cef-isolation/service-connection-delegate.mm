@@ -21,17 +21,14 @@
 #import "cef-isolated-client.h"
 #import "service-connection-delegate.h"
 
-@implementation ServiceConnectionDelegate
-{
-	NSString *uniqueClientName;
-	NSConditionLock *lock;
-	BOOL shutdown;
-	NSThread *connectionThread;
-}
 
+
+@implementation ServiceConnectionDelegate
 
 #define T_START 0
 #define T_FINISHED 1
+
+@synthesize cefIsolationService = _cefIsolationService;
 
 
 - (ServiceConnectionDelegate *)initWithUniqueName: (NSString *)name

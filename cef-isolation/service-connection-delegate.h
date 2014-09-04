@@ -19,7 +19,14 @@
 
 class CEFisolationService;
 
-@interface ServiceConnectionDelegate : NSObject
+@interface ServiceConnectionDelegate : NSObject {
+	id<CEFIsolationService> _cefIsolationService;
+	NSString *uniqueClientName;
+	NSConditionLock *lock;
+	BOOL shutdown;
+	NSThread *connectionThread;
+}
+
 @property (readonly) id<CEFIsolationService> cefIsolationService;
 
 - (ServiceConnectionDelegate *)initWithUniqueName: (NSString *)name;
