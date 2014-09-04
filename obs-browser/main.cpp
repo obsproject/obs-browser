@@ -30,6 +30,9 @@ obs_module_load(void)
 {
 	browser_source_info = create_browser_source_info();
 
+	BrowserManager::Instance()->SetModulePath(
+		obs_get_module_binary_path(obs_current_module()));
+
 	BrowserManager::Instance()->Startup();
 	obs_register_source(&browser_source_info);
 	return true;
@@ -39,5 +42,6 @@ void
 obs_module_unload()
 {
 	BrowserManager::Instance()->Shutdown();
+	BrowserManager::Instance()->SetModulePath(nullptr);
 	BrowserManager::DestroyInstance();
 }

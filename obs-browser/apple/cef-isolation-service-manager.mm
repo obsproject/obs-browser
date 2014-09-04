@@ -20,6 +20,7 @@
 // shared
 #include "browser-listener.hpp"
 #include "browser-settings.hpp"
+#include "browser-manager.hpp"
 
 // shared apple
 #import "cef-logging.h"
@@ -58,11 +59,17 @@ CEFIsolationServiceManager::Startup()
 
 	CEFLogDebug(@"Creating service %@", _uniqueClientName);
 
-	CEFLogDebug(@"Launching child process");
+	NSString *launchPath = [NSString stringWithUTF8String:
+		BrowserManager::Instance()->GetModulePath()];
+
+	launchPath = [launchPath stringByDeletingLastPathComponent];
+	launchPath = [launchPath stringByAppendingPathComponent:
+		@"/CEF.app/Contents/MacOS/CEF"];
+
+	CEFLogDebug(@"Launching child process %@", launchPath);
 	isolatedClientProcess = [[[NSTask alloc] init] autorelease];
 	[isolatedClientProcess setArguments: @[ _uniqueClientName ]];
-	[isolatedClientProcess setLaunchPath:
-		 @"../obs-plugins/CEF.app/Contents/MacOS/CEF"];
+	[isolatedClientProcess setLaunchPath: launchPath];
 
 	[isolatedClientProcess launch];
 

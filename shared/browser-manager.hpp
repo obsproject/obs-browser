@@ -44,7 +44,11 @@ public:
 
 	void TickBrowser(const int browserIdentifier);
 
+	void SetModulePath(const char *path) { this->path = path; }
+	const char *GetModulePath() { return path; }
+
 private:
 	class Impl;
 	std::unique_ptr<Impl> pimpl;
+	const char *path;
 };
