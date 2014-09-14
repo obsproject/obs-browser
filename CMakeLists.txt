@@ -69,7 +69,7 @@ set(obs-browser_HEADERS
 
 if (APPLE)
 	list(APPEND obs-browser_SOURCES
-		shared-apple/browser-settings-bridge.mm
+		shared-apple/browser-bridges.mm
 		obs-browser/apple/browser-source-mac.mm
 		obs-browser/apple/browser-manager-mac.mm
 		obs-browser/apple/browser-source-listener-mac.mm
@@ -82,7 +82,7 @@ if (APPLE)
 	list(APPEND obs-browser_HEADERS
 		shared-apple/cef-logging.h
 		shared-apple/cef-isolation.h
-		shared-apple/browser-settings-bridge.h
+		shared-apple/browser-bridges.h
 		obs-browser/apple/browser-source-mac.h
 		obs-browser/apple/browser-manager-mac.h
 		obs-browser/apple/browser-source-listener-mac.h
@@ -185,7 +185,7 @@ if(APPLE)
 		shared/browser-task.hpp
 		shared/browser-app.hpp
 		shared/browser-types.h
-		shared-apple/browser-settings-bridge.h)
+		shared-apple/browser-bridges.h)
 
 	add_executable(cef-isolation
 		${cef-isolation_SOURCES}

@@ -65,7 +65,6 @@
 		[connection registerName: _manager->GetUniqueClientName()];
 		[connection setRootObject: _manager->GetCefIsolationService()];
 		[connection addRunLoop: threadRunLoop];
-
 		BOOL threadAlive = YES;
 		while (threadAlive) {
 			@autoreleasepool {

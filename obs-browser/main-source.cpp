@@ -108,6 +108,42 @@ static void browser_source_render(void *data, gs_effect_t effect)
 
 }
 
+static void browser_source_mouse_click(void *data,
+	const struct obs_mouse_event *event, int32_t type, bool mouse_up,
+	uint32_t click_count)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+	bs->SendMouseClick(event, type, mouse_up, click_count);
+}
+
+static void browser_source_mouse_move(void *data,
+	const struct obs_mouse_event *event, bool mouse_leave)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+	bs->SendMouseMove(event, mouse_leave);
+}
+
+static void browser_source_mouse_wheel(void *data,
+	const struct obs_mouse_event *event, int x_delta, int y_delta)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+	bs->SendMouseWheel(event, x_delta, y_delta);
+}
+
+static void browser_source_focus(void *data, bool focus)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+	bs->SendFocus(focus);
+}
+
+static void browser_source_key_click(void *data,
+	const struct obs_key_event *event, bool key_up)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+	if (key_up)
+		bs->SendKeyClick(event, key_up);
+}
+
 struct obs_source_info
 create_browser_source_info() 
 {
@@ -116,10 +152,21 @@ create_browser_source_info()
 	browser_source_info.id = "browser_source";
 	browser_source_info.type = OBS_SOURCE_TYPE_INPUT;
 #ifdef __APPLE__
-	browser_source_info.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW;
+	browser_source_info.output_flags = OBS_SOURCE_VIDEO |
+		OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION;
 #else
 	browser_source_info.output_flags = OBS_SOURCE_ASYNC_VIDEO;
 #endif
+	browser_source_info.mouse_click =
+		browser_source_mouse_click;
+	browser_source_info.mouse_move =
+		browser_source_mouse_move;
+	browser_source_info.mouse_wheel =
+		browser_source_mouse_wheel;
+	browser_source_info.focus =
+		browser_source_focus;
+	browser_source_info.key_click =
+		browser_source_key_click;
 	browser_source_info.get_name = browser_source_get_name;
 	browser_source_info.create = browser_source_create;
 	browser_source_info.destroy = browser_source_destroy;

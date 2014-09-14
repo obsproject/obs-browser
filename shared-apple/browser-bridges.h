@@ -20,6 +20,8 @@
 #import <Foundation/Foundation.h>
 
 struct BrowserSettings;
+struct obs_mouse_event;
+struct obs_key_event;
 
 @interface BrowserSettingsBridge : NSObject
 
@@ -32,4 +34,25 @@ struct BrowserSettings;
 
 @end
 
+@interface ObsMouseEventBridge : NSObject
+
+@property (readonly)unsigned int modifiers;
+@property (readonly)int x;
+@property (readonly)int y;
+
++ (id)fromObsMouseEvent: (const obs_mouse_event *)event;
+
+@end
+
+@interface ObsKeyEventBridge : NSObject
+
+@property (readonly)unsigned int modifiers;
+@property (readonly)NSString *text;
+@property (readonly)unsigned int nativeModifiers;
+@property (readonly)unsigned int nativeScanCode;
+@property (readonly)unsigned int nativeVirtualKey;
+
++ (id)fromObsKeyEvent: (const obs_key_event *)event;
+
+@end
 

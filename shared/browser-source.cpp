@@ -54,3 +54,39 @@ BrowserSource::UpdateBrowser()
 	browserIdentifier = BrowserManager::Instance()->CreateBrowser(
 		browserSettings, browserListener);
 }
+
+void BrowserSource::SendMouseClick(
+	const struct obs_mouse_event *event,
+	int32_t type,
+	bool mouseUp,
+	uint32_t clickCount)
+{
+
+	BrowserManager::Instance()->SendMouseClick(browserIdentifier,
+		event, type, mouseUp, clickCount);
+}
+
+void BrowserSource::SendMouseMove( const struct obs_mouse_event *event,
+	bool mouseLeave)
+{
+	BrowserManager::Instance()->SendMouseMove(browserIdentifier,
+		event, mouseLeave);
+}
+
+void BrowserSource::SendMouseWheel(const struct obs_mouse_event *event,
+	int xDelta, int yDelta)
+{
+	BrowserManager::Instance()->SendMouseWheel(browserIdentifier,
+		event, xDelta, yDelta);
+}
+
+void BrowserSource::SendFocus(bool focus)
+{
+	BrowserManager::Instance()->SendFocus(browserIdentifier, focus);
+}
+
+void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool keyUp)
+{
+	BrowserManager::Instance()->SendKeyClick(browserIdentifier, event,
+		keyUp);
+}

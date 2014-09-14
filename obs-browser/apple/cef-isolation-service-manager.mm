@@ -25,7 +25,7 @@
 // shared apple
 #import "cef-logging.h"
 #import "cef-isolation.h"
-#import "browser-settings-bridge.h"
+#import "browser-bridges.h"
 
 #import "cef-isolation-service.h"
 #import "client-connection-delegate.h"
@@ -169,5 +169,108 @@ CEFIsolationServiceManager::TickBrowser(const int browserIdentifier)
 	}
 	@catch (NSException *exception) {
 		// swallow
+	}
+}
+
+
+void
+CEFIsolationServiceManager::SendMouseClick(const int browserIdentifier,
+	const struct obs_mouse_event *event, const int32_t type,
+	const bool mouseUp, const uint32_t clickCount)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+		[_cefIsolationService client];
+	@try {
+		@autoreleasepool {
+			ObsMouseEventBridge *obsMouseEventBridge =
+				[[ObsMouseEventBridge fromObsMouseEvent: event]
+				 autorelease];
+
+			[cefIsolatedClient sendMouseClick:browserIdentifier
+				event:obsMouseEventBridge type:type
+				mouseUp:mouseUp clickCount:clickCount];
+		}
+	}
+	@catch (NSException *exception) {
+		//swallow
+	}
+}
+
+void
+CEFIsolationServiceManager::SendMouseMove(const int browserIdentifier,
+	const struct obs_mouse_event *event, bool mouseLeave)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+		[_cefIsolationService client];
+	@try {
+		@autoreleasepool {
+			ObsMouseEventBridge *obsMouseEventBridge =
+			[[ObsMouseEventBridge fromObsMouseEvent: event]
+				 autorelease];
+
+			[cefIsolatedClient sendMouseMove:browserIdentifier
+				event:obsMouseEventBridge
+				mouseLeave:mouseLeave];
+		}
+	}
+	@catch (NSException *exception) {
+		//swallow
+	}
+}
+
+void
+CEFIsolationServiceManager::SendMouseWheel(const int browserIdentifier,
+	const struct obs_mouse_event *event, int xDelta, int yDelta)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+		[_cefIsolationService client];
+	@try {
+		@autoreleasepool {
+			ObsMouseEventBridge *obsMouseEventBridge =
+			[[ObsMouseEventBridge fromObsMouseEvent: event]
+			 autorelease];
+
+			[cefIsolatedClient sendMouseWheel:browserIdentifier
+				event:obsMouseEventBridge xDelta:xDelta
+				yDelta:yDelta];
+		}
+	}
+	@catch (NSException *exception) {
+		//swallow
+	}
+}
+
+void
+CEFIsolationServiceManager::SendFocus(const int browserIdentifier, bool focus)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+		[_cefIsolationService client];
+	@try {
+		[cefIsolatedClient sendFocus:browserIdentifier
+				focus:focus];
+	}
+	@catch (NSException *exception) {
+		//swallow
+	}
+}
+
+void
+CEFIsolationServiceManager::SendKeyClick(const int browserIdentifier,
+	const struct obs_key_event *event, bool keyUp)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+		[_cefIsolationService client];
+	@try {
+		@autoreleasepool {
+			ObsKeyEventBridge *obsKeyEventBridge =
+				[[ObsKeyEventBridge fromObsKeyEvent: event]
+				autorelease];
+
+			[cefIsolatedClient sendKeyClick:browserIdentifier
+				event:obsKeyEventBridge keyUp:keyUp];
+		}
+	}
+	@catch (NSException *exception) {
+		//swallow
 	}
 }

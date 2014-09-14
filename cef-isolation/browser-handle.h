@@ -26,6 +26,8 @@
 #include "browser-texture.hpp"
 
 class BrowserTexture;
+class BrowserHandle;
+typedef std::shared_ptr<BrowserHandle> SharedBrowserHandle;
 
 typedef int BrowserSurfaceHandle;
 
@@ -58,3 +60,4 @@ private:
 
 	std::unique_ptr<BrowserTexture> browserTexture;
 };
+

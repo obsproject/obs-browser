@@ -41,6 +41,16 @@ public:
 		const std::shared_ptr<BrowserListener> &browserListener);
 	void DestroyBrowser(const int browserIdentifier);
 	void TickBrowser(const int browserIdentifier);
+	void SendMouseClick(const int browserIdentifier,
+		const struct obs_mouse_event *event, const int32_t type,
+		const bool mouseUp, const uint32_t clickCount);
+	void SendMouseMove(const int browserIdentifier,
+		const struct obs_mouse_event *event, bool mouseLeave);
+	void SendMouseWheel(const int browserIdentifier,
+		const struct obs_mouse_event *event, int xDelta, int yDelta);
+	void SendFocus(const int browserIdentifier, bool focus);
+	void SendKeyClick(const int browserIdentifier,
+		const struct obs_key_event *event, bool key_up);
 
 public:
 	NSString *GetUniqueClientName() { return _uniqueClientName; }

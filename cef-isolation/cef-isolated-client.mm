@@ -23,7 +23,7 @@
 // shared apple
 #import "cef-isolation.h"
 #import "cef-logging.h"
-#import "browser-settings-bridge.h"
+#import "browser-bridges.h"
 
 // shared
 #include "browser-task.hpp"
@@ -98,8 +98,6 @@ sync_on_cef_ui(dispatch_block_t block)
 			cefBrowserSettings, nil);
 	});
 
-
-
 	if (browser != nil) {
 		browserHandle->SetBrowser(browser.get());
 		map[browser->GetIdentifier()] = browserHandle;
@@ -112,6 +110,117 @@ sync_on_cef_ui(dispatch_block_t block)
 - (oneway void)tickBrowser: (const int)browserIdentifier {
 	(void)browserIdentifier;
 	// Not implemented
+}
+
+typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
+
+- (void)sendEvent:(const int)browserIdentifier
+	event:(event_block_t)event
+{
+	if (map.count(browserIdentifier) == 1) {
+		SharedBrowserHandle browserHandle =
+			map[browserIdentifier];
+		sync_on_cef_ui(^{
+			event(browserHandle);
+		});
+	}
+}
+
+- (void)sendMouseClick:(const int)browserIdentifier
+	event:(ObsMouseEventBridge *)event type:(const int)type
+	mouseUp:(BOOL)mouseUp clickCount:(const int)clickCount
+{
+	[self sendEvent:browserIdentifier
+		event:^(SharedBrowserHandle browserHandle)
+	{
+		CefMouseEvent mouseEvent;
+		mouseEvent.x = event.x;
+		mouseEvent.y = event.y;
+		mouseEvent.modifiers = event.modifiers;
+		CefRefPtr<CefBrowserHost> host =
+			browserHandle->GetBrowser()->GetHost();
+
+		CefBrowserHost::MouseButtonType buttonType =
+			(CefBrowserHost::MouseButtonType)type;
+
+		host->SendMouseClickEvent(mouseEvent, buttonType,
+			mouseUp, clickCount);
+	}];
+}
+
+
+- (oneway void)sendMouseMove:(const int)browserIdentifier
+	event:(ObsMouseEventBridge *)event mouseLeave:(BOOL)mouseLeave
+{
+	[self sendEvent:browserIdentifier
+		event:^(SharedBrowserHandle browserHandle)
+	{
+		CefMouseEvent mouseEvent;
+		mouseEvent.x = event.x;
+		mouseEvent.y = event.y;
+		mouseEvent.modifiers = event.modifiers;
+
+		CefRefPtr<CefBrowserHost> host =
+			browserHandle->GetBrowser()->GetHost();
+		host->SendMouseMoveEvent(mouseEvent, mouseLeave);
+	}];
+}
+
+- (void)sendMouseWheel:(const int)browserIdentifier
+	event:(ObsMouseEventBridge *)event xDelta:(int)xDelta
+	yDelta:(int)yDelta
+{
+	[self sendEvent:browserIdentifier
+		event:^(SharedBrowserHandle browserHandle)
+	 {
+		CefMouseEvent mouseEvent;
+		mouseEvent.x = event.x;
+		mouseEvent.y = event.y;
+		mouseEvent.modifiers = event.modifiers;
+
+		CefRefPtr<CefBrowserHost> host =
+			browserHandle->GetBrowser()->GetHost();
+		host->SendMouseWheelEvent(mouseEvent, xDelta, yDelta);
+	}];
+}
+
+- (oneway void)sendFocus:(const int)browserIdentifier focus:(BOOL)focus
+{
+	[self sendEvent:browserIdentifier
+		event:^(SharedBrowserHandle browserHandle)
+	{
+		CefRefPtr<CefBrowserHost> host =
+			browserHandle->GetBrowser()->GetHost();
+		host->SendFocusEvent(focus);
+	}];
+}
+
+- (void)sendKeyClick:(const int)browserIdentifier
+	event:(bycopy ObsKeyEventBridge *)event keyUp:(BOOL)keyUp
+{
+	[self sendEvent:browserIdentifier
+		  event:^(SharedBrowserHandle browserHandle)
+	{
+		CefRefPtr<CefBrowserHost> host =
+			browserHandle->GetBrowser()->GetHost();
+		CefKeyEvent keyEvent;
+		keyEvent.native_key_code = event.nativeVirtualKey;
+
+		if (event.text.length > 0) {
+			@autoreleasepool {
+				keyEvent.character = [event.text
+					characterAtIndex: 0];
+				// how do I determine this?
+				keyEvent.unmodified_character =
+					event.nativeScanCode;
+			}
+		}
+
+		keyEvent.type = KEYEVENT_KEYUP;
+		keyEvent.modifiers = event.modifiers;
+
+		host->SendKeyEvent(keyEvent);
+	}];
 }
 
 - (void)destroyBrowser:(const int)browserIdentifier {

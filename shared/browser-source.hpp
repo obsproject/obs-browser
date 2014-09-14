@@ -55,6 +55,14 @@ public:
 	void RenderActiveTexture(gs_effect_t effect);
 	void InvalidateActiveTexture();
 
+	void SendMouseClick(const struct obs_mouse_event *event,
+		int32_t type, bool mouseUp, uint32_t clickCount);
+	void SendMouseMove(const struct obs_mouse_event *event,
+		bool mouseLeave);
+	void SendMouseWheel(const struct obs_mouse_event *event,
+		int xDelta, int yDelta);
+	void SendFocus(bool focus);
+	void SendKeyClick(const struct obs_key_event *event, bool keyUp);
 	std::shared_ptr<BrowserListener> CreateListener();
 
 

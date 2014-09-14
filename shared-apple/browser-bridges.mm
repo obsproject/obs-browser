@@ -15,7 +15,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-#import "browser-settings-bridge.h"
+#include <obs-module.h>
+#import "browser-bridges.h"
 #include "browser-settings.hpp"
 
 @implementation BrowserSettingsBridge
@@ -38,4 +39,47 @@
 	return [[BrowserSettingsBridge alloc]
 		initWithBrowserSettings: browserSettings];
 }
+@end
+
+@implementation ObsMouseEventBridge
+
+- (id)initWithObsMouseEvent: (const struct obs_mouse_event *)event
+{
+	if (self = [super init]) {
+		_x = event->x;
+		_y = event->y;
+		_modifiers = event->modifiers;
+	}
+
+	return self;
+}
+
++ (id)fromObsMouseEvent:(const obs_mouse_event *)event
+{
+	return [[ObsMouseEventBridge alloc] initWithObsMouseEvent:event];
+}
+
+@end
+
+@implementation ObsKeyEventBridge
+
+- (id)initWithObsKeyEvent: (const struct obs_key_event *)event
+{
+	if (self = [super init]) {
+		_modifiers = event->modifiers;
+		NSString *__text = [NSString stringWithUTF8String: event->text];
+		_text = [__text copy];
+		_nativeModifiers = event->native_modifiers;
+		_nativeScanCode = event->native_scancode;
+		_nativeVirtualKey = event->native_vkey;
+	}
+
+	return self;
+}
+
++ (id)fromObsKeyEvent:(const obs_key_event *)event
+{
+	return [[ObsKeyEventBridge alloc] initWithObsKeyEvent:event];
+}
+
 @end
