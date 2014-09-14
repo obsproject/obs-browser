@@ -140,8 +140,10 @@ static void browser_source_key_click(void *data,
 	const struct obs_key_event *event, bool key_up)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
-	if (key_up)
-		bs->SendKeyClick(event, key_up);
+	bs->SendKeyClick(event, key_up);
+
+	blog(LOG_DEBUG,
+	     "key_click '%s' %s", event->text, key_up ? "key_up" : "key_down");
 }
 
 struct obs_source_info

@@ -207,19 +207,25 @@ typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
 		keyEvent.native_key_code = event.nativeVirtualKey;
 
 		if (event.text.length > 0) {
-			@autoreleasepool {
-				keyEvent.character = [event.text
-					characterAtIndex: 0];
-				// how do I determine this?
-				keyEvent.unmodified_character =
-					event.nativeScanCode;
-			}
+
+			keyEvent.character = [event.text characterAtIndex: 0];
+			// how do I determine this?
+			keyEvent.unmodified_character =
+				[[event.text lowercaseString]
+					 characterAtIndex: 0];
 		}
 
-		keyEvent.type = KEYEVENT_KEYUP;
 		keyEvent.modifiers = event.modifiers;
 
-		host->SendKeyEvent(keyEvent);
+		if (keyUp) {
+			keyEvent.type = KEYEVENT_KEYUP;
+			host->SendKeyEvent(keyEvent);
+			keyEvent.type = KEYEVENT_CHAR;
+			host->SendKeyEvent(keyEvent);
+		} else {
+			keyEvent.type = KEYEVENT_RAWKEYDOWN;
+			host->SendKeyEvent(keyEvent);
+		}
 	}];
 }
 
