@@ -121,6 +121,10 @@ static void browser_source_mouse_move(void *data,
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendMouseMove(event, mouse_leave);
+
+	blog(LOG_DEBUG,
+	     "mouse_move x:%d y:%d leave:'%s'", event->x, event->y,
+	     mouse_leave ? "true" : "false");
 }
 
 static void browser_source_mouse_wheel(void *data,
@@ -134,6 +138,9 @@ static void browser_source_focus(void *data, bool focus)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendFocus(focus);
+
+	blog(LOG_DEBUG,
+	     "focus '%s'", focus ? "true" : "false");
 }
 
 static void browser_source_key_click(void *data,
@@ -143,7 +150,14 @@ static void browser_source_key_click(void *data,
 	bs->SendKeyClick(event, key_up);
 
 	blog(LOG_DEBUG,
-	     "key_click '%s' %s", event->text, key_up ? "key_up" : "key_down");
+		"key_click '%s' %04x %s vkey='%d ctrl=%s, cm= %s, sh=%s, al=%s",
+		event->text, event->text ? event->text[0] : 0,
+		key_up ? "key_up" : "key_down",
+		event->native_vkey,
+		event->modifiers & INTERACT_CONTROL_KEY ? "true" : "false",
+		event->modifiers & INTERACT_COMMAND_KEY ? "true" : "false",
+		event->modifiers & INTERACT_SHIFT_KEY ? "true" : "false",
+		event->modifiers & INTERACT_ALT_KEY ? "true" : "false");
 }
 
 struct obs_source_info

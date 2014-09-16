@@ -68,8 +68,8 @@
 			// so that calls from OBS are not delayed by
 			// CEF tasks in the message loop.
 			NSConnection *connection = [NSConnection
-						    connectionWithRegisteredName: uniqueClientName
-						    host: nil];
+				connectionWithRegisteredName: uniqueClientName
+				host: nil];
 
 			[connection setRootObject: cefIsolatedClient];
 			CEFLogDebug(@"Checking for host process connection...");

@@ -34,7 +34,6 @@
 
 #import "cef-isolated-client.h"
 
-
 @implementation CEFIsolatedClient
 
 - (id)init {
@@ -192,41 +191,92 @@ typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
 		CefRefPtr<CefBrowserHost> host =
 			browserHandle->GetBrowser()->GetHost();
 		host->SendFocusEvent(focus);
+		[[host->GetWindowHandle() window]
+			makeFirstResponder: host->GetWindowHandle()];
 	}];
 }
 
+enum AppleVirtualKey {
+	kVK_Return     = 0x24,
+	kVK_Command    = 0x37,
+	kVK_Shift      = 0x38,
+	kVK_Option     = 0x3A,
+	kVK_Control    = 0x3B,
+};
+
+void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
+{
+	@autoreleasepool {
+		CGEventRef cgEvent = CGEventCreateKeyboardEvent(NULL,
+			event.nativeVirtualKey, false);
+
+		NSEvent *e = [NSEvent eventWithCGEvent: cgEvent];
+		NSString *s = [e charactersIgnoringModifiers];
+		if (s && s.length)
+			character = [s characterAtIndex: 0];
+
+		CFRelease(cgEvent);
+	}
+}
+
 - (void)sendKeyClick:(const int)browserIdentifier
-	event:(bycopy ObsKeyEventBridge *)event keyUp:(BOOL)keyUp
+	       event:(bycopy ObsKeyEventBridge *)event keyUp:(BOOL)keyUp
 {
 	[self sendEvent:browserIdentifier
 		  event:^(SharedBrowserHandle browserHandle)
 	{
 		CefRefPtr<CefBrowserHost> host =
-			browserHandle->GetBrowser()->GetHost();
+			 browserHandle->GetBrowser()->GetHost();
+
+
+
+		NSEvent *nsEvent =
+			 [NSEvent keyEventWithType: keyUp ? NSKeyUp : NSKeyDown
+					  location: NSMakePoint(0,0)
+				     modifierFlags: [event nativeModifiers]
+					 timestamp: 0
+				      windowNumber: 0
+					   context: nil
+					characters: [event text]
+		       charactersIgnoringModifiers: nil
+					 isARepeat: false
+					   keyCode: event.nativeVirtualKey];
+
+
 		CefKeyEvent keyEvent;
+		keyEvent.modifiers = [event modifiers];
+
 		keyEvent.native_key_code = event.nativeVirtualKey;
 
-		if (event.text.length > 0) {
+		if (event.text.length) {
+			keyEvent.character =
+			[event.text characterAtIndex: 0];
 
-			keyEvent.character = [event.text characterAtIndex: 0];
-			// how do I determine this?
-			keyEvent.unmodified_character =
-				[[event.text lowercaseString]
-					 characterAtIndex: 0];
+			getUnmodifiedCharacter(event,
+				keyEvent.unmodified_character);
 		}
 
-		keyEvent.modifiers = event.modifiers;
 
 		if (keyUp) {
 			keyEvent.type = KEYEVENT_KEYUP;
 			host->SendKeyEvent(keyEvent);
-			keyEvent.type = KEYEVENT_CHAR;
-			host->SendKeyEvent(keyEvent);
 		} else {
-			keyEvent.type = KEYEVENT_RAWKEYDOWN;
-			host->SendKeyEvent(keyEvent);
+			// Somehow return is not handled correctly
+			if ([event nativeVirtualKey] == kVK_Return) {
+				keyEvent.type = KEYEVENT_CHAR;
+				host->SendKeyEvent(keyEvent);
+				return;
+			}
+
+			host->HandleKeyEventBeforeTextInputClient(nsEvent);
+
+			NSTextInputContext *inputContext =
+				host->GetNSTextInputContext();
+			[inputContext handleEvent:nsEvent];
+
+			host->HandleKeyEventAfterTextInputClient(nsEvent);
 		}
-	}];
+	 }];
 }
 
 - (void)destroyBrowser:(const int)browserIdentifier {
