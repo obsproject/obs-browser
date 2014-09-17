@@ -30,3 +30,47 @@ BrowserClient::GetRenderHandler()
 {
 	return renderHandler;
 }
+
+CefRefPtr<CefLifeSpanHandler>
+BrowserClient::GetLifeSpanHandler()
+{
+	return this;
+}
+
+CefRefPtr<CefContextMenuHandler>
+BrowserClient::GetContextMenuHandler()
+{
+	return this;
+}
+
+bool
+BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser,
+	CefRefPtr<CefFrame> frame, const CefString& target_url,
+	const CefString& target_frame_name,
+	const CefPopupFeatures& popupFeatures,
+	CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
+	CefBrowserSettings& settings, bool* no_javascript_access)
+{
+	(void)browser;
+	(void)frame;
+	(void)target_url;
+	(void)target_frame_name;
+	(void)popupFeatures;
+	(void)windowInfo;
+	(void)client;
+	(void)settings;
+	(void)no_javascript_access;
+
+	return true;
+}
+
+void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
+	CefRefPtr<CefFrame> frame, CefRefPtr<CefContextMenuParams> params,
+	CefRefPtr<CefMenuModel> model)
+{
+	(void)browser;
+	(void)frame;
+	(void)params;
+
+	model->Clear();
+}
