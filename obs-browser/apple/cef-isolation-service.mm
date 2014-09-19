@@ -18,7 +18,7 @@
 #include <map>
 
 #include <obs-module.h>
-
+#include <util/platform.h>
 #import "cef-isolation.h"
 #import "cef-logging.h"
 
@@ -28,6 +28,17 @@
 
 @implementation CEFIsolationService {
 	std::map<int, std::shared_ptr<BrowserListener> > browserListenerMap;
+	NSObject *listenerLock;
+
+}
+
+- (id)init {
+	self = [super init];
+	if (self) {
+		listenerLock = [[NSObject alloc] init];
+	}
+
+	return self;
 }
 
 - (void)addListener: (const std::shared_ptr<BrowserListener> &)browserListener
@@ -68,20 +79,24 @@
 - (void)destroySurface:(const int)browserIdentifier
 	surfaceHandle:(const int)surfaceHandle
 {
-	if (browserListenerMap.count(browserIdentifier) == 1) {
-		BrowserListener *listener =
-			browserListenerMap[browserIdentifier].get();
-		listener->DestroySurface(surfaceHandle);
+	@synchronized(listenerLock) {
+		if (browserListenerMap.count(browserIdentifier) == 1) {
+			BrowserListener *listener =
+				browserListenerMap[browserIdentifier].get();
+			listener->DestroySurface(surfaceHandle);
+		}
 	}
 }
 
 - (void)onDraw:(const int)browserIdentifier width:(const int)width
 	height:(const int)height surfaceHandle:(const int)surfaceHandle
 {
-	if (browserListenerMap.count(browserIdentifier) == 1) {
-		BrowserListener *listener =
-		browserListenerMap[browserIdentifier].get();
-		listener->OnDraw(surfaceHandle, width, height);
+	@synchronized(listenerLock) {
+		if (browserListenerMap.count(browserIdentifier) == 1) {
+			BrowserListener *listener =
+			browserListenerMap[browserIdentifier].get();
+			listener->OnDraw(surfaceHandle, width, height);
+		}
 	}
 }
 
@@ -89,6 +104,16 @@
 	UNUSED_PARAMETER(client);
 	if (exception) CEFLogError(@"Client Exception: %@", exception);
 	_client = nil;
+
+	@synchronized(listenerLock) {
+		for(auto i = browserListenerMap.begin();
+		    i != browserListenerMap.end();
+		    i++)
+		{
+			(*i).second->Invalidated();
+		}
+		browserListenerMap.clear();
+	}
 }
 
 @end

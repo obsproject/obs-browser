@@ -46,6 +46,8 @@ public:
 
 	void DestroySurface(const BrowserSurfaceHandle surfaceHandle);
 
+	void Invalidated();
+
 private:
 	BrowserSource::Impl * const browserSource;
 	std::map<int, std::shared_ptr<TextureRef>> textureMap;

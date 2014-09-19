@@ -102,7 +102,7 @@ sync_on_cef_ui(dispatch_block_t block)
 		map[browser->GetIdentifier()] = browserHandle;
 		return browser->GetIdentifier();
 	} else {
-		return -1;
+		return 0;
 	}
 }
 

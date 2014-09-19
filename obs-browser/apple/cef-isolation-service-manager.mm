@@ -57,21 +57,7 @@ CEFIsolationServiceManager::Startup()
 
 	_uniqueClientName = CreateUUID();
 
-	CEFLogDebug(@"Creating service %@", _uniqueClientName);
 
-	NSString *launchPath = [NSString stringWithUTF8String:
-		BrowserManager::Instance()->GetModulePath()];
-
-	launchPath = [launchPath stringByDeletingLastPathComponent];
-	launchPath = [launchPath stringByAppendingPathComponent:
-		@"/CEF.app/Contents/MacOS/CEF"];
-
-	CEFLogDebug(@"Launching child process %@", launchPath);
-	isolatedClientProcess = [[[NSTask alloc] init] autorelease];
-	[isolatedClientProcess setArguments: @[ _uniqueClientName ]];
-	[isolatedClientProcess setLaunchPath: launchPath];
-
-	[isolatedClientProcess launch];
 
 	_cefIsolationService = [[CEFIsolationService alloc] init];
 
@@ -90,12 +76,15 @@ CEFIsolationServiceManager::Shutdown()
 {
 	[delegate shutdown];
 	_cefIsolationService = nil;
-	[isolatedClientProcess terminate];
-	isolatedClientProcess = nil;
 	_uniqueClientName = nil;
 	delegate = nil;
 }
 
+void
+CEFIsolationServiceManager::Restart()
+{
+	[delegate restart];
+}
 
 int
 CEFIsolationServiceManager::CreateBrowser(
@@ -103,7 +92,7 @@ CEFIsolationServiceManager::CreateBrowser(
 	const std::shared_ptr<BrowserListener> &browserListener)
 {
 	id<CEFIsolatedClient> cefIsolatedClient = nil;
-	int browserIdentifier = -1;
+	int browserIdentifier = 0;
 
 	@synchronized(cefIsolationServiceLock) {
 		if ([_cefIsolationService client] != nil) {
@@ -119,15 +108,15 @@ CEFIsolationServiceManager::CreateBrowser(
 			browserIdentifier = [cefIsolatedClient createBrowser:
 				browserSettingsBridge];
 		}
-		if (browserIdentifier > 0) {
+		if (browserIdentifier != 0) {
 			[_cefIsolationService addListener: browserListener
 				browserIdentifier: browserIdentifier];
 		}
 
 	}
 	@catch (NSException *exception) {
-		[_cefIsolationService invalidateClient: cefIsolatedClient
-			withException:exception];
+//		[_cefIsolationService invalidateClient: cefIsolatedClient
+//			withException:exception];
 	}
 	@finally {
 		return browserIdentifier;
@@ -162,7 +151,7 @@ void
 CEFIsolationServiceManager::TickBrowser(const int browserIdentifier)
 {
 	id<CEFIsolatedClient> cefIsolatedClient =
-	[_cefIsolationService client];
+		[_cefIsolationService client];
 
 	@try {
 		[cefIsolatedClient tickBrowser: browserIdentifier];

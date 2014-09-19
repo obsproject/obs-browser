@@ -44,6 +44,12 @@ BrowserManager::Shutdown()
 }
 
 void
+BrowserManager::Restart()
+{
+	pimpl->Restart();
+}
+
+void
 BrowserManager::TickBrowser(const int browserIdentifier)
 {
 	pimpl->TickBrowser(browserIdentifier);
@@ -129,6 +135,12 @@ void
 BrowserManager::Impl::DestroyBrowser(const int browserIdentifier)
 {
 	cefIsolationServiceManager->DestroyBrowser(browserIdentifier);
+}
+
+void
+BrowserManager::Impl::Restart()
+{
+	cefIsolationServiceManager->Restart();
 }
 
 void

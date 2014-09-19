@@ -35,6 +35,7 @@ public:
 public:
 	void Startup();
 	void Shutdown();
+	void Restart();
 	
 	int CreateBrowser(
 		const BrowserSettings &browserSettings,
@@ -62,7 +63,6 @@ private:
 	ClientConnectionDelegate *delegate;
 	NSString *_uniqueClientName;
 	CEFIsolationService *_cefIsolationService;
-	NSTask *isolatedClientProcess;
 	NSObject *cefIsolationServiceLock;
 
 };

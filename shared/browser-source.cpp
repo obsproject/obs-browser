@@ -35,11 +35,15 @@ void
 BrowserSource::UpdateBrowser()
 {
 	if (browserIdentifier != 0) {
+		// because we need to always enter graphics
+		// before we lock the texture (this order is important)
+		obs_enter_graphics();
 		LockTexture();
 		BrowserManager::Instance()->DestroyBrowser(browserIdentifier);
 		InvalidateActiveTexture();
 		browserIdentifier = 0;
 		UnlockTexture();
+		obs_leave_graphics();
 	}
 
 	std::shared_ptr<BrowserListener> browserListener(CreateListener());
@@ -50,7 +54,7 @@ BrowserSource::UpdateBrowser()
 	browserSettings.width = width;
 	browserSettings.height = height;
 	browserSettings.fps = fps;
-	
+
 	browserIdentifier = BrowserManager::Instance()->CreateBrowser(
 		browserSettings, browserListener);
 }

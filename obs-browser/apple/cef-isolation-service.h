@@ -28,5 +28,4 @@ class BrowserListener;
 - (void)addListener: (const std::shared_ptr<BrowserListener> &)browserListener
 	browserIdentifier: (const int)browserIdentifier;
 - (void)removeListener: (const int)browserIdentifier;
-
 @end

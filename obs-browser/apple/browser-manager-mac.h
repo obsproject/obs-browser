@@ -29,6 +29,8 @@ public:
 public:
 	void Startup();
 	void Shutdown();
+	void Restart();
+	
 	int CreateBrowser(
 		const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener);

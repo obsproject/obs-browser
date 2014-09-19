@@ -35,12 +35,15 @@ public:
 
 	void Startup();
 	void Shutdown();
+	void Restart();
 
 	int CreateBrowser(
 		const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener);
 
 	void DestroyBrowser(const int browserIdentifier);
+
+
 
 	void TickBrowser(const int browserIdentifier);
 	void SendMouseClick(const int browserIdentifier,

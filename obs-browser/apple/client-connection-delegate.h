@@ -26,6 +26,7 @@ class CEFIsolationServiceManager;
 - (ClientConnectionDelegate *)initWithManager:
 	(CEFIsolationServiceManager *)manager;
 - (void)createConnectionThread;
+- (void)restart;
 - (void)shutdown;
 
 @end

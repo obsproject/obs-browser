@@ -18,6 +18,7 @@
 #include <obs-module.h>
 
 #include "browser-source.hpp"
+#include "browser-manager.hpp"
 
 static void
 browser_source_get_defaults(obs_data_t settings)
@@ -27,6 +28,17 @@ browser_source_get_defaults(obs_data_t settings)
 	obs_data_set_default_int(settings, "width", 800);
 	obs_data_set_default_int(settings, "height", 600);
 	obs_data_set_default_int(settings, "fps", 30);
+}
+
+static bool restart_button_clicked(obs_properties_t props,
+	obs_property_t property, void *data)
+{
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(property);
+	UNUSED_PARAMETER(data);
+
+	BrowserManager::Instance()->Restart();
+	return true;
 }
 
 static obs_properties_t
@@ -42,7 +54,10 @@ browser_source_get_properties()
 		obs_module_text("Height"), 1, 4096, 1);
 	obs_properties_add_int(props, "fps",
 		obs_module_text("FPS"), 1, 60, 1);
-
+#ifdef __APPLE__
+	obs_properties_add_button(props, "restart",
+		obs_module_text("Restart CEF"), restart_button_clicked);
+#endif
 	return props;
 }
 
@@ -121,10 +136,6 @@ static void browser_source_mouse_move(void *data,
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendMouseMove(event, mouse_leave);
-
-	blog(LOG_DEBUG,
-	     "mouse_move x:%d y:%d leave:'%s'", event->x, event->y,
-	     mouse_leave ? "true" : "false");
 }
 
 static void browser_source_mouse_wheel(void *data,
@@ -138,9 +149,6 @@ static void browser_source_focus(void *data, bool focus)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendFocus(focus);
-
-	blog(LOG_DEBUG,
-	     "focus '%s'", focus ? "true" : "false");
 }
 
 static void browser_source_key_click(void *data,
@@ -148,16 +156,6 @@ static void browser_source_key_click(void *data,
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendKeyClick(event, key_up);
-
-	blog(LOG_DEBUG,
-		"key_click '%s' %04x %s vkey='%d ctrl=%s, cm= %s, sh=%s, al=%s",
-		event->text, event->text ? event->text[0] : 0,
-		key_up ? "key_up" : "key_down",
-		event->native_vkey,
-		event->modifiers & INTERACT_CONTROL_KEY ? "true" : "false",
-		event->modifiers & INTERACT_COMMAND_KEY ? "true" : "false",
-		event->modifiers & INTERACT_SHIFT_KEY ? "true" : "false",
-		event->modifiers & INTERACT_ALT_KEY ? "true" : "false");
 }
 
 struct obs_source_info

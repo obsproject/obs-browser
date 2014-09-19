@@ -137,3 +137,17 @@ BrowserSource::Impl::Listener::DestroySurface(
 		obs_leave_graphics();
 	}
 }
+
+void
+BrowserSource::Impl::Listener::Invalidated()
+{
+	obs_enter_graphics();
+	browserSource->GetParent()->LockTexture();
+	textureMap.clear();
+	browserSource->activeTexture = nullptr;
+	browserSource->GetParent()->browserIdentifier = 0;
+	browserSource->GetParent()->UnlockTexture();
+	obs_leave_graphics();
+
+	browserSource->GetParent()->UpdateBrowser();
+}

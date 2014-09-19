@@ -32,6 +32,8 @@ public:
 	virtual void DestroySurface(const BrowserSurfaceHandle surfaceHandle) 
 		= 0;
 
+	virtual void Invalidated() = 0;
+
 };
 
 class BrowserListener : public BrowserListenerBase
@@ -62,4 +64,7 @@ public:
 	{
 		(void)surfaceHandle;
 	}
+
+	virtual void Invalidated() override
+	{}
 };
