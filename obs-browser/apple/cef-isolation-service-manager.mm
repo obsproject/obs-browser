@@ -34,7 +34,8 @@
 
 
 
-NSString *CreateUUID() {
+NSString *CreateUUID()
+{
 	CFUUIDRef uuid = CFUUIDCreate(NULL);
 	CFStringRef str = CFUUIDCreateString(NULL, uuid);
 	CFRelease(uuid);
@@ -51,28 +52,21 @@ CEFIsolationServiceManager::~CEFIsolationServiceManager()
 	[cefIsolationServiceLock release];
 }
 
-void
-CEFIsolationServiceManager::Startup()
+void CEFIsolationServiceManager::Startup()
 {
 
 	_uniqueClientName = CreateUUID();
-
-
-
 	_cefIsolationService = [[CEFIsolationService alloc] init];
-
-	delegate =
-		[[ClientConnectionDelegate alloc]
+	delegate = [[ClientConnectionDelegate alloc]
 			initWithManager: this];
 
 	// Eventually move this to NSThread alloc/init so we can
 	// attach lifetime observers before it starts
 	[NSThread detachNewThreadSelector: @selector(createConnectionThread)
-		toTarget: delegate withObject: nil];
+			toTarget: delegate withObject: nil];
 }
 
-void
-CEFIsolationServiceManager::Shutdown()
+void CEFIsolationServiceManager::Shutdown()
 {
 	[delegate shutdown];
 	_cefIsolationService = nil;
@@ -80,16 +74,14 @@ CEFIsolationServiceManager::Shutdown()
 	delegate = nil;
 }
 
-void
-CEFIsolationServiceManager::Restart()
+void CEFIsolationServiceManager::Restart()
 {
 	[delegate restart];
 }
 
-int
-CEFIsolationServiceManager::CreateBrowser(
-	const BrowserSettings &browserSettings,
-	const std::shared_ptr<BrowserListener> &browserListener)
+int CEFIsolationServiceManager::CreateBrowser(
+		const BrowserSettings &browserSettings,
+		const std::shared_ptr<BrowserListener> &browserListener)
 {
 	id<CEFIsolatedClient> cefIsolatedClient = nil;
 	int browserIdentifier = 0;
@@ -102,29 +94,26 @@ CEFIsolationServiceManager::CreateBrowser(
 	@try {
 		@autoreleasepool {
 			BrowserSettingsBridge *browserSettingsBridge =
-				[[BrowserSettingsBridge fromBrowserSettings:
-					browserSettings] autorelease];
+					[[BrowserSettingsBridge
+						fromBrowserSettings:
+						browserSettings] autorelease];
 
 			browserIdentifier = [cefIsolatedClient createBrowser:
-				browserSettingsBridge];
+					browserSettingsBridge];
 		}
 		if (browserIdentifier != 0) {
 			[_cefIsolationService addListener: browserListener
-				browserIdentifier: browserIdentifier];
+					browserIdentifier: browserIdentifier];
 		}
 
 	}
-	@catch (NSException *exception) {
-//		[_cefIsolationService invalidateClient: cefIsolatedClient
-//			withException:exception];
-	}
+	@catch (NSException *exception) {}
 	@finally {
 		return browserIdentifier;
 	}
 }
 
-void
-CEFIsolationServiceManager::DestroyBrowser(const int browserIdentifier)
+void CEFIsolationServiceManager::DestroyBrowser(int browserIdentifier)
 {
 	id<CEFIsolatedClient> cefIsolatedClient = nil;
 
@@ -138,17 +127,13 @@ CEFIsolationServiceManager::DestroyBrowser(const int browserIdentifier)
 		[cefIsolatedClient destroyBrowser: browserIdentifier];
 
 	}
-	@catch (NSException *exception) {
-		[_cefIsolationService invalidateClient: cefIsolatedClient
-					 withException:exception];
-	}
+	@catch (NSException *exception) {}
 	@finally {
 		[_cefIsolationService removeListener: browserIdentifier];
 	}
 }
 
-void
-CEFIsolationServiceManager::TickBrowser(const int browserIdentifier)
+void CEFIsolationServiceManager::TickBrowser(int browserIdentifier)
 {
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
@@ -156,81 +141,72 @@ CEFIsolationServiceManager::TickBrowser(const int browserIdentifier)
 	@try {
 		[cefIsolatedClient tickBrowser: browserIdentifier];
 	}
-	@catch (NSException *exception) {
-		// swallow
-	}
+	@catch (NSException *exception) {}
 }
 
 
-void
-CEFIsolationServiceManager::SendMouseClick(const int browserIdentifier,
-	const struct obs_mouse_event *event, const int32_t type,
-	const bool mouseUp, const uint32_t clickCount)
+void CEFIsolationServiceManager::SendMouseClick(int browserIdentifier,
+		const struct obs_mouse_event *event, int32_t type, bool mouseUp,
+		uint32_t clickCount)
 {
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
 	@try {
 		@autoreleasepool {
 			ObsMouseEventBridge *obsMouseEventBridge =
-				[[ObsMouseEventBridge fromObsMouseEvent: event]
-				 autorelease];
+					[[ObsMouseEventBridge fromObsMouseEvent:
+						event]
+					autorelease];
 
 			[cefIsolatedClient sendMouseClick:browserIdentifier
-				event:obsMouseEventBridge type:type
-				mouseUp:mouseUp clickCount:clickCount];
+					event:obsMouseEventBridge type:type
+					mouseUp:mouseUp clickCount:clickCount];
 		}
 	}
-	@catch (NSException *exception) {
-		//swallow
-	}
+	@catch (NSException *exception) {}
 }
 
-void
-CEFIsolationServiceManager::SendMouseMove(const int browserIdentifier,
-	const struct obs_mouse_event *event, bool mouseLeave)
+void CEFIsolationServiceManager::SendMouseMove(int browserIdentifier,
+		const struct obs_mouse_event *event, bool mouseLeave)
 {
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
 	@try {
 		@autoreleasepool {
 			ObsMouseEventBridge *obsMouseEventBridge =
-			[[ObsMouseEventBridge fromObsMouseEvent: event]
-				 autorelease];
+					[[ObsMouseEventBridge fromObsMouseEvent:
+						event]
+					autorelease];
 
 			[cefIsolatedClient sendMouseMove:browserIdentifier
-				event:obsMouseEventBridge
-				mouseLeave:mouseLeave];
+					event:obsMouseEventBridge
+					mouseLeave:mouseLeave];
 		}
 	}
-	@catch (NSException *exception) {
-		//swallow
-	}
+	@catch (NSException *exception) {}
 }
 
-void
-CEFIsolationServiceManager::SendMouseWheel(const int browserIdentifier,
-	const struct obs_mouse_event *event, int xDelta, int yDelta)
+void CEFIsolationServiceManager::SendMouseWheel(int browserIdentifier,
+		const struct obs_mouse_event *event, int xDelta, int yDelta)
 {
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
 	@try {
 		@autoreleasepool {
 			ObsMouseEventBridge *obsMouseEventBridge =
-			[[ObsMouseEventBridge fromObsMouseEvent: event]
-			 autorelease];
+					[[ObsMouseEventBridge fromObsMouseEvent:
+						event]
+					autorelease];
 
 			[cefIsolatedClient sendMouseWheel:browserIdentifier
 				event:obsMouseEventBridge xDelta:xDelta
 				yDelta:yDelta];
 		}
 	}
-	@catch (NSException *exception) {
-		//swallow
-	}
+	@catch (NSException *exception) {}
 }
 
-void
-CEFIsolationServiceManager::SendFocus(const int browserIdentifier, bool focus)
+void CEFIsolationServiceManager::SendFocus(int browserIdentifier, bool focus)
 {
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
@@ -238,28 +214,24 @@ CEFIsolationServiceManager::SendFocus(const int browserIdentifier, bool focus)
 		[cefIsolatedClient sendFocus:browserIdentifier
 				focus:focus];
 	}
-	@catch (NSException *exception) {
-		//swallow
-	}
+	@catch (NSException *exception) {}
 }
 
-void
-CEFIsolationServiceManager::SendKeyClick(const int browserIdentifier,
-	const struct obs_key_event *event, bool keyUp)
+void CEFIsolationServiceManager::SendKeyClick(int browserIdentifier,
+		const struct obs_key_event *event, bool keyUp)
 {
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
 	@try {
 		@autoreleasepool {
 			ObsKeyEventBridge *obsKeyEventBridge =
-				[[ObsKeyEventBridge fromObsKeyEvent: event]
-				autorelease];
+					[[ObsKeyEventBridge fromObsKeyEvent:
+						event]
+					autorelease];
 
 			[cefIsolatedClient sendKeyClick:browserIdentifier
-				event:obsKeyEventBridge keyUp:keyUp];
+					event:obsKeyEventBridge keyUp:keyUp];
 		}
 	}
-	@catch (NSException *exception) {
-		//swallow
-	}
+	@catch (NSException *exception) {}
 }

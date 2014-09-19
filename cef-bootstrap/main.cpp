@@ -19,8 +19,8 @@
 
 #include "browser-app.hpp"
 
-int 
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 	
 #ifdef _WIN32
 	CefMainArgs mainArgs(NULL);

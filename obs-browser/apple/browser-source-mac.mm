@@ -90,34 +90,29 @@ BrowserSource::Impl::~Impl()
 	obs_leave_graphics();
 }
 
-std::shared_ptr<BrowserListener>
-BrowserSource::CreateListener()
+std::shared_ptr<BrowserListener> BrowserSource::CreateListener()
 {
 	return pimpl->CreateListener();
 }
 
-void
-BrowserSource::RenderActiveTexture(gs_effect_t effect)
+void BrowserSource::RenderActiveTexture(gs_effect_t effect)
 {
 	pimpl->RenderCurrentTexture(effect);
 }
 
-void
-BrowserSource::InvalidateActiveTexture()
+void BrowserSource::InvalidateActiveTexture()
 {
 	pimpl->InvalidateActiveTexture();
 }
 
-void
-BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
+void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
 {
 	UNUSED_PARAMETER(effect);
 
 	GetParent()->LockTexture();
 
-	build_sprite_rect(
-		gs_vertexbuffer_get_data(vertexBuffer),
-		0, 0, parent->GetWidth(), parent->GetHeight());
+	build_sprite_rect(gs_vertexbuffer_get_data(vertexBuffer),
+			0, 0, parent->GetWidth(), parent->GetHeight());
 
 	if (activeTexture != nullptr) {
 		gs_vertexbuffer_flush(vertexBuffer);
@@ -125,10 +120,10 @@ BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
 		gs_load_indexbuffer(NULL);
 		gs_load_samplerstate(sampler, 0);
 
-		gs_technique_t tech = gs_effect_get_technique(
-			drawEffect, "Default");
-		gs_effect_set_texture(gs_effect_get_param_by_idx(
-			drawEffect, 1), activeTexture->GetTexture());
+		gs_technique_t tech = gs_effect_get_technique(drawEffect,
+				"Default");
+		gs_effect_set_texture(gs_effect_get_param_by_idx(drawEffect, 1),
+				activeTexture->GetTexture());
 
 		gs_technique_begin(tech);
 		gs_technique_begin_pass(tech, 0);
@@ -140,16 +135,18 @@ BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
 	
 	GetParent()->UnlockTexture();
 }
+void BrowserSource::Impl::SetActiveTexture(TextureRef *texture)
+{
+	activeTexture = texture;
+}
 
-void
-BrowserSource::Impl::InvalidateActiveTexture()
+void BrowserSource::Impl::InvalidateActiveTexture()
 {
 	activeTexture = nullptr;
 }
 
-std::shared_ptr<BrowserListener>
-BrowserSource::Impl::CreateListener()
+std::shared_ptr<BrowserListener> BrowserSource::Impl::CreateListener()
 {
 	return std::shared_ptr<BrowserListener>(
-		new BrowserSource::Impl::Listener(this));
+			new BrowserSource::Impl::Listener(this));
 }

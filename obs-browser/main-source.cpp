@@ -20,18 +20,17 @@
 #include "browser-source.hpp"
 #include "browser-manager.hpp"
 
-static void
-browser_source_get_defaults(obs_data_t settings)
+static void browser_source_get_defaults(obs_data_t settings)
 {
 	obs_data_set_default_string(settings, "url",
-		"http://www.obsproject.com");
+			"http://www.obsproject.com");
 	obs_data_set_default_int(settings, "width", 800);
 	obs_data_set_default_int(settings, "height", 600);
 	obs_data_set_default_int(settings, "fps", 30);
 }
 
 static bool restart_button_clicked(obs_properties_t props,
-	obs_property_t property, void *data)
+		obs_property_t property, void *data)
 {
 	UNUSED_PARAMETER(props);
 	UNUSED_PARAMETER(property);
@@ -41,65 +40,59 @@ static bool restart_button_clicked(obs_properties_t props,
 	return true;
 }
 
-static obs_properties_t
-browser_source_get_properties()
+static obs_properties_t browser_source_get_properties()
 {
 	obs_properties_t props = obs_properties_create();
 
 	obs_properties_add_text(props, "url",
-		obs_module_text("URL"), OBS_TEXT_DEFAULT);
+			obs_module_text("URL"), OBS_TEXT_DEFAULT);
 	obs_properties_add_int(props, "width",
-		obs_module_text("Width"), 1, 4096, 1);
+			obs_module_text("Width"), 1, 4096, 1);
 	obs_properties_add_int(props, "height",
-		obs_module_text("Height"), 1, 4096, 1);
+			obs_module_text("Height"), 1, 4096, 1);
 	obs_properties_add_int(props, "fps",
-		obs_module_text("FPS"), 1, 60, 1);
+			obs_module_text("FPS"), 1, 60, 1);
 #ifdef __APPLE__
+	// osx is the only process-isolated cef impl
 	obs_properties_add_button(props, "restart",
-		obs_module_text("Restart CEF"), restart_button_clicked);
+			obs_module_text("Restart CEF"), restart_button_clicked);
 #endif
 	return props;
 }
 
-static void
-browser_source_update(void *data, obs_data_t settings)
+static void browser_source_update(void *data, obs_data_t settings)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->UpdateSettings(settings);
 }
 
-static uint32_t
-browser_source_get_width(void *data)
+static uint32_t browser_source_get_width(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	return bs->GetWidth();
 }
 
-static uint32_t
-browser_source_get_height(void *data)
+static uint32_t browser_source_get_height(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	return bs->GetHeight();
 }
 
 
-static const char *
-browser_source_get_name(void)
+static const char *browser_source_get_name(void)
 {
 	return obs_module_text("BrowserSource");
 }
 
 
-static void *
-browser_source_create(obs_data_t settings, obs_source_t source)
+static void *browser_source_create(obs_data_t settings, obs_source_t source)
 {
 	BrowserSource *browserSource = new BrowserSource(settings, source);
 
 	return browserSource;
 }
 
-static void
-browser_source_destroy(void *data)
+static void browser_source_destroy(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
@@ -124,22 +117,22 @@ static void browser_source_render(void *data, gs_effect_t effect)
 }
 
 static void browser_source_mouse_click(void *data,
-	const struct obs_mouse_event *event, int32_t type, bool mouse_up,
-	uint32_t click_count)
+		const struct obs_mouse_event *event, int32_t type,
+		bool mouse_up, uint32_t click_count)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendMouseClick(event, type, mouse_up, click_count);
 }
 
 static void browser_source_mouse_move(void *data,
-	const struct obs_mouse_event *event, bool mouse_leave)
+		const struct obs_mouse_event *event, bool mouse_leave)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendMouseMove(event, mouse_leave);
 }
 
 static void browser_source_mouse_wheel(void *data,
-	const struct obs_mouse_event *event, int x_delta, int y_delta)
+		const struct obs_mouse_event *event, int x_delta, int y_delta)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendMouseWheel(event, x_delta, y_delta);
@@ -152,7 +145,7 @@ static void browser_source_focus(void *data, bool focus)
 }
 
 static void browser_source_key_click(void *data,
-	const struct obs_key_event *event, bool key_up)
+		const struct obs_key_event *event, bool key_up)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendKeyClick(event, key_up);
@@ -165,22 +158,16 @@ create_browser_source_info()
 
 	browser_source_info.id = "browser_source";
 	browser_source_info.type = OBS_SOURCE_TYPE_INPUT;
-#ifdef __APPLE__
 	browser_source_info.output_flags = OBS_SOURCE_VIDEO |
-		OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION;
-#else
-	browser_source_info.output_flags = OBS_SOURCE_ASYNC_VIDEO;
-#endif
-	browser_source_info.mouse_click =
-		browser_source_mouse_click;
-	browser_source_info.mouse_move =
-		browser_source_mouse_move;
-	browser_source_info.mouse_wheel =
-		browser_source_mouse_wheel;
-	browser_source_info.focus =
-		browser_source_focus;
-	browser_source_info.key_click =
-		browser_source_key_click;
+			OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION;
+
+	// interaction
+	browser_source_info.mouse_click = browser_source_mouse_click;
+	browser_source_info.mouse_move = browser_source_mouse_move;
+	browser_source_info.mouse_wheel = browser_source_mouse_wheel;
+	browser_source_info.focus = browser_source_focus;
+	browser_source_info.key_click = browser_source_key_click;
+
 	browser_source_info.get_name = browser_source_get_name;
 	browser_source_info.create = browser_source_create;
 	browser_source_info.destroy = browser_source_destroy;

@@ -20,8 +20,7 @@
 #include "browser-listener.hpp"
 #include "browser-settings.hpp"
 
-void
-BrowserSource::UpdateSettings(obs_data_t settings)
+void BrowserSource::UpdateSettings(obs_data_t settings)
 {
 	url = obs_data_get_string(settings, "url");
 	width = (uint32_t)obs_data_get_int(settings, "width");
@@ -31,8 +30,7 @@ BrowserSource::UpdateSettings(obs_data_t settings)
 	UpdateBrowser();
 }
 
-void
-BrowserSource::UpdateBrowser()
+void BrowserSource::UpdateBrowser()
 {
 	if (browserIdentifier != 0) {
 		// because we need to always enter graphics
@@ -56,32 +54,29 @@ BrowserSource::UpdateBrowser()
 	browserSettings.fps = fps;
 
 	browserIdentifier = BrowserManager::Instance()->CreateBrowser(
-		browserSettings, browserListener);
+			browserSettings, browserListener);
 }
 
-void BrowserSource::SendMouseClick(
-	const struct obs_mouse_event *event,
-	int32_t type,
-	bool mouseUp,
-	uint32_t clickCount)
+void BrowserSource::SendMouseClick(const struct obs_mouse_event *event,
+		int32_t type, bool mouseUp, uint32_t clickCount)
 {
 
 	BrowserManager::Instance()->SendMouseClick(browserIdentifier,
-		event, type, mouseUp, clickCount);
+			event, type, mouseUp, clickCount);
 }
 
-void BrowserSource::SendMouseMove( const struct obs_mouse_event *event,
-	bool mouseLeave)
+void BrowserSource::SendMouseMove(const struct obs_mouse_event *event,
+		bool mouseLeave)
 {
 	BrowserManager::Instance()->SendMouseMove(browserIdentifier,
-		event, mouseLeave);
+			event, mouseLeave);
 }
 
 void BrowserSource::SendMouseWheel(const struct obs_mouse_event *event,
-	int xDelta, int yDelta)
+		int xDelta, int yDelta)
 {
 	BrowserManager::Instance()->SendMouseWheel(browserIdentifier,
-		event, xDelta, yDelta);
+			event, xDelta, yDelta);
 }
 
 void BrowserSource::SendFocus(bool focus)
@@ -92,5 +87,5 @@ void BrowserSource::SendFocus(bool focus)
 void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool keyUp)
 {
 	BrowserManager::Instance()->SendKeyClick(browserIdentifier, event,
-		keyUp);
+			keyUp);
 }

@@ -21,8 +21,7 @@
 
 class BrowserTexture::Impl {
 public:
-	Impl(const int width, const int height,
-		const BrowserSurfaceHandle surfaceHandle);
+	Impl(int width, int height, BrowserSurfaceHandle surfaceHandle);
 	~Impl();
 
 	int GetWidth() const;

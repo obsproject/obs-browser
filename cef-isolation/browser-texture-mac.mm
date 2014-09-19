@@ -24,39 +24,35 @@
 #include "browser-texture-mac.h"
 
 BrowserTexture::BrowserTexture(const int width, const int height,
-	const BrowserSurfaceHandle surfaceHandle)
+		const BrowserSurfaceHandle surfaceHandle)
 : pimpl(new Impl(width, height, surfaceHandle))
 {}
 
 BrowserTexture::~BrowserTexture()
 {}
 
-int
-BrowserTexture::GetWidth() const
+int BrowserTexture::GetWidth() const
 {
 	return pimpl->GetWidth();
 }
 
-int
-BrowserTexture::GetHeight() const
+int BrowserTexture::GetHeight() const
 {
 	return pimpl->GetHeight();
 }
 
-BrowserSurfaceHandle
-BrowserTexture::GetHandle() const
+BrowserSurfaceHandle BrowserTexture::GetHandle() const
 {
 	return pimpl->GetHandle();
 }
 
-bool
-BrowserTexture::Upload(const void *data)
+bool BrowserTexture::Upload(const void *data)
 {
 	return pimpl->Upload(data);
 }
 
-BrowserTexture::Impl::Impl(const int width, const int height,
-	const BrowserSurfaceHandle surfaceHandle)
+BrowserTexture::Impl::Impl(int width, int height,
+		BrowserSurfaceHandle surfaceHandle)
 : width(width), height(height), surfaceHandle(surfaceHandle)
 {
 	ioSurfaceRef = IOSurfaceLookup(surfaceHandle);
@@ -69,26 +65,22 @@ BrowserTexture::Impl::~Impl()
 	CFRelease(ioSurfaceRef);
 }
 
-int
-BrowserTexture::Impl::GetWidth() const
+int BrowserTexture::Impl::GetWidth() const
 {
 	return width;
 }
 
-int
-BrowserTexture::Impl::GetHeight() const
+int BrowserTexture::Impl::GetHeight() const
 {
 	return height;
 }
 
-BrowserSurfaceHandle
-BrowserTexture::Impl::GetHandle() const
+BrowserSurfaceHandle BrowserTexture::Impl::GetHandle() const
 {
 	return surfaceHandle;
 }
 
-bool
-BrowserTexture::Impl::Upload(const void *data)
+bool BrowserTexture::Impl::Upload(const void *data)
 {
 	if (ioSurfaceRef) {
 		IOSurfaceLock(ioSurfaceRef, 0, nullptr);

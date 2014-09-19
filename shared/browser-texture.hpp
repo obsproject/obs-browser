@@ -24,7 +24,7 @@ typedef int BrowserSurfaceHandle;
 class BrowserTexture {
 public:
 	BrowserTexture(const int width, const int height,
-		const BrowserSurfaceHandle surfaceHandle);
+			const BrowserSurfaceHandle surfaceHandle);
 
 	~BrowserTexture();
 

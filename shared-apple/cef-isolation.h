@@ -19,6 +19,8 @@
 
 #import <Foundation/Foundation.h>
 
+#include "browser-types.h"
+
 @protocol CEFIsolatedClient;
 @class BrowserSettingsBridge;
 @class ObsMouseEventBridge;
@@ -26,31 +28,31 @@
 
 @protocol CEFIsolationService
 - (oneway void)registerClient:(id<CEFIsolatedClient>)client;
-- (BOOL)createSurface:(const int)browserIdentifier width:(const int)width
-	height:(const int)height surfaceHandle:(int *)surfaceHandle;
-- (void)destroySurface:(const int)browserIdentifier
-	surfaceHandle:(const int)surfaceHandle;
-- (void)onDraw:(const int)browserIdentifier width:(const int)width
-	height:(const int)height surfaceHandle:(const int)surfaceHandle;
+- (BOOL)createSurface:(int)browserIdentifier width:(int)width height:(int)height
+		surfaceHandle:(BrowserSurfaceHandle *)surfaceHandle;
+- (void)destroySurface:(int)browserIdentifier
+		surfaceHandle:(BrowserSurfaceHandle)surfaceHandle;
+- (void)onDraw:(int)browserIdentifier width:(int)width
+		height:(int)height
+		surfaceHandle:(BrowserSurfaceHandle)surfaceHandle;
 - (void)invalidateClient:(id)client withException:(NSException *)exception;
 @end
 
 @protocol CEFIsolatedClient
 - (oneway void)registerServer:(id<CEFIsolationService>)server;
 - (int)createBrowser:(BrowserSettingsBridge *)browserSettings;
-- (void)destroyBrowser:(const int)browserIdentifier;
-- (oneway void)tickBrowser:(const int)browserIdentifier;
-- (void)sendMouseClick:(const int) browserIdentifier
-	event:(ObsMouseEventBridge *)event type:(const int)type
-	mouseUp:(BOOL)mouseUp clickCount:(const int)clickCount;
-- (oneway void)sendMouseMove:(const int) browserIdentifier
-	event:(ObsMouseEventBridge *)event mouseLeave:(BOOL)mouseLeave;
-- (void)sendMouseWheel:(const int)browserIdentifier
-	event:(ObsMouseEventBridge *)event xDelta:(int)xDelta
-	yDelta:(int)yDelta;
-- (oneway void)sendFocus:(const int)browserIdentifier focus:(BOOL)focus;
-- (void)sendKeyClick:(const int) browserIdentifier
-	event:(bycopy ObsKeyEventBridge *)event keyUp:(BOOL)keyUp;
+- (void)destroyBrowser:(int)browserIdentifier;
+- (oneway void)tickBrowser:(int)browserIdentifier;
+- (void)sendMouseClick:(int) browserIdentifier
+		event:(ObsMouseEventBridge *)event type:(int)type
+		mouseUp:(BOOL)mouseUp clickCount:(int)clickCount;
+- (oneway void)sendMouseMove:(int)browserIdentifier
+		event:(ObsMouseEventBridge *)event mouseLeave:(BOOL)mouseLeave;
+- (void)sendMouseWheel:(int)browserIdentifier event:(ObsMouseEventBridge *)event
+		xDelta:(int)xDelta yDelta:(int)yDelta;
+- (oneway void)sendFocus:(int)browserIdentifier focus:(BOOL)focus;
+- (void)sendKeyClick:(int) browserIdentifier
+		event:(bycopy ObsKeyEventBridge *)event keyUp:(BOOL)keyUp;
 @end
 
 

@@ -38,12 +38,12 @@
 
 
 - (ClientConnectionDelegate *)initWithManager:
-(CEFIsolationServiceManager *)manager
+		(CEFIsolationServiceManager *)manager
 {
 	self = [super init];
 	if (self) {
 		lock = [[[NSConditionLock alloc] initWithCondition: T_START]
-			autorelease];
+				autorelease];
 		_manager = manager;
 	}
 	return self;
@@ -64,26 +64,26 @@
 	CEFLogDebug(@"Creating service %@", _manager->GetUniqueClientName());
 
 	NSString *launchPath = [NSString stringWithUTF8String:
-		BrowserManager::Instance()->GetModulePath()];
+			BrowserManager::Instance()->GetModulePath()];
 
 	launchPath = [launchPath stringByDeletingLastPathComponent];
 	launchPath = [launchPath stringByAppendingPathComponent:
-		      @"/CEF.app/Contents/MacOS/CEF"];
+			@"/CEF.app/Contents/MacOS/CEF"];
 
 	CEFLogDebug(@"Launching child process %@", launchPath);
 	if (clientProcess != nil && clientProcess.isRunning) {
 		CEFLogDebug(@"Existing process %d found; terminating",
-			clientProcess.processIdentifier);
+				clientProcess.processIdentifier);
 		[clientProcess terminate];
 	}
+
 	clientProcess = [[[NSTask alloc] init] autorelease];
 	[clientProcess setArguments: @[ _manager->GetUniqueClientName() ]];
 	[clientProcess setLaunchPath: launchPath];
 
 	[clientProcess launch];
 	
-	NSConnection *connection =
-		[[[NSConnection alloc] init] autorelease];
+	NSConnection *connection = [[[NSConnection alloc] init] autorelease];
 
 	[connection registerName: _manager->GetUniqueClientName()];
 	[connection setRootObject: _manager->GetCefIsolationService()];
@@ -109,9 +109,9 @@
 		connectionThread = [NSThread currentThread];
 
 		[[NSNotificationCenter defaultCenter] addObserver:self
-			selector:@selector(connectionDidDie:)
-			name:NSConnectionDidDieNotification
-			object:nil];
+				selector:@selector(connectionDidDie:)
+				name:NSConnectionDidDieNotification
+				object:nil];
 
 		NSConnection *connection = nullptr;
 		shutdown = NO;
@@ -123,20 +123,22 @@
 					connection = nil;
 				}
 				[_manager->GetCefIsolationService()
-					invalidateClient: nil
-					withException: nil];
+						invalidateClient: nil
+						withException: nil];
 				connection = [self createConnectionWithRunLoop:
-					threadRunLoop];
+						threadRunLoop];
 				newConnection = NO;
 			}
 			@autoreleasepool {
-				[threadRunLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+				[threadRunLoop runMode:NSDefaultRunLoopMode
+						beforeDate:
+							[NSDate distantFuture]];
 			}
 		}
 
 		[[NSNotificationCenter defaultCenter] removeObserver:self
-			name:NSConnectionDidDieNotification
-			object:nil];
+				name:NSConnectionDidDieNotification
+				object:nil];
 
 		[connection invalidate];
 		connection = nil;
@@ -165,20 +167,19 @@
 - (void)restart
 {
 	[self performSelector:@selector(restartConnection)
-		onThread:connectionThread withObject:nil
-		waitUntilDone:NO];
+			onThread:connectionThread withObject:nil
+			waitUntilDone:NO];
 }
 
 - (void)shutdown
 {
 	[self performSelector:@selector(shutdownThread)
-		     onThread:connectionThread withObject:nil waitUntilDone:NO];
+			onThread:connectionThread withObject:nil
+			waitUntilDone:NO];
 
 	// wait for thread to finish
 	[lock lockWhenCondition: T_FINISHED];
 	[lock unlockWithCondition: T_START];
-
-
 }
 
 @end

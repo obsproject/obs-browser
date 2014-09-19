@@ -31,10 +31,8 @@
 
 #import "service-connection-delegate.h"
 
-void processTerminatedEvent(
-	CFFileDescriptorRef fdref,
-	CFOptionFlags callBackTypes,
-	void* info)
+void processTerminatedEvent(CFFileDescriptorRef fdref,
+		CFOptionFlags callBackTypes, void* info)
 {
 	(void)callBackTypes;
 	(void)info;
@@ -46,38 +44,39 @@ void processTerminatedEvent(
 }
 
 
-void hookParentDeath() {
+void hookParentDeath()
+{
 	int fd = kqueue();
 	struct kevent kev;
 	EV_SET(&kev, getppid(), EVFILT_PROC, EV_ADD|EV_ENABLE, NOTE_EXIT,
-	       0, NULL);
+		       0, NULL);
 	kevent(fd, &kev, 1, NULL, 0, NULL);
 	CFFileDescriptorRef fdref = CFFileDescriptorCreate(kCFAllocatorDefault,
-		fd, true, processTerminatedEvent, NULL);
+			fd, true, processTerminatedEvent, NULL);
 	CFFileDescriptorEnableCallBacks(fdref, kCFFileDescriptorReadCallBack);
 	CFRunLoopSourceRef source =
-		CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault,
+			CFFileDescriptorCreateRunLoopSource(kCFAllocatorDefault,
 			fdref, 0);
 	CFRunLoopAddSource(CFRunLoopGetMain(), source, kCFRunLoopDefaultMode);
 	CFRelease(source);
 }
 
-int main (int argc, const char * argv[]) {
+int main (int argc, const char * argv[])
+{
 
 	hookParentDeath();
 
 	@autoreleasepool {
 		if (argc != 2) {
-			CEFLogError(
-				@"Invalid arguments send to isolated client");
+			CEFLogError(@"Invalid arguments send to client");
 			return -1;
 		}
 
 		NSString *uniqueClientName =
-			[NSString stringWithUTF8String: argv[1]];
+				[NSString stringWithUTF8String: argv[1]];
 
 		CEFLogDebug(@"Process created with argument: %@",
-			uniqueClientName);
+				uniqueClientName);
 
 
 		CefMainArgs mainArgs;
@@ -94,16 +93,16 @@ int main (int argc, const char * argv[]) {
 		}
 
 		ServiceConnectionDelegate *delegate =
-			[[[ServiceConnectionDelegate alloc]
-				 initWithUniqueName: uniqueClientName]
-			 autorelease];
+				[[[ServiceConnectionDelegate alloc]
+					 initWithUniqueName: uniqueClientName]
+				 autorelease];
 
 
 		// Eventually move this to NSThread alloc/init so we can
 		// attach lifetime observers before it starts
 		[NSThread detachNewThreadSelector:
-			@selector(createConnectionThread)
-			toTarget: delegate withObject: nil];
+				@selector(createConnectionThread)
+				toTarget: delegate withObject: nil];
 
 		CefRunMessageLoop();
 

@@ -27,7 +27,7 @@ public:
 
 public:
 	virtual void OnRegisterCustomSchemes(
-		CefRefPtr<CefSchemeRegistrar> registrar) OVERRIDE;
+			CefRefPtr<CefSchemeRegistrar> registrar) OVERRIDE;
 private:
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 

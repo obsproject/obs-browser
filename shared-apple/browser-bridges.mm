@@ -21,12 +21,11 @@
 
 @implementation BrowserSettingsBridge
 
-- (id)initWithBrowserSettings: (const BrowserSettings &)browserSettings
+- (id)initWithBrowserSettings:(const BrowserSettings &)browserSettings
 {
 	if (self = [super init]) {
 		_url = [NSString stringWithUTF8String:
-			browserSettings.url.c_str()];
-
+				browserSettings.url.c_str()];
 		_width = browserSettings.width;
 		_height = browserSettings.height;
 		_fps = browserSettings.fps;
@@ -34,7 +33,7 @@
 	return self;
 }
 
-+ (id)fromBrowserSettings: (const BrowserSettings &)browserSettings
++ (id)fromBrowserSettings:(const BrowserSettings &)browserSettings
 {
 	return [[BrowserSettingsBridge alloc]
 		initWithBrowserSettings: browserSettings];
@@ -43,7 +42,7 @@
 
 @implementation ObsMouseEventBridge
 
-- (id)initWithObsMouseEvent: (const struct obs_mouse_event *)event
+- (id)initWithObsMouseEvent:(const struct obs_mouse_event *)event
 {
 	if (self = [super init]) {
 		_x = event->x;
@@ -63,7 +62,7 @@
 
 @implementation ObsKeyEventBridge
 
-- (id)initWithObsKeyEvent: (const struct obs_key_event *)event
+- (id)initWithObsKeyEvent:(const struct obs_key_event *)event
 {
 	if (self = [super init]) {
 		_modifiers = event->modifiers;

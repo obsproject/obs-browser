@@ -17,14 +17,12 @@
 
 #include "browser-task.hpp"
 
-CefRefPtr<BrowserTask>
-BrowserTask::newTask(std::function<void()> task)
+CefRefPtr<BrowserTask> BrowserTask::newTask(std::function<void()> task)
 {
 	return CefRefPtr<BrowserTask>(new BrowserTask(task));
 }
 
-void 
-BrowserTask::Execute()
+void BrowserTask::Execute()
 {
 	task();
 }

@@ -17,8 +17,7 @@
 
 #include "graphics-helpers.h"
 
-gs_vertbuffer_t
-create_vertex_buffer()
+gs_vertbuffer_t create_vertex_buffer()
 {
 	struct gs_vb_data *vb_data = gs_vbdata_create();
 
@@ -49,15 +48,8 @@ create_vertex_buffer()
 	return gs_vertexbuffer_create(vb_data, GS_DYNAMIC);
 }
 
-void
-build_sprite(
-	struct gs_vb_data *data,
-	float fcx,
-	float fcy,
-	float start_u,
-	float end_u,
-	float start_v,
-	float end_v)
+void build_sprite(struct gs_vb_data *data, float fcx, float fcy,
+		float start_u, float end_u, float start_v, float end_v)
 {
 	struct vec2 *tvarray = (struct vec2 *)data->tvarray[0].array;
 
@@ -70,14 +62,9 @@ build_sprite(
 	vec2_set(tvarray+3, end_u,   end_v);
 }
 
-void
-build_sprite_rect(
-	struct gs_vb_data *data,
-	float origin_x,
-	float origin_y,
-	float end_x,
-	float end_y)
+void build_sprite_rect(struct gs_vb_data *data, float origin_x, float origin_y,
+		float end_x, float end_y)
 {
 	build_sprite(data, fabs(end_x - origin_x), fabs(end_y - origin_y),
-		     origin_x, end_x, origin_y, end_y);
+			origin_x, end_x, origin_y, end_y);
 }

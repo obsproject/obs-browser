@@ -18,25 +18,22 @@
 #include "browser-texture.hpp"
 #include "browser-handle.h"
 
-BrowserHandle::BrowserHandle(const int width, const int height,
-	id<CEFIsolationService> cefIsolationService)
+BrowserHandle::BrowserHandle(int width, int height,
+		id<CEFIsolationService> cefIsolationService)
 : width(width), height(height),	cefIsolationService(cefIsolationService)
 {}
 
-void
-BrowserHandle::SetBrowser(CefRefPtr<CefBrowser> browser)
+void BrowserHandle::SetBrowser(CefRefPtr<CefBrowser> browser)
 {
 	this->browser = browser;
 }
 
-CefRefPtr<CefBrowser>
-BrowserHandle::GetBrowser()
+CefRefPtr<CefBrowser> BrowserHandle::GetBrowser()
 {
 	return browser;
 }
 
-void
-BrowserHandle::Shutdown()
+void BrowserHandle::Shutdown()
 {
 	if (browser == nullptr) {
 		return;
@@ -45,23 +42,18 @@ BrowserHandle::Shutdown()
 	browser->GetHost()->CloseBrowser(true);
 }
 
-int
-BrowserHandle::GetWidth() const
+int BrowserHandle::GetWidth() const
 {
 	return width;
 }
 
-int
-BrowserHandle::GetHeight() const
+int BrowserHandle::GetHeight() const
 {
 	return height;
 }
 
-bool
-BrowserHandle::RenderToAvailableTexture(
-	const int width,
-	const int height,
-	const void *data)
+bool BrowserHandle::RenderToAvailableTexture(int width, int height,
+		const void *data)
 {
 	if (browser == nullptr) {
 		return false;
@@ -71,12 +63,12 @@ BrowserHandle::RenderToAvailableTexture(
 	if (browserTexture == nullptr) {
 		int surfaceHandle = 0;
 		if ([cefIsolationService createSurface: browser->GetIdentifier()
-			width: width height: height
-			surfaceHandle: &surfaceHandle])
+				width: width height: height
+				surfaceHandle: &surfaceHandle])
 		{
 			std::unique_ptr<BrowserTexture> newTexture(
-				new BrowserTexture(width, height,
-					surfaceHandle));
+					new BrowserTexture(width, height,
+						surfaceHandle));
 
 			browserTexture = std::move(newTexture);
 
@@ -89,8 +81,9 @@ BrowserHandle::RenderToAvailableTexture(
 
 		if (needsOnDraw) {
 			[cefIsolationService onDraw: browser->GetIdentifier()
-				width: width height:height
-				surfaceHandle: browserTexture->GetHandle()];
+					width: width height:height
+					surfaceHandle:
+						browserTexture->GetHandle()];
 		}
 	}
 

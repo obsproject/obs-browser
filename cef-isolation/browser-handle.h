@@ -27,18 +27,18 @@
 
 class BrowserTexture;
 class BrowserHandle;
+
 typedef std::shared_ptr<BrowserHandle> SharedBrowserHandle;
 
 typedef int BrowserSurfaceHandle;
 
 class BrowserHandle {
 public:
-	BrowserHandle(const int width, const int height,
-		id<CEFIsolationService> cefIsolationService);
+	BrowserHandle(int width, int height,
+			id<CEFIsolationService> cefIsolationService);
 
 public:
-	bool RenderToAvailableTexture(const int width, const int height,
-		const void *data);
+	bool RenderToAvailableTexture(int width, int height, const void *data);
 public:
 	int GetWidth() const;
 	int GetHeight() const;

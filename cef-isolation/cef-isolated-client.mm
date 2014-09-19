@@ -36,19 +36,21 @@
 
 @implementation CEFIsolatedClient
 
-- (id)init {
+- (id)init
+{
 	if (self = [super init]) {
 		_server = nil;
 	}
 	return self;
 }
 
-- (oneway void)registerServer:(id<CEFIsolationService>)server {
+- (oneway void)registerServer:(id<CEFIsolationService>)server
+{
 	CEFLogDebug(@"Registered server");
 	_server = server;
 }
-void
-sync_on_cef_ui(dispatch_block_t block)
+
+void sync_on_cef_ui(dispatch_block_t block)
 {
 	if ([NSThread isMainThread]) {
 		block();
@@ -62,7 +64,8 @@ sync_on_cef_ui(dispatch_block_t block)
 	browser->GetHost()->WasResized();
 }
 
-- (int)createBrowser:(BrowserSettingsBridge *)browserSettings{
+- (int)createBrowser:(BrowserSettingsBridge *)browserSettings
+{
 	__block CefRefPtr<CefBrowser> browser;
 
 	__block std::shared_ptr<BrowserHandle> browserHandle(
@@ -72,10 +75,10 @@ sync_on_cef_ui(dispatch_block_t block)
 	sync_on_cef_ui(^{
 
 		CefRefPtr<BrowserRenderHandler> browserRenderHandler =
-			new BrowserRenderHandler(browserHandle);
+				new BrowserRenderHandler(browserHandle);
 
 		CefRefPtr<BrowserClient> browserClient =
-			new BrowserClient(browserRenderHandler.get());
+				new BrowserClient(browserRenderHandler.get());
 
 		CefWindowInfo windowInfo;
 		windowInfo.view = nullptr;
@@ -93,8 +96,9 @@ sync_on_cef_ui(dispatch_block_t block)
 		// Less chance of freezes here taking the whole
 		// process down
 		browser = CefBrowserHost::CreateBrowserSync(windowInfo,
-			browserClient.get(), [browserSettings.url UTF8String],
-			cefBrowserSettings, nil);
+				browserClient.get(),
+				[browserSettings.url UTF8String],
+				cefBrowserSettings, nil);
 	});
 
 	if (browser != nil) {
@@ -137,13 +141,13 @@ typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
 		mouseEvent.y = event.y;
 		mouseEvent.modifiers = event.modifiers;
 		CefRefPtr<CefBrowserHost> host =
-			browserHandle->GetBrowser()->GetHost();
+				browserHandle->GetBrowser()->GetHost();
 
 		CefBrowserHost::MouseButtonType buttonType =
-			(CefBrowserHost::MouseButtonType)type;
+				(CefBrowserHost::MouseButtonType)type;
 
 		host->SendMouseClickEvent(mouseEvent, buttonType,
-			mouseUp, clickCount);
+				mouseUp, clickCount);
 	}];
 }
 
@@ -160,7 +164,7 @@ typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
 		mouseEvent.modifiers = event.modifiers;
 
 		CefRefPtr<CefBrowserHost> host =
-			browserHandle->GetBrowser()->GetHost();
+				browserHandle->GetBrowser()->GetHost();
 		host->SendMouseMoveEvent(mouseEvent, mouseLeave);
 	}];
 }
@@ -178,7 +182,7 @@ typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
 		mouseEvent.modifiers = event.modifiers;
 
 		CefRefPtr<CefBrowserHost> host =
-			browserHandle->GetBrowser()->GetHost();
+				browserHandle->GetBrowser()->GetHost();
 		host->SendMouseWheelEvent(mouseEvent, xDelta, yDelta);
 	}];
 }
@@ -189,10 +193,10 @@ typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
 		event:^(SharedBrowserHandle browserHandle)
 	{
 		CefRefPtr<CefBrowserHost> host =
-			browserHandle->GetBrowser()->GetHost();
+				browserHandle->GetBrowser()->GetHost();
 		host->SendFocusEvent(focus);
 		[[host->GetWindowHandle() window]
-			makeFirstResponder: host->GetWindowHandle()];
+				makeFirstResponder: host->GetWindowHandle()];
 	}];
 }
 
@@ -253,7 +257,7 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 			[event.text characterAtIndex: 0];
 
 			getUnmodifiedCharacter(event,
-				keyEvent.unmodified_character);
+					keyEvent.unmodified_character);
 		}
 
 
@@ -271,7 +275,7 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 			host->HandleKeyEventBeforeTextInputClient(nsEvent);
 
 			NSTextInputContext *inputContext =
-				host->GetNSTextInputContext();
+					host->GetNSTextInputContext();
 			[inputContext handleEvent:nsEvent];
 
 			host->HandleKeyEventAfterTextInputClient(nsEvent);
@@ -282,7 +286,7 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 - (void)destroyBrowser:(const int)browserIdentifier {
 	if (map.count(browserIdentifier) == 1) {
 		std::shared_ptr<BrowserHandle> browserHandle =
-			map[browserIdentifier];
+				map[browserIdentifier];
 		sync_on_cef_ui(^{
 			browserHandle->Shutdown();
 		});

@@ -26,6 +26,6 @@ class BrowserListener;
 @property (readonly) id<CEFIsolatedClient> client;
 
 - (void)addListener: (const std::shared_ptr<BrowserListener> &)browserListener
-	browserIdentifier: (const int)browserIdentifier;
-- (void)removeListener: (const int)browserIdentifier;
+		browserIdentifier: (int)browserIdentifier;
+- (void)removeListener: (int)browserIdentifier;
 @end

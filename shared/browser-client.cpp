@@ -19,37 +19,32 @@
 
 #include "browser-client.hpp"
 
-BrowserClient::BrowserClient(
-	CefRenderHandler *renderHandler)
+BrowserClient::BrowserClient(CefRenderHandler *renderHandler)
 : renderHandler(renderHandler)
 {
 }
 
-CefRefPtr<CefRenderHandler>
-BrowserClient::GetRenderHandler()
+CefRefPtr<CefRenderHandler> BrowserClient::GetRenderHandler()
 {
 	return renderHandler;
 }
 
-CefRefPtr<CefLifeSpanHandler>
-BrowserClient::GetLifeSpanHandler()
+CefRefPtr<CefLifeSpanHandler> BrowserClient::GetLifeSpanHandler()
 {
 	return this;
 }
 
-CefRefPtr<CefContextMenuHandler>
-BrowserClient::GetContextMenuHandler()
+CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 {
 	return this;
 }
 
-bool
-BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser,
-	CefRefPtr<CefFrame> frame, const CefString& target_url,
-	const CefString& target_frame_name,
-	const CefPopupFeatures& popupFeatures,
-	CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
-	CefBrowserSettings& settings, bool* no_javascript_access)
+bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser,
+		CefRefPtr<CefFrame> frame, const CefString& target_url,
+		const CefString& target_frame_name,
+		const CefPopupFeatures& popupFeatures,
+		CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
+		CefBrowserSettings& settings, bool* no_javascript_access)
 {
 	(void)browser;
 	(void)frame;
@@ -61,6 +56,7 @@ BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser,
 	(void)settings;
 	(void)no_javascript_access;
 
+	// block popups
 	return true;
 }
 
@@ -72,5 +68,6 @@ void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 	(void)frame;
 	(void)params;
 
+	// remove all context menu contributions
 	model->Clear();
 }

@@ -34,21 +34,14 @@ public:
 	~Listener()
 	{}
 
-	void OnDraw(
-		    const BrowserSurfaceHandle surfaceHandle,
-		    const int width,
-		    const int height);
-
-	bool CreateSurface(
-			   const int width,
-			   const int height,
-			   BrowserSurfaceHandle * const surfaceHandle);
-
-	void DestroySurface(const BrowserSurfaceHandle surfaceHandle);
-
+	void OnDraw(const BrowserSurfaceHandle surfaceHandle,
+			int width, int height);
+	bool CreateSurface(int width, int height,
+			BrowserSurfaceHandle *surfaceHandle);
+	void DestroySurface(BrowserSurfaceHandle surfaceHandle);
 	void Invalidated();
 
 private:
-	BrowserSource::Impl * const browserSource;
+	BrowserSource::Impl *browserSource;
 	std::map<int, std::shared_ptr<TextureRef>> textureMap;
 };

@@ -31,11 +31,11 @@ public:
 public: /* CefRenderHandler overrides */
 
 	virtual bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
-		OVERRIDE;
+			OVERRIDE;
 
 	virtual void OnPaint(CefRefPtr<CefBrowser> browser,
-		PaintElementType type, const RectList &dirtyRects,
-		const void *buffer, int width, int height) OVERRIDE;
+			PaintElementType type, const RectList &dirtyRects,
+			const void *buffer, int width, int height) OVERRIDE;
 
 private:
 	std::shared_ptr<BrowserHandle> browserHandle;
