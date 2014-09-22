@@ -159,8 +159,10 @@ create_browser_source_info()
 	browser_source_info.id = "browser_source";
 	browser_source_info.type = OBS_SOURCE_TYPE_INPUT;
 	browser_source_info.output_flags = OBS_SOURCE_VIDEO |
-			OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION;
-
+			OBS_SOURCE_INTERACTION;
+#ifdef __APPLE__
+	browser_source_info.output_flags |= OBS_SOURCE_CUSTOM_DRAW;
+#endif
 	// interaction
 	browser_source_info.mouse_click = browser_source_mouse_click;
 	browser_source_info.mouse_move = browser_source_mouse_move;

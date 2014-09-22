@@ -44,15 +44,14 @@ endif(APPLE)
 set(image-source_SOURCES
 	image-source.c)
 
-# Finish this passthrough library
-#if (NOT APPLE)
-#	# This is needed to load the libraries from a 
-#	# separate directory
-#	add_library(obs-browser-facade MODULE
-#		obs-browser-facade/main.c)
-#	target_link_libraries(obs-browser-facade
-#		libobs)
-#endif()
+if (NOT APPLE)
+	# This is needed to load the libraries from a 
+	# separate directory
+	add_library(obs-browser-facade MODULE
+		obs-browser-facade/main.c)
+	target_link_libraries(obs-browser-facade
+		libobs)
+endif()
 
 set(obs-browser_SOURCES
 	obs-browser/main.cpp
@@ -252,16 +251,19 @@ if (APPLE)
 	endif(XCODE)
 endif(APPLE)
 
+if (WIN32)
+	set_target_properties(cef-bootstrap PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+endif(WIN32)
+
 if (APPLE AND XCODE)
 	set_xcode_property(cef-bootstrap CLANG_CXX_LIBRARY "libc++")
-endif(APPLE)
+endif(APPLE AND XCODE)
 
 target_include_directories(cef-bootstrap PRIVATE "shared")
 target_include_directories_system(cef-bootstrap PUBLIC ${CEF_INCLUDE_DIR})
 
 target_link_libraries(cef-bootstrap
 	${CEF_LIBRARIES})
-
 
 if (APPLE)
 

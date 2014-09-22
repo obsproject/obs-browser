@@ -18,10 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "browser-render-handler.hpp"
 #include "browser-listener.hpp"
 
-BrowserRenderHandler::BrowserRenderHandler(
-	const int width,
-	const int height,
-	const std::shared_ptr<BrowserListener> &browserListener)
+BrowserRenderHandler::BrowserRenderHandler(int width, int height,
+		const std::shared_ptr<BrowserListener> &browserListener)
 : width(width), height(height), browserListener(browserListener),
 	currentSurfaceHandle(0)
 {
@@ -40,7 +38,7 @@ BrowserRenderHandler::~BrowserRenderHandler()
 bool
 BrowserRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
 {
-	(void) (browser);
+	(void)browser;
 
 	rect.Set(0, 0, width, height);
 	return true;
@@ -48,18 +46,13 @@ BrowserRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
 
 
 
-void
-	BrowserRenderHandler::OnPaint(
-	CefRefPtr<CefBrowser> browser,
-	PaintElementType type,
-	const RectList &dirtyRects,
-	const void *data,
-	int width,
-	int height)
+void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser, 
+		PaintElementType type, const RectList &dirtyRects,
+		const void *data, int width, int height)
 {
-	(void) (browser);
-	(void) (type);
-	(void) (dirtyRects);
+	(void)browser;
+	(void)type;
+	(void)dirtyRects;
 
 
 	if (surfaceHandles.size() < 2) {
@@ -79,7 +72,7 @@ void
 	if (currentSurfaceHandle != previousSurfaceHandle) {
 		obs_enter_graphics();
 		gs_texture_set_image(surfaceHandles[currentSurfaceHandle], 
-			(const uint8_t*) data, width * 4, false);
+				(const uint8_t*) data, width * 4, false);
 		obs_leave_graphics();
 	}
 	
