@@ -20,11 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "browser-types.h"
 #include "browser-source-listener-base.hpp"
 
-void
-BrowserSource::Impl::Listener::OnDraw(
-const BrowserSurfaceHandle surfaceHandle,
-const int width,
-const int height)
+void BrowserSource::Impl::Listener::OnDraw( BrowserSurfaceHandle surfaceHandle,
+		int width, int height)
 {
 	UNUSED_PARAMETER(width);
 	UNUSED_PARAMETER(height);
@@ -44,16 +41,15 @@ const int height)
 	}
 }
 
-bool
-BrowserSource::Impl::Listener::CreateSurface(
-const int width,
-const int height,
-BrowserSurfaceHandle * const surfaceHandle)
+bool BrowserSource::Impl::Listener::CreateSurface(int width, int height, 
+		BrowserSurfaceHandle *surfaceHandle)
 {
+	//TODO: We can't lock graphics on CEF thread
+	// as there may be a synchronous call
 	obs_enter_graphics();
 
 	gs_texture_t newTexture =  gs_texture_create(width, height, GS_BGRA, 1, 
-		nullptr, GS_DYNAMIC);
+			nullptr, GS_DYNAMIC);
 	
 	obs_leave_graphics();
 
@@ -61,13 +57,11 @@ BrowserSurfaceHandle * const surfaceHandle)
 
 	*surfaceHandle = newTexture;
 
-
 	return true;
 }
 
-void
-BrowserSource::Impl::Listener::DestroySurface(
-const BrowserSurfaceHandle surfaceHandle)
+void BrowserSource::Impl::Listener::DestroySurface(
+		BrowserSurfaceHandle surfaceHandle)
 {
 	if (textureSet.count(surfaceHandle) == 1) {
 		obs_enter_graphics();

@@ -21,12 +21,15 @@
 #import "cef-isolation-service.h"
 #import "cef-isolation-service-manager.h"
 #import "client-connection-delegate.h"
+#include "browser-manager.hpp"
 
 @implementation ClientConnectionDelegate
 {
 	NSConditionLock *lock;
 	BOOL shutdown;
+	BOOL newConnection;
 	NSThread *connectionThread;
+	NSTask *clientProcess;
 }
 
 
@@ -35,15 +38,61 @@
 
 
 - (ClientConnectionDelegate *)initWithManager:
-(CEFIsolationServiceManager *)manager
+		(CEFIsolationServiceManager *)manager
 {
 	self = [super init];
 	if (self) {
 		lock = [[[NSConditionLock alloc] initWithCondition: T_START]
-			autorelease];
+				autorelease];
 		_manager = manager;
 	}
 	return self;
+}
+
+- (void)connectionDidDie:(NSNotification *)aNotification
+{
+	(void)aNotification;
+
+	if (!shutdown && !newConnection) {
+		CEFLogError(@"Lost connection to isolated client process");
+		[self restart];
+	}
+}
+
+- (NSConnection *)createConnectionWithRunLoop:(NSRunLoop *)runLoop
+{
+	CEFLogDebug(@"Creating service %@", _manager->GetUniqueClientName());
+
+	NSString *launchPath = [NSString stringWithUTF8String:
+			BrowserManager::Instance()->GetModulePath()];
+
+	launchPath = [launchPath stringByDeletingLastPathComponent];
+	launchPath = [launchPath stringByAppendingPathComponent:
+			@"/CEF.app/Contents/MacOS/CEF"];
+
+	CEFLogDebug(@"Launching child process %@", launchPath);
+	if (clientProcess != nil && clientProcess.isRunning) {
+		CEFLogDebug(@"Existing process %d found; terminating",
+				clientProcess.processIdentifier);
+		[clientProcess terminate];
+	}
+
+	clientProcess = [[[NSTask alloc] init] autorelease];
+	[clientProcess setArguments: @[ _manager->GetUniqueClientName() ]];
+	[clientProcess setLaunchPath: launchPath];
+
+	[clientProcess launch];
+	
+	NSConnection *connection = [[[NSConnection alloc] init] autorelease];
+
+	[connection registerName: _manager->GetUniqueClientName()];
+	[connection setRootObject: _manager->GetCefIsolationService()];
+	[connection addRunLoop: runLoop];
+
+
+
+	return connection;
+
 }
 
 - (void)createConnectionThread
@@ -59,22 +108,45 @@
 		NSRunLoop *threadRunLoop = [NSRunLoop currentRunLoop];
 		connectionThread = [NSThread currentThread];
 
-		NSConnection *connection =
-		[[[NSConnection alloc] init] autorelease];
+		[[NSNotificationCenter defaultCenter] addObserver:self
+				selector:@selector(connectionDidDie:)
+				name:NSConnectionDidDieNotification
+				object:nil];
 
-		[connection registerName: _manager->GetUniqueClientName()];
-		[connection setRootObject: _manager->GetCefIsolationService()];
-		[connection addRunLoop: threadRunLoop];
-		BOOL threadAlive = YES;
-		while (threadAlive) {
+		NSConnection *connection = nullptr;
+		shutdown = NO;
+		newConnection = YES;
+		while (!shutdown) {
+			if (newConnection) {
+				if (connection != nil) {
+					// it should already be invalidated
+					connection = nil;
+				}
+				[_manager->GetCefIsolationService()
+						invalidateClient: nil
+						withException: nil];
+				connection = [self createConnectionWithRunLoop:
+						threadRunLoop];
+				newConnection = NO;
+			}
 			@autoreleasepool {
-				[threadRunLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
-				threadAlive = !shutdown;
+				[threadRunLoop runMode:NSDefaultRunLoopMode
+						beforeDate:
+							[NSDate distantFuture]];
 			}
 		}
 
-		// invalidate connection and proxy objects
+		[[NSNotificationCenter defaultCenter] removeObserver:self
+				name:NSConnectionDidDieNotification
+				object:nil];
+
 		[connection invalidate];
+		connection = nil;
+		if (clientProcess != nullptr) {
+			[clientProcess terminate];
+			clientProcess = nil;
+		}
+
 	}
 
 	connectionThread = nil;
@@ -82,15 +154,28 @@
 	[lock unlockWithCondition: T_FINISHED];
 }
 
+- (void)restartConnection
+{
+	newConnection = YES;
+}
+
 - (void)shutdownThread
 {
 	shutdown = YES;
 }
 
+- (void)restart
+{
+	[self performSelector:@selector(restartConnection)
+			onThread:connectionThread withObject:nil
+			waitUntilDone:NO];
+}
+
 - (void)shutdown
 {
 	[self performSelector:@selector(shutdownThread)
-		     onThread:connectionThread withObject:nil waitUntilDone:NO];
+			onThread:connectionThread withObject:nil
+			waitUntilDone:NO];
 
 	// wait for thread to finish
 	[lock lockWhenCondition: T_FINISHED];

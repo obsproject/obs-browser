@@ -36,7 +36,7 @@
 	self = [super init];
 	if (self) {
 		lock = [[[NSConditionLock alloc] initWithCondition: T_START]
-			autorelease];
+				autorelease];
 		uniqueClientName = name;
 	}
 	return self;
@@ -68,13 +68,15 @@
 			// so that calls from OBS are not delayed by
 			// CEF tasks in the message loop.
 			NSConnection *connection = [NSConnection
-						    connectionWithRegisteredName: uniqueClientName
-						    host: nil];
+					connectionWithRegisteredName:
+						uniqueClientName
+					host: nil];
 
 			[connection setRootObject: cefIsolatedClient];
 			CEFLogDebug(@"Checking for host process connection...");
 			_cefIsolationService = (id)[connection rootProxy];
-			[[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:.1]];
+			[[NSRunLoop currentRunLoop] runUntilDate:[NSDate
+					dateWithTimeIntervalSinceNow:.1]];
 		}
 
 		CEFLogDebug(@"Connected to host process and fetched proxy service");
@@ -86,7 +88,9 @@
 		BOOL threadAlive = YES;
 		while (threadAlive) {
 			@autoreleasepool {
-				[threadRunLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+				[threadRunLoop runMode:NSDefaultRunLoopMode
+						beforeDate:
+						[NSDate distantFuture]];
 				threadAlive = !shutdown;
 			}
 		}
@@ -109,10 +113,12 @@
 - (void)shutdown
 {
 	[self performSelector:@selector(shutdownThread)
-		     onThread:connectionThread withObject:nil waitUntilDone:NO];
+			onThread:connectionThread withObject:nil
+			waitUntilDone:NO];
 
 	// wait for thread to finish
 	[lock lockWhenCondition: T_FINISHED];
 	[lock unlockWithCondition: T_START];
 }
+
 @end

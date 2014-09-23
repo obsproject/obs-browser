@@ -29,6 +29,7 @@ public:
 public:
 	BrowserSource *GetParent() { return parent; }
 	void RenderCurrentTexture(gs_effect_t effect);
+	void InvalidateActiveTexture();
 	std::shared_ptr<BrowserListener> CreateListener();
 	void SetActiveTexture(gs_texture_t texture)
 		{ activeTexture = texture; }

@@ -31,72 +31,63 @@ BrowserManager::~BrowserManager()
 {
 }
 
-void
-BrowserManager::Startup()
+void BrowserManager::Startup()
 {
 	pimpl->Startup();
 }
 
-void
-BrowserManager::Shutdown()
+void BrowserManager::Shutdown()
 {
 	pimpl->Shutdown();
 }
 
-void
-BrowserManager::TickBrowser(const int browserIdentifier)
+void BrowserManager::Restart()
+{
+	pimpl->Restart();
+}
+
+void BrowserManager::TickBrowser(int browserIdentifier)
 {
 	pimpl->TickBrowser(browserIdentifier);
 }
 
-void
-BrowserManager::SendMouseClick(
-	const int browserIdentifier,
-	const struct obs_mouse_event *event,
-	int32_t type,
-	bool mouseUp,
-	uint32_t clickCount)
+void BrowserManager::SendMouseClick(int browserIdentifier,
+		const struct obs_mouse_event *event, int32_t type, bool mouseUp,
+		uint32_t clickCount)
 {
 	pimpl->SendMouseClick(browserIdentifier, event, type, mouseUp,
 		clickCount);
 }
 
-void
-BrowserManager::SendMouseMove(const int browserIdentifier,
-	const struct obs_mouse_event *event, bool mouseLeave)
+void BrowserManager::SendMouseMove(int browserIdentifier,
+		const struct obs_mouse_event *event, bool mouseLeave)
 {
 	pimpl->SendMouseMove(browserIdentifier, event, mouseLeave);
 }
 
-void
-BrowserManager::SendMouseWheel(const int browserIdentifier,
-	const struct obs_mouse_event *event, int xDelta, int yDelta)
+void BrowserManager::SendMouseWheel(int browserIdentifier,
+		const struct obs_mouse_event *event, int xDelta, int yDelta)
 {
 	pimpl->SendMouseWheel(browserIdentifier, event, xDelta, yDelta);
 }
-void
-BrowserManager::SendFocus(const int browserIdentifier, bool focus)
+void BrowserManager::SendFocus(int browserIdentifier, bool focus)
 {
 	pimpl->SendFocus(browserIdentifier, focus);
 }
 
-void
-BrowserManager::SendKeyClick(const int browserIdentifier,
-	const struct obs_key_event *event, bool keyUp)
+void BrowserManager::SendKeyClick(int browserIdentifier,
+		const struct obs_key_event *event, bool keyUp)
 {
 	pimpl->SendKeyClick(browserIdentifier, event, keyUp);
 }
 
-int
-BrowserManager::CreateBrowser(
-	const BrowserSettings &browserSettings,
-	const std::shared_ptr<BrowserListener> &browserListener)
+int BrowserManager::CreateBrowser(const BrowserSettings &browserSettings,
+		const std::shared_ptr<BrowserListener> &browserListener)
 {
 	return pimpl->CreateBrowser(browserSettings, browserListener);
 }
 
-void
-BrowserManager::DestroyBrowser(const int browserIdentifier)
+void BrowserManager::DestroyBrowser(int browserIdentifier)
 {
 	pimpl->DestroyBrowser(browserIdentifier);
 }
@@ -106,74 +97,65 @@ BrowserManager::Impl::Impl()
 {
 }
 
-void
-BrowserManager::Impl::Startup() {
+void BrowserManager::Impl::Startup() {
 	cefIsolationServiceManager->Startup();
 }
 
-void
-BrowserManager::Impl::Shutdown() {
+void BrowserManager::Impl::Shutdown() {
 	cefIsolationServiceManager->Shutdown();
 }
 
-int
-BrowserManager::Impl::CreateBrowser(
-	const BrowserSettings &browserSettings,
-	const std::shared_ptr<BrowserListener> &browserListener)
+int BrowserManager::Impl::CreateBrowser(const BrowserSettings &browserSettings,
+		const std::shared_ptr<BrowserListener> &browserListener)
 {
 	return cefIsolationServiceManager->CreateBrowser(
 		browserSettings, browserListener);
 }
 
-void
-BrowserManager::Impl::DestroyBrowser(const int browserIdentifier)
+void BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 {
 	cefIsolationServiceManager->DestroyBrowser(browserIdentifier);
 }
 
-void
-BrowserManager::Impl::TickBrowser(const int browserIdentifier)
+void BrowserManager::Impl::Restart()
+{
+	cefIsolationServiceManager->Restart();
+}
+
+void BrowserManager::Impl::TickBrowser(int browserIdentifier)
 {
 	cefIsolationServiceManager->TickBrowser(browserIdentifier);
 }
 
-void
-BrowserManager::Impl::SendMouseClick(
-	const int browserIdentifier,
-	const struct obs_mouse_event *event,
-	int32_t type,
-	bool mouseUp,
-	uint32_t clickCount)
+void BrowserManager::Impl::SendMouseClick(int browserIdentifier,
+		const struct obs_mouse_event *event, int32_t type, bool mouseUp,
+		uint32_t clickCount)
 {
 	cefIsolationServiceManager->SendMouseClick(browserIdentifier,
 		event, type, mouseUp, clickCount);
 }
 
-void
-BrowserManager::Impl::SendMouseMove(const int browserIdentifier,
-	const struct obs_mouse_event *event, bool mouseLeave)
+void BrowserManager::Impl::SendMouseMove(int browserIdentifier,
+		const struct obs_mouse_event *event, bool mouseLeave)
 {
 	cefIsolationServiceManager->SendMouseMove(browserIdentifier,
 		event, mouseLeave);
 }
 
-void
-BrowserManager::Impl::SendMouseWheel(const int browserIdentifier,
-	const struct obs_mouse_event *event, int xDelta, int yDelta)
+void BrowserManager::Impl::SendMouseWheel(int browserIdentifier,
+		const struct obs_mouse_event *event, int xDelta, int yDelta)
 {
 	cefIsolationServiceManager->SendMouseWheel(browserIdentifier,
 		event, xDelta, yDelta);
 }
 
-void
-BrowserManager::Impl::SendFocus(int browserIdentifier, bool focus)
+void BrowserManager::Impl::SendFocus(int browserIdentifier, bool focus)
 {
 	cefIsolationServiceManager->SendFocus(browserIdentifier, focus);
 }
 
-void
-BrowserManager::Impl::SendKeyClick(int browserIdentifier,
-	const struct obs_key_event *event, bool keyUp)
+void BrowserManager::Impl::SendKeyClick(int browserIdentifier,
+		const struct obs_key_event *event, bool keyUp)
 {
 	cefIsolationServiceManager->SendKeyClick(browserIdentifier, event,
 		keyUp);
@@ -181,8 +163,7 @@ BrowserManager::Impl::SendKeyClick(int browserIdentifier,
 
 static BrowserManager *instance;
 
-BrowserManager *
-BrowserManager::Instance()
+BrowserManager *BrowserManager::Instance()
 {
 	if (instance == nullptr) {
 		instance = new BrowserManager();
@@ -190,8 +171,7 @@ BrowserManager::Instance()
 	return instance;
 }
 
-void
-BrowserManager::DestroyInstance()
+void BrowserManager::DestroyInstance()
 {
 	if (instance != nullptr) {
 		delete instance;

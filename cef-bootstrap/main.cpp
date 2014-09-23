@@ -19,12 +19,14 @@
 
 #include "browser-app.hpp"
 
-int 
-main(int argc, char *argv[]) {
-	
 #ifdef _WIN32
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+	LPSTR lpCmdLine, int nCmdShow)
+{
 	CefMainArgs mainArgs(NULL);
 #else
+int main(int argc, char *argv[])
+{
 	CefMainArgs mainArgs(argc, argv);
 #endif
 	CefRefPtr<BrowserApp> mainApp(new BrowserApp());

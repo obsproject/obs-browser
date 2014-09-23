@@ -22,9 +22,9 @@
 gs_vertbuffer_t create_vertex_buffer();
 
 void build_sprite(struct gs_vb_data *data,
-	float fcx, float fcy, float start_u, float end_u, float start_v,
-	float end_v);
+		float fcx, float fcy, float start_u, float end_u, float start_v,
+		float end_v);
 
 void build_sprite_rect(
-	struct gs_vb_data *data, float origin_x, float origin_y, float end_x,
-	float end_y);
+		struct gs_vb_data *data, float origin_x, float origin_y,
+		float end_x, float end_y);

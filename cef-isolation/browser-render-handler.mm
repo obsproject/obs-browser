@@ -22,13 +22,13 @@
 #include "browser-handle.h"
 
 BrowserRenderHandler::BrowserRenderHandler(
-	std::shared_ptr<BrowserHandle> &browserHandle)
+		std::shared_ptr<BrowserHandle> &browserHandle)
 : browserHandle(browserHandle)
 {
 }
 
-bool
-BrowserRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
+bool BrowserRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser,
+		CefRect &rect)
 {
 	(void)(browser);
 
@@ -38,14 +38,10 @@ BrowserRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
 
 
 
-void
-BrowserRenderHandler::OnPaint(
-	CefRefPtr<CefBrowser> browser,
-	PaintElementType type,
-	const RectList &dirtyRects,
-	const void *data,
-	int width,
-	int height)
+void BrowserRenderHandler::OnPaint(
+		CefRefPtr<CefBrowser> browser, PaintElementType type,
+		const RectList &dirtyRects, const void *data, int width,
+		int height)
 {
 	(void)(browser);
 	(void)(type);

@@ -47,7 +47,7 @@ public:
 	uint32_t GetHeight() const { return height; }
 	obs_source_t GetSource() const { return source; }
 
-	int GetBrowserIdentifier() { return browserIdentifier; }
+	int GetBrowserIdentifier() const { return browserIdentifier; }
 
 	void LockTexture() { pthread_mutex_lock(&textureLock); }
 	void UnlockTexture() { pthread_mutex_unlock(&textureLock); }
@@ -56,11 +56,11 @@ public:
 	void InvalidateActiveTexture();
 
 	void SendMouseClick(const struct obs_mouse_event *event,
-		int32_t type, bool mouseUp, uint32_t clickCount);
+			int32_t type, bool mouseUp, uint32_t clickCount);
 	void SendMouseMove(const struct obs_mouse_event *event,
-		bool mouseLeave);
+			bool mouseLeave);
 	void SendMouseWheel(const struct obs_mouse_event *event,
-		int xDelta, int yDelta);
+			int xDelta, int yDelta);
 	void SendFocus(bool focus);
 	void SendKeyClick(const struct obs_key_event *event, bool keyUp);
 	std::shared_ptr<BrowserListener> CreateListener();

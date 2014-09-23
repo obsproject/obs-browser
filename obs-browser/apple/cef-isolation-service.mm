@@ -18,7 +18,7 @@
 #include <map>
 
 #include <obs-module.h>
-
+#include <util/platform.h>
 #import "cef-isolation.h"
 #import "cef-logging.h"
 
@@ -26,24 +26,38 @@
 
 #include "browser-listener.hpp"
 
-@implementation CEFIsolationService {
-	std::map<int, std::shared_ptr<BrowserListener> > browserListenerMap;
+@implementation CEFIsolationService
+{
+	std::map<int, std::shared_ptr<BrowserListener> > listenerMap;
+	NSObject *listenerLock;
+
 }
 
-- (void)addListener: (const std::shared_ptr<BrowserListener> &)browserListener
-  browserIdentifier: (const int)browserIdentifier
+- (id)init
 {
-	browserListenerMap[browserIdentifier] = browserListener;
+	self = [super init];
+	if (self) {
+		listenerLock = [[NSObject alloc] init];
+	}
+
+	return self;
 }
 
-- (void)removeListener: (const int)browserIdentifier
+- (void)addListener:(const std::shared_ptr<BrowserListener> &)browserListener
+		browserIdentifier: (int)browserIdentifier
 {
-	browserListenerMap.erase(browserIdentifier);
+	listenerMap[browserIdentifier] = browserListener;
+}
+
+- (void)removeListener:(int)browserIdentifier
+{
+	listenerMap.erase(browserIdentifier);
 }
 
 /* Protocol methods */
 
-- (oneway void)registerClient:(id<CEFIsolatedClient>)client {
+- (oneway void)registerClient:(id<CEFIsolatedClient>)client
+{
 	@try {
 		CEFLogDebug(@"Registered client");
 		_client = client;
@@ -55,40 +69,58 @@
 	}	
 }
 
-- (BOOL)createSurface: (const int)browserIdentifier width:(int)width
-	height:(int)height surfaceHandle:(int * const)surfaceHandle
+- (BOOL)createSurface:(int)browserIdentifier width:(int)width height:(int)height
+		surfaceHandle:(BrowserSurfaceHandle *)surfaceHandle
 {
-	if (browserListenerMap.count(browserIdentifier) == 1) {
-		BrowserListener *listener =
-			browserListenerMap[browserIdentifier].get();
-		return listener->CreateSurface(width, height, surfaceHandle);
+	@synchronized(listenerLock) {
+		if (listenerMap.count(browserIdentifier) == 1) {
+			BrowserListener *listener =
+					listenerMap[browserIdentifier].get();
+			return listener->CreateSurface(width, height,
+					surfaceHandle);
+		}
 	}
 	return false;
 }
-- (void)destroySurface:(const int)browserIdentifier
-	surfaceHandle:(const int)surfaceHandle
+- (void)destroySurface:(int)browserIdentifier
+		surfaceHandle:(BrowserSurfaceHandle)surfaceHandle
 {
-	if (browserListenerMap.count(browserIdentifier) == 1) {
-		BrowserListener *listener =
-			browserListenerMap[browserIdentifier].get();
-		listener->DestroySurface(surfaceHandle);
+	@synchronized(listenerLock) {
+		if (listenerMap.count(browserIdentifier) == 1) {
+			BrowserListener *listener =
+					listenerMap[browserIdentifier].get();
+			listener->DestroySurface(surfaceHandle);
+		}
 	}
 }
 
-- (void)onDraw:(const int)browserIdentifier width:(const int)width
-	height:(const int)height surfaceHandle:(const int)surfaceHandle
+- (void)onDraw:(int)browserIdentifier width:(int)width height:(int)height
+		surfaceHandle:(BrowserSurfaceHandle)surfaceHandle
 {
-	if (browserListenerMap.count(browserIdentifier) == 1) {
-		BrowserListener *listener =
-		browserListenerMap[browserIdentifier].get();
-		listener->OnDraw(surfaceHandle, width, height);
+	@synchronized(listenerLock) {
+		if (listenerMap.count(browserIdentifier) == 1) {
+			BrowserListener *listener =
+					listenerMap[browserIdentifier].get();
+			listener->OnDraw(surfaceHandle, width, height);
+		}
 	}
 }
 
-- (void)invalidateClient:(id)client withException:(NSException *)exception {
+- (void)invalidateClient:(id)client withException:(NSException *)exception
+{
 	UNUSED_PARAMETER(client);
 	if (exception) CEFLogError(@"Client Exception: %@", exception);
 	_client = nil;
+
+	@synchronized(listenerLock) {
+		for(auto i = listenerMap.begin();
+		    i != listenerMap.end();
+		    i++)
+		{
+			(*i).second->Invalidated();
+		}
+		listenerMap.clear();
+	}
 }
 
 @end

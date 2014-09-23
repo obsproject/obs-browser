@@ -24,11 +24,8 @@
 #include "browser-source-listener-mac.h"
 #include "texture-ref.hpp"
 
-void
-BrowserSource::Impl::Listener::OnDraw(
-	const BrowserSurfaceHandle surfaceHandle,
-	const int width,
-	const int height)
+void BrowserSource::Impl::Listener::OnDraw(BrowserSurfaceHandle surfaceHandle,
+		int width, int height)
 {
 	UNUSED_PARAMETER(width);
 	UNUSED_PARAMETER(height);
@@ -55,11 +52,8 @@ BrowserSource::Impl::Listener::OnDraw(
 	}
 }
 
-bool
-BrowserSource::Impl::Listener::CreateSurface(
-	const int width,
-	const int height,
-	BrowserSurfaceHandle * const surfaceHandle)
+bool BrowserSource::Impl::Listener::CreateSurface(int width,
+		int height, BrowserSurfaceHandle *surfaceHandle)
 {
 	unsigned pixelFormat = 'BGRA';
 	unsigned bytesPerElement = 4;
@@ -77,7 +71,7 @@ BrowserSource::Impl::Listener::CreateSurface(
 	}
 
 	CFDictionaryRef dictionaryRef =
-		(CFDictionaryRef)
+			(CFDictionaryRef)
 			[NSDictionary dictionaryWithObjectsAndKeys:
 				[NSNumber numberWithInt: width],
 				(id)kIOSurfaceWidth,
@@ -114,19 +108,16 @@ BrowserSource::Impl::Listener::CreateSurface(
 
 	int ioSurfaceHandle = IOSurfaceGetID(ioSurfaceRef);
 
-	std::shared_ptr<TextureRef> textureRef(
-		new TextureRef(ioSurfaceRef, ioSurfaceTex));
-
-	textureMap[ioSurfaceHandle] = textureRef;
+	textureMap[ioSurfaceHandle].reset(
+			new TextureRef(ioSurfaceRef, ioSurfaceTex));
 
 	*surfaceHandle = ioSurfaceHandle;
 
 	return true;
 }
 
-void
-BrowserSource::Impl::Listener::DestroySurface(
-	const BrowserSurfaceHandle surfaceHandle)
+void BrowserSource::Impl::Listener::DestroySurface(
+		BrowserSurfaceHandle surfaceHandle)
 {
 	if (textureMap.count(surfaceHandle) == 1) {
 		obs_enter_graphics();
@@ -136,4 +127,17 @@ BrowserSource::Impl::Listener::DestroySurface(
 		browserSource->GetParent()->UnlockTexture();
 		obs_leave_graphics();
 	}
+}
+
+void BrowserSource::Impl::Listener::Invalidated()
+{
+	obs_enter_graphics();
+	browserSource->GetParent()->LockTexture();
+	textureMap.clear();
+	browserSource->activeTexture = nullptr;
+	browserSource->GetParent()->browserIdentifier = 0;
+	browserSource->GetParent()->UnlockTexture();
+	obs_leave_graphics();
+
+	browserSource->GetParent()->UpdateBrowser();
 }

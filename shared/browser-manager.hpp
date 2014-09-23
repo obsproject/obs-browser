@@ -35,24 +35,27 @@ public:
 
 	void Startup();
 	void Shutdown();
+	void Restart();
 
-	int CreateBrowser(
-		const BrowserSettings &browserSettings,
-		const std::shared_ptr<BrowserListener> &browserListener);
+	int CreateBrowser(const BrowserSettings &browserSettings,
+			const std::shared_ptr<BrowserListener>
+				&browserListener);
 
-	void DestroyBrowser(const int browserIdentifier);
+	void DestroyBrowser(int browserIdentifier);
 
-	void TickBrowser(const int browserIdentifier);
-	void SendMouseClick(const int browserIdentifier,
-		const struct obs_mouse_event *event, int32_t type,
-		bool mouse_up, uint32_t click_count);
-	void SendMouseMove(const int browserIdentifier,
-		const struct obs_mouse_event *event, bool mouseLeave);
-	void SendMouseWheel(const int browserIdentifier,
-		const struct obs_mouse_event *event, int xDelta, int yDelta);
-	void SendFocus(const int browserIdentifier, bool focus);
-	void SendKeyClick(const int browserIdentifier,
-		const struct obs_key_event *event, bool keyUp);
+	void TickBrowser(int browserIdentifier);
+	void SendMouseClick(int browserIdentifier,
+			const struct obs_mouse_event *event, int32_t type,
+			bool mouse_up, uint32_t click_count);
+	void SendMouseMove(int browserIdentifier,
+			const struct obs_mouse_event *event, bool mouseLeave);
+	void SendMouseWheel(int browserIdentifier,
+			const struct obs_mouse_event *event, int xDelta,
+			int yDelta);
+	void SendFocus(int browserIdentifier, bool focus);
+	void SendKeyClick(int browserIdentifier,
+			const struct obs_key_event *event, bool keyUp);
+
 	void SetModulePath(const char *path) { this->path = path; }
 	const char *GetModulePath() { return path; }
 

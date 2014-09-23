@@ -24,5 +24,5 @@
 #ifdef __APPLE__
 typedef int BrowserSurfaceHandle;
 #else
-typedef struct gs_texture * BrowserSurfaceHandle;
+typedef struct gs_texture *BrowserSurfaceHandle;
 #endif

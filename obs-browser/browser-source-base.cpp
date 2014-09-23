@@ -41,16 +41,19 @@ BrowserSource::~BrowserSource()
 	pthread_mutex_destroy(&textureLock);
 }
 
-std::shared_ptr<BrowserListener>
-BrowserSource::CreateListener()
+std::shared_ptr<BrowserListener> BrowserSource::CreateListener()
 {
 	return pimpl->CreateListener();
 }
 
-void
-BrowserSource::RenderActiveTexture(gs_effect_t effect)
+void BrowserSource::RenderActiveTexture(gs_effect_t effect)
 {
 	pimpl->RenderCurrentTexture(effect);
+}
+
+void BrowserSource::InvalidateActiveTexture()
+{
+	pimpl->InvalidateActiveTexture();
 }
 
 BrowserSource::Impl::Impl(BrowserSource *parent)
@@ -60,8 +63,7 @@ BrowserSource::Impl::Impl(BrowserSource *parent)
 BrowserSource::Impl::~Impl()
 {}
 
-void
-BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
+void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
 {
 	GetParent()->LockTexture();
 
@@ -75,9 +77,13 @@ BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
 	GetParent()->UnlockTexture();
 }
 
-std::shared_ptr<BrowserListener>
-BrowserSource::Impl::CreateListener()
+void BrowserSource::Impl::InvalidateActiveTexture()
+{
+	activeTexture = nullptr;
+}
+
+std::shared_ptr<BrowserListener> BrowserSource::Impl::CreateListener()
 {
 	return std::shared_ptr<BrowserListener>(
-		new BrowserSource::Impl::Listener(this));
+			new BrowserSource::Impl::Listener(this));
 }
