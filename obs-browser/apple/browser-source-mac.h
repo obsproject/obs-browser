@@ -28,7 +28,7 @@ public:
 	~Impl();
 public:
 	BrowserSource *GetParent() { return parent; }
-	void RenderCurrentTexture(gs_effect_t effect);
+	void RenderCurrentTexture(gs_effect_t *effect);
 	std::shared_ptr<BrowserListener> CreateListener();
 	void SetActiveTexture(TextureRef *texture);
 	void InvalidateActiveTexture();
@@ -37,8 +37,8 @@ private:
 	class Listener;
 	BrowserSource *parent;
 	TextureRef *activeTexture;
-	gs_effect_t drawEffect;
-	gs_samplerstate_t sampler;
-	gs_vertbuffer_t vertexBuffer;
+	gs_effect_t *drawEffect;
+	gs_samplerstate_t *sampler;
+	gs_vertbuffer_t *vertexBuffer;
 
 };

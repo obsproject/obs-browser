@@ -17,7 +17,7 @@
 
 #include "graphics-helpers.h"
 
-gs_vertbuffer_t create_vertex_buffer()
+gs_vertbuffer_t *create_vertex_buffer()
 {
 	struct gs_vb_data *vb_data = gs_vbdata_create();
 

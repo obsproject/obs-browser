@@ -34,7 +34,7 @@ extern "C" {
 #include "graphics-helpers.h"
 }
 
-BrowserSource::BrowserSource(obs_data_t settings, obs_source_t source)
+BrowserSource::BrowserSource(obs_data_t *settings, obs_source_t *source)
 :  pimpl(new Impl(this)), source(source)
 {
 	pthread_mutex_init(&textureLock, NULL);
@@ -95,7 +95,7 @@ std::shared_ptr<BrowserListener> BrowserSource::CreateListener()
 	return pimpl->CreateListener();
 }
 
-void BrowserSource::RenderActiveTexture(gs_effect_t effect)
+void BrowserSource::RenderActiveTexture(gs_effect_t *effect)
 {
 	pimpl->RenderCurrentTexture(effect);
 }
@@ -105,7 +105,7 @@ void BrowserSource::InvalidateActiveTexture()
 	pimpl->InvalidateActiveTexture();
 }
 
-void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
+void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t *effect)
 {
 	UNUSED_PARAMETER(effect);
 
@@ -120,7 +120,7 @@ void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
 		gs_load_indexbuffer(NULL);
 		gs_load_samplerstate(sampler, 0);
 
-		gs_technique_t tech = gs_effect_get_technique(drawEffect,
+		gs_technique_t *tech = gs_effect_get_technique(drawEffect,
 				"Default");
 		gs_effect_set_texture(gs_effect_get_param_by_idx(drawEffect, 1),
 				activeTexture->GetTexture());

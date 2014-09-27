@@ -22,7 +22,7 @@
 
 class TextureRef {
 public:
-	TextureRef(IOSurfaceRef ioSurfaceRef, gs_texture_t texture)
+	TextureRef(IOSurfaceRef ioSurfaceRef, gs_texture_t *texture)
 	: ioSurfaceRef(ioSurfaceRef), texture(texture)
 	{
 		IOSurfaceIncrementUseCount(ioSurfaceRef);
@@ -37,10 +37,10 @@ public:
 	}
 
 public:
-	gs_texture_t GetTexture() const { return texture; }
+	gs_texture_t *GetTexture() const { return texture; }
 	IOSurfaceRef GetSurfaceRef() const { return ioSurfaceRef; }
 
 private:
 	IOSurfaceRef ioSurfaceRef;
-	gs_texture_t texture;
+	gs_texture_t *texture;
 };

@@ -20,7 +20,7 @@
 #include "browser-listener.hpp"
 #include "browser-settings.hpp"
 
-void BrowserSource::UpdateSettings(obs_data_t settings)
+void BrowserSource::UpdateSettings(obs_data_t *settings)
 {
 	url = obs_data_get_string(settings, "url");
 	width = (uint32_t)obs_data_get_int(settings, "width");

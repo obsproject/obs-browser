@@ -19,7 +19,7 @@
 
 #include <obs-module.h>
 
-gs_vertbuffer_t create_vertex_buffer();
+gs_vertbuffer_t *create_vertex_buffer();
 
 void build_sprite(struct gs_vb_data *data,
 		float fcx, float fcy, float start_u, float end_u, float start_v,

@@ -34,25 +34,25 @@ class BrowserListener;
 class BrowserSource {
 
 public:
-	BrowserSource(obs_data_t settings, obs_source_t source);
+	BrowserSource(obs_data_t *settings, obs_source_t *source);
 	~BrowserSource();
 
 public:
-	void UpdateSettings(obs_data_t settings);
+	void UpdateSettings(obs_data_t *settings);
 	void UpdateBrowser();
 
 public:
 	const std::string& GetUrl() const { return url; }
 	uint32_t GetWidth() const { return width; }
 	uint32_t GetHeight() const { return height; }
-	obs_source_t GetSource() const { return source; }
+	obs_source_t *GetSource() const { return source; }
 
 	int GetBrowserIdentifier() const { return browserIdentifier; }
 
 	void LockTexture() { pthread_mutex_lock(&textureLock); }
 	void UnlockTexture() { pthread_mutex_unlock(&textureLock); }
 
-	void RenderActiveTexture(gs_effect_t effect);
+	void RenderActiveTexture(gs_effect_t *effect);
 	void InvalidateActiveTexture();
 
 	void SendMouseClick(const struct obs_mouse_event *event,
@@ -70,7 +70,7 @@ private:
 	class Impl;
 	std::unique_ptr<Impl> pimpl;
 
-	obs_source_t source;
+	obs_source_t *source;
 	std::string url;
 	uint32_t width;
 	uint32_t height;

@@ -20,7 +20,7 @@
 #include "browser-source.hpp"
 #include "browser-manager.hpp"
 
-static void browser_source_get_defaults(obs_data_t settings)
+static void browser_source_get_defaults(obs_data_t *settings)
 {
 	obs_data_set_default_string(settings, "url",
 			"http://www.obsproject.com");
@@ -29,8 +29,8 @@ static void browser_source_get_defaults(obs_data_t settings)
 	obs_data_set_default_int(settings, "fps", 30);
 }
 
-static bool restart_button_clicked(obs_properties_t props,
-		obs_property_t property, void *data)
+static bool restart_button_clicked(obs_properties_t *props,
+		obs_property_t *property, void *data)
 {
 	UNUSED_PARAMETER(props);
 	UNUSED_PARAMETER(property);
@@ -40,9 +40,9 @@ static bool restart_button_clicked(obs_properties_t props,
 	return true;
 }
 
-static obs_properties_t browser_source_get_properties()
+static obs_properties_t *browser_source_get_properties()
 {
-	obs_properties_t props = obs_properties_create();
+	obs_properties_t *props = obs_properties_create();
 
 	obs_properties_add_text(props, "url",
 			obs_module_text("URL"), OBS_TEXT_DEFAULT);
@@ -60,7 +60,7 @@ static obs_properties_t browser_source_get_properties()
 	return props;
 }
 
-static void browser_source_update(void *data, obs_data_t settings)
+static void browser_source_update(void *data, obs_data_t *settings)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->UpdateSettings(settings);
@@ -85,7 +85,7 @@ static const char *browser_source_get_name(void)
 }
 
 
-static void *browser_source_create(obs_data_t settings, obs_source_t source)
+static void *browser_source_create(obs_data_t *settings, obs_source_t *source)
 {
 	BrowserSource *browserSource = new BrowserSource(settings, source);
 
@@ -100,7 +100,7 @@ static void browser_source_destroy(void *data)
 }
 
 
-static void browser_source_render(void *data, gs_effect_t effect)
+static void browser_source_render(void *data, gs_effect_t *effect)
 {
 
 	UNUSED_PARAMETER(effect);

@@ -96,8 +96,8 @@ bool BrowserSource::Impl::Listener::CreateSurface(int width,
 	}
 
 	obs_enter_graphics();
-	gs_texture_t ioSurfaceTex =
-	gs_texture_create_from_iosurface(ioSurfaceRef);
+	gs_texture_t *ioSurfaceTex =
+		gs_texture_create_from_iosurface(ioSurfaceRef);
 
 	obs_leave_graphics();
 
