@@ -55,9 +55,7 @@ BrowserSource::Impl::Impl(BrowserSource *parent)
 {
 	obs_enter_graphics();
 
-	char *drawEffectFile = obs_module_file("draw_rect.effect");
-	drawEffect = gs_effect_create_from_file(drawEffectFile, NULL);
-	bfree(drawEffectFile);
+	drawEffect = obs_get_default_rect_effect();
 
 	struct gs_sampler_info info = {
 		.filter = GS_FILTER_LINEAR,
@@ -82,10 +80,6 @@ BrowserSource::Impl::~Impl()
 	if (sampler != nullptr) {
 		gs_samplerstate_destroy(sampler);
 		sampler = nullptr;
-	}
-	if (drawEffect != nullptr) {
-		gs_effect_destroy(drawEffect);
-		drawEffect = nullptr;
 	}
 	obs_leave_graphics();
 }
@@ -121,8 +115,9 @@ void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t *effect)
 		gs_load_samplerstate(sampler, 0);
 
 		gs_technique_t *tech = gs_effect_get_technique(drawEffect,
-				"Default");
-		gs_effect_set_texture(gs_effect_get_param_by_idx(drawEffect, 1),
+				"Draw");
+		gs_effect_set_texture(gs_effect_get_param_by_name(
+					drawEffect, "image"),
 				activeTexture->GetTexture());
 
 		gs_technique_begin(tech);

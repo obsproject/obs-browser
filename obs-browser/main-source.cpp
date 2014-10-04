@@ -40,7 +40,7 @@ static bool restart_button_clicked(obs_properties_t *props,
 	return true;
 }
 
-static obs_properties_t *browser_source_get_properties()
+static obs_properties_t *browser_source_get_properties(void *)
 {
 	obs_properties_t *props = obs_properties_create();
 
