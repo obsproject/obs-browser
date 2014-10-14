@@ -3,7 +3,6 @@
 #include <include/cef_url.h>
 
 #include "browser-scheme.hpp"
-#include "browser-mime-types.h"
 
 
 BrowserSchemeHandlerFactory::BrowserSchemeHandlerFactory()
