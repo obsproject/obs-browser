@@ -20,12 +20,14 @@
 #include <sys/event.h>
 
 #include <include/cef_app.h>
+#include <include/cef_browser.h>
 
 #import "cef-logging.h"
 #import "cef-isolation.h"
 
 #import "cef-isolated-client.h"
 #include "browser-app.hpp"
+#include "browser-scheme.hpp"
 
 #include "objc/runtime.h"
 
@@ -103,6 +105,12 @@ int main (int argc, const char * argv[])
 		[NSThread detachNewThreadSelector:
 				@selector(createConnectionThread)
 				toTarget: delegate withObject: nil];
+
+		CefRefPtr<BrowserSchemeHandlerFactory> factory =
+				CefRefPtr<BrowserSchemeHandlerFactory>(
+					new BrowserSchemeHandlerFactory());
+
+		CefRegisterSchemeHandlerFactory("http", "absolute", factory);
 
 		CefRunMessageLoop();
 

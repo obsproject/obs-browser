@@ -169,7 +169,8 @@ if(APPLE)
 		cef-isolation/service-connection-delegate.mm
 		shared/browser-client.cpp
 		shared/browser-task.cpp
-		shared/browser-app.cpp)
+		shared/browser-app.cpp
+		shared/browser-scheme.cpp)
 
 	set(cef-isolation_HEADERS
 		shared-apple/cef-logging.h
@@ -183,6 +184,7 @@ if(APPLE)
 		shared/browser-client.hpp
 		shared/browser-task.hpp
 		shared/browser-app.hpp
+		shared/browser-scheme.hpp
 		shared/browser-types.h
 		shared-apple/browser-bridges.h)
 

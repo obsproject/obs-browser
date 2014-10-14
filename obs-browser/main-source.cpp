@@ -43,7 +43,9 @@ static bool restart_button_clicked(obs_properties_t *props,
 static obs_properties_t *browser_source_get_properties(void *)
 {
 	obs_properties_t *props = obs_properties_create();
-
+	// use this when obs allows non-readonly paths
+	//obs_properties_add_path(props, "url", obs_module_text("URL"),
+	//		OBS_PATH_FILE, "*.*", nullptr);
 	obs_properties_add_text(props, "url",
 			obs_module_text("URL"), OBS_TEXT_DEFAULT);
 	obs_properties_add_int(props, "width",

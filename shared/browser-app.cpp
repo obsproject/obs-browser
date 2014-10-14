@@ -30,6 +30,6 @@ BrowserApp::BrowserApp()
 void BrowserApp::OnRegisterCustomSchemes(
 		CefRefPtr<CefSchemeRegistrar> registrar)
 {
-	(void)registrar;
+	registrar->AddCustomScheme("http", true, true, false);
 }
 
