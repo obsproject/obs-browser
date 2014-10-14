@@ -39,15 +39,35 @@ static bool restart_button_clicked(obs_properties_t *props,
 	BrowserManager::Instance()->Restart();
 	return true;
 }
+static bool is_local_file_modified(obs_properties_t *props,
+		obs_property_t *prop, obs_data_t *settings)
+{
+	UNUSED_PARAMETER(prop);
+
+	bool enabled = obs_data_get_bool(settings, "is_local_file");
+	obs_property_t *url = obs_properties_get(props, "url");
+	obs_property_t *local_file = obs_properties_get(props, "local_file");
+	obs_property_set_visible(url, !enabled);
+	obs_property_set_visible(local_file, enabled);
+
+	return true;
+}
 
 static obs_properties_t *browser_source_get_properties(void *)
 {
 	obs_properties_t *props = obs_properties_create();
+
 	// use this when obs allows non-readonly paths
-	//obs_properties_add_path(props, "url", obs_module_text("URL"),
-	//		OBS_PATH_FILE, "*.*", nullptr);
+	obs_property_t *prop = obs_properties_add_bool(props, "is_local_file",
+			obs_module_text("Local file"));
+
+	obs_property_set_modified_callback(prop, is_local_file_modified);
+	obs_properties_add_path(props, "local_file",
+			obs_module_text("Local file"), OBS_PATH_FILE, "*.*",
+			nullptr);
 	obs_properties_add_text(props, "url",
 			obs_module_text("URL"), OBS_TEXT_DEFAULT);
+
 	obs_properties_add_int(props, "width",
 			obs_module_text("Width"), 1, 4096, 1);
 	obs_properties_add_int(props, "height",

@@ -71,6 +71,7 @@ private:
 	std::unique_ptr<Impl> pimpl;
 
 	obs_source_t *source;
+	bool isLocalFile;
 	std::string url;
 	uint32_t width;
 	uint32_t height;
