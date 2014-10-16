@@ -25,7 +25,7 @@
 #include "browser-source-base.hpp"
 #include "browser-source-listener-base.hpp"
 
-BrowserSource::BrowserSource(obs_data_t settings, obs_source_t source)
+BrowserSource::BrowserSource(obs_data_t *settings, obs_source_t *source)
 : pimpl(new Impl(this)), source(source), browserIdentifier(0)
 {
 	pthread_mutex_init(&textureLock, NULL);
@@ -46,7 +46,7 @@ std::shared_ptr<BrowserListener> BrowserSource::CreateListener()
 	return pimpl->CreateListener();
 }
 
-void BrowserSource::RenderActiveTexture(gs_effect_t effect)
+void BrowserSource::RenderActiveTexture(gs_effect_t *effect)
 {
 	pimpl->RenderCurrentTexture(effect);
 }
@@ -63,15 +63,17 @@ BrowserSource::Impl::Impl(BrowserSource *parent)
 BrowserSource::Impl::~Impl()
 {}
 
-void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t effect)
+void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t *effect)
 {
 	GetParent()->LockTexture();
 
 	if (activeTexture != nullptr) {
 		gs_reset_blend_state();
-		gs_effect_set_texture(gs_effect_get_param_by_name(effect, "image"),
-			activeTexture);
-		gs_draw_sprite(activeTexture, 0, parent->GetWidth(), parent->GetHeight());
+		gs_effect_set_texture(
+				gs_effect_get_param_by_name(effect, "image"),
+				activeTexture);
+		gs_draw_sprite(activeTexture, 0, parent->GetWidth(), 
+				parent->GetHeight());
 	}
 	
 	GetParent()->UnlockTexture();

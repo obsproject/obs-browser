@@ -54,9 +54,14 @@ public:
 
 	void PushEvent(std::function<void()> event);
 
+private: 
+	void ExecuteOnBrowser(int browserIdentifier, 
+			std::function<void(CefRefPtr<CefBrowser>)> f, 
+			bool async = false);
+
 private:
 	bool threadAlive;
-	os_event_t dispatchEvent;
+	os_event_t *dispatchEvent;
 	pthread_t managerThread;
 	pthread_mutex_t dispatchLock;
 

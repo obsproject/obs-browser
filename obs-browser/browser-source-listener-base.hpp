@@ -27,7 +27,7 @@ class Impl;
 class BrowserSource::Impl::Listener : public BrowserListener
 {
 public:
-	Listener(BrowserSource::Impl * const browserSource)
+	Listener(BrowserSource::Impl *browserSource)
 		: browserSource(browserSource)
 	{}
 
@@ -35,18 +35,18 @@ public:
 	{}
 
 	void OnDraw(
-		const BrowserSurfaceHandle surfaceHandle,
-		const int width,
-		const int height);
+		BrowserSurfaceHandle surfaceHandle,
+		int width,
+		int height);
 
 	bool CreateSurface(
-		const int width,
-		const int height,
-		BrowserSurfaceHandle * const surfaceHandle);
+		int width,
+		int height,
+		BrowserSurfaceHandle *surfaceHandle);
 
-	void DestroySurface(const BrowserSurfaceHandle surfaceHandle);
+	void DestroySurface(BrowserSurfaceHandle surfaceHandle);
 
 private:
-	BrowserSource::Impl * const browserSource;
+	BrowserSource::Impl *browserSource;
 	std::set<BrowserSurfaceHandle> textureSet;
 };

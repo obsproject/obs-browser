@@ -48,7 +48,7 @@ bool BrowserSource::Impl::Listener::CreateSurface(int width, int height,
 	// as there may be a synchronous call
 	obs_enter_graphics();
 
-	gs_texture_t newTexture =  gs_texture_create(width, height, GS_BGRA, 1, 
+	gs_texture_t *newTexture =  gs_texture_create(width, height, GS_BGRA, 1, 
 			nullptr, GS_DYNAMIC);
 	
 	obs_leave_graphics();

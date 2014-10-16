@@ -24,7 +24,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
 static void *obs_so;
 static bool (*obs_actual_load)(void);
 static void (*obs_actual_unload)(void);
-static void (*obs_actual_module_set_pointer)(obs_module_t module);
+static void (*obs_actual_module_set_pointer)(obs_module_t *module);
 
 bool
 obs_module_load(void)

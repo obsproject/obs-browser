@@ -1,10 +1,11 @@
+#include <util/platform.h>
+
 #include "browser-manager-base.hpp"
 #include "browser-task.hpp"
 #include "browser-app.hpp"
 #include "browser-settings.hpp"
 #include "browser-client.hpp"
 #include "browser-render-handler.hpp"
-
 
 BrowserManager::BrowserManager()
 : pimpl(new BrowserManager::Impl())
@@ -44,31 +45,32 @@ void BrowserManager::SendMouseClick(int browserIdentifier,
 		const struct obs_mouse_event *event, int32_t type,
 		bool mouse_up, uint32_t click_count)
 {
-
+	pimpl->SendMouseClick(browserIdentifier, event, type, mouse_up, 
+			click_count);
 }
 
 void BrowserManager::SendMouseMove(int browserIdentifier,
 		const struct obs_mouse_event *event, bool mouseLeave)
 {
-
+	pimpl->SendMouseMove(browserIdentifier, event, mouseLeave);
 }
 
 void BrowserManager::SendMouseWheel(int browserIdentifier,
 		const struct obs_mouse_event *event, int xDelta,
 		int yDelta)
 {
-
+	pimpl->SendMouseWheel(browserIdentifier, event, xDelta, yDelta);
 }
 
 void BrowserManager::SendFocus(int browserIdentifier, bool focus)
 {
-
+	pimpl->SendFocus(browserIdentifier, focus);
 }
 
 void BrowserManager::SendKeyClick(int browserIdentifier,
 		const struct obs_key_event *event, bool keyUp)
 {
-
+	pimpl->SendKeyClick(browserIdentifier, event, keyUp);
 }
 
 BrowserManager::Impl::Impl()
@@ -88,7 +90,7 @@ int BrowserManager::Impl::CreateBrowser(
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
 	int browserIdentifier = 0;
-	os_event_t createdEvent;
+	os_event_t *createdEvent;
 	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
 
 	CefPostTask(TID_UI, BrowserTask::newTask(
@@ -113,8 +115,8 @@ int BrowserManager::Impl::CreateBrowser(
 
 		CefRefPtr<CefBrowser> browser =
 				CefBrowserHost::CreateBrowserSync(windowInfo, 
-				browserClient, browserSettings.url, cefBrowserSettings, 
-				nullptr);
+				browserClient, browserSettings.url, 
+				cefBrowserSettings, nullptr);
 
 		if (browser != nullptr) {
 			browserIdentifier = browser->GetIdentifier();
@@ -133,7 +135,7 @@ BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 {
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
-		os_event_t closeEvent;
+		os_event_t *closeEvent;
 		os_event_init(&closeEvent, OS_EVENT_TYPE_AUTO);
 		CefPostTask(TID_UI, BrowserTask::newTask([&, browser] 
 		{
@@ -149,6 +151,117 @@ BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 void 
 BrowserManager::Impl::TickBrowser(int browserIdentifier)
 {}
+
+void BrowserManager::Impl::ExecuteOnBrowser(int browserIdentifier, 
+		std::function<void(CefRefPtr<CefBrowser>)> f, 
+		bool async)
+{
+	if (browserMap.count(browserIdentifier) > 0) {
+		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
+		if (async) {
+			CefPostTask(TID_UI, BrowserTask::newTask([&] {
+				f(browser);
+			}));
+		} else {
+			os_event_t *finishedEvent;
+			os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
+			CefPostTask(TID_UI, BrowserTask::newTask([&] {
+				f(browser);
+				os_event_signal(finishedEvent);
+			}));
+			os_event_wait(finishedEvent);
+			os_event_destroy(finishedEvent);
+		}
+	}
+}
+
+void BrowserManager::Impl::SendMouseClick(int browserIdentifier,
+	const struct obs_mouse_event *event, int32_t type,
+	bool mouse_up, uint32_t click_count)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b) 
+	{
+		CefMouseEvent e;
+		e.modifiers = event->modifiers;
+		e.x = event->x;
+		e.y = event->y;
+		CefBrowserHost::MouseButtonType buttonType =
+			(CefBrowserHost::MouseButtonType)type;
+		b->GetHost()->SendMouseClickEvent(e, buttonType, mouse_up, 
+			click_count);
+	});
+}
+
+void BrowserManager::Impl::SendMouseMove(int browserIdentifier,
+	const struct obs_mouse_event *event, bool mouseLeave)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
+	{
+		CefMouseEvent e;
+		e.modifiers = event->modifiers;
+		e.x = event->x;
+		e.y = event->y;
+		b->GetHost()->SendMouseMoveEvent(e, mouseLeave);
+	});
+}
+
+void BrowserManager::Impl::SendMouseWheel(int browserIdentifier,
+	const struct obs_mouse_event *event, int xDelta,
+	int yDelta)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
+	{
+		CefMouseEvent e;
+		e.modifiers = event->modifiers;
+		e.x = event->x;
+		e.y = event->y;
+		b->GetHost()->SendMouseWheelEvent(e, xDelta, yDelta);
+	});
+}
+
+void BrowserManager::Impl::SendFocus(int browserIdentifier, bool focus)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
+	{
+		b->GetHost()->SendFocusEvent(focus);
+	});
+}
+
+void BrowserManager::Impl::SendKeyClick(int browserIdentifier,
+	const struct obs_key_event *event, bool keyUp)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
+	{
+
+		CefKeyEvent e;
+		e.windows_key_code = event->native_vkey;
+		e.native_key_code = 0;
+
+		e.type = keyUp ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
+		
+		if (event->text) {
+			char16 *characters;
+			os_utf8_to_wcs_ptr(event->text, 0, &characters);
+			if (characters) {
+				e.character = characters[0];
+				bfree(characters);
+			}
+		}
+		
+		//e.native_key_code = event->native_vkey;
+		e.modifiers = event->modifiers;
+		
+		b->GetHost()->SendKeyEvent(e);
+		if (event->text && !keyUp) {
+			e.type = KEYEVENT_CHAR;
+			// Figure out why this works
+			e.windows_key_code = e.character;
+			e.character = 0;
+			b->GetHost()->SendKeyEvent(e);
+		}
+
+	});
+}
 
 
 void
@@ -172,7 +285,7 @@ BrowserManager::Impl::Startup()
 
 void BrowserManager::Impl::Shutdown() 
 {
-	os_event_t shutdown_event;
+	os_event_t *shutdown_event;
 	os_event_init(&shutdown_event, OS_EVENT_TYPE_AUTO);
 
 	// post the task
@@ -221,7 +334,6 @@ std::string getBootstrap()
 
 void BrowserManager::Impl::BrowserManagerEntry()
 {
-	
 	std::string bootstrapPath = getBootstrap();
 	bool thread_exit = false;
 	PushEvent([] {

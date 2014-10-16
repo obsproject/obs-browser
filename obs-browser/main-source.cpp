@@ -144,6 +144,10 @@ static void browser_source_mouse_click(void *data,
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	bs->SendMouseClick(event, type, mouse_up, click_count);
+
+	blog(LOG_DEBUG,
+		"mouse_click x:%d y:%d mouse_up:'%s' count:'%d'", event->x, 
+		event->y, mouse_up ? "true" : "false", click_count);
 }
 
 static void browser_source_mouse_move(void *data,
