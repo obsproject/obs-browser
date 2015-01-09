@@ -118,6 +118,7 @@ static void browser_source_destroy(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
+	bs = NULL;
 	delete bs;
 }
 
