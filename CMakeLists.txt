@@ -14,35 +14,7 @@ if(APPLE)
 	find_library(COCOA_FRAMEWORK Cocoa)
 	find_library(APPKIT_FRAMEWORK AppKit)
 	find_library(IOSURFACE_FRAMEWORK IOSurface)
-
-	# Compile isolation and bootstrap as 32bit
-	# Everything else is still 64bit
-	if (CEF_ROOT_DIR MATCHES ".*32")
-		set(CEF_ISOLATION_32 "true")
-	endif()
-	
-	set(_xcodebuild "xcodebuild")
-	set(_xcodebuild_args -sdk -version)
-	set(_sed "sed")
-	set(_sed_args "s/Path: \\(.*10.8.sdk\\)/\\1/p")
-
-	execute_process(
-		COMMAND xcodebuild ${_xcodebuild_args}
-		COMMAND sed -n ${_sed_args}
-		OUTPUT_VARIABLE OSX_10_8_SDK)
-
-	STRING(REGEX REPLACE "(\r?\n)+$" "" OSX_10_8_SDK "${OSX_10_8_SDK}")
-
-	if(NOT OSX_10_8_SDK)
-		message(FATAL_ERROR "macosx10.8.sdk is required to build this plugin")
-	else(NOT OSX_10_8_SDK)
-		message("Found macosx10.8.sdk at ${OSX_10_8_SDK}")
-	endif(NOT OSX_10_8_SDK)
-
 endif(APPLE)
-
-set(image-source_SOURCES
-	image-source.c)
 
 if (NOT APPLE)
 	# This is needed to load the libraries from a 
@@ -192,20 +164,9 @@ if(APPLE)
 		${cef-isolation_SOURCES}
 		${cef-isolation_HEADERS})
 
-	if (CEF_ISOLATION_32)
-		set_target_properties(cef-isolation PROPERTIES 
-			COMPILE_FLAGS "-m32 -isysroot ${OSX_10_8_SDK} -mmacosx-version-min=10.8" 
-			LINK_FLAGS "-m32 -isysroot ${OSX_10_8_SDK}"
-			OSX_ARCHITECTURES "i386")
-	endif(CEF_ISOLATION_32)
-
 	set(MACOSX_DEPLOYMENT_TARGET "10.8")
-	set_target_properties(cef-isolation PROPERTIES
-		LINK_FLAGS "-isysroot ${OSX_10_8_SDK}")
 
 	if (XCODE)
-		set_xcode_property(cef-isolation
-			SDKROOT "macosx10.8")
 		set_xcode_property(cef-isolation
 			CLANG_CXX_LIBRARY "libc++")
 	endif(XCODE)
@@ -236,21 +197,8 @@ add_executable(cef-bootstrap
 	${cef-bootstrap_HEADERS})
 
 if (APPLE)
-	if (CEF_ISOLATION_32)
-		set_target_properties(cef-bootstrap PROPERTIES 
-				COMPILE_FLAGS "-m32 -isysroot ${OSX_10_8_SDK} -mmacosx-version-min=10.8" 
-				LINK_FLAGS "-m32 -isysroot ${OSX_10_8_SDK}"
-				OSX_ARCHITECTURES "i386")
-	else(CEF_ISOLATION_32)
-		set_target_properties(cef-bootstrap PROPERTIES 
-				COMPILE_FLAGS "-isysroot ${OSX_10_8_SDK} -mmacosx-version-min=10.8"
-				LINK_FLAGS "-isysroot ${OSX_10_8_SDK}")
-	endif(CEF_ISOLATION_32)
-
-	if (XCODE)
-		set_xcode_property(cef-bootstrap PROPERTIES 
-			SDKROOT "macosx10.8")
-	endif(XCODE)
+	set_target_properties(cef-bootstrap PROPERTIES 
+		COMPILE_FLAGS "-mmacosx-version-min=10.8")		
 endif(APPLE)
 
 if (WIN32)
