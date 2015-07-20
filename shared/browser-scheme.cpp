@@ -35,8 +35,11 @@ bool BrowserSchemeHandler::ProcessRequest(CefRefPtr<CefRequest> request,
 
 	std::string path = CefString(&parts.path);
 	fileName = path.substr(path.find_last_of("/") + 1);
-
+#ifdef WIN32
+	inputStream.open(path.erase(0,1), std::ifstream::binary);
+#else
 	inputStream.open(path, std::ifstream::binary);
+#endif
 	if (!inputStream.is_open()) {
 		callback->Cancel();
 		return false;

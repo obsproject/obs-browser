@@ -4,6 +4,7 @@
 #include "browser-task.hpp"
 #include "browser-app.hpp"
 #include "browser-settings.hpp"
+#include "browser-scheme.hpp"
 #include "browser-client.hpp"
 #include "browser-render-handler.hpp"
 
@@ -346,7 +347,9 @@ void BrowserManager::Impl::BrowserManagerEntry()
 		CefRefPtr<BrowserApp> app(new BrowserApp());
 		CefExecuteProcess(mainArgs, app, nullptr);
 		CefInitialize(mainArgs, settings, app, nullptr);
+		CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
 		CefRunMessageLoop();
+		CefShutdown();
 	});
 
 	while (true) {
