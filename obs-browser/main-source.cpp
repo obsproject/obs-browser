@@ -74,6 +74,8 @@ static obs_properties_t *browser_source_get_properties(void *)
 			obs_module_text("Height"), 1, 4096, 1);
 	obs_properties_add_int(props, "fps",
 			obs_module_text("FPS"), 1, 60, 1);
+	obs_properties_add_text(props, "css",
+		obs_module_text("CSS"), OBS_TEXT_MULTILINE);
 #ifdef __APPLE__
 	// osx is the only process-isolated cef impl
 	obs_properties_add_button(props, "restart",

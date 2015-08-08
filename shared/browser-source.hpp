@@ -43,6 +43,7 @@ public:
 
 public:
 	const std::string& GetUrl() const { return url; }
+	const std::string& GetCss() const { return css; }
 	uint32_t GetWidth() const { return width; }
 	uint32_t GetHeight() const { return height; }
 	obs_source_t *GetSource() const { return source; }
@@ -73,6 +74,7 @@ private:
 	obs_source_t *source;
 	bool isLocalFile;
 	std::string url;
+	std::string css;
 	uint32_t width;
 	uint32_t height;
 	uint32_t fps;
