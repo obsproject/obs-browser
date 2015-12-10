@@ -31,10 +31,11 @@ bool BrowserSchemeHandler::ProcessRequest(CefRefPtr<CefRequest> request,
 		CefRefPtr<CefCallback> callback)
 {
 	CefURLParts parts;
+	CefString fileName;
 	CefParseURL(request->GetURL(), parts);
 
 	std::string path = CefString(&parts.path);
-	fileName = path.substr(path.find_last_of("/") + 1);
+	path = CefURIDecode(path,true,cef_uri_unescape_rule_t::UU_SPACES);
 #ifdef WIN32
 	inputStream.open(path.erase(0,1), std::ifstream::binary);
 #else
