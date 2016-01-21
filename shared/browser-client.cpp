@@ -46,16 +46,21 @@ CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 }
 
 bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser,
-		CefRefPtr<CefFrame> frame, const CefString& target_url,
-		const CefString& target_frame_name,
-		const CefPopupFeatures& popupFeatures,
-		CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
-		CefBrowserSettings& settings, bool* no_javascript_access)
+	CefRefPtr<CefFrame> frame, const CefString& target_url,
+	const CefString& target_frame_name,
+	WindowOpenDisposition target_disposition,
+	bool user_gesture,
+	const CefPopupFeatures& popupFeatures,
+	CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
+	CefBrowserSettings& settings,
+	bool* no_javascript_access)
 {
 	(void)browser;
 	(void)frame;
 	(void)target_url;
 	(void)target_frame_name;
+	(void)target_disposition;
+	(void)user_gesture;
 	(void)popupFeatures;
 	(void)windowInfo;
 	(void)client;

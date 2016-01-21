@@ -1,6 +1,6 @@
 #include <cctype>
 #include <algorithm>
-#include <include/cef_url.h>
+#include <include/cef_parser.h>
 
 #include "browser-scheme.hpp"
 
@@ -35,7 +35,8 @@ bool BrowserSchemeHandler::ProcessRequest(CefRefPtr<CefRequest> request,
 	CefParseURL(request->GetURL(), parts);
 
 	std::string path = CefString(&parts.path);
-	path = CefURIDecode(path,true,cef_uri_unescape_rule_t::UU_SPACES);
+	path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_SPACES);
+	path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_NORMAL);
 #ifdef WIN32
 	inputStream.open(path.erase(0,1), std::ifstream::binary);
 #else
