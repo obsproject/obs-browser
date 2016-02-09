@@ -21,6 +21,7 @@
 
 struct BrowserSettings {
 	std::string url;
+	std::string css;
 	unsigned int width;
 	unsigned int height;
 	unsigned int fps;

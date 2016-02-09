@@ -7,6 +7,7 @@
 #include "browser-scheme.hpp"
 #include "browser-client.hpp"
 #include "browser-render-handler.hpp"
+#include "browser-load-handler.hpp"
 
 BrowserManager::BrowserManager()
 : pimpl(new BrowserManager::Impl())
@@ -102,8 +103,11 @@ int BrowserManager::Impl::CreateBrowser(
 				new BrowserRenderHandler(browserSettings.width, 
 				browserSettings.height, browserListener));
 
+		CefRefPtr<BrowserLoadHandler> loadHandler(
+				new BrowserLoadHandler(browserSettings.css));
+
 		CefRefPtr<BrowserClient> browserClient(
-				new BrowserClient(renderHandler)); 
+				new BrowserClient(renderHandler,loadHandler)); 
 
 		CefWindowInfo windowInfo;
 		windowInfo.transparent_painting_enabled = true;

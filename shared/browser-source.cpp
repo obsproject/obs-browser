@@ -24,6 +24,7 @@ void BrowserSource::UpdateSettings(obs_data_t *settings)
 {
 	isLocalFile = obs_data_get_bool(settings, "is_local_file");
 	url = obs_data_get_string(settings, isLocalFile ? "local_file" : "url");
+	css = obs_data_get_string(settings, "css");
 	width = (uint32_t)obs_data_get_int(settings, "width");
 	height = (uint32_t)obs_data_get_int(settings, "height");
 	fps = (uint32_t)obs_data_get_int(settings, "fps");
@@ -49,6 +50,7 @@ void BrowserSource::UpdateBrowser()
 	browserSettings.width = width;
 	browserSettings.height = height;
 	browserSettings.fps = fps;
+	browserSettings.css = css;
 
 	browserIdentifier = BrowserManager::Instance()->CreateBrowser(
 			browserSettings, browserListener);

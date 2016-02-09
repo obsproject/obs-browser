@@ -21,18 +21,21 @@
 
 class BrowserSource;
 class BrowserRenderHandler;
+class BrowserLoadHandler;
 
 class BrowserClient : public CefClient, public CefLifeSpanHandler,
 		public CefContextMenuHandler
 {
 public:
-	BrowserClient(CefRenderHandler *renderHandler);
+	BrowserClient(CefRenderHandler *renderHandler,
+		CefLoadHandler *loadHandler);
 
 public: /* CefClient overrides */
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() OVERRIDE;
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler()
 			OVERRIDE;
+	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() OVERRIDE;
 
 public: /* CefLifeSpanHandler overrides */
 	virtual bool OnBeforePopup(CefRefPtr<CefBrowser> browser,
@@ -49,6 +52,7 @@ public: /* CefContextMenuHandler overrides */
 			CefRefPtr<CefMenuModel> model);
 private:
 	CefRefPtr<CefRenderHandler> renderHandler;
+	CefRefPtr<CefLoadHandler> loadHandler;
 
 public:
 	IMPLEMENT_REFCOUNTING(BrowserClient);
