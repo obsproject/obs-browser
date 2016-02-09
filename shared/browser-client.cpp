@@ -19,14 +19,20 @@
 
 #include "browser-client.hpp"
 
-BrowserClient::BrowserClient(CefRenderHandler *renderHandler)
-: renderHandler(renderHandler)
+BrowserClient::BrowserClient(CefRenderHandler *renderHandler,
+	CefLoadHandler *loadHandler)
+	: renderHandler(renderHandler), loadHandler(loadHandler)
 {
 }
 
 CefRefPtr<CefRenderHandler> BrowserClient::GetRenderHandler()
 {
 	return renderHandler;
+}
+
+CefRefPtr<CefLoadHandler> BrowserClient::GetLoadHandler()
+{
+	return loadHandler;
 }
 
 CefRefPtr<CefLifeSpanHandler> BrowserClient::GetLifeSpanHandler()
