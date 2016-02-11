@@ -103,7 +103,7 @@ static uint32_t browser_source_get_height(void *data)
 }
 
 
-static const char *browser_source_get_name(void)
+static const char *browser_source_get_name(void *)
 {
 	return obs_module_text("BrowserSource");
 }

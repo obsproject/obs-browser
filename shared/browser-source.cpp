@@ -46,7 +46,7 @@ void BrowserSource::UpdateBrowser()
 
 	BrowserSettings browserSettings;
 
-	browserSettings.url = isLocalFile? "http://absolute"+ url : url,
+	browserSettings.url = isLocalFile? "http://absolute/"+ url : url,
 	browserSettings.width = width;
 	browserSettings.height = height;
 	browserSettings.fps = fps;
