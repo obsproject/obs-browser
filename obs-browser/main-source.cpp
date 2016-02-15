@@ -57,6 +57,7 @@ static obs_properties_t *browser_source_get_properties(void *)
 {
 	obs_properties_t *props = obs_properties_create();
 
+	obs_properties_set_flags(props, OBS_PROPERTIES_DEFER_UPDATE);
 	// use this when obs allows non-readonly paths
 	obs_property_t *prop = obs_properties_add_bool(props, "is_local_file",
 			obs_module_text("Local file"));
