@@ -76,6 +76,8 @@ static obs_properties_t *browser_source_get_properties(void *)
 			obs_module_text("FPS"), 1, 60, 1);
 	obs_properties_add_text(props, "css",
 		obs_module_text("CSS"), OBS_TEXT_MULTILINE);
+	obs_properties_add_bool(props, "shutdown",
+		obs_module_text("Shutdown when not active"));
 #ifdef __APPLE__
 	// osx is the only process-isolated cef impl
 	obs_properties_add_button(props, "restart",
@@ -106,6 +108,23 @@ static uint32_t browser_source_get_height(void *data)
 static const char *browser_source_get_name(void *)
 {
 	return obs_module_text("BrowserSource");
+}
+
+static void browser_source_activate(void *data)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+
+	if ( bs->GetShutdown() )
+		bs->UpdateBrowser();
+	
+}
+
+static void browser_source_deactivate(void *data)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+
+	if (bs->GetShutdown())
+		BrowserManager::Instance()->DestroyBrowser(bs->GetBrowserIdentifier());
 }
 
 
@@ -187,7 +206,7 @@ create_browser_source_info()
 	browser_source_info.id = "browser_source";
 	browser_source_info.type = OBS_SOURCE_TYPE_INPUT;
 	browser_source_info.output_flags = OBS_SOURCE_VIDEO |
-			OBS_SOURCE_INTERACTION;
+			OBS_SOURCE_INTERACTION | OBS_SOURCE_DO_NOT_DUPLICATE;
 #ifdef __APPLE__
 	browser_source_info.output_flags |= OBS_SOURCE_CUSTOM_DRAW;
 #endif
@@ -207,6 +226,8 @@ create_browser_source_info()
 	browser_source_info.get_properties = browser_source_get_properties;
 	browser_source_info.get_defaults = browser_source_get_defaults;
 	browser_source_info.video_render = browser_source_render;
+	browser_source_info.activate = browser_source_activate;
+	browser_source_info.deactivate = browser_source_deactivate;
 
 	return browser_source_info;
 }
