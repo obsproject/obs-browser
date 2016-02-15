@@ -39,10 +39,9 @@ set(obs-browser_HEADERS
 	shared/browser-source.hpp
 	shared/browser-listener.hpp
 	shared/browser-settings.hpp
-	shared/browser-types.h)
 	shared/browser-types.h
 	shared/base64.hpp
-	obs-browser/browser-load-handler.hpp)
+	obs-browser/browser-load-handler.hpp
 	shared/browser-scheme.hpp
 	shared/browser-types.h)
 
