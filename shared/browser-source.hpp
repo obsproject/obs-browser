@@ -47,6 +47,7 @@ public:
 	uint32_t GetWidth() const { return width; }
 	uint32_t GetHeight() const { return height; }
 	obs_source_t *GetSource() const { return source; }
+	const bool GetShutdown() const { return shutdown; }
 
 	int GetBrowserIdentifier() const { return browserIdentifier; }
 
@@ -78,6 +79,7 @@ private:
 	uint32_t width;
 	uint32_t height;
 	uint32_t fps;
+	bool shutdown;
 
 	int browserIdentifier;
 
