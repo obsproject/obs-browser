@@ -133,6 +133,9 @@ static void *browser_source_create(obs_data_t *settings, obs_source_t *source)
 {
 	BrowserSource *browserSource = new BrowserSource(settings, source);
 
+	if (browserSource->GetShutdown() && !obs_source_showing(source))
+		BrowserManager::Instance()->DestroyBrowser(browserSource->GetBrowserIdentifier());
+
 	return browserSource;
 }
 
