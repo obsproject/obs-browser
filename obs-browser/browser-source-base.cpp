@@ -69,6 +69,7 @@ void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t *effect)
 
 	if (activeTexture != nullptr) {
 		gs_reset_blend_state();
+		gs_blend_function(GS_BLEND_DSTALPHA, GS_BLEND_INVSRCALPHA);
 		gs_effect_set_texture(
 				gs_effect_get_param_by_name(effect, "image"),
 				activeTexture);
