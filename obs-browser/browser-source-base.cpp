@@ -75,6 +75,7 @@ void BrowserSource::Impl::RenderCurrentTexture(gs_effect_t *effect)
 				activeTexture);
 		gs_draw_sprite(activeTexture, 0, parent->GetWidth(), 
 				parent->GetHeight());
+		gs_reset_blend_state();
 	}
 	
 	GetParent()->UnlockTexture();
