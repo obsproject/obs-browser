@@ -46,7 +46,18 @@ public:
 
 	void DestroySurface(BrowserSurfaceHandle surfaceHandle);
 
+	bool CreatePopupSurface(
+		int width,
+		int height,
+		int x,
+		int y,
+		BrowserSurfaceHandle *surfaceHandle);
+
+	void DestroyPopupSurface();
+
 private:
 	BrowserSource::Impl *browserSource;
+	gs_texture_t *popupSurface = nullptr;
 	std::set<BrowserSurfaceHandle> textureSet;
+	int popupX, popupY;
 };

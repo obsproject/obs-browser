@@ -56,6 +56,26 @@ public:
 		return false;
 	}
 
+	virtual bool CreatePopupSurface(
+		int width,
+		int height,
+		int x,
+		int y,
+		BrowserSurfaceHandle *surfaceHandle) 
+	{
+		(void)width;
+		(void)height;
+		(void)x;
+		(void)y;
+		(void)surfaceHandle;
+
+		return false;
+	}
+
+	virtual void DestroyPopupSurface() 
+	{
+	}
+
 	virtual void DestroySurface(BrowserSurfaceHandle surfaceHandle) override
 	{
 		(void)surfaceHandle;

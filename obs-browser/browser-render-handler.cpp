@@ -35,6 +35,31 @@ BrowserRenderHandler::~BrowserRenderHandler()
 	surfaceHandles.clear();
 }
 
+void BrowserRenderHandler::OnPopupSize(CefRefPtr<CefBrowser> browser,
+	const CefRect& rect)
+{
+	if (rect.width <= 0 || rect.height <= 0)
+		return;
+
+	originalPopupRect = rect;
+	popupRect = GetPopupRectInWebView(originalPopupRect);
+}
+
+void BrowserRenderHandler::OnPopupShow(CefRefPtr<CefBrowser> browser,
+	bool show)
+{
+	if (!show)
+	{
+		ClearPopupRects();
+		browserListener->DestroyPopupSurface();
+	}
+}
+
+void BrowserRenderHandler::ClearPopupRects() {
+	popupRect.Set(0, 0, 0, 0);
+	originalPopupRect.Set(0, 0, 0, 0);
+}
+
 bool
 BrowserRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
 {
@@ -44,37 +69,90 @@ BrowserRenderHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
 	return true;
 }
 
-
+CefRect BrowserRenderHandler::GetPopupRectInWebView(const CefRect& originalRect)
+{
+	CefRect rc(originalRect);
+	// if x or y are negative, move them to 0.
+	if (rc.x < 0)
+		rc.x = 0;
+	if (rc.y < 0)
+		rc.y = 0;
+	// if popup goes outside the view, try to reposition origin
+	if (rc.x + rc.width > width)
+		rc.x = width - rc.width;
+	if (rc.y + rc.height > height)
+		rc.y = height - rc.height;
+	// if x or y became negative, move them to 0 again.
+	if (rc.x < 0)
+		rc.x = 0;
+	if (rc.y < 0)
+		rc.y = 0;
+	return rc;
+}
 
 void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser, 
 		PaintElementType type, const RectList &dirtyRects,
 		const void *data, int width, int height)
 {
 	(void)browser;
-	(void)type;
-	(void)dirtyRects;
 
+	if (type == PET_VIEW)
+	{
+		viewWidth = width;
+		viewHeight = height;
+		if (surfaceHandles.size() < 2) {
+			BrowserSurfaceHandle newSurfaceHandle = 0;
+			browserListener->CreateSurface(width, height,
+				&newSurfaceHandle);
 
-	if (surfaceHandles.size() < 2) {
-		BrowserSurfaceHandle newSurfaceHandle = 0;
-		browserListener->CreateSurface(width, height, 
-			&newSurfaceHandle);
+			if (newSurfaceHandle != nullptr) {
+				surfaceHandles.push_back(newSurfaceHandle);
+			}
+		}
 
-		if (newSurfaceHandle != nullptr) {
-			surfaceHandles.push_back(newSurfaceHandle);
+		int previousSurfaceHandle = currentSurfaceHandle;
+
+		currentSurfaceHandle = (++currentSurfaceHandle % surfaceHandles.size());
+
+		if (currentSurfaceHandle != previousSurfaceHandle) {
+			obs_enter_graphics();
+			gs_texture_set_image(surfaceHandles[currentSurfaceHandle],
+				(const uint8_t*)data, width * 4, false);
+			obs_leave_graphics();
 		}
 	}
-	
-	int previousSurfaceHandle = currentSurfaceHandle;
+	else if (type == PET_POPUP && popupRect.width > 0 &&
+		popupRect.height > 0)
+	{
+		int skipPixels = 0, x = popupRect.x;
+		int skipRows = 0, y = popupRect.y;
+		int w = width;
+		int h = height;
 
-	currentSurfaceHandle = (++currentSurfaceHandle % surfaceHandles.size());
+		if (x < 0)
+		{
+			skipPixels = -x;
+			x = 0;
+		}
 
-	if (currentSurfaceHandle != previousSurfaceHandle) {
+		if (y < 0)
+		{
+			skipRows = -y;
+			y = 0;
+		}
+		if (x + w > viewWidth)
+			w -= x + w - viewWidth;
+		if (y + h > viewHeight)
+			h -= y + h - viewHeight;
+		
 		obs_enter_graphics();
-		gs_texture_set_image(surfaceHandles[currentSurfaceHandle], 
-				(const uint8_t*) data, width * 4, false);
+		BrowserSurfaceHandle newTexture = 0;
+		browserListener->CreatePopupSurface(width, height, x, y, &newTexture);
+		gs_texture_set_image(newTexture,
+			(const uint8_t*)data, w * 4, false);
 		obs_leave_graphics();
 	}
 	
-	browserListener->OnDraw(surfaceHandles[currentSurfaceHandle], width, height);
+
+	browserListener->OnDraw(surfaceHandles[currentSurfaceHandle], viewWidth, viewHeight);
 }

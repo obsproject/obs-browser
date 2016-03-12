@@ -39,9 +39,25 @@ public: /* CefRenderHandler overrides */
 	virtual bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
 		OVERRIDE;
 
+	CefRect GetPopupRectInWebView(const CefRect& originalRect);
+
 	virtual void OnPaint(CefRefPtr<CefBrowser> browser,
 		PaintElementType type, const RectList &dirtyRects,
 		const void *buffer, int width, int height) OVERRIDE;
+
+	const CefRect& popupRect_() const { return popupRect; }
+	const CefRect& originalPopupRect_() const { return originalPopupRect; }
+
+	// Forwarded from CefRenderHandler callbacks.
+	void OnPopupShow(CefRefPtr<CefBrowser> browser,
+		bool show);
+	// |rect| must be in pixel coordinates.
+	void OnPopupSize(CefRefPtr<CefBrowser> browser,
+		const CefRect& rect);
+	void ClearPopupRects();
+
+	int GetViewWidth() const { return viewWidth; }
+	int GetViewHeight() const { return viewHeight; }
 
 private:
 	const int width;
@@ -49,6 +65,10 @@ private:
 	const std::shared_ptr<BrowserListener> browserListener;
 	std::vector<struct gs_texture *> surfaceHandles;
 	int currentSurfaceHandle;
+	int viewWidth;
+	int viewHeight;
+	CefRect popupRect;
+	CefRect originalPopupRect;
 
 private:
 	IMPLEMENT_REFCOUNTING(BrowserRenderHandler);

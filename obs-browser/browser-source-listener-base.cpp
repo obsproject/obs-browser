@@ -30,6 +30,8 @@ void BrowserSource::Impl::Listener::OnDraw( BrowserSurfaceHandle surfaceHandle,
 
 		obs_enter_graphics();
 		browserSource->GetParent()->LockTexture();
+		if (popupSurface != nullptr)
+			gs_copy_texture_region(surfaceHandle, popupX, popupY, popupSurface, 0, 0, gs_texture_get_width(popupSurface), gs_texture_get_height(popupSurface));	
 		browserSource->SetActiveTexture(surfaceHandle);
 		browserSource->GetParent()->UnlockTexture();
 		obs_leave_graphics();
@@ -58,6 +60,31 @@ bool BrowserSource::Impl::Listener::CreateSurface(int width, int height,
 	*surfaceHandle = newTexture;
 
 	return true;
+}
+
+bool BrowserSource::Impl::Listener::CreatePopupSurface(int width, int height,
+	int x, int y, BrowserSurfaceHandle *popupSurfaceHandle)
+{
+	obs_enter_graphics();
+
+	gs_texture_t *newTexture = gs_texture_create(width, height, GS_BGRA, 1,
+		nullptr, GS_DYNAMIC);
+
+	obs_leave_graphics();
+
+	*popupSurfaceHandle = newTexture;
+	popupSurface = newTexture;
+	popupX = x;
+	popupY = y;
+
+	return true;
+}
+
+void BrowserSource::Impl::Listener::DestroyPopupSurface()
+{
+	obs_enter_graphics();
+	popupSurface = nullptr;
+	obs_leave_graphics();
 }
 
 void BrowserSource::Impl::Listener::DestroySurface(
