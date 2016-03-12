@@ -84,9 +84,15 @@ CefRect BrowserRenderHandler::GetPopupRectInWebView(const CefRect& originalRect)
 		rc.y = height - rc.height;
 	// if x or y became negative, move them to 0 again.
 	if (rc.x < 0)
+	{
 		rc.x = 0;
+		rc.width = width;
+	}
 	if (rc.y < 0)
+	{
 		rc.y = 0;
+		rc.height = height;
+	}
 	return rc;
 }
 
@@ -124,22 +130,17 @@ void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 	else if (type == PET_POPUP && popupRect.width > 0 &&
 		popupRect.height > 0)
 	{
-		int skipPixels = 0, x = popupRect.x;
-		int skipRows = 0, y = popupRect.y;
+		int x = popupRect.x;
+		int y = popupRect.y;
 		int w = width;
 		int h = height;
 
 		if (x < 0)
-		{
-			skipPixels = -x;
 			x = 0;
-		}
 
 		if (y < 0)
-		{
-			skipRows = -y;
 			y = 0;
-		}
+
 		if (x + w > viewWidth)
 			w -= x + w - viewWidth;
 		if (y + h > viewHeight)
