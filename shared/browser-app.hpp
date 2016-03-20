@@ -28,6 +28,10 @@ public:
 public:
 	virtual void OnRegisterCustomSchemes(
 			CefRefPtr<CefSchemeRegistrar> registrar) OVERRIDE;
+	virtual void OnBeforeCommandLineProcessing(
+		const CefString& process_type,
+		CefRefPtr<CefCommandLine> command_line) OVERRIDE;
+
 private:
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 

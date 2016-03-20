@@ -33,3 +33,9 @@ void BrowserApp::OnRegisterCustomSchemes(
 	registrar->AddCustomScheme("http", true, true, false);
 }
 
+void BrowserApp::OnBeforeCommandLineProcessing(
+	const CefString& process_type,
+	CefRefPtr<CefCommandLine> command_line)
+{
+	command_line->AppendSwitch("enable-system-flash");
+}
