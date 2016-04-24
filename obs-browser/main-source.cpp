@@ -28,6 +28,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "height", 600);
 	obs_data_set_default_int(settings, "fps", 30);
 	obs_data_set_default_bool(settings, "shutdown", true);
+	obs_data_set_default_string(settings, "css", "body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }");
 }
 
 static bool restart_button_clicked(obs_properties_t *props,
@@ -80,6 +81,8 @@ static obs_properties_t *browser_source_get_properties(void *)
 		obs_module_text("CSS"), OBS_TEXT_MULTILINE);
 	obs_properties_add_bool(props, "shutdown",
 		obs_module_text("Shutdown when not active"));
+
+
 #ifdef __APPLE__
 	// osx is the only process-isolated cef impl
 	obs_properties_add_button(props, "restart",
