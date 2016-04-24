@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 #include <obs-module.h>
+#include <util/dstr.h>
 
 #include "browser-source.hpp"
 #include "browser-manager.hpp"
@@ -55,19 +56,33 @@ static bool is_local_file_modified(obs_properties_t *props,
 	return true;
 }
 
-static obs_properties_t *browser_source_get_properties(void *)
+static obs_properties_t *browser_source_get_properties(void *data)
 {
 	obs_properties_t *props = obs_properties_create();
+	struct dstr path = { 0 };
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
 	obs_properties_set_flags(props, OBS_PROPERTIES_DEFER_UPDATE);
 	// use this when obs allows non-readonly paths
 	obs_property_t *prop = obs_properties_add_bool(props, "is_local_file",
 			obs_module_text("Local file"));
 
+	if (bs && bs->GetUrl() != "")
+	{
+		const char *slash;
+
+		dstr_copy(&path, bs->GetUrl().c_str());
+		dstr_replace(&path, "\\", "/");
+		slash = strrchr(path.array, '/');
+		if (slash)
+			dstr_resize(&path, slash - path.array + 1);
+	}
+
+
 	obs_property_set_modified_callback(prop, is_local_file_modified);
 	obs_properties_add_path(props, "local_file",
 			obs_module_text("Local file"), OBS_PATH_FILE, "*.*",
-			nullptr);
+			path.array);
 	obs_properties_add_text(props, "url",
 			obs_module_text("URL"), OBS_TEXT_DEFAULT);
 
