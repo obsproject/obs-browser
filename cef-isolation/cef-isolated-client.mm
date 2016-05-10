@@ -78,7 +78,7 @@ void sync_on_cef_ui(dispatch_block_t block)
 				new BrowserRenderHandler(browserHandle);
 
 		CefRefPtr<BrowserClient> browserClient =
-				new BrowserClient(browserRenderHandler.get());
+				new BrowserClient(browserRenderHandler.get(),NULL);
 
 		CefWindowInfo windowInfo;
 		windowInfo.view = nullptr;

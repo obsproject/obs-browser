@@ -127,7 +127,7 @@ target_include_directories(obs-browser PRIVATE
 
 if (APPLE)
 	target_include_directories(obs-browser PUBLIC 
-		"shared-apple")
+		"shared-apple" ${CEF_INCLUDE_DIR})
 else(APPLE)
 	target_include_directories_system(obs-browser PUBLIC ${CEF_INCLUDE_DIR})
 endif(APPLE)
@@ -147,7 +147,8 @@ else(NOT APPLE)
 	list(APPEND obs-browser_LIBRARIES 
 		${COCOA_FRAMEWORK} 
 		${APPKIT_FRAMEWORK}
-		${IOSURFACE_FRAMEWORK})
+		${IOSURFACE_FRAMEWORK}
+		${CEF_LIBRARIES})
 endif(NOT APPLE)
 
 target_link_libraries(obs-browser 
@@ -255,6 +256,9 @@ if (APPLE)
 		MACOSX_BUNDLE_BUNDLE_NAME "CEF Helper"
 		MACOSX_BUNDLE_GUI_IDENTIFIER "org.catchexception.cef.cef-bootstrap")
 
+
+	add_custom_command(TARGET obs-browser POST_BUILD
+		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/CEF.app/Contents/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:obs-browser>")
 
 	add_custom_command(TARGET cef-isolation
 		# Disable taskbar visibility
