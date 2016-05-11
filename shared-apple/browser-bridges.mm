@@ -29,6 +29,8 @@
 		_width = browserSettings.width;
 		_height = browserSettings.height;
 		_fps = browserSettings.fps;
+		_css = [NSString stringWithUTF8String:
+				browserSettings.css.c_str()];
 	}
 	return self;
 }
