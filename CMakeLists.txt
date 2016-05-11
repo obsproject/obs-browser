@@ -109,6 +109,9 @@ endif(APPLE)
 
 set(obs-browser_LIBRARIES
 	libobs)
+	
+set(libobs_LIBRARIES
+	libobs)
 
 if (APPLE)
 	list(APPEND obs-browser_LIBRARIES
@@ -165,7 +168,9 @@ if(APPLE)
 		shared/browser-client.cpp
 		shared/browser-task.cpp
 		shared/browser-app.cpp
-		shared/browser-scheme.cpp)
+		shared/browser-scheme.cpp
+		shared/base64.cpp
+		obs-browser/browser-load-handler.cpp)
 
 	set(cef-isolation_HEADERS
 		shared-apple/cef-logging.h
@@ -179,6 +184,8 @@ if(APPLE)
 		shared/browser-client.hpp
 		shared/browser-task.hpp
 		shared/browser-app.hpp
+		shared/base64.hpp
+		obs-browser/browser-load-handler.hpp
 		shared/browser-scheme.hpp
 		shared/browser-types.h
 		shared-apple/browser-bridges.h)
@@ -204,7 +211,9 @@ if(APPLE)
 	target_link_libraries(cef-isolation
 		${CEF_LIBRARIES}
 		${APPKIT_FRAMEWORK}
-		${IOSURFACE_FRAMEWORK})
+		${IOSURFACE_FRAMEWORK}
+		${libobs_LIBRARIES}
+		)
 
 endif(APPLE)
 
@@ -258,34 +267,39 @@ if (APPLE)
 
 
 	add_custom_command(TARGET obs-browser POST_BUILD
-		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/CEF.app/Contents/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:obs-browser>")
+		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/CEF.app/Contents/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:obs-browser>"
+		)
 
 	add_custom_command(TARGET cef-isolation
 		# Disable taskbar visibility
-		COMMAND defaults write "$<TARGET_FILE_DIR:cef-isolation>/../Info.plist" "LSUIElement" true)
+		COMMAND defaults write "$<TARGET_FILE_DIR:cef-isolation>/../Info.plist" "LSUIElement" true
+		)
 
 	add_custom_command(TARGET cef-bootstrap POST_BUILD
 		# Remember if you change this but don't cause a recompile it will not rename it successfully
 		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:cef-bootstrap>"
 		
 		# Disable taskbar visibility
-		COMMAND defaults write "$<TARGET_FILE_DIR:cef-bootstrap>/../Info.plist" "LSUIElement" true)
+		COMMAND defaults write "$<TARGET_FILE_DIR:cef-bootstrap>/../Info.plist" "LSUIElement" true
+		)
 
 	add_custom_command(TARGET cef-isolation POST_BUILD
 		# Remember if you change this but don't cause a recompile in the shared object it will not rename it successfully
 		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:cef-isolation>"
+		COMMAND install_name_tool -change "@rpath/libobs.0.dylib" "@executable_path/../Frameworks/libobs.0.dylib" "$<TARGET_FILE:cef-isolation>"		
 
 		# Make a Frameworks directory
 		COMMAND mkdir -p "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks"
 
 		# Copy the CEF and support frameworks
 		COMMAND cp -Rf "${CEF_ROOT_DIR}/Release/Chromium Embedded Framework.framework" "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks/"
+		COMMAND cp -Rf "$<TARGET_FILE_DIR:cef-isolation>/../../../../../libobs/libobs.0.dylib" "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks/"
 
 		# Setup the helper apps
 		COMMAND rm -rf "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks/CEF Helper.app"
 		COMMAND cp -Rf "$<TARGET_FILE_DIR:cef-bootstrap>/../../../CEF Helper.app" "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks"
-		COMMAND "BUILT_PRODUCTS_DIR=$<TARGET_FILE_DIR:cef-isolation>/../../.." "CONTENTS_FOLDER_PATH=CEF.app/Contents" "${CEF_ROOT_DIR}/tools/make_more_helpers.sh" "Frameworks" "CEF")
-
+		)
+		
 endif(APPLE)
 
 if(APPLE)
