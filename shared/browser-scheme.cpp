@@ -31,10 +31,13 @@ bool BrowserSchemeHandler::ProcessRequest(CefRefPtr<CefRequest> request,
 		CefRefPtr<CefCallback> callback)
 {
 	CefURLParts parts;
-	CefString fileName;
 	CefParseURL(request->GetURL(), parts);
 
 	std::string path = CefString(&parts.path);
+
+	// Set fileName for use in GetResponseHeaders
+	fileName = path;
+
 	path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_SPACES);
 	path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_NORMAL);
 #ifdef WIN32
