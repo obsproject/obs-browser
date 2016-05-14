@@ -44,10 +44,7 @@ set(obs-browser_SOURCES
 	obs-browser/main.cpp
 	obs-browser/main-source.cpp
 	shared/browser-source.cpp
-	shared/base64.cpp
-	obs-browser/browser-load-handler.cpp
-	shared/browser-scheme.cpp
-)
+	shared/base64.cpp)
 
 set(obs-browser_HEADERS
 	shared/browser-manager.hpp
@@ -56,8 +53,6 @@ set(obs-browser_HEADERS
 	shared/browser-settings.hpp
 	shared/browser-types.h
 	shared/base64.hpp
-	obs-browser/browser-load-handler.hpp
-	shared/browser-scheme.hpp
 	shared/browser-types.h)
 
 if (APPLE)
@@ -94,7 +89,9 @@ else (APPLE)
 		obs-browser/browser-source-listener-base.cpp
 		obs-browser/browser-manager-base.cpp
 		obs-browser/browser-render-handler.cpp
-		obs-browser/browser-source-base.cpp)
+		obs-browser/browser-source-base.cpp
+		obs-browser/browser-load-handler.cpp
+		shared/browser-scheme.cpp)
 
 	list(APPEND obs-browser_HEADERS
 		shared/browser-client.hpp
@@ -103,7 +100,9 @@ else (APPLE)
 		obs-browser/browser-source-listener-base.hpp
 		obs-browser/browser-manager-base.hpp
 		obs-browser/browser-render-handler.hpp
-		obs-browser/browser-source-base.hpp)
+		obs-browser/browser-source-base.hpp
+		obs-browser/browser-load-handler.hpp
+		shared/browser-scheme.hpp)
 
 endif(APPLE)
 
@@ -127,7 +126,7 @@ target_include_directories(obs-browser PRIVATE
 
 if (APPLE)
 	target_include_directories(obs-browser PUBLIC 
-		"shared-apple" ${CEF_INCLUDE_DIR})
+		"shared-apple")
 else(APPLE)
 	target_include_directories_system(obs-browser PUBLIC ${CEF_INCLUDE_DIR})
 endif(APPLE)
@@ -147,8 +146,7 @@ else(NOT APPLE)
 	list(APPEND obs-browser_LIBRARIES 
 		${COCOA_FRAMEWORK} 
 		${APPKIT_FRAMEWORK}
-		${IOSURFACE_FRAMEWORK}
-		${CEF_LIBRARIES})
+		${IOSURFACE_FRAMEWORK})
 endif(NOT APPLE)
 
 target_link_libraries(obs-browser 
@@ -208,8 +206,7 @@ if(APPLE)
 	target_link_libraries(cef-isolation
 		${CEF_LIBRARIES}
 		${APPKIT_FRAMEWORK}
-		${IOSURFACE_FRAMEWORK}
-		)
+		${IOSURFACE_FRAMEWORK})
 
 endif(APPLE)
 
