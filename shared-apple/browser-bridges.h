@@ -29,6 +29,7 @@ struct obs_key_event;
 @property (readonly)unsigned int width;
 @property (readonly)unsigned int height;
 @property (readonly)unsigned int fps;
+@property (readonly)NSString *css;
 
 + (id)fromBrowserSettings: (const BrowserSettings &)browserSettings;
 

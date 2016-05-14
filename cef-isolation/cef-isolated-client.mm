@@ -31,6 +31,7 @@
 
 #include "browser-handle.h"
 #include "browser-render-handler.hpp"
+#include "obs-browser/browser-load-handler.hpp"
 
 #import "cef-isolated-client.h"
 
@@ -76,9 +77,12 @@ void sync_on_cef_ui(dispatch_block_t block)
 
 		CefRefPtr<BrowserRenderHandler> browserRenderHandler =
 				new BrowserRenderHandler(browserHandle);
+				
+		CefRefPtr<BrowserLoadHandler> loadHandler =
+				new BrowserLoadHandler(std::string([browserSettings.css UTF8String]));
 
 		CefRefPtr<BrowserClient> browserClient =
-				new BrowserClient(browserRenderHandler.get());
+				new BrowserClient(browserRenderHandler.get(),loadHandler);
 
 		CefWindowInfo windowInfo;
 		windowInfo.view = nullptr;

@@ -21,8 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <include/cef_load_handler.h>
 
-#include <obs-module.h>
-
 class BrowserListener;
 
 class BrowserLoadHandler : public CefLoadHandler
@@ -35,7 +33,7 @@ public:
 
 public: /* CefLoadHandler overrides */
 
-	virtual void BrowserLoadHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode) OVERRIDE;
+	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode) OVERRIDE;
 
 private:
 	const std::string css;

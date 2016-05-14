@@ -68,6 +68,11 @@ void BrowserSchemeHandler::GetResponseHeaders(CefRefPtr<CefResponse> response,
 
 	std::string fileExtension = fileName.substr(
 		fileName.find_last_of(".") + 1);
+	
+	if (fileExtension == "woff2") {
+		fileExtension = "woff";
+	}
+	
 	std::transform(fileExtension.begin(), fileExtension.end(),
 			fileExtension.begin(), ::tolower);
 
