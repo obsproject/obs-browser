@@ -86,6 +86,7 @@ int main (int argc, const char * argv[])
 		
 		settings.log_severity = LOGSEVERITY_DEFAULT;
 		settings.windowless_rendering_enabled = true;
+		settings.remote_debugging_port = 9222;
 
 		CefRefPtr<BrowserApp> app(new BrowserApp());
 
