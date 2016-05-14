@@ -109,9 +109,6 @@ endif(APPLE)
 
 set(obs-browser_LIBRARIES
 	libobs)
-	
-set(libobs_LIBRARIES
-	libobs)
 
 if (APPLE)
 	list(APPEND obs-browser_LIBRARIES
@@ -212,7 +209,6 @@ if(APPLE)
 		${CEF_LIBRARIES}
 		${APPKIT_FRAMEWORK}
 		${IOSURFACE_FRAMEWORK}
-		${libobs_LIBRARIES}
 		)
 
 endif(APPLE)
@@ -285,15 +281,13 @@ if (APPLE)
 
 	add_custom_command(TARGET cef-isolation POST_BUILD
 		# Remember if you change this but don't cause a recompile in the shared object it will not rename it successfully
-		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:cef-isolation>"
-		COMMAND install_name_tool -change "@rpath/libobs.0.dylib" "@executable_path/../Frameworks/libobs.0.dylib" "$<TARGET_FILE:cef-isolation>"		
+		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:cef-isolation>"		
 
 		# Make a Frameworks directory
 		COMMAND mkdir -p "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks"
 
 		# Copy the CEF and support frameworks
 		COMMAND cp -Rf "${CEF_ROOT_DIR}/Release/Chromium Embedded Framework.framework" "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks/"
-		COMMAND cp -Rf "$<TARGET_FILE_DIR:cef-isolation>/../../../../../libobs/libobs.0.dylib" "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks/"
 
 		# Setup the helper apps
 		COMMAND rm -rf "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks/CEF Helper.app"

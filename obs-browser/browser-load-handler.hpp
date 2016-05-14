@@ -21,8 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <include/cef_load_handler.h>
 
-#include <obs-module.h>
-
 class BrowserListener;
 
 class BrowserLoadHandler : public CefLoadHandler
