@@ -37,8 +37,12 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 	const CefString& process_type,
 	CefRefPtr<CefCommandLine> command_line)
 {
+	bool enablegpu = command_line->HasSwitch("enable-gpu");
 	command_line->AppendSwitch("enable-system-flash");
-	command_line->AppendSwitch("disable-gpu");
-	command_line->AppendSwitch("disable-gpu-compositing");
+	if (!enablegpu)
+	{
+		command_line->AppendSwitch("disable-gpu");
+		command_line->AppendSwitch("disable-gpu-compositing");
+	}
 	command_line->AppendSwitch("enable-begin-frame-scheduling");
 }
