@@ -67,6 +67,7 @@ public:
 	void SendKeyClick(const struct obs_key_event *event, bool keyUp);
 	std::shared_ptr<BrowserListener> CreateListener();
 
+	void ExecuteVisiblityJSCallback(bool visible);
 
 private:
 	class Impl;

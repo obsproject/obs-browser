@@ -54,6 +54,8 @@ public:
 
 	void PushEvent(std::function<void()> event);
 
+	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
+
 private: 
 	void ExecuteOnBrowser(int browserIdentifier, 
 			std::function<void(CefRefPtr<CefBrowser>)> f, 

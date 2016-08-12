@@ -59,6 +59,8 @@ public:
 	void SetModulePath(const char *path) { this->path = path; }
 	const char *GetModulePath() { return path; }
 
+	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
+
 private:
 	class Impl;
 	std::unique_ptr<Impl> pimpl;

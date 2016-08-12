@@ -287,6 +287,20 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 	 }];
 }
 
+- (void)executeVisiblityJSCallback:(const int)browserIdentifier visible:(BOOL)visible
+{
+	[self sendEvent:browserIdentifier
+		  event:^(SharedBrowserHandle browserHandle)
+	{
+		CefRefPtr<CefBrowser> browser = browserHandle->GetBrowser();
+
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Visibility");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetBool(0, visible);
+		browser->SendProcessMessage(PID_RENDERER, msg);
+	}];
+}
+
 - (void)destroyBrowser:(const int)browserIdentifier {
 	if (map.count(browserIdentifier) == 1) {
 		std::shared_ptr<BrowserHandle> browserHandle =

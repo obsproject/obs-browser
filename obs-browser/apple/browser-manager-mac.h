@@ -49,6 +49,8 @@ public:
 	void SendFocus(int browserIdentifier, bool focus);
 	void SendKeyClick(const int browserIdentifier,
 			const struct obs_key_event *event, bool keyUp);
+	
+	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
 
 private:
 	std::unique_ptr<CEFIsolationServiceManager> cefIsolationServiceManager;

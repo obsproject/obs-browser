@@ -130,23 +130,31 @@ static const char *browser_source_get_name(void *)
 	return obs_module_text("BrowserSource");
 }
 
+// Called when the source is visible
 static void browser_source_show(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
-	if ( bs->GetShutdown() )
+	if ( bs->GetShutdown() ) {
 		bs->UpdateBrowser();
-	
+	}
+	else {
+		bs->ExecuteVisiblityJSCallback(true);
+	}
 }
 
+// Called when the source is no longer visible
 static void browser_source_hide(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
-	if (bs->GetShutdown())
+	if (bs->GetShutdown()) {
 		BrowserManager::Instance()->DestroyBrowser(bs->GetBrowserIdentifier());
+	}
+	else {
+		bs->ExecuteVisiblityJSCallback(false);
+	}
 }
-
 
 static void *browser_source_create(obs_data_t *settings, obs_source_t *source)
 {
