@@ -51,7 +51,7 @@ public:
 
 
 private:
-	std::wstring fileName;
+	std::string fileName;
 	std::ifstream inputStream;
 	bool isComplete;
 	int64 length;
