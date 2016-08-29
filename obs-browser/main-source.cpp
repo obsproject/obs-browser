@@ -130,7 +130,7 @@ static const char *browser_source_get_name(void *)
 	return obs_module_text("BrowserSource");
 }
 
-static void browser_source_activate(void *data)
+static void browser_source_show(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
@@ -139,7 +139,7 @@ static void browser_source_activate(void *data)
 	
 }
 
-static void browser_source_deactivate(void *data)
+static void browser_source_hide(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
@@ -168,7 +168,6 @@ static void browser_source_destroy(void *data)
 
 static void browser_source_render(void *data, gs_effect_t *effect)
 {
-
 	UNUSED_PARAMETER(effect);
 
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
@@ -179,7 +178,6 @@ static void browser_source_render(void *data, gs_effect_t *effect)
 	}
 
 	bs->RenderActiveTexture(effect);
-
 }
 
 static void browser_source_mouse_click(void *data,
@@ -246,8 +244,8 @@ create_browser_source_info()
 	browser_source_info.get_properties = browser_source_get_properties;
 	browser_source_info.get_defaults = browser_source_get_defaults;
 	browser_source_info.video_render = browser_source_render;
-	browser_source_info.activate = browser_source_activate;
-	browser_source_info.deactivate = browser_source_deactivate;
+	browser_source_info.show = browser_source_show;
+	browser_source_info.hide = browser_source_hide;
 
 	return browser_source_info;
 }
