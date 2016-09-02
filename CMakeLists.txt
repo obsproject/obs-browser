@@ -53,7 +53,8 @@ set(obs-browser_HEADERS
 	shared/browser-settings.hpp
 	shared/browser-types.h
 	shared/base64.hpp
-	shared/browser-types.h)
+	shared/browser-types.h
+	shared/browser-version.h)
 
 if (APPLE)
 	list(APPEND obs-browser_SOURCES

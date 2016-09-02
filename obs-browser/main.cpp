@@ -17,6 +17,7 @@
 
 #include <obs-module.h>
 
+#include "browser-version.h"
 #include "browser-manager.hpp"
 
 OBS_DECLARE_MODULE()
@@ -27,6 +28,8 @@ struct obs_source_info browser_source_info;
 
 bool obs_module_load(void)
 {
+    blog(LOG_INFO, "[browser_source: 'Version: %s']", OBS_BROWSER_VERSION);
+
 	browser_source_info = create_browser_source_info();
 
 	BrowserManager::Instance()->SetModulePath(
@@ -34,6 +37,7 @@ bool obs_module_load(void)
 
 	BrowserManager::Instance()->Startup();
 	obs_register_source(&browser_source_info);
+
 	return true;
 }
 
