@@ -6,10 +6,10 @@ CEF Based obs-studio browser plugin
 
 obs-browser provides a global object that allows access to some obs specific functionality from javascript.
 
-### Get OBS Studio Version
+### Get OBS Studio Browser Plugin Version
 ```
-window.obsstudio.version
-// => 0.14.2
+window.obsstudio.pluginVersion
+// => 1.24.0
 ```
 
 ### Register for visibility callbacks

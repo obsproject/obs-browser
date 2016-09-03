@@ -24,6 +24,7 @@
 #include "include/cef_browser.h"
 #include "include/cef_command_line.h"
 #include "include/wrapper/cef_helpers.h"
+#include "browser-version.h"
 
 BrowserApp::BrowserApp(){
 }
@@ -66,9 +67,8 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	CefRefPtr<CefV8Value> obsStudioObj = CefV8Value::CreateObject(0);
 	globalObj->SetValue("obsstudio", obsStudioObj, V8_PROPERTY_ATTRIBUTE_NONE);
 
-	// Figure out how to get OBS version here
-	CefRefPtr<CefV8Value> version = CefV8Value::CreateString("0.0.0");
-	obsStudioObj->SetValue("version", version, V8_PROPERTY_ATTRIBUTE_NONE);
+	CefRefPtr<CefV8Value> pluginVersion = CefV8Value::CreateString(OBS_BROWSER_VERSION);
+	obsStudioObj->SetValue("pluginVersion", pluginVersion, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
