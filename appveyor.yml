@@ -1,0 +1,38 @@
+environment:
+  FFMPEG_VERSION: 3.0.1
+  CURL_VERSION: 7.39.0
+  matrix:
+    - VSVER: Visual Studio 14 2015 Win64  
+
+platform: x64
+configuration: Debug
+
+install:
+  - git clone  --recursive https://github.com/jp9000/obs-studio.git c:\projects\obs-studio
+  - cd c:\
+  - mv c:\projects\obs-browser c:\projects\obs-studio\plugins\obs-browser
+  - echo add_subdirectory(obs-browser) > c:\projects\obs-studio\plugins\CMakeLists.txt
+  - curl -kLO http://opensource.spotify.com/cefbuilds/cef_binary_3.2704.1434.gec3e9ed_windows64.tar.bz2
+  - 7z x cef_binary_3.2704.1434.gec3e9ed_windows64.tar.bz2 -oc:\projects\cef
+  - 7z x c:\projects\cef\cef_binary_3.2704.1434.gec3e9ed_windows64.tar -oc:\projects\cef
+  - cd c:\projects\cef\cef_binary_3.2704.1434.gec3e9ed_windows64
+  - mkdir build
+  - cd ./build
+  - cmake -G "Visual Studio 14 2015 Win64" ..
+  - msbuild c:\projects\cef\cef_binary_3.2704.1434.gec3e9ed_windows64\build\cef.sln
+  - mkdir libcef_dll
+  - cp c:\projects\cef\cef_binary_3.2704.1434.gec3e9ed_windows64\build\libcef_dll_wrapper\Debug\libcef_dll_wrapper.lib c:\projects\cef\cef_binary_3.2704.1434.gec3e9ed_windows64\build\libcef_dll\libcef_dll_wrapper.lib
+
+  - cd c:\projects\obs-studio
+  - curl -kLO https://obsproject.com/downloads/dependencies2015.zip
+  - 7z x dependencies2015.zip -odependencies2015
+  - set DepsPath=%CD%\dependencies2015\win64
+  - set QTDIR=C:\Qt\5.7\msvc2015_64
+  - mkdir build
+  - cd ./build
+  - cmake -G "Visual Studio 14 2015 Win64" -DCEF_ROOT_DIR=c:\projects\cef\cef_binary_3.2704.1434.gec3e9ed_windows64 ..
+
+build:
+  project: C:\projects\obs-studio\build\obs-studio.sln
+
+
