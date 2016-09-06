@@ -75,6 +75,11 @@ void BrowserManager::SendKeyClick(int browserIdentifier,
 	pimpl->SendKeyClick(browserIdentifier, event, keyUp);
 }
 
+void BrowserManager::ExecuteVisiblityJSCallback(int browserIdentifier, bool visible)
+{
+	pimpl->ExecuteVisiblityJSCallback(browserIdentifier, visible);
+}
+
 BrowserManager::Impl::Impl()
 {
 	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
@@ -98,7 +103,6 @@ int BrowserManager::Impl::CreateBrowser(
 	CefPostTask(TID_UI, BrowserTask::newTask(
 			[&] 
 	{
-
 		CefRefPtr<BrowserRenderHandler> renderHandler(
 				new BrowserRenderHandler(browserSettings.width, 
 				browserSettings.height, browserListener));
@@ -268,6 +272,16 @@ void BrowserManager::Impl::SendKeyClick(int browserIdentifier,
 	});
 }
 
+void BrowserManager::Impl::ExecuteVisiblityJSCallback(int browserIdentifier, bool visible)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
+	{
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Visibility");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetBool(0, visible);
+		b->SendProcessMessage(PID_RENDERER, msg);
+	});
+}
 
 void
 BrowserManager::Impl::Startup() 

@@ -81,6 +81,11 @@ void BrowserManager::SendKeyClick(int browserIdentifier,
 	pimpl->SendKeyClick(browserIdentifier, event, keyUp);
 }
 
+void BrowserManager::ExecuteVisiblityJSCallback(int browserIdentifier, bool visible)
+{
+	pimpl->ExecuteVisiblityJSCallback(browserIdentifier, visible);
+}
+
 int BrowserManager::CreateBrowser(const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
@@ -159,6 +164,11 @@ void BrowserManager::Impl::SendKeyClick(int browserIdentifier,
 {
 	cefIsolationServiceManager->SendKeyClick(browserIdentifier, event,
 		keyUp);
+}
+
+void BrowserManager::Impl::ExecuteVisiblityJSCallback(int browserIdentifier, bool visible)
+{
+	cefIsolationServiceManager->ExecuteVisiblityJSCallback(browserIdentifier, visible);
 }
 
 static BrowserManager *instance;

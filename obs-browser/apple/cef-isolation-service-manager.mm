@@ -235,3 +235,13 @@ void CEFIsolationServiceManager::SendKeyClick(int browserIdentifier,
 	}
 	@catch (NSException *exception) {}
 }
+
+void CEFIsolationServiceManager::ExecuteVisiblityJSCallback(int browserIdentifier, bool visible)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+		[_cefIsolationService client];
+	@try {
+		[cefIsolatedClient executeVisiblityJSCallback:browserIdentifier visible:visible];
+	}
+	@catch (NSException *exception) {}
+}

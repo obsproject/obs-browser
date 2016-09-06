@@ -17,15 +17,22 @@
 
 #include "browser-app.hpp"
 
+#include <iostream>
 #include <string>
 
 #include "cefsimple/simple_handler.h"
 #include "include/cef_browser.h"
 #include "include/cef_command_line.h"
 #include "include/wrapper/cef_helpers.h"
+#include "browser-version.h"
 
-BrowserApp::BrowserApp()
-{}
+BrowserApp::BrowserApp(){
+}
+
+CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
+{
+	return this;
+}
 
 void BrowserApp::OnRegisterCustomSchemes(
 		CefRefPtr<CefSchemeRegistrar> registrar)
@@ -49,4 +56,48 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 	command_line->AppendSwitch("enable-begin-frame-scheduling");
 
 	command_line->AppendSwitch("enable-system-flash");
+}
+
+void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
+		CefRefPtr<CefFrame> frame,
+		CefRefPtr<CefV8Context> context)
+{
+	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
+
+	CefRefPtr<CefV8Value> obsStudioObj = CefV8Value::CreateObject(0);
+	globalObj->SetValue("obsstudio", obsStudioObj, V8_PROPERTY_ATTRIBUTE_NONE);
+
+	CefRefPtr<CefV8Value> pluginVersion = CefV8Value::CreateString(OBS_BROWSER_VERSION);
+	obsStudioObj->SetValue("pluginVersion", pluginVersion, V8_PROPERTY_ATTRIBUTE_NONE);
+}
+
+bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+		CefProcessId source_process,
+		CefRefPtr<CefProcessMessage> message) {
+	DCHECK(source_process == PID_BROWSER);
+
+	if (message->GetName() == "Visibility") {
+		CefRefPtr<CefListValue> args = message->GetArgumentList();
+
+		CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
+
+		context->Enter();
+		
+		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
+
+		CefRefPtr<CefV8Value> obsStudioObj = globalObj->GetValue("obsstudio");
+
+		CefRefPtr<CefV8Value> visibilityFunction = obsStudioObj->GetValue("onVisibilityChange");
+		if (visibilityFunction && visibilityFunction->IsFunction()) {
+			CefV8ValueList arguments;
+			arguments.push_back(CefV8Value::CreateBool(args->GetBool(0)));
+			visibilityFunction->ExecuteFunction(NULL, arguments);
+		}
+
+		context->Exit();
+
+		return true;
+	}
+
+	return false;
 }

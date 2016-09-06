@@ -89,3 +89,8 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool keyUp)
 	BrowserManager::Instance()->SendKeyClick(browserIdentifier, event,
 			keyUp);
 }
+
+void BrowserSource::ExecuteVisiblityJSCallback(bool visible)
+{
+	BrowserManager::Instance()->ExecuteVisiblityJSCallback(browserIdentifier, visible);
+}

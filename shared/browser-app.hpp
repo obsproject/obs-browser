@@ -18,19 +18,31 @@
 #pragma once
 
 #include "include/cef_app.h"
+#include <include/cef_render_process_handler.h>
 
-class BrowserApp : public CefApp
+class BrowserApp : public CefApp,
+				   public CefRenderProcessHandler
 {
 
 public:
 	BrowserApp();
 
 public:
+	virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() OVERRIDE;
 	virtual void OnRegisterCustomSchemes(
 			CefRefPtr<CefSchemeRegistrar> registrar) OVERRIDE;
 	virtual void OnBeforeCommandLineProcessing(
 		const CefString& process_type,
 		CefRefPtr<CefCommandLine> command_line) OVERRIDE;
+
+	virtual void OnContextCreated(CefRefPtr<CefBrowser> browser,
+		CefRefPtr<CefFrame> frame,
+		CefRefPtr<CefV8Context> context) OVERRIDE;
+
+	virtual bool OnProcessMessageReceived(
+		CefRefPtr<CefBrowser> browser,
+		CefProcessId source_process,
+		CefRefPtr<CefProcessMessage> message) OVERRIDE;
 
 private:
 	IMPLEMENT_REFCOUNTING(BrowserApp);

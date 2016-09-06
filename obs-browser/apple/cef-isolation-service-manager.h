@@ -56,6 +56,8 @@ public:
 	void SendKeyClick(int browserIdentifier,
 			const struct obs_key_event *event, bool key_up);
 
+	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
+
 public:
 	NSString *GetUniqueClientName() { return _uniqueClientName; }
 
