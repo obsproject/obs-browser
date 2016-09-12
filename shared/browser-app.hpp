@@ -45,6 +45,10 @@ public:
 		CefRefPtr<CefProcessMessage> message) OVERRIDE;
 
 private:
+	virtual void ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
+		const char *functionName,
+        CefV8ValueList arguments);
+	
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 
 };

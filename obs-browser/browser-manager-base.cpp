@@ -80,6 +80,11 @@ void BrowserManager::ExecuteVisiblityJSCallback(int browserIdentifier, bool visi
 	pimpl->ExecuteVisiblityJSCallback(browserIdentifier, visible);
 }
 
+void BrowserManager::ExecuteSceneChangeJSCallback(const char *name)
+{
+	pimpl->ExecuteSceneChangeJSCallback(name);
+}
+
 BrowserManager::Impl::Impl()
 {
 	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
@@ -167,6 +172,29 @@ void BrowserManager::Impl::ExecuteOnBrowser(int browserIdentifier,
 {
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
+		if (async) {
+			CefPostTask(TID_UI, BrowserTask::newTask([&] {
+				f(browser);
+			}));
+		} else {
+			os_event_t *finishedEvent;
+			os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
+			CefPostTask(TID_UI, BrowserTask::newTask([&] {
+				f(browser);
+				os_event_signal(finishedEvent);
+			}));
+			os_event_wait(finishedEvent);
+			os_event_destroy(finishedEvent);
+		}
+	}
+}
+
+void BrowserManager::Impl::ExecuteOnAllBrowsers(
+	std::function<void(CefRefPtr<CefBrowser>)> f, 
+			bool async)
+{
+	for (auto& x: browserMap) {
+		CefRefPtr<CefBrowser> browser = x.second;
 		if (async) {
 			CefPostTask(TID_UI, BrowserTask::newTask([&] {
 				f(browser);
@@ -279,6 +307,17 @@ void BrowserManager::Impl::ExecuteVisiblityJSCallback(int browserIdentifier, boo
 		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Visibility");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetBool(0, visible);
+		b->SendProcessMessage(PID_RENDERER, msg);
+	});
+}
+
+void BrowserManager::Impl::ExecuteSceneChangeJSCallback(const char *name)
+{
+	ExecuteOnAllBrowsers([&](CefRefPtr<CefBrowser> b)
+	{
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SceneChange");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetString(0, name);
 		b->SendProcessMessage(PID_RENDERER, msg);
 	});
 }

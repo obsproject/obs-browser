@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 
 #include "browser-version.h"
 #include "browser-manager.hpp"
@@ -25,6 +26,20 @@ OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
 
 extern struct obs_source_info create_browser_source_info();
 struct obs_source_info browser_source_info;
+
+// Handle events from the frontend
+static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
+{
+	if (event == OBS_FRONTEND_EVENT_SCENE_CHANGED) {
+
+		obs_source_t *source = obs_frontend_get_current_scene();
+
+		const char *name = obs_source_get_name(source);
+
+		BrowserManager::Instance()->ExecuteSceneChangeJSCallback(name);
+		obs_source_release(source);
+	}
+}
 
 bool obs_module_load(void)
 {
@@ -37,6 +52,7 @@ bool obs_module_load(void)
 
 	BrowserManager::Instance()->Startup();
 	obs_register_source(&browser_source_info);
+	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 
 	return true;
 }

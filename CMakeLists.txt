@@ -5,6 +5,8 @@ project(cef-isolation)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
+include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/UI/obs-frontend-api")
+
 include(BSUtils)
 
 find_package(LibObs REQUIRED)
@@ -108,7 +110,8 @@ else (APPLE)
 endif(APPLE)
 
 set(obs-browser_LIBRARIES
-	libobs)
+	libobs
+	obs-frontend-api)
 
 if (APPLE)
 	list(APPEND obs-browser_LIBRARIES

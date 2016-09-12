@@ -19,7 +19,19 @@ window.obsstudio.pluginVersion
  *
  * @param {bool} visiblity - True -> visible, False -> hidden
  */
-window.obsstudio.onVisibilityChange(visiblity) {
+window.obsstudio.onVisibilityChange = function(visiblity) {
+	
+};
+```
+
+### Register for scene change callbacks
+```
+/**
+ * onSceneChange gets callbacks when the scene is changed
+ *
+ * @param {string} sceneName - The name of the scene that was changed to.
+ */
+window.obsstudio.onSceneChange = function(sceneName) {
 	
 };
 ```
