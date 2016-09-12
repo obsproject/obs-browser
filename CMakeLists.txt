@@ -12,6 +12,11 @@ include(BSUtils)
 find_package(LibObs REQUIRED)
 find_package(CEF REQUIRED)
 
+if (WIN32)
+	find_package(Boost REQUIRED COMPONENTS locale)
+endif(WIN32)
+
+
 if(MSVC)
 	option(USE_STATIC_CRT "Use static CRT" ON)
 
@@ -152,6 +157,10 @@ else(NOT APPLE)
 		${APPKIT_FRAMEWORK}
 		${IOSURFACE_FRAMEWORK})
 endif(NOT APPLE)
+
+if (WIN32)
+	target_include_directories(obs-browser PUBLIC ${Boost_INCLUDE_DIRS})
+endif(WIN32)
 
 target_link_libraries(obs-browser 
         ${obs-browser_LIBRARIES})
