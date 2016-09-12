@@ -56,9 +56,14 @@ public:
 
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
 
+	void ExecuteSceneChangeJSCallback(const char *name);
+
 private: 
 	void ExecuteOnBrowser(int browserIdentifier, 
 			std::function<void(CefRefPtr<CefBrowser>)> f, 
+			bool async = false);
+
+	void ExecuteOnAllBrowsers(std::function<void(CefRefPtr<CefBrowser>)> f, 
 			bool async = false);
 
 private:

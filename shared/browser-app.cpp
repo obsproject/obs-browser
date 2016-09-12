@@ -71,31 +71,45 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("pluginVersion", pluginVersion, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
+void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
+		const char *functionName,
+		CefV8ValueList arguments)
+{
+	CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
+
+	context->Enter();
+	
+	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
+
+	CefRefPtr<CefV8Value> obsStudioObj = globalObj->GetValue("obsstudio");
+
+	CefRefPtr<CefV8Value> jsFunction = obsStudioObj->GetValue(functionName);
+	if (jsFunction && jsFunction->IsFunction()) {
+		jsFunction->ExecuteFunction(NULL, arguments);
+	}
+
+	context->Exit();
+}
+
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		CefProcessId source_process,
 		CefRefPtr<CefProcessMessage> message) {
 	DCHECK(source_process == PID_BROWSER);
 
+	CefRefPtr<CefListValue> args = message->GetArgumentList();
+
 	if (message->GetName() == "Visibility") {
-		CefRefPtr<CefListValue> args = message->GetArgumentList();
+		CefV8ValueList arguments;
+		arguments.push_back(CefV8Value::CreateBool(args->GetBool(0)));
 
-		CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
+		ExecuteJSFunction(browser, "onVisibilityChange", arguments);
+		return true;
+	}
+	else if (message->GetName() == "SceneChange") {
+		CefV8ValueList arguments;
+		arguments.push_back(CefV8Value::CreateString(args->GetString(0)));
 
-		context->Enter();
-		
-		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
-
-		CefRefPtr<CefV8Value> obsStudioObj = globalObj->GetValue("obsstudio");
-
-		CefRefPtr<CefV8Value> visibilityFunction = obsStudioObj->GetValue("onVisibilityChange");
-		if (visibilityFunction && visibilityFunction->IsFunction()) {
-			CefV8ValueList arguments;
-			arguments.push_back(CefV8Value::CreateBool(args->GetBool(0)));
-			visibilityFunction->ExecuteFunction(NULL, arguments);
-		}
-
-		context->Exit();
-
+		ExecuteJSFunction(browser , "onSceneChange", arguments);
 		return true;
 	}
 

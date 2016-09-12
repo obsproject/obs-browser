@@ -86,6 +86,11 @@ void BrowserManager::ExecuteVisiblityJSCallback(int browserIdentifier, bool visi
 	pimpl->ExecuteVisiblityJSCallback(browserIdentifier, visible);
 }
 
+void BrowserManager::ExecuteSceneChangeJSCallback(const char *name)
+{
+	pimpl->ExecuteSceneChangeJSCallback(name);
+}
+
 int BrowserManager::CreateBrowser(const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
@@ -169,6 +174,11 @@ void BrowserManager::Impl::SendKeyClick(int browserIdentifier,
 void BrowserManager::Impl::ExecuteVisiblityJSCallback(int browserIdentifier, bool visible)
 {
 	cefIsolationServiceManager->ExecuteVisiblityJSCallback(browserIdentifier, visible);
+}
+
+void BrowserManager::Impl::ExecuteSceneChangeJSCallback(const char *name)
+{
+	cefIsolationServiceManager->ExecuteSceneChangeJSCallback(name);
 }
 
 static BrowserManager *instance;

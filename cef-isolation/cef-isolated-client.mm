@@ -133,6 +133,16 @@ typedef void(^event_block_t)(std::shared_ptr<BrowserHandle>);
 	}
 }
 
+- (void)sendEventToAllBrowsers:(event_block_t)event
+{
+    for (auto& x: map) {
+		SharedBrowserHandle browserHandle = x.second;
+		sync_on_cef_ui(^{
+			event(browserHandle);
+		});
+	}
+}
+
 - (void)sendMouseClick:(const int)browserIdentifier
 	event:(ObsMouseEventBridge *)event type:(const int)type
 	mouseUp:(BOOL)mouseUp clickCount:(const int)clickCount
@@ -297,6 +307,19 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Visibility");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetBool(0, visible);
+		browser->SendProcessMessage(PID_RENDERER, msg);
+	}];
+}
+
+- (void)executeSceneChangeJSCallback:(const char *)name
+{
+	[self sendEventToAllBrowsers:^(SharedBrowserHandle browserHandle)
+	{
+		CefRefPtr<CefBrowser> browser = browserHandle->GetBrowser();
+
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("SceneChange");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetString(0, name);
 		browser->SendProcessMessage(PID_RENDERER, msg);
 	}];
 }

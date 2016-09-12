@@ -58,6 +58,8 @@ public:
 
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
 
+	void ExecuteSceneChangeJSCallback(const char *name);
+
 public:
 	NSString *GetUniqueClientName() { return _uniqueClientName; }
 

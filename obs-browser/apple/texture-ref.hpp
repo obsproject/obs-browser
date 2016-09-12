@@ -19,6 +19,7 @@
 
 #include <obs-module.h>
 #import <Foundation/Foundation.h>
+#import <IOSurface/IOSurfaceAPI.h>
 
 class TextureRef {
 public:
