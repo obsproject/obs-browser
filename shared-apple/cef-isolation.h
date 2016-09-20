@@ -18,6 +18,7 @@
 #pragma once
 
 #import <Foundation/Foundation.h>
+#include <jansson.h>
 
 #include "browser-types.h"
 
@@ -54,6 +55,10 @@
 - (void)sendKeyClick:(int) browserIdentifier
 		event:(bycopy ObsKeyEventBridge *)event keyUp:(BOOL)keyUp;
 - (void)refreshPageNoCache:(const int)browserIdentifier;
+- (void)executeVisiblityJSCallback:(const int)browserIdentifier
+		visible:(BOOL)visible;
+- (void)executeSceneChangeJSCallback:(const char *)name;
+- (void)dispatchJSEvent:(const char *)eventName data:(const char*) jsonString;
 @end
 
 

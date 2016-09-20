@@ -19,6 +19,7 @@
 
 #include <Foundation/Foundation.h>
 #include <string>
+#include <jansson.h>
 
 @class CEFIsolationService;
 @class ClientConnectionDelegate;
@@ -61,6 +62,8 @@ public:
 	void ExecuteSceneChangeJSCallback(const char *name);
     
     void RefreshPageNoCache(int browserIdentifier);
+
+	void DispatchJSEvent(const char *eventName, const char *jsonData);
 
 public:
 	NSString *GetUniqueClientName() { return _uniqueClientName; }

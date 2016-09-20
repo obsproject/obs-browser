@@ -90,6 +90,11 @@ void BrowserManager::RefreshPageNoCache(int browserIdentifier)
 	pimpl->RefreshPageNoCache(browserIdentifier);
 }
 
+void BrowserManager::DispatchJSEvent(const char *eventName, const char *jsonString)
+{
+	pimpl->DispatchJSEvent(eventName, jsonString);
+}
+
 BrowserManager::Impl::Impl()
 {
 	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
@@ -332,6 +337,18 @@ void BrowserManager::Impl::RefreshPageNoCache(int browserIdentifier)
 	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
 	{
 		b->ReloadIgnoreCache();
+	});
+}
+
+void BrowserManager::Impl::DispatchJSEvent(const char *eventName, const char *jsonString)
+{
+	ExecuteOnAllBrowsers([&](CefRefPtr<CefBrowser> b)
+	{
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("DispatchJSEvent");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetString(0, eventName);
+		args->SetString(0, jsonString);
+		b->SendProcessMessage(PID_RENDERER, msg);
 	});
 }
 

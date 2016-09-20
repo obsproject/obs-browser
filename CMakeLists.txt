@@ -94,7 +94,8 @@ else (APPLE)
 		obs-browser/browser-render-handler.cpp
 		obs-browser/browser-source-base.cpp
 		obs-browser/browser-load-handler.cpp
-		shared/browser-scheme.cpp)
+		shared/browser-scheme.cpp
+		fmt/format.cc)
 
 	list(APPEND obs-browser_HEADERS
 		shared/browser-client.hpp
@@ -105,13 +106,15 @@ else (APPLE)
 		obs-browser/browser-render-handler.hpp
 		obs-browser/browser-source-base.hpp
 		obs-browser/browser-load-handler.hpp
-		shared/browser-scheme.hpp)
+		shared/browser-scheme.hpp
+		fmt/format.h)
 
 endif(APPLE)
 
 set(obs-browser_LIBRARIES
 	libobs
-	obs-frontend-api)
+	obs-frontend-api
+	${OBS_JANSSON_IMPORT})
 
 if (APPLE)
 	list(APPEND obs-browser_LIBRARIES
@@ -128,12 +131,16 @@ target_include_directories(obs-browser PRIVATE
 	"obs-browser" 
 	"shared")
 
+target_include_directories(obs-browser PUBLIC
+	${OBS_JANSSON_INCLUDE_DIRS})
+
 if (APPLE)
 	target_include_directories(obs-browser PUBLIC 
 		"shared-apple")
-else(APPLE)
+else (APPLE)
 	target_include_directories_system(obs-browser PUBLIC ${CEF_INCLUDE_DIR})
 endif(APPLE)
+
 
 if (APPLE)
 	set_xcode_property(obs-browser CLANG_CXX_LIBRARY "libc++")
@@ -169,7 +176,8 @@ if(APPLE)
 		shared/browser-app.cpp
 		shared/browser-scheme.cpp
 		shared/base64.cpp
-		obs-browser/browser-load-handler.cpp)
+		obs-browser/browser-load-handler.cpp
+		fmt/format.cc)
 
 	set(cef-isolation_HEADERS
 		shared-apple/cef-logging.h
@@ -205,10 +213,14 @@ if(APPLE)
 		"shared"
 		"shared-apple")
 	
-	target_include_directories_system(cef-isolation PUBLIC ${CEF_INCLUDE_DIR})
+	target_include_directories_system(cef-isolation
+		PUBLIC
+			${CEF_INCLUDE_DIR}
+			${OBS_JANSSON_INCLUDE_DIRS})
 	
 	target_link_libraries(cef-isolation
 		${CEF_LIBRARIES}
+		${OBS_JANSSON_IMPORT}
 		${APPKIT_FRAMEWORK}
 		${IOSURFACE_FRAMEWORK})
 
@@ -216,10 +228,12 @@ endif(APPLE)
 
 set(cef-bootstrap_SOURCES
 	cef-bootstrap/main.cpp
-	shared/browser-app.cpp)
+	shared/browser-app.cpp
+	fmt/format.cc)
 
 set(cef-bootstrap_HEADERS
-	shared/browser-app.hpp)
+	shared/browser-app.hpp
+	fmt/format.h)
 
 add_executable(cef-bootstrap 
 	${cef-bootstrap_SOURCES} 
@@ -239,10 +253,14 @@ if (APPLE AND XCODE)
 endif(APPLE AND XCODE)
 
 target_include_directories(cef-bootstrap PRIVATE "shared")
-target_include_directories_system(cef-bootstrap PUBLIC ${CEF_INCLUDE_DIR})
+target_include_directories_system(cef-bootstrap
+	PUBLIC
+		${CEF_INCLUDE_DIR}
+		${OBS_JANSSON_INCLUDE_DIRS})
 
 target_link_libraries(cef-bootstrap
-	${CEF_LIBRARIES})
+	${CEF_LIBRARIES}
+	${OBS_JANSSON_IMPORT})
 
 if (APPLE)
 
@@ -250,7 +268,7 @@ if (APPLE)
 		OUTPUT_NAME "CEF"
 		MACOSX_BUNDLE TRUE
 		BUILD_WITH_INSTALL_RPATH TRUE
-		INSTALL_RPATH "@loader_path/../Frameworks"
+		INSTALL_RPATH "@executable_path/.."
 		MACOSX_BUNDLE_BUNDLE_NAME "CEF Helper"
 		MACOSX_BUNDLE_GUI_IDENTIFIER "org.catchexception.cef.cef-isolation")
 
@@ -258,7 +276,7 @@ if (APPLE)
 		OUTPUT_NAME "CEF Helper"
 		MACOSX_BUNDLE TRUE
 		BUILD_WITH_INSTALL_RPATH TRUE
-		INSTALL_RPATH "@loader_path/../../../"
+		INSTALL_RPATH "@executable_path/../../../.."
 		MACOSX_BUNDLE_BUNDLE_NAME "CEF Helper"
 		MACOSX_BUNDLE_GUI_IDENTIFIER "org.catchexception.cef.cef-bootstrap")
 

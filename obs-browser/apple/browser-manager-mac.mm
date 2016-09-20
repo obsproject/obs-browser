@@ -96,6 +96,11 @@ void BrowserManager::RefreshPageNoCache(int browserIdentifier)
     pimpl->RefreshPageNoCache(browserIdentifier);
 }
 
+void BrowserManager::DispatchJSEvent(const char *name, const char *jsonData)
+{
+	pimpl->DispatchJSEvent(name, jsonData);
+}
+
 int BrowserManager::CreateBrowser(const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
@@ -189,6 +194,11 @@ void BrowserManager::Impl::ExecuteSceneChangeJSCallback(const char *name)
 void BrowserManager::Impl::RefreshPageNoCache(int browserIdentifier)
 {
     cefIsolationServiceManager->RefreshPageNoCache(browserIdentifier);
+}
+
+void BrowserManager::Impl::DispatchJSEvent(const char *eventName, const char *jsonData)
+{
+	cefIsolationServiceManager->DispatchJSEvent(eventName, jsonData);
 }
 
 static BrowserManager *instance;

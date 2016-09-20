@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #include <include/cef_app.h>
 #include <include/cef_browser.h>
@@ -286,13 +287,7 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 				return;
 			}
 
-			host->HandleKeyEventBeforeTextInputClient(nsEvent);
-
-			NSTextInputContext *inputContext =
-					host->GetNSTextInputContext();
-			[inputContext handleEvent:nsEvent];
-
-			host->HandleKeyEventAfterTextInputClient(nsEvent);
+			host->SendKeyEvent(keyEvent);
 		}
 	 }];
 }
@@ -335,7 +330,20 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
      }];
 }
 
+-(void)dispatchJSEvent:(const char *)eventName data:(const char *)jsonString
+{
+	[self sendEventToAllBrowsers:^(SharedBrowserHandle browserHandle)
+	{
+		CefRefPtr<CefBrowser> browser = browserHandle->GetBrowser();
 
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("DispatchJSEvent");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetString(0, eventName);
+		args->SetString(1, jsonString);
+
+		browser->SendProcessMessage(PID_RENDERER, msg);
+	}];
+}
 
 - (void)destroyBrowser:(const int)browserIdentifier {
 	if (map.count(browserIdentifier) == 1) {

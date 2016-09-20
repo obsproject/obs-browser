@@ -19,8 +19,9 @@
 
 #include <iostream>
 #include <string>
+#include <jansson.h>
 
-#include "cefsimple/simple_handler.h"
+#include "fmt/format.h"
 #include "include/cef_browser.h"
 #include "include/cef_command_line.h"
 #include "include/wrapper/cef_helpers.h"
@@ -64,7 +65,7 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 {
 	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
 
-	CefRefPtr<CefV8Value> obsStudioObj = CefV8Value::CreateObject(0);
+	CefRefPtr<CefV8Value> obsStudioObj = CefV8Value::CreateObject(0, 0);
 	globalObj->SetValue("obsstudio", obsStudioObj, V8_PROPERTY_ATTRIBUTE_NONE);
 
 	CefRefPtr<CefV8Value> pluginVersion = CefV8Value::CreateString(OBS_BROWSER_VERSION);
@@ -93,7 +94,8 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		CefProcessId source_process,
-		CefRefPtr<CefProcessMessage> message) {
+		CefRefPtr<CefProcessMessage> message)
+{
 	DCHECK(source_process == PID_BROWSER);
 
 	CefRefPtr<CefListValue> args = message->GetArgumentList();
@@ -105,11 +107,45 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		ExecuteJSFunction(browser, "onVisibilityChange", arguments);
 		return true;
 	}
-	else if (message->GetName() == "SceneChange") {
-		CefV8ValueList arguments;
-		arguments.push_back(CefV8Value::CreateString(args->GetString(0)));
+	else if (message->GetName() == "DispatchJSEvent") {       
+		CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
 
-		ExecuteJSFunction(browser , "onSceneChange", arguments);
+		context->Enter();
+
+		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
+
+		json_t *json = json_object();
+        
+		if (args->GetSize() > 1) {
+			json_error_t error;
+
+			json_object_set_new(json, "detail", json_loads(args->GetString(1).ToString().c_str(), 0, &error));
+		}
+
+		char *jsonString = json_dumps(json, 0);
+
+		std::string script = fmt::format(
+			"new CustomEvent('{}', {});", 
+			args->GetString(0).ToString(),
+			jsonString);
+
+		free(jsonString);
+
+		CefRefPtr<CefV8Value> returnValue;
+		CefRefPtr<CefV8Exception> exception;
+
+		// Create the CustomEvent object
+		// We have to use eval to invoke the new operator
+		context->Eval(script, browser->GetMainFrame()->GetURL(), 0, returnValue, exception);
+
+		CefV8ValueList arguments;
+		arguments.push_back(returnValue);
+
+		CefRefPtr<CefV8Value> dispatchEvent = globalObj->GetValue("dispatchEvent");
+		dispatchEvent->ExecuteFunction(NULL, arguments);
+
+		context->Exit();
+
 		return true;
 	}
 
