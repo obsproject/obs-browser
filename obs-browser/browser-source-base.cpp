@@ -28,7 +28,6 @@
 BrowserSource::BrowserSource(obs_data_t *settings, obs_source_t *source)
 : pimpl(new Impl(this)), source(source), browserIdentifier(0)
 {
-	pthread_mutex_init(&textureLock, NULL);
 	UpdateSettings(settings);
 }
 
@@ -38,7 +37,6 @@ BrowserSource::~BrowserSource()
 	if (browserIdentifier != 0) {
 		BrowserManager::Instance()->DestroyBrowser(browserIdentifier);
 	}
-	pthread_mutex_destroy(&textureLock);
 }
 
 std::shared_ptr<BrowserListener> BrowserSource::CreateListener()

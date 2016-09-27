@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <string>
 
-#include <pthread.h>
+#include <mutex>
 
 #include <obs-module.h>
 #include <util/platform.h>
@@ -51,8 +51,8 @@ public:
 
 	int GetBrowserIdentifier() const { return browserIdentifier; }
 
-	void LockTexture() { pthread_mutex_lock(&textureLock); }
-	void UnlockTexture() { pthread_mutex_unlock(&textureLock); }
+	void LockTexture() { textureLock.lock(); }
+	void UnlockTexture() { textureLock.unlock(); }
 
 	void RenderActiveTexture(gs_effect_t *effect);
 	void InvalidateActiveTexture();
@@ -84,6 +84,5 @@ private:
 
 	int browserIdentifier;
 
-	pthread_mutex_t textureLock;
-
+	std::mutex textureLock;
 };
