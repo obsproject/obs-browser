@@ -52,6 +52,7 @@ public:
 	inline int GetBrowserIdentifier() const { return browserIdentifier; }
 
 	inline void LockTexture() { textureLock.lock(); }
+	inline bool TryLockTexture() { return textureLock.try_lock(); }
 	inline void UnlockTexture() { textureLock.unlock(); }
 
 	void RenderActiveTexture(gs_effect_t *effect);
