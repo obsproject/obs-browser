@@ -42,17 +42,17 @@ public:
 	void UpdateBrowser();
 
 public:
-	const std::string& GetUrl() const { return url; }
-	const std::string& GetCss() const { return css; }
-	uint32_t GetWidth() const { return width; }
-	uint32_t GetHeight() const { return height; }
-	obs_source_t *GetSource() const { return source; }
-	const bool GetShutdown() const { return shutdown; }
+	inline const std::string& GetUrl() const { return url; }
+	inline const std::string& GetCss() const { return css; }
+	inline uint32_t GetWidth() const { return width; }
+	inline uint32_t GetHeight() const { return height; }
+	inline obs_source_t *GetSource() const { return source; }
+	inline const bool GetShutdown() const { return shutdown; }
 
-	int GetBrowserIdentifier() const { return browserIdentifier; }
+	inline int GetBrowserIdentifier() const { return browserIdentifier; }
 
-	void LockTexture() { textureLock.lock(); }
-	void UnlockTexture() { textureLock.unlock(); }
+	inline void LockTexture() { textureLock.lock(); }
+	inline void UnlockTexture() { textureLock.unlock(); }
 
 	void RenderActiveTexture(gs_effect_t *effect);
 	void InvalidateActiveTexture();
