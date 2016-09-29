@@ -53,6 +53,8 @@ public:
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
 
 	void ExecuteSceneChangeJSCallback(const char *name);
+    
+    void RefreshPageNoCache(int browserIdentifier);
 
 private:
 	std::unique_ptr<CEFIsolationServiceManager> cefIsolationServiceManager;

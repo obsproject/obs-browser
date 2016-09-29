@@ -248,10 +248,24 @@ void CEFIsolationServiceManager::ExecuteVisiblityJSCallback(int browserIdentifie
 
 void CEFIsolationServiceManager::ExecuteSceneChangeJSCallback(const char *name)
 {
+    id<CEFIsolatedClient> cefIsolatedClient =
+    [_cefIsolationService client];
+    @try {
+        [cefIsolatedClient executeSceneChangeJSCallback:name];
+    }
+    @catch (NSException *exception) {}
+}
+
+void CEFIsolationServiceManager::RefreshPageNoCache(int browserIdentifier)
+{
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
 	@try {
-		[cefIsolatedClient executeSceneChangeJSCallback:name];
+		[cefIsolatedClient refreshPageNoCache:browserIdentifier];
 	}
 	@catch (NSException *exception) {}
 }
+
+
+
+

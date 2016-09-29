@@ -91,6 +91,11 @@ void BrowserManager::ExecuteSceneChangeJSCallback(const char *name)
 	pimpl->ExecuteSceneChangeJSCallback(name);
 }
 
+void BrowserManager::RefreshPageNoCache(int browserIdentifier)
+{
+    pimpl->RefreshPageNoCache(browserIdentifier);
+}
+
 int BrowserManager::CreateBrowser(const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
@@ -179,6 +184,11 @@ void BrowserManager::Impl::ExecuteVisiblityJSCallback(int browserIdentifier, boo
 void BrowserManager::Impl::ExecuteSceneChangeJSCallback(const char *name)
 {
 	cefIsolationServiceManager->ExecuteSceneChangeJSCallback(name);
+}
+
+void BrowserManager::Impl::RefreshPageNoCache(int browserIdentifier)
+{
+    cefIsolationServiceManager->RefreshPageNoCache(browserIdentifier);
 }
 
 static BrowserManager *instance;

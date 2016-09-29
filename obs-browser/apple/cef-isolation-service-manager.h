@@ -59,6 +59,8 @@ public:
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
 
 	void ExecuteSceneChangeJSCallback(const char *name);
+    
+    void RefreshPageNoCache(int browserIdentifier);
 
 public:
 	NSString *GetUniqueClientName() { return _uniqueClientName; }

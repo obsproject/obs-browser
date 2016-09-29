@@ -324,6 +324,19 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 	}];
 }
 
+- (void)refreshPageNoCache:(const int)browserIdentifier
+{
+    [self sendEvent:browserIdentifier
+              event:^(SharedBrowserHandle browserHandle)
+     {
+         CefRefPtr<CefBrowser> browser = browserHandle->GetBrowser();
+         
+         browser->ReloadIgnoreCache();
+     }];
+}
+
+
+
 - (void)destroyBrowser:(const int)browserIdentifier {
 	if (map.count(browserIdentifier) == 1) {
 		std::shared_ptr<BrowserHandle> browserHandle =
