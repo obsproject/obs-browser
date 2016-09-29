@@ -37,7 +37,6 @@ extern "C" {
 BrowserSource::BrowserSource(obs_data_t *settings, obs_source_t *source)
 :  pimpl(new Impl(this)), source(source)
 {
-	pthread_mutex_init(&textureLock, NULL);
 	UpdateSettings(settings);
 }
 
@@ -47,7 +46,6 @@ BrowserSource::~BrowserSource()
 	if (browserIdentifier != 0) {
 		BrowserManager::Instance()->DestroyBrowser(browserIdentifier);
 	}
-	pthread_mutex_destroy(&textureLock);
 }
 
 BrowserSource::Impl::Impl(BrowserSource *parent)
