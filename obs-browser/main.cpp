@@ -43,7 +43,7 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 
 bool obs_module_load(void)
 {
-    blog(LOG_INFO, "[browser_source: 'Version: %s']", OBS_BROWSER_VERSION);
+	blog(LOG_INFO, "[browser_source: 'Version: %s']", OBS_BROWSER_VERSION);
 
 	browser_source_info = create_browser_source_info();
 

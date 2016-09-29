@@ -85,6 +85,11 @@ void BrowserManager::ExecuteSceneChangeJSCallback(const char *name)
 	pimpl->ExecuteSceneChangeJSCallback(name);
 }
 
+void BrowserManager::RefreshPageNoCache(int browserIdentifier)
+{
+	pimpl->RefreshPageNoCache(browserIdentifier);
+}
+
 BrowserManager::Impl::Impl()
 {
 	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
@@ -319,6 +324,14 @@ void BrowserManager::Impl::ExecuteSceneChangeJSCallback(const char *name)
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetString(0, name);
 		b->SendProcessMessage(PID_RENDERER, msg);
+	});
+}
+
+void BrowserManager::Impl::RefreshPageNoCache(int browserIdentifier)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
+	{
+		b->ReloadIgnoreCache();
 	});
 }
 

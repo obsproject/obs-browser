@@ -47,7 +47,7 @@ public:
 private:
 	virtual void ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 		const char *functionName,
-        CefV8ValueList arguments);
+		CefV8ValueList arguments);
 	
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 

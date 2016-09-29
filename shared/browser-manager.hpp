@@ -60,8 +60,10 @@ public:
 	const char *GetModulePath() { return path; }
 
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
-    
-    void ExecuteSceneChangeJSCallback(const char *name);
+	
+	void ExecuteSceneChangeJSCallback(const char *name);
+
+	void RefreshPageNoCache(int browserIdentifier);
 
 private:
 	class Impl;

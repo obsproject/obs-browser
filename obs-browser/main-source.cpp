@@ -42,6 +42,17 @@ static bool restart_button_clicked(obs_properties_t *props,
 	BrowserManager::Instance()->Restart();
 	return true;
 }
+
+static bool refreshnocache_button_clicked(obs_properties_t *props,
+	obs_property_t *property, void *data)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+
+	BrowserManager::Instance()->RefreshPageNoCache(bs->GetBrowserIdentifier());
+	
+	return true;
+}
+
 static bool is_local_file_modified(obs_properties_t *props,
 		obs_property_t *prop, obs_data_t *settings)
 {
@@ -97,6 +108,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_bool(props, "shutdown",
 		obs_module_text("Shutdown when not active"));
 
+	obs_properties_add_button(props, "refreshnocache",
+		obs_module_text("Refresh cache of current page"), refreshnocache_button_clicked);
 
 #ifdef __APPLE__
 	// osx is the only process-isolated cef impl

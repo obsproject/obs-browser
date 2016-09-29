@@ -36,17 +36,17 @@ public:
 	void DestroyBrowser(int browserIdentifier);
 	void TickBrowser(int browserIdentifier);
 
-    void SendMouseClick(int browserIdentifier,
-        const struct obs_mouse_event *event, int32_t type,
-        bool mouse_up, uint32_t click_count);
-    void SendMouseMove(int browserIdentifier,
-        const struct obs_mouse_event *event, bool mouseLeave);
-    void SendMouseWheel(int browserIdentifier,
-        const struct obs_mouse_event *event, int xDelta,
-        int yDelta);
-    void SendFocus(int browserIdentifier, bool focus);
-    void SendKeyClick(int browserIdentifier,
-        const struct obs_key_event *event, bool keyUp);
+	void SendMouseClick(int browserIdentifier,
+		const struct obs_mouse_event *event, int32_t type,
+		bool mouse_up, uint32_t click_count);
+	void SendMouseMove(int browserIdentifier,
+		const struct obs_mouse_event *event, bool mouseLeave);
+	void SendMouseWheel(int browserIdentifier,
+		const struct obs_mouse_event *event, int xDelta,
+		int yDelta);
+	void SendFocus(int browserIdentifier, bool focus);
+	void SendKeyClick(int browserIdentifier,
+		const struct obs_key_event *event, bool keyUp);
 
 	void AddListener(const int browserIdentifier,
 		std::shared_ptr<BrowserListener> browserListener);
@@ -57,6 +57,8 @@ public:
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
 
 	void ExecuteSceneChangeJSCallback(const char *name);
+
+	void RefreshPageNoCache(int browserIdentifier);
 
 private: 
 	void ExecuteOnBrowser(int browserIdentifier, 
