@@ -107,7 +107,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_text(props, "css",
 		obs_module_text("CSS"), OBS_TEXT_MULTILINE);
 	obs_properties_add_bool(props, "shutdown",
-		obs_module_text("Shutdown when not active"));
+		obs_module_text("Shutdown source when not visible"));
 	obs_properties_add_bool(props, "restart_when_active",
 		obs_module_text("Refresh browser when scene becomes active"));
 
