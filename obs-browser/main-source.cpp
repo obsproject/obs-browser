@@ -29,6 +29,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "height", 600);
 	obs_data_set_default_int(settings, "fps", 30);
 	obs_data_set_default_bool(settings, "shutdown", false);
+	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", "body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }");
 }
 
@@ -107,6 +108,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		obs_module_text("CSS"), OBS_TEXT_MULTILINE);
 	obs_properties_add_bool(props, "shutdown",
 		obs_module_text("Shutdown when not active"));
+	obs_properties_add_bool(props, "restart_when_active",
+		obs_module_text("Refresh browser when scene becomes active"));
 
 	obs_properties_add_button(props, "refreshnocache",
 		obs_module_text("Refresh cache of current page"), refreshnocache_button_clicked);
@@ -141,6 +144,21 @@ static uint32_t browser_source_get_height(void *data)
 static const char *browser_source_get_name(void *)
 {
 	return obs_module_text("BrowserSource");
+}
+
+static void browser_source_activate(void *data)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+	obs_data_t *settings = obs_source_get_settings(bs->GetSource());
+	bool restart = obs_data_get_bool(settings, "restart_when_active");
+
+	if (restart)
+		BrowserManager::Instance()->RefreshPageNoCache(bs->GetBrowserIdentifier());
+}
+
+static void browser_source_deactivate(void *data)
+{
+
 }
 
 // Called when the source is visible
@@ -267,6 +285,9 @@ create_browser_source_info()
 	browser_source_info.video_render = browser_source_render;
 	browser_source_info.show = browser_source_show;
 	browser_source_info.hide = browser_source_hide;
+	browser_source_info.activate = browser_source_activate;
+	browser_source_info.deactivate = browser_source_deactivate;
+
 
 	return browser_source_info;
 }
