@@ -11,7 +11,7 @@ find_library(CEF_LIBRARY
 
 find_library(CEFWRAPPER_LIBRARY
 	NAMES cef_dll_wrapper libcef_dll_wrapper
-	PATHS ${CEF_ROOT_DIR}/build/libcef_dll)
+	PATHS ${CEF_ROOT_DIR}/build/libcef_dll ${CEF_ROOT_DIR}/build/libcef_dll_wrapper)
 
 if (NOT CEF_LIBRARY)
 	message(FATAL_ERROR "Could not find the CEF shared library" )
