@@ -14,8 +14,8 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-
 #include <include/cef_render_handler.h>
+#include <util/base.h>
 
 #include "browser-client.hpp"
 #include "browser-obs-bridge.hpp"
@@ -24,6 +24,11 @@ BrowserClient::BrowserClient(CefRenderHandler *renderHandler,
 	CefLoadHandler *loadHandler, BrowserOBSBridge *browserOBSBridge)
 	: renderHandler(renderHandler), loadHandler(loadHandler), browserOBSBridge(browserOBSBridge)
 {
+}
+
+CefRefPtr<CefDisplayHandler> BrowserClient::GetDisplayHandler()
+{
+	return this;
 }
 
 CefRefPtr<CefRenderHandler> BrowserClient::GetRenderHandler()
@@ -120,5 +125,17 @@ bool BrowserClient::OnProcessMessageReceived(
 
 		return true;
 	}
+	return false;
+}
+
+bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser> browser,
+	const CefString& message,
+	const CefString& source,
+	int line)
+{
+	blog(LOG_INFO, "obs-browser: %s (source: %s:%d)",
+			message.ToString().c_str(),
+			source.ToString().c_str(),
+			line);
 	return false;
 }
