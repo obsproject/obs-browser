@@ -14,8 +14,8 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-
 #include <include/cef_render_handler.h>
+#include <util/base.h>
 
 #include "browser-client.hpp"
 
@@ -23,6 +23,11 @@ BrowserClient::BrowserClient(CefRenderHandler *renderHandler,
 	CefLoadHandler *loadHandler)
 	: renderHandler(renderHandler), loadHandler(loadHandler)
 {
+}
+
+CefRefPtr<CefDisplayHandler> BrowserClient::GetDisplayHandler()
+{
+	return this;
 }
 
 CefRefPtr<CefRenderHandler> BrowserClient::GetRenderHandler()
@@ -81,4 +86,13 @@ void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 
 	// remove all context menu contributions
 	model->Clear();
+}
+
+bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser> browser,
+	const CefString& message,
+	const CefString& source,
+	int line)
+{
+	blog( LOG_INFO, "obs-browser: %s (source: %s:%d)", message.ToString( ).c_str( ), source.ToString( ).c_str( ), line );
+	return false;
 }

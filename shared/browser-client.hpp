@@ -24,13 +24,14 @@ class BrowserRenderHandler;
 class BrowserLoadHandler;
 
 class BrowserClient : public CefClient, public CefLifeSpanHandler,
-		public CefContextMenuHandler
+		public CefContextMenuHandler, public CefDisplayHandler
 {
 public:
 	BrowserClient(CefRenderHandler *renderHandler,
 		CefLoadHandler *loadHandler);
 
 public: /* CefClient overrides */
+	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() OVERRIDE;
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() OVERRIDE;
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler()
@@ -52,6 +53,11 @@ public: /* CefContextMenuHandler overrides */
 			CefRefPtr<CefFrame> frame,
 			CefRefPtr<CefContextMenuParams> params,
 			CefRefPtr<CefMenuModel> model);
+public: /* CefDisplayHandler overrides */
+	virtual bool OnConsoleMessage(CefRefPtr<CefBrowser> browser,
+		const CefString& message,
+		const CefString& source,
+		int line) OVERRIDE;
 private:
 	CefRefPtr<CefRenderHandler> renderHandler;
 	CefRefPtr<CefLoadHandler> loadHandler;
