@@ -53,6 +53,7 @@
 - (oneway void)sendFocus:(int)browserIdentifier focus:(BOOL)focus;
 - (void)sendKeyClick:(int) browserIdentifier
 		event:(bycopy ObsKeyEventBridge *)event keyUp:(BOOL)keyUp;
+- (void)refreshPageNoCache:(const int)browserIdentifier;
 @end
 
 
