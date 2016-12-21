@@ -17,10 +17,10 @@
 
 #include <obs-module.h>
 #include <obs-frontend-api.h>
-#include <jansson.h>
 
 #include "browser-version.h"
 #include "browser-manager.hpp"
+#include "util.hpp"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
@@ -61,12 +61,7 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		{
 			obs_source_t *source = obs_frontend_get_current_scene();
 
-			const char *name = obs_source_get_name(source);
-
-			json_t *obj = json_object();
-			json_object_set_new(obj, "name", json_string(name));
-			const char *jsonString = json_dumps(obj, 0);
-			free(obj);
+			const char* jsonString = obsSourceToJSON(source);
 
 			BrowserManager::Instance()->DispatchJSEvent("obsSceneChanged", jsonString);
 

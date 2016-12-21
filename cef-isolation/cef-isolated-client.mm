@@ -36,6 +36,8 @@
 
 #import "cef-isolated-client.h"
 
+#import "browser-obs-bridge-mac.hpp"
+
 @implementation CEFIsolatedClient
 
 - (id)init
@@ -74,6 +76,8 @@ void sync_on_cef_ui(dispatch_block_t block)
 		new BrowserHandle(browserSettings.width,
 			browserSettings.height, _server));
 
+	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeMac(_server);
+
 	sync_on_cef_ui(^{
 
 		CefRefPtr<BrowserRenderHandler> browserRenderHandler =
@@ -83,7 +87,7 @@ void sync_on_cef_ui(dispatch_block_t block)
 				new BrowserLoadHandler(std::string([browserSettings.css UTF8String]));
 
 		CefRefPtr<BrowserClient> browserClient =
-				new BrowserClient(browserRenderHandler.get(),loadHandler);
+				new BrowserClient(browserRenderHandler.get(),loadHandler, browserOBSBridge);
 
 		CefWindowInfo windowInfo;
 		windowInfo.view = nullptr;

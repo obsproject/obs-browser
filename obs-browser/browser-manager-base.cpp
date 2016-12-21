@@ -90,6 +90,14 @@ void BrowserManager::RefreshPageNoCache(int browserIdentifier)
 	pimpl->RefreshPageNoCache(browserIdentifier);
 }
 
+/**
+	Sends JSON Data about an OBS event to be executed as a DOM event.
+	The jsonString is already encoded so that we can pass it across the process boundary that cef-isolation creates.
+
+	@param eventName the name of the DOM event that we will fire
+	@param jsonString A json encoded string that will be accessable from the detail field of the event object
+	@return
+*/
 void BrowserManager::DispatchJSEvent(const char *eventName, const char *jsonString)
 {
 	pimpl->DispatchJSEvent(eventName, jsonString);

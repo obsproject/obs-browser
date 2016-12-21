@@ -30,7 +30,6 @@ public:
 			BrowserSurfaceHandle *surfaceHandle) = 0;
 	virtual void DestroySurface(BrowserSurfaceHandle surfaceHandle) = 0;
 	virtual void Invalidated() = 0;
-
 };
 
 class BrowserListener : public BrowserListenerBase

@@ -32,6 +32,11 @@ window.addEventListener('obsSceneChanged', function(evt) {
 });
 ```
 
+### Get the current scene
+```
+window.obsstudio.getCurrentScene(function(data) {console.log(data);});
+```
+
 ## Building on OSX
 
 ### Building CEF

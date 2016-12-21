@@ -262,7 +262,7 @@ void CEFIsolationServiceManager::RefreshPageNoCache(int browserIdentifier)
 	id<CEFIsolatedClient> cefIsolatedClient =
 		[_cefIsolationService client];
 	@try {
-		[cefIsolatedClient refreshPageNoCache:browserIdentifier];
+		[cefIsolatedClient r    :browserIdentifier];
 	}
 	@catch (NSException *exception) {}
 }

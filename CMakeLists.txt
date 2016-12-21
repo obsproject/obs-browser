@@ -46,7 +46,8 @@ set(obs-browser_SOURCES
 	obs-browser/main.cpp
 	obs-browser/main-source.cpp
 	shared/browser-source.cpp
-	shared/base64.cpp)
+	shared/base64.cpp
+	shared/util.cpp)
 
 set(obs-browser_HEADERS
 	shared/browser-manager.hpp
@@ -56,7 +57,8 @@ set(obs-browser_HEADERS
 	shared/browser-types.h
 	shared/base64.hpp
 	shared/browser-types.h
-	shared/browser-version.h)
+	shared/browser-version.h
+	shared/util.hpp)
 
 if (APPLE)
 	list(APPEND obs-browser_SOURCES
@@ -112,7 +114,6 @@ else (APPLE)
 endif(APPLE)
 
 set(obs-browser_LIBRARIES
-	libobs
 	obs-frontend-api
 	${OBS_JANSSON_IMPORT})
 
@@ -167,6 +168,7 @@ if(APPLE)
 	set(cef-isolation_SOURCES
 		cef-isolation/main.mm
 		cef-isolation/cef-isolated-client.mm
+		cef-isolation/browser-obs-bridge-mac.mm
 		cef-isolation/browser-handle.mm
 		cef-isolation/browser-render-handler.mm
 		cef-isolation/browser-texture-mac.mm
@@ -187,6 +189,7 @@ if(APPLE)
 		cef-isolation/browser-render-handler.hpp
 		cef-isolation/browser-texture-mac.h
 		cef-isolation/service-connection-delegate.h
+		cef-isolation/browser-obs-bridge-mac.hpp
 		shared/browser-texture.hpp
 		shared/browser-client.hpp
 		shared/browser-task.hpp
@@ -195,6 +198,7 @@ if(APPLE)
 		obs-browser/browser-load-handler.hpp
 		shared/browser-scheme.hpp
 		shared/browser-types.h
+		shared/browser-obs-bridge.hpp
 		shared-apple/browser-bridges.h)
 
 	add_executable(cef-isolation

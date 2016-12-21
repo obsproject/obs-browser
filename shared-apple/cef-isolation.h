@@ -37,6 +37,7 @@
 		height:(int)height
 		surfaceHandle:(BrowserSurfaceHandle)surfaceHandle;
 - (void)invalidateClient:(id)client withException:(NSException *)exception;
+- (const char*)getCurrentSceneJSONData;
 @end
 
 @protocol CEFIsolatedClient
