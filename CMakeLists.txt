@@ -141,7 +141,7 @@ if (APPLE)
 	target_include_directories(obs-browser PUBLIC 
 		"shared-apple")
 else (APPLE)
-	target_include_directories_system(obs-browser PUBLIC ${CEF_INCLUDE_DIR})
+	target_include_directories_system(obs-browser PUBLIC ${CEF_ROOT_DIR})
 endif(APPLE)
 
 
@@ -261,7 +261,7 @@ endif(APPLE AND XCODE)
 target_include_directories(cef-bootstrap PRIVATE "shared")
 target_include_directories_system(cef-bootstrap
 	PUBLIC
-		${CEF_INCLUDE_DIR}
+		${CEF_ROOT_DIR}
 		${OBS_JANSSON_INCLUDE_DIRS})
 
 target_link_libraries(cef-bootstrap
