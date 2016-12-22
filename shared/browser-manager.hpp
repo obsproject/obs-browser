@@ -18,6 +18,7 @@
 #pragma once
 
 #include <memory>
+#include <jansson.h>
 
 class BrowserListener;
 struct BrowserSettings;
@@ -64,6 +65,8 @@ public:
 	void ExecuteSceneChangeJSCallback(const char *name);
 
 	void RefreshPageNoCache(int browserIdentifier);
+
+	void DispatchJSEvent(const char *eventName, const char *jsonString);
 
 private:
 	class Impl;

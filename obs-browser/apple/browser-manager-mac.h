@@ -56,6 +56,8 @@ public:
     
     void RefreshPageNoCache(int browserIdentifier);
 
+	void DispatchJSEvent(const char *eventName, const char *jsonData);
+
 private:
 	std::unique_ptr<CEFIsolationServiceManager> cefIsolationServiceManager;
 };

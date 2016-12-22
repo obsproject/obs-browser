@@ -59,6 +59,8 @@ public:
 	void ExecuteSceneChangeJSCallback(const char *name);
 
 	void RefreshPageNoCache(int browserIdentifier);
+	
+	void DispatchJSEvent(const char *eventName, const char *jsonString);
 
 private: 
 	void ExecuteOnBrowser(int browserIdentifier, 

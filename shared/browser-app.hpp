@@ -21,7 +21,8 @@
 #include <include/cef_render_process_handler.h>
 
 class BrowserApp : public CefApp,
-				   public CefRenderProcessHandler
+				   public CefRenderProcessHandler,
+				   public CefV8Handler
 {
 
 public:
@@ -44,11 +45,21 @@ public:
 		CefProcessId source_process,
 		CefRefPtr<CefProcessMessage> message) OVERRIDE;
 
+public: /* CefV8Handler */
+	virtual bool Execute(const CefString& name,
+			CefRefPtr<CefV8Value> object,
+			const CefV8ValueList& arguments,
+			CefRefPtr<CefV8Value>& retval,
+			CefString& exception) OVERRIDE;
+
 private:
 	virtual void ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 		const char *functionName,
 		CefV8ValueList arguments);
-	
-	IMPLEMENT_REFCOUNTING(BrowserApp);
 
+	typedef std::map<int, CefRefPtr<CefV8Value>> CallbackMap;
+	int callbackId;
+	CallbackMap callbackMap;
+
+	IMPLEMENT_REFCOUNTING(BrowserApp);
 };
