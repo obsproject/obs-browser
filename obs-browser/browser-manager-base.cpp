@@ -8,6 +8,7 @@
 #include "browser-client.hpp"
 #include "browser-render-handler.hpp"
 #include "browser-load-handler.hpp"
+#include "browser-obs-bridge-base.hpp"
 
 BrowserManager::BrowserManager()
 : pimpl(new BrowserManager::Impl())
@@ -123,6 +124,8 @@ int BrowserManager::Impl::CreateBrowser(
 	os_event_t *createdEvent;
 	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
 
+	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
+
 	CefPostTask(TID_UI, BrowserTask::newTask(
 			[&] 
 	{
@@ -134,7 +137,7 @@ int BrowserManager::Impl::CreateBrowser(
 				new BrowserLoadHandler(browserSettings.css));
 
 		CefRefPtr<BrowserClient> browserClient(
-				new BrowserClient(renderHandler,loadHandler)); 
+				new BrowserClient(renderHandler, loadHandler, browserOBSBridge));
 
 		CefWindowInfo windowInfo;
 		windowInfo.transparent_painting_enabled = true;

@@ -96,6 +96,7 @@ else (APPLE)
 		obs-browser/browser-render-handler.cpp
 		obs-browser/browser-source-base.cpp
 		obs-browser/browser-load-handler.cpp
+		obs-browser/browser-obs-bridge-base.cpp
 		shared/browser-scheme.cpp
 		fmt/format.cc)
 
@@ -108,6 +109,7 @@ else (APPLE)
 		obs-browser/browser-render-handler.hpp
 		obs-browser/browser-source-base.hpp
 		obs-browser/browser-load-handler.hpp
+		obs-browser/browser-obs-bridge-base.hpp
 		shared/browser-scheme.hpp
 		fmt/format.h)
 

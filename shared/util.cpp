@@ -1,4 +1,4 @@
-#import "util.hpp"
+#include "util.hpp"
 
 /**
 	Takes an OBS source and generates a JSON encoded string representing information about the source.
