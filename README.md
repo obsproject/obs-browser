@@ -31,6 +31,15 @@ window.addEventListener('obsSceneChanged', function(evt) {
     document.body.appendChild(t);
 });
 ```
+#### Other events that are available
+* obsStreamingStarting
+* obsStreamingStarted
+* obsStreamingStopping
+* obsStreamingStopped
+* obsRecordingStarting
+* obsRecordingStarted
+* obsRecordingStopping
+* obsRecordingStopped
 
 ### Get the current scene
 ```
