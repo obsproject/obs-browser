@@ -358,7 +358,7 @@ void BrowserManager::Impl::DispatchJSEvent(const char *eventName, const char *js
 		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("DispatchJSEvent");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetString(0, eventName);
-		args->SetString(0, jsonString);
+		args->SetString(1, jsonString);
 		b->SendProcessMessage(PID_RENDERER, msg);
 	});
 }
