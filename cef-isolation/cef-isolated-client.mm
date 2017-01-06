@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #include <include/cef_app.h>
 #include <include/cef_browser.h>
@@ -34,6 +35,8 @@
 #include "obs-browser/browser-load-handler.hpp"
 
 #import "cef-isolated-client.h"
+
+#import "browser-obs-bridge-mac.hpp"
 
 @implementation CEFIsolatedClient
 
@@ -73,6 +76,8 @@ void sync_on_cef_ui(dispatch_block_t block)
 		new BrowserHandle(browserSettings.width,
 			browserSettings.height, _server));
 
+	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeMac(_server);
+
 	sync_on_cef_ui(^{
 
 		CefRefPtr<BrowserRenderHandler> browserRenderHandler =
@@ -82,7 +87,7 @@ void sync_on_cef_ui(dispatch_block_t block)
 				new BrowserLoadHandler(std::string([browserSettings.css UTF8String]));
 
 		CefRefPtr<BrowserClient> browserClient =
-				new BrowserClient(browserRenderHandler.get(),loadHandler);
+				new BrowserClient(browserRenderHandler.get(),loadHandler, browserOBSBridge);
 
 		CefWindowInfo windowInfo;
 		windowInfo.view = nullptr;
@@ -286,13 +291,7 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 				return;
 			}
 
-			host->HandleKeyEventBeforeTextInputClient(nsEvent);
-
-			NSTextInputContext *inputContext =
-					host->GetNSTextInputContext();
-			[inputContext handleEvent:nsEvent];
-
-			host->HandleKeyEventAfterTextInputClient(nsEvent);
+			host->SendKeyEvent(keyEvent);
 		}
 	 }];
 }
@@ -335,7 +334,20 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
      }];
 }
 
+-(void)dispatchJSEvent:(const char *)eventName data:(const char *)jsonString
+{
+	[self sendEventToAllBrowsers:^(SharedBrowserHandle browserHandle)
+	{
+		CefRefPtr<CefBrowser> browser = browserHandle->GetBrowser();
 
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("DispatchJSEvent");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetString(0, eventName);
+		args->SetString(1, jsonString);
+
+		browser->SendProcessMessage(PID_RENDERER, msg);
+	}];
+}
 
 - (void)destroyBrowser:(const int)browserIdentifier {
 	if (map.count(browserIdentifier) == 1) {

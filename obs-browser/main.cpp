@@ -20,6 +20,7 @@
 
 #include "browser-version.h"
 #include "browser-manager.hpp"
+#include "util.hpp"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
@@ -30,14 +31,62 @@ struct obs_source_info browser_source_info;
 // Handle events from the frontend
 static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 {
-	if (event == OBS_FRONTEND_EVENT_SCENE_CHANGED) {
+	switch(event)
+	{
+	case OBS_FRONTEND_EVENT_STREAMING_STARTING:
+		BrowserManager::Instance()->DispatchJSEvent("obsStreamingStarting", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_STREAMING_STARTED:
+		BrowserManager::Instance()->DispatchJSEvent("obsStreamingStarted", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_STREAMING_STOPPING:
+		BrowserManager::Instance()->DispatchJSEvent("obsStreamingStopping", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_STREAMING_STOPPED:
+		BrowserManager::Instance()->DispatchJSEvent("obsStreamingStopped", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STARTING:
+		BrowserManager::Instance()->DispatchJSEvent("obsRecordingStarting", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
+		BrowserManager::Instance()->DispatchJSEvent("obsRecordingStarted", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STOPPING:
+		BrowserManager::Instance()->DispatchJSEvent("obsRecordingStopping", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
+		BrowserManager::Instance()->DispatchJSEvent("obsRecordingStopped", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_SCENE_CHANGED:
+		{
+			obs_source_t *source = obs_frontend_get_current_scene();
 
-		obs_source_t *source = obs_frontend_get_current_scene();
+			const char* jsonString = obsSourceToJSON(source);
 
-		const char *name = obs_source_get_name(source);
+			BrowserManager::Instance()->DispatchJSEvent("obsSceneChanged", jsonString);
 
-		BrowserManager::Instance()->ExecuteSceneChangeJSCallback(name);
-		obs_source_release(source);
+			obs_source_release(source);
+			break;
+		}
+	case OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED:
+		break;
+	case OBS_FRONTEND_EVENT_TRANSITION_CHANGED:
+		break;
+	case OBS_FRONTEND_EVENT_TRANSITION_STOPPED:
+		break;
+	case OBS_FRONTEND_EVENT_TRANSITION_LIST_CHANGED:
+		break;
+	case OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED:
+		break;
+	case OBS_FRONTEND_EVENT_SCENE_COLLECTION_LIST_CHANGED:
+		break;
+	case OBS_FRONTEND_EVENT_PROFILE_CHANGED:
+		break;
+	case OBS_FRONTEND_EVENT_PROFILE_LIST_CHANGED:
+		break;
+	case OBS_FRONTEND_EVENT_EXIT:
+		BrowserManager::Instance()->DispatchJSEvent("obsExit", nullptr);
+		break;
 	}
 }
 

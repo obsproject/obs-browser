@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 #include <string>
+#import <Foundation/Foundation.h>
 
 // shared
 #include "browser-listener.hpp"
@@ -266,6 +267,12 @@ void CEFIsolationServiceManager::RefreshPageNoCache(int browserIdentifier)
 	@catch (NSException *exception) {}
 }
 
-
-
-
+void CEFIsolationServiceManager::DispatchJSEvent(const char *eventName, const char *jsonData)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+		[_cefIsolationService client];
+	@try {
+		[cefIsolatedClient dispatchJSEvent:eventName data:jsonData];
+	}
+	@catch (NSException *exception) {}
+}

@@ -27,7 +27,6 @@ public:
 
 	BrowserRenderHandler(std::shared_ptr<BrowserHandle> &browserHandle);
 
-
 public: /* CefRenderHandler overrides */
 
 	virtual bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)

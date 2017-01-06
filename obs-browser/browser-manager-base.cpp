@@ -8,6 +8,7 @@
 #include "browser-client.hpp"
 #include "browser-render-handler.hpp"
 #include "browser-load-handler.hpp"
+#include "browser-obs-bridge-base.hpp"
 
 BrowserManager::BrowserManager()
 : pimpl(new BrowserManager::Impl())
@@ -90,6 +91,19 @@ void BrowserManager::RefreshPageNoCache(int browserIdentifier)
 	pimpl->RefreshPageNoCache(browserIdentifier);
 }
 
+/**
+	Sends JSON Data about an OBS event to be executed as a DOM event.
+	The jsonString is already encoded so that we can pass it across the process boundary that cef-isolation creates.
+
+	@param eventName the name of the DOM event that we will fire
+	@param jsonString A json encoded string that will be accessable from the detail field of the event object
+	@return
+*/
+void BrowserManager::DispatchJSEvent(const char *eventName, const char *jsonString)
+{
+	pimpl->DispatchJSEvent(eventName, jsonString);
+}
+
 BrowserManager::Impl::Impl()
 {
 	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
@@ -110,6 +124,8 @@ int BrowserManager::Impl::CreateBrowser(
 	os_event_t *createdEvent;
 	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
 
+	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
+
 	CefPostTask(TID_UI, BrowserTask::newTask(
 			[&] 
 	{
@@ -121,7 +137,7 @@ int BrowserManager::Impl::CreateBrowser(
 				new BrowserLoadHandler(browserSettings.css));
 
 		CefRefPtr<BrowserClient> browserClient(
-				new BrowserClient(renderHandler,loadHandler)); 
+				new BrowserClient(renderHandler, loadHandler, browserOBSBridge));
 
 		CefWindowInfo windowInfo;
 		windowInfo.transparent_painting_enabled = true;
@@ -332,6 +348,18 @@ void BrowserManager::Impl::RefreshPageNoCache(int browserIdentifier)
 	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
 	{
 		b->ReloadIgnoreCache();
+	});
+}
+
+void BrowserManager::Impl::DispatchJSEvent(const char *eventName, const char *jsonString)
+{
+	ExecuteOnAllBrowsers([&](CefRefPtr<CefBrowser> b)
+	{
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("DispatchJSEvent");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetString(0, eventName);
+		args->SetString(1, jsonString);
+		b->SendProcessMessage(PID_RENDERER, msg);
 	});
 }
 

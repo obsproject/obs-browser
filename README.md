@@ -26,14 +26,24 @@ window.obsstudio.onVisibilityChange = function(visiblity) {
 
 ### Register for scene change callbacks
 ```
-/**
- * onSceneChange gets callbacks when the scene is changed
- *
- * @param {string} sceneName - The name of the scene that was changed to.
- */
-window.obsstudio.onSceneChange = function(sceneName) {
-	
-};
+window.addEventListener('obsSceneChanged', function(evt) {
+	var t = document.createTextNode(evt.detail.name);
+    document.body.appendChild(t);
+});
+```
+#### Other events that are available
+* obsStreamingStarting
+* obsStreamingStarted
+* obsStreamingStopping
+* obsStreamingStopped
+* obsRecordingStarting
+* obsRecordingStarted
+* obsRecordingStopping
+* obsRecordingStopped
+
+### Get the current scene
+```
+window.obsstudio.getCurrentScene(function(data) {console.log(data);});
 ```
 
 ## Building on OSX
@@ -41,7 +51,7 @@ window.obsstudio.onSceneChange = function(sceneName) {
 ### Building CEF
 #### Getting
 *  Download CEF Mac 64 from [https://cefbuilds.com/](https://cefbuilds.com/)
-  *  At the time of writing this I used build 2704
+  *  At the time of writing this I used build 2883
 *  Extract and cd into the folder
 
 #### Setting Up Project
@@ -70,7 +80,7 @@ git clone git@github.com:kc5nra/obs-browser.git ./plugins/obs-browser
 echo "add_subdirectory(obs-browser)" >> ./plugins/CMakeLists.txt
 mkdir build
 cd ./build
-cmake -D CMAKE_PREFIX_PATH=/usr/local/opt/qt5/lib/cmake -D CEF_ROOT_DIR=/Users/username/Development/cef_binary_3.2704.1434.gec3e9ed_macosx64 -G Xcode ..
+cmake -D CMAKE_PREFIX_PATH=/usr/local/opt/qt5/lib/cmake -D CEF_ROOT_DIR=/Users/username/Development/cef_binary_3.2883.1540.gedbfb20_macosx64 -D BUILD_BROWSER=yes -G Xcode ..
 open obs-studio.xcodeproj/
 ```
 
