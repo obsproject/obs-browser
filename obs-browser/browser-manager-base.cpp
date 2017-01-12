@@ -112,8 +112,8 @@ BrowserManager::Impl::Impl()
 
 BrowserManager::Impl::~Impl()
 {
-	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
-	pthread_mutex_init(&dispatchLock, nullptr);
+	os_event_destroy(dispatchEvent);
+	pthread_mutex_destroy(&dispatchLock);
 }
 
 int BrowserManager::Impl::CreateBrowser(
@@ -366,6 +366,7 @@ void BrowserManager::Impl::DispatchJSEvent(const char *eventName, const char *js
 void
 BrowserManager::Impl::Startup() 
 {
+	pthread_mutex_lock(&dispatchLock);
 	int ret = pthread_create(&managerThread, nullptr,
 		browserManagerEntry, this);
 	
@@ -378,6 +379,7 @@ BrowserManager::Impl::Startup()
 	else {
 		threadAlive = true;
 	}
+	pthread_mutex_unlock(&dispatchLock);
 		
 	return;
 }
