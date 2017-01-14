@@ -443,7 +443,11 @@ void BrowserManager::Impl::BrowserManagerEntry()
 		settings.log_severity = LOGSEVERITY_VERBOSE;
 		settings.windowless_rendering_enabled = true;
 		settings.no_sandbox = true;
-		CefString(&settings.cache_path).FromASCII(obs_module_config_path(""));
+		
+		char *conf_path = obs_module_config_path("");
+		CefString(&settings.cache_path).FromASCII(conf_path);
+		bfree(conf_path);
+		
 		CefString(&settings.browser_subprocess_path) = getBootstrap();
 		CefRefPtr<BrowserApp> app(new BrowserApp());
 		CefExecuteProcess(mainArgs, app, nullptr);
