@@ -9,8 +9,6 @@
 #include "browser-render-handler.hpp"
 #include "browser-load-handler.hpp"
 #include "browser-obs-bridge-base.hpp"
-#include <chrono>
-#include <thread>
 
 BrowserManager::BrowserManager()
 : pimpl(new BrowserManager::Impl())
@@ -106,31 +104,25 @@ void BrowserManager::DispatchJSEvent(const char *eventName, const char *jsonStri
 	pimpl->DispatchJSEvent(eventName, jsonString);
 }
 
-std::string getBootstrap()
+BrowserManager::Impl::Impl()
 {
-	std::string modulePath(BrowserManager::Instance()->GetModulePath());
-	std::string parentPath(modulePath.substr(0,
-		modulePath.find_last_of('/') + 1));
-#ifdef _WIN32
-	return parentPath + "/cef-bootstrap.exe";
-#else
-	return parentPath + "/cef-bootstrap";
-#endif
+	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
+	pthread_mutex_init(&dispatchLock, nullptr);
 }
 
-//////////////////////////////////////////////////////////////////////////
-// BrowserManager::Impl
-BrowserManager::Impl::Impl() {}
-
-BrowserManager::Impl::~Impl() {}
+BrowserManager::Impl::~Impl()
+{
+	os_event_destroy(dispatchEvent);
+	pthread_mutex_destroy(&dispatchLock);
+}
 
 int BrowserManager::Impl::CreateBrowser(
 		const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
 	int browserIdentifier = 0;
-	std::mutex createMutex;
-	std::condition_variable createEvent;
+	os_event_t *createdEvent;
+	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
 
 	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
 
@@ -165,11 +157,11 @@ int BrowserManager::Impl::CreateBrowser(
 			browserIdentifier = browser->GetIdentifier();
 			browserMap[browserIdentifier] = browser;
 		}
-		createEvent.notify_all();
+		os_event_signal(createdEvent);
 	}));
 
-	std::unique_lock<std::mutex> createLock(createMutex);
-	createEvent.wait(createLock);
+	os_event_wait(createdEvent);
+	os_event_destroy(createdEvent);
 	return browserIdentifier;
 }
 
@@ -178,14 +170,15 @@ BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 {
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
-		std::mutex closeMutex;
-		std::condition_variable closeEvent;
-		CefPostTask(TID_UI, BrowserTask::newTask([&, browser]
+		os_event_t *closeEvent;
+		os_event_init(&closeEvent, OS_EVENT_TYPE_AUTO);
+		CefPostTask(TID_UI, BrowserTask::newTask([&, browser] 
 		{
 			browser->GetHost()->CloseBrowser(true);
-			closeEvent.notify_all();
+			os_event_signal(closeEvent);
 		}));
-		closeEvent.wait(std::unique_lock<std::mutex>(closeMutex));
+		os_event_wait(closeEvent);
+		os_event_destroy(closeEvent);
 		browserMap.erase(browserIdentifier);
 	}
 }
@@ -205,13 +198,14 @@ void BrowserManager::Impl::ExecuteOnBrowser(int browserIdentifier,
 				f(browser);
 			}));
 		} else {
-			std::mutex finishedMutex;
-			std::condition_variable finishedEvent;
+			os_event_t *finishedEvent;
+			os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
 			CefPostTask(TID_UI, BrowserTask::newTask([&] {
 				f(browser);
-				finishedEvent.notify_all();
+				os_event_signal(finishedEvent);
 			}));
-			finishedEvent.wait(std::unique_lock<std::mutex>(finishedMutex));
+			os_event_wait(finishedEvent);
+			os_event_destroy(finishedEvent);
 		}
 	}
 }
@@ -227,13 +221,14 @@ void BrowserManager::Impl::ExecuteOnAllBrowsers(
 				f(browser);
 			}));
 		} else {
-			std::mutex finishedMutex;
-			std::condition_variable finishedEvent;
+			os_event_t *finishedEvent;
+			os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
 			CefPostTask(TID_UI, BrowserTask::newTask([&] {
 				f(browser);
-				finishedEvent.notify_all();
+				os_event_signal(finishedEvent);
 			}));
-			finishedEvent.wait(std::unique_lock<std::mutex>(finishedMutex));
+			os_event_wait(finishedEvent);
+			os_event_destroy(finishedEvent);
 		}
 	}
 }
@@ -368,69 +363,112 @@ void BrowserManager::Impl::DispatchJSEvent(const char *eventName, const char *js
 	});
 }
 
-void BrowserManager::Impl::Startup()
+void
+BrowserManager::Impl::Startup() 
 {
-	// Initialize CEF
-	CefMainArgs mainArgs;
-	CefSettings settings;
-	settings.log_severity = LOGSEVERITY_VERBOSE;
-	settings.windowless_rendering_enabled = true;
-	settings.no_sandbox = false;
-	settings.multi_threaded_message_loop = true;
-	CefString(&settings.cache_path).FromASCII(obs_module_config_path(""));
-	CefString(&settings.browser_subprocess_path) = getBootstrap();
-	CefRefPtr<BrowserApp> app(new BrowserApp());
-	CefExecuteProcess(mainArgs, app, nullptr);
-	CefInitialize(mainArgs, settings, app, nullptr);
-	CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
-
-	// Initialize event queue.
-	{
-		std::lock_guard<std::mutex> lock(events.mutex);
-		events.bQuit = false;
-		events.thread = std::thread(QueueThreadMain, this);
+	pthread_mutex_lock(&dispatchLock);
+	int ret = pthread_create(&managerThread, nullptr,
+		browserManagerEntry, this);
+	
+	if (ret != 0) {
+		blog(LOG_ERROR,
+			"BrowserManager: failed to create browser "
+			"manager thread.");
+		threadAlive = false;
 	}
-
-
+	else {
+		threadAlive = true;
+	}
+	pthread_mutex_unlock(&dispatchLock);
+		
 	return;
 }
 
-void BrowserManager::Impl::Shutdown()
+void BrowserManager::Impl::Shutdown() 
 {
-	// Quit Event Thread
-	events.bQuit = true;
-	events.condvar.notify_all();
-	events.thread.join();
+	os_event_t *shutdown_event;
+	os_event_init(&shutdown_event, OS_EVENT_TYPE_AUTO);
 
-	// Shut down CEF
-	CefShutdown();
+	// post the task
+	CefPostTask(TID_UI, BrowserTask::newTask([] {
+		CefQuitMessageLoop();
+	}));
+
+	// this event will then get processed and shut down the dispatcher loop
+	PushEvent([this, shutdown_event] {
+		threadAlive = false;
+		os_event_signal(shutdown_event);
+	});
+
+	os_event_wait(shutdown_event);
+	os_event_destroy(shutdown_event);
 	return;
+}
+
+void *BrowserManager::Impl::browserManagerEntry(void* threadArgument)
+{
+	BrowserManager::Impl *browserManager =
+			static_cast<BrowserManager::Impl *>(threadArgument);
+	browserManager->BrowserManagerEntry();
+	return nullptr;
 }
 
 void BrowserManager::Impl::PushEvent(std::function<void()> event)
 {
-	std::lock_guard<std::mutex> lock(events.mutex);
-	events.queue.push(event);
-	events.condvar.notify_one();
+	pthread_mutex_lock(&dispatchLock);
+	queue.push_back(event);
+	pthread_mutex_unlock(&dispatchLock);
+	os_event_signal(dispatchEvent);
 }
 
-void BrowserManager::Impl::QueueThreadMain(void* data)
+std::string getBootstrap()
 {
-	auto obj = static_cast<BrowserManager::Impl*>(data);
-	obj->QueueThreadLocalMain();
+	std::string modulePath(BrowserManager::Instance()->GetModulePath());
+	std::string parentPath(modulePath.substr(0,
+			modulePath.find_last_of('/') + 1));
+#ifdef _WIN32	
+	return parentPath + "/cef-bootstrap.exe";
+#else
+	return parentPath + "/cef-bootstrap";
+#endif
 }
 
-void BrowserManager::Impl::QueueThreadLocalMain()
+void BrowserManager::Impl::BrowserManagerEntry()
 {
-	std::unique_lock<std::mutex> ulock(events.mutex);
-	do {
-		events.condvar.wait(ulock);
-		while (events.queue.size() > 0) {
-			auto v = events.queue.front();
-			v();
-			events.queue.pop();
+	std::string bootstrapPath = getBootstrap();
+	bool thread_exit = false;
+	PushEvent([] {
+		CefMainArgs mainArgs;
+		CefSettings settings;
+		settings.log_severity = LOGSEVERITY_VERBOSE;
+		settings.windowless_rendering_enabled = true;
+		settings.no_sandbox = true;
+		CefString(&settings.cache_path).FromASCII(obs_module_config_path(""));
+		CefString(&settings.browser_subprocess_path) = getBootstrap();
+		CefRefPtr<BrowserApp> app(new BrowserApp());
+		CefExecuteProcess(mainArgs, app, nullptr);
+		CefInitialize(mainArgs, settings, app, nullptr);
+		CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
+		CefRunMessageLoop();
+		CefShutdown();
+	});
+
+	while (true) {
+		
+		if (os_event_timedwait(dispatchEvent, 10) != ETIMEDOUT) {
+			pthread_mutex_lock(&dispatchLock);
+			while (!queue.empty()) {
+				auto event = queue[0];
+				event();
+				queue.erase(queue.begin());
+			}
+			thread_exit = !threadAlive;
+			pthread_mutex_unlock(&dispatchLock);
+			if (thread_exit) {
+				return;
+			}
 		}
-	} while (events.bQuit == false);
+	}
 }
 
 static BrowserManager *instance;

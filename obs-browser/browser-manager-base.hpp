@@ -9,11 +9,6 @@
 #include <functional>
 #include <util/threading.h>
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <queue>
-
 #include "browser-manager.hpp"
 
 class BrowserManager::Impl
@@ -22,6 +17,14 @@ class BrowserManager::Impl
 public:
 	Impl();
 	~Impl();
+
+private:
+
+	static void *browserManagerEntry(void* threadArguments);
+	void BrowserManagerEntry();
+
+
+public:
 
 	void Startup();
 	void Shutdown();
@@ -68,19 +71,12 @@ private:
 			bool async = false);
 
 private:
+	bool threadAlive;
+	os_event_t *dispatchEvent;
+	pthread_t managerThread;
+	pthread_mutex_t dispatchLock;
+
 	std::map<int, std::shared_ptr<BrowserListener>> listenerMap;
 	std::map<int, CefRefPtr<CefBrowser> > browserMap;
-
-	// Holds Queue related Information
-	struct {
-		std::thread thread;
-		std::mutex mutex;
-		std::condition_variable condvar;
-		std::queue<std::function<void()>> queue;
-
-		bool bQuit = false;
-	} events;
-	static void QueueThreadMain(void*);
-	void QueueThreadLocalMain();
-
+	std::vector<std::function<void()>> queue;
 };
