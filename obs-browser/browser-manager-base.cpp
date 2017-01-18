@@ -129,11 +129,11 @@ int BrowserManager::Impl::CreateBrowser(
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
 	int browserIdentifier = 0;
-	std::mutex createMutex;
-	std::condition_variable createEvent;
 
 	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
 
+	os_event_t* evnt;
+	os_event_init(&evnt, OS_EVENT_TYPE_AUTO);
 	CefPostTask(TID_UI, BrowserTask::newTask(
 			[&] 
 	{
@@ -165,11 +165,10 @@ int BrowserManager::Impl::CreateBrowser(
 			browserIdentifier = browser->GetIdentifier();
 			browserMap[browserIdentifier] = browser;
 		}
-		createEvent.notify_all();
+		os_event_signal(evnt);
 	}));
-
-	std::unique_lock<std::mutex> createLock(createMutex);
-	createEvent.wait(createLock);
+	os_event_wait(evnt);
+	os_event_destroy(evnt);
 	return browserIdentifier;
 }
 
@@ -178,14 +177,15 @@ BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 {
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
-		std::mutex closeMutex;
-		std::condition_variable closeEvent;
+		os_event_t* evnt;
+		os_event_init(&evnt, OS_EVENT_TYPE_AUTO);
 		CefPostTask(TID_UI, BrowserTask::newTask([&, browser]
 		{
 			browser->GetHost()->CloseBrowser(true);
-			closeEvent.notify_all();
+			os_event_signal(evnt);
 		}));
-		closeEvent.wait(std::unique_lock<std::mutex>(closeMutex));
+		os_event_wait(evnt);
+		os_event_destroy(evnt);
 		browserMap.erase(browserIdentifier);
 	}
 }
@@ -205,13 +205,14 @@ void BrowserManager::Impl::ExecuteOnBrowser(int browserIdentifier,
 				f(browser);
 			}));
 		} else {
-			std::mutex finishedMutex;
-			std::condition_variable finishedEvent;
+			os_event_t* evnt;
+			os_event_init(&evnt, OS_EVENT_TYPE_AUTO);
 			CefPostTask(TID_UI, BrowserTask::newTask([&] {
 				f(browser);
-				finishedEvent.notify_all();
+				os_event_signal(evnt);
 			}));
-			finishedEvent.wait(std::unique_lock<std::mutex>(finishedMutex));
+			os_event_wait(evnt);
+			os_event_destroy(evnt);
 		}
 	}
 }
@@ -227,13 +228,14 @@ void BrowserManager::Impl::ExecuteOnAllBrowsers(
 				f(browser);
 			}));
 		} else {
-			std::mutex finishedMutex;
-			std::condition_variable finishedEvent;
+			os_event_t* evnt;
+			os_event_init(&evnt, OS_EVENT_TYPE_AUTO);
 			CefPostTask(TID_UI, BrowserTask::newTask([&] {
 				f(browser);
-				finishedEvent.notify_all();
+				os_event_signal(evnt);
 			}));
-			finishedEvent.wait(std::unique_lock<std::mutex>(finishedMutex));
+			os_event_wait(evnt);
+			os_event_destroy(evnt);
 		}
 	}
 }
