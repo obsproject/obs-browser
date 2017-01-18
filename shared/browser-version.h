@@ -1,3 +1,3 @@
 #pragma once
 
-#define OBS_BROWSER_VERSION "1.27.0"
+#define OBS_BROWSER_VERSION "1.28.0"
