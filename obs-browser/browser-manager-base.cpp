@@ -107,13 +107,15 @@ void BrowserManager::DispatchJSEvent(const char *eventName, const char *jsonStri
 BrowserManager::Impl::Impl()
 {
 	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
+	os_event_init(&startupEvent, OS_EVENT_TYPE_MANUAL);
 	pthread_mutex_init(&dispatchLock, nullptr);
 }
 
 BrowserManager::Impl::~Impl()
 {
-	os_event_destroy(dispatchEvent);
 	pthread_mutex_destroy(&dispatchLock);
+	os_event_destroy(startupEvent);
+	os_event_destroy(dispatchEvent);
 }
 
 int BrowserManager::Impl::CreateBrowser(
@@ -123,6 +125,8 @@ int BrowserManager::Impl::CreateBrowser(
 	int browserIdentifier = 0;
 	os_event_t *createdEvent;
 	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
+
+	os_event_wait(startupEvent);
 
 	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
 
@@ -437,7 +441,7 @@ void BrowserManager::Impl::BrowserManagerEntry()
 {
 	std::string bootstrapPath = getBootstrap();
 	bool thread_exit = false;
-	PushEvent([] {
+	PushEvent([this] {
 		CefMainArgs mainArgs;
 		CefSettings settings;
 		settings.log_severity = LOGSEVERITY_VERBOSE;
@@ -449,6 +453,7 @@ void BrowserManager::Impl::BrowserManagerEntry()
 		CefExecuteProcess(mainArgs, app, nullptr);
 		CefInitialize(mainArgs, settings, app, nullptr);
 		CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
+		os_event_signal(startupEvent);
 		CefRunMessageLoop();
 		CefShutdown();
 	});

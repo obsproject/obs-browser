@@ -73,6 +73,7 @@ private:
 private:
 	bool threadAlive;
 	os_event_t *dispatchEvent;
+	os_event_t *startupEvent;
 	pthread_t managerThread;
 	pthread_mutex_t dispatchLock;
 
