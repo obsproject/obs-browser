@@ -293,7 +293,7 @@ if (APPLE)
 
 	add_custom_command(TARGET cef-isolation
 		# Disable taskbar visibility
-		COMMAND defaults write "$<TARGET_FILE_DIR:cef-isolation>/../Info.plist" "LSUIElement" true
+		COMMAND defaults write "$<TARGET_FILE_DIR:cef-isolation>/../Info.plist" "LSUIElement" 1
 		)
 
 	add_custom_command(TARGET cef-bootstrap POST_BUILD
@@ -301,7 +301,7 @@ if (APPLE)
 		COMMAND install_name_tool -change "@executable_path/Chromium Embedded Framework" "@rpath/Chromium Embedded Framework.framework/Chromium Embedded Framework" "$<TARGET_FILE:cef-bootstrap>"
 		
 		# Disable taskbar visibility
-		COMMAND defaults write "$<TARGET_FILE_DIR:cef-bootstrap>/../Info.plist" "LSUIElement" true
+		COMMAND defaults write "$<TARGET_FILE_DIR:cef-bootstrap>/../Info.plist" "LSUIElement" 1
 		)
 
 	add_custom_command(TARGET cef-isolation POST_BUILD
