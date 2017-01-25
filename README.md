@@ -92,7 +92,7 @@ Build in Xcode (⌘+B)
 ### Building CEF
 #### Getting
 *  Download CEF Windows 64bit from [https://cefbuilds.com/](https://cefbuilds.com/)
-  *  At the time of writing this I used build 2704
+  *  At the time of writing this the browser source needs CEF branch 2840 or higher
 *  Extract and cd into the folder
 
 #### Setting Up Project
