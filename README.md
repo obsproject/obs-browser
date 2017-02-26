@@ -51,7 +51,7 @@ window.obsstudio.getCurrentScene(function(data) {console.log(data);});
 ### Building CEF
 #### Getting
 *  Download CEF Mac 64 from [https://cefbuilds.com/](https://cefbuilds.com/)
-  *  At the time of writing this I used build 2883
+  *  Use CEF branch 2987
 *  Extract and cd into the folder
 
 #### Setting Up Project
@@ -92,7 +92,7 @@ Build in Xcode (⌘+B)
 ### Building CEF
 #### Getting
 *  Download CEF Windows 64bit from [https://cefbuilds.com/](https://cefbuilds.com/)
-  *  At the time of writing this the browser source needs CEF branch 2840 or higher
+  *  Use CEF branch 2987
 *  Extract and cd into the folder
 
 #### Setting Up Project
