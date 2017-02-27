@@ -38,7 +38,7 @@ CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
 void BrowserApp::OnRegisterCustomSchemes(
 		CefRawPtr<CefSchemeRegistrar> registrar)
 {
-	registrar->AddCustomScheme("http", true, true, false, false, true);
+	registrar->AddCustomScheme("http", true, false, false, false, true);
 }
 
 void BrowserApp::OnBeforeCommandLineProcessing(
