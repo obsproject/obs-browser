@@ -27,16 +27,20 @@ void BrowserSource::Impl::Listener::OnDraw( BrowserSurfaceHandle surfaceHandle,
 	UNUSED_PARAMETER(height);
 
 	if (textureSet.count(surfaceHandle) > 0) {
-
 		obs_enter_graphics();
-		if (browserSource->GetParent()->TryLockTexture()) {
-			if (popupSurface != nullptr)
-				gs_copy_texture_region(surfaceHandle, popupX, popupY, popupSurface, 0, 0, gs_texture_get_width(popupSurface), gs_texture_get_height(popupSurface));
-			browserSource->SetActiveTexture(surfaceHandle);
-			browserSource->GetParent()->UnlockTexture();
+		if (browserSource)
+		{
+			if (browserSource->GetParent())
+			{
+				if (browserSource->GetParent()->TryLockTexture()) {
+					if (popupSurface != nullptr)
+						gs_copy_texture_region(surfaceHandle, popupX, popupY, popupSurface, 0, 0, gs_texture_get_width(popupSurface), gs_texture_get_height(popupSurface));
+					browserSource->SetActiveTexture(surfaceHandle);
+					browserSource->GetParent()->UnlockTexture();
+				}
+			}
 		}
 		obs_leave_graphics();
-
 	}
 	else {
 		blog(LOG_ERROR, "Asked to draw unknown surface with handle"
