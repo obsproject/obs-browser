@@ -107,7 +107,12 @@ Visual Studio 12 2013 Win64 or Visual Studio 14 2015 Win64
 #### Building
 Build in Visual Studio
 
-TODO: tell user to move stuff, or update FindCEF.cmake
+You should fix CEF DLL wrapper path. So either you can
+* Copy libraries to a correct location,  
+  assuming that CEF_ROOT_DIR is a CEF repo directory path (example: C:/Users/User/Desktop/cef_binary_3.2743.1445.gdad7c0a_windows64)
+  * Create directory ${CEF_ROOT_DIR}/build/libcef_dll
+  * Copy files from ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/{BUILDTYPE} to ${CEF_ROOT_DIR}/build/libcef_dll
+* *OR* change FindCEF.cmake file in the obs-browser repo directory path
 
 ### Building OBS and obs-browser
 #### Follow the OBS build instructions
