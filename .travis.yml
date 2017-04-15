@@ -1,0 +1,31 @@
+os: osx
+env: CMAKE_PREFIX_PATH=/usr/local/opt/qt5/lib/cmake
+
+language: cpp
+
+before_install:
+  - brew update
+  - brew install ffmpeg x264 qt5
+  - cd ../
+  - git clone  --recursive https://github.com/jp9000/obs-studio.git
+  - curl -kLO http://opensource.spotify.com/cefbuilds/cef_binary_3.2704.1434.gec3e9ed_macosx64.tar.bz2
+  - tar -xvf ./cef_binary_3.2704.1434.gec3e9ed_macosx64.tar.bz2
+  - cd ./cef_binary_3.2704.1434.gec3e9ed_macosx64
+  - mkdir build
+  - cd ./build
+  - cmake -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++" -DCMAKE_EXE_LINKER_FLAGS="-std=c++11 -stdlib=libc++" ..
+  - make -j4
+  - mkdir libcef_dll
+  - mv ./libcef_dll_wrapper/libcef_dll_wrapper.a ./libcef_dll/libcef_dll_wrapper.a
+  - cd ../../
+  - mv ./obs-browser ./obs-studio/plugins/obs-browser
+  - cd ./obs-studio
+  - echo "add_subdirectory(obs-browser)" >> ./plugins/CMakeLists.txt
+
+before_script:  
+  - mkdir build
+  - cd build
+  - ls $PWD/../../cef_binary_3.2704.1434.gec3e9ed_macosx64
+  - cmake -DCEF_ROOT_DIR=$PWD/../../cef_binary_3.2704.1434.gec3e9ed_macosx64 ..
+
+script: make -j4
