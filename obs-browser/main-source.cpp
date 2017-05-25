@@ -200,8 +200,9 @@ static void *browser_source_create(obs_data_t *settings, obs_source_t *source)
 static void browser_source_destroy(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
-
+	
 	delete bs;
+	bs = NULL;
 }
 
 
