@@ -126,7 +126,8 @@ int BrowserManager::Impl::CreateBrowser(
 	os_event_t *createdEvent;
 	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
 
-	os_event_wait(startupEvent);
+	if (!startedUp)
+		os_event_wait(startupEvent);
 
 	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
 
@@ -370,6 +371,7 @@ void BrowserManager::Impl::DispatchJSEvent(const char *eventName, const char *js
 void
 BrowserManager::Impl::Startup() 
 {
+	startedUp = false;
 	pthread_mutex_lock(&dispatchLock);
 	int ret = pthread_create(&managerThread, nullptr,
 		browserManagerEntry, this);
@@ -454,6 +456,7 @@ void BrowserManager::Impl::BrowserManagerEntry()
 		CefInitialize(mainArgs, settings, app, nullptr);
 		CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
 		os_event_signal(startupEvent);
+		startedUp = true;
 		CefRunMessageLoop();
 		CefShutdown();
 	});
