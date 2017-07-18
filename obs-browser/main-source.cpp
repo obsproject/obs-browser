@@ -154,11 +154,15 @@ static void browser_source_activate(void *data)
 
 	if (restart)
 		BrowserManager::Instance()->RefreshPageNoCache(bs->GetBrowserIdentifier());
+
+	bs->ExecuteActiveJSCallback(true);
 }
 
 static void browser_source_deactivate(void *data)
 {
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
+	bs->ExecuteActiveJSCallback(false);
 }
 
 // Called when the source is visible

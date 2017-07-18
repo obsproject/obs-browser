@@ -81,6 +81,11 @@ void BrowserManager::ExecuteVisiblityJSCallback(int browserIdentifier, bool visi
 	pimpl->ExecuteVisiblityJSCallback(browserIdentifier, visible);
 }
 
+void BrowserManager::ExecuteActiveJSCallback(int browserIdentifier, bool active)
+{
+	pimpl->ExecuteActiveJSCallback(browserIdentifier, active);
+}
+
 void BrowserManager::ExecuteSceneChangeJSCallback(const char *name)
 {
 	pimpl->ExecuteSceneChangeJSCallback(name);
@@ -332,6 +337,17 @@ void BrowserManager::Impl::ExecuteVisiblityJSCallback(int browserIdentifier, boo
 		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Visibility");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetBool(0, visible);
+		b->SendProcessMessage(PID_RENDERER, msg);
+	});
+}
+
+void BrowserManager::Impl::ExecuteActiveJSCallback(int browserIdentifier, bool active)
+{
+	ExecuteOnBrowser(browserIdentifier, [&](CefRefPtr<CefBrowser> b)
+	{
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Active");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetBool(0, active);
 		b->SendProcessMessage(PID_RENDERER, msg);
 	});
 }

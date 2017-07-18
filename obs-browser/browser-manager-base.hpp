@@ -56,6 +56,8 @@ public:
 
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
 
+	void ExecuteActiveJSCallback(int browserIdentifier, bool active);
+
 	void ExecuteSceneChangeJSCallback(const char *name);
 
 	void RefreshPageNoCache(int browserIdentifier);

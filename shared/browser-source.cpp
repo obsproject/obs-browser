@@ -94,3 +94,8 @@ void BrowserSource::ExecuteVisiblityJSCallback(bool visible)
 {
 	BrowserManager::Instance()->ExecuteVisiblityJSCallback(browserIdentifier, visible);
 }
+
+void BrowserSource::ExecuteActiveJSCallback(bool active)
+{
+	BrowserManager::Instance()->ExecuteActiveJSCallback(browserIdentifier, active);
+}

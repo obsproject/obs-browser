@@ -110,6 +110,13 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		ExecuteJSFunction(browser, "onVisibilityChange", arguments);
 		return true;
 	}
+	else if (message->GetName() == "Active") {
+		CefV8ValueList arguments;
+		arguments.push_back(CefV8Value::CreateBool(args->GetBool(0)));
+
+		ExecuteJSFunction(browser, "onActiveChange", arguments);
+		return true;
+	}
 	else if (message->GetName() == "DispatchJSEvent") {       
 		CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
 
@@ -161,7 +168,6 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		CefString jsonString = message->GetArgumentList()->GetString(1);
 
 		CefRefPtr<CefV8Value> callback = callbackMap[callbackID];
-		
 		CefV8ValueList args;
 		args.push_back(CefV8Value::CreateString(jsonString));
 

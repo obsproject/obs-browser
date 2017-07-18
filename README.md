@@ -24,6 +24,18 @@ window.obsstudio.onVisibilityChange = function(visiblity) {
 };
 ```
 
+### Register for active/inactive callbacks
+```
+/**
+ * onActiveChange gets callbacks when the active/inactive state of the browser source changes in OBS
+ *
+ * @param {bool} True -> active, False -> inactive
+ */
+window.obsstudio.onActiveChange = function(active) {
+	
+};
+```
+
 ### Register for scene change callbacks
 ```
 window.addEventListener('obsSceneChanged', function(evt) {

@@ -69,6 +69,7 @@ public:
 	std::shared_ptr<BrowserListener> CreateListener();
 
 	void ExecuteVisiblityJSCallback(bool visible);
+	void ExecuteActiveJSCallback(bool active);
 
 private:
 	class Impl;

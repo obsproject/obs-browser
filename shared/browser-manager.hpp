@@ -61,6 +61,8 @@ public:
 	const char *GetModulePath() { return path; }
 
 	void ExecuteVisiblityJSCallback(int browserIdentifier, bool visible);
+
+	void ExecuteActiveJSCallback(int browserIdentifier, bool active);
 	
 	void ExecuteSceneChangeJSCallback(const char *name);
 
