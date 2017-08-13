@@ -77,7 +77,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_set_flags(props, OBS_PROPERTIES_DEFER_UPDATE);
 	// use this when obs allows non-readonly paths
 	obs_property_t *prop = obs_properties_add_bool(props, "is_local_file",
-			obs_module_text("Local file"));
+			obs_module_text("LocalFile"));
 
 	if (bs && bs->GetUrl() != "")
 	{
@@ -107,12 +107,12 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_text(props, "css",
 		obs_module_text("CSS"), OBS_TEXT_MULTILINE);
 	obs_properties_add_bool(props, "shutdown",
-		obs_module_text("Shutdown source when not visible"));
+		obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
-		obs_module_text("Refresh browser when scene becomes active"));
+		obs_module_text("RefreshBrowserActive"));
 
 	obs_properties_add_button(props, "refreshnocache",
-		obs_module_text("Refresh cache of current page"), refreshnocache_button_clicked);
+		obs_module_text("RefreshNoCache"), refreshnocache_button_clicked);
 
 #ifdef __APPLE__
 	// osx is the only process-isolated cef impl
