@@ -1,4 +1,5 @@
 #include <util/platform.h>
+#include <include/cef_version.h>
 
 #include "browser-manager-base.hpp"
 #include "browser-task.hpp"
@@ -149,7 +150,9 @@ int BrowserManager::Impl::CreateBrowser(
 				new BrowserClient(renderHandler, loadHandler, browserOBSBridge));
 
 		CefWindowInfo windowInfo;
+#if CHROME_VERSION_BUILD < 3071
 		windowInfo.transparent_painting_enabled = true;
+#endif
 		windowInfo.width = browserSettings.width;
 		windowInfo.height = browserSettings.height;
 		windowInfo.windowless_rendering_enabled = true;

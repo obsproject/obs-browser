@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <jansson.h>
+#include <include/cef_version.h>
 
 #include "fmt/format.h"
 #include "include/cef_browser.h"
@@ -38,7 +39,11 @@ CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
 void BrowserApp::OnRegisterCustomSchemes(
 		CefRawPtr<CefSchemeRegistrar> registrar)
 {
+#if CHROME_VERSION_BUILD >= 3029
+	registrar->AddCustomScheme("http", true, false, false, false, true, false);
+#else
 	registrar->AddCustomScheme("http", true, false, false, false, true);
+#endif
 }
 
 void BrowserApp::OnBeforeCommandLineProcessing(
