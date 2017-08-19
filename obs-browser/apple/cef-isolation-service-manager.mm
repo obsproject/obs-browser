@@ -247,6 +247,16 @@ void CEFIsolationServiceManager::ExecuteVisiblityJSCallback(int browserIdentifie
 	@catch (NSException *exception) {}
 }
 
+void CEFIsolationServiceManager::ExecuteActiveJSCallback(int browserIdentifier, bool active)
+{
+	id<CEFIsolatedClient> cefIsolatedClient =
+	[_cefIsolationService client];
+	@try {
+		[cefIsolatedClient executeActiveJSCallback:browserIdentifier active:active];
+	}
+	@catch (NSException *exception) {}
+}
+
 void CEFIsolationServiceManager::ExecuteSceneChangeJSCallback(const char *name)
 {
     id<CEFIsolatedClient> cefIsolatedClient =
