@@ -20,6 +20,7 @@
 
 #include <include/cef_app.h>
 #include <include/cef_browser.h>
+#include <include/cef_version.h>
 
 // shared apple
 #import "cef-isolation.h"
@@ -92,7 +93,9 @@ void sync_on_cef_ui(dispatch_block_t block)
 		CefWindowInfo windowInfo;
 		windowInfo.view = nullptr;
 		windowInfo.parent_view = nullptr;
+#if CHROME_VERSION_BUILD < 3071
 		windowInfo.transparent_painting_enabled = true;
+#endif
 		windowInfo.width = browserSettings.width;
 		windowInfo.height = browserSettings.height;
 		windowInfo.windowless_rendering_enabled = true;
