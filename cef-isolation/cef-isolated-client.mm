@@ -313,6 +313,20 @@ void getUnmodifiedCharacter(ObsKeyEventBridge *event, UniChar &character)
 	}];
 }
 
+- (void)executeActiveJSCallback:(const int)browserIdentifier active:(BOOL)active
+{
+	[self sendEvent:browserIdentifier
+			event:^(SharedBrowserHandle browserHandle)
+	{
+		CefRefPtr<CefBrowser> browser = browserHandle->GetBrowser();
+
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Active");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetBool(0, active);
+		browser->SendProcessMessage(PID_RENDERER, msg);
+	}];
+}
+
 - (void)executeSceneChangeJSCallback:(const char *)name
 {
 	[self sendEventToAllBrowsers:^(SharedBrowserHandle browserHandle)

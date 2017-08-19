@@ -58,6 +58,8 @@
 - (void)refreshPageNoCache:(const int)browserIdentifier;
 - (void)executeVisiblityJSCallback:(const int)browserIdentifier
 		visible:(BOOL)visible;
+- (void)executeActiveJSCallback:(const int)browserIdentifier
+		active:(BOOL)active;
 - (void)executeSceneChangeJSCallback:(const char *)name;
 - (void)dispatchJSEvent:(const char *)eventName data:(const char*) jsonString;
 @end
