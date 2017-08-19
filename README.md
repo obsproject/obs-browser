@@ -62,7 +62,7 @@ window.obsstudio.getCurrentScene(function(data) {console.log(data);});
 
 ### Building CEF
 #### Getting
-*  Download CEF Mac 64 from [https://cefbuilds.com/](https://cefbuilds.com/)
+*  Download CEF Mac 64 from [http://opensource.spotify.com/cefbuilds/index.html](http://opensource.spotify.com/cefbuilds/index.html)
   *  Use CEF branch 2987
 *  Extract and cd into the folder
 
@@ -103,7 +103,7 @@ Build in Xcode (⌘+B)
 
 ### Building CEF
 #### Getting
-*  Download CEF Windows 64bit from [https://cefbuilds.com/](https://cefbuilds.com/)
+*  Download CEF Windows 64bit from [http://opensource.spotify.com/cefbuilds/index.html](http://opensource.spotify.com/cefbuilds/index.html)
   *  Use CEF branch 2987
 *  Extract and cd into the folder
 
