@@ -104,7 +104,7 @@ Build in Xcode (⌘+B)
 ### Building CEF
 #### Getting
 *  Download CEF Windows 64bit from [http://opensource.spotify.com/cefbuilds/index.html](http://opensource.spotify.com/cefbuilds/index.html)
-  *  Use CEF branch 2987
+  *  Use CEF branch 2987, or newer branches up until 3112
 *  Extract and cd into the folder
 
 #### Setting Up Project
