@@ -1,5 +1,7 @@
 include(FindPackageHandleStandardArgs)
 
+SET(CEF_ROOT_DIR "" CACHE PATH "Path to a CEF distributed build")
+
 message("Looking for Chromium Embedded Framework in ${CEF_ROOT_DIR}")
 
 find_path(CEF_INCLUDE_DIR "include/cef_version.h"
