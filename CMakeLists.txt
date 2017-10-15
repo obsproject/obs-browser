@@ -328,7 +328,35 @@ if (APPLE)
 		COMMAND rm -rf "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks/CEF Helper.app"
 		COMMAND cp -Rf "$<TARGET_FILE_DIR:cef-bootstrap>/../../../CEF Helper.app" "$<TARGET_FILE_DIR:cef-isolation>/../Frameworks"
 		)
-		
+
+else(APPLE)
+	math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
+	add_custom_command(TARGET obs-browser POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+		"${CEF_ROOT_DIR}/Resources"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+	)
+
+	add_custom_command(TARGET obs-browser POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy
+		"${CEF_ROOT_DIR}/Release/chrome_elf.dll"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+		COMMAND ${CMAKE_COMMAND} -E copy
+		"${CEF_ROOT_DIR}/Release/libcef.dll"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+		COMMAND ${CMAKE_COMMAND} -E copy
+		"${CEF_ROOT_DIR}/Release/libEGL.dll"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+		COMMAND ${CMAKE_COMMAND} -E copy
+		"${CEF_ROOT_DIR}/Release/libGLESv2.dll"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+		COMMAND ${CMAKE_COMMAND} -E copy
+		"${CEF_ROOT_DIR}/Release/natives_blob.bin"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+		COMMAND ${CMAKE_COMMAND} -E copy
+		"${CEF_ROOT_DIR}/Release/snapshot_blob.bin"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+	)
 endif(APPLE)
 
 if(APPLE)
