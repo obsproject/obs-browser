@@ -15,3 +15,9 @@ const char* BrowserOBSBridgeBase::GetCurrentSceneJSONData()
 
 	return jsonString; 
 }
+
+const char* BrowserOBSBridgeBase::GetStatus()
+{
+	const char* jsonString = obsStatusToJSON();
+	return jsonString;
+}

@@ -105,5 +105,20 @@ bool BrowserClient::OnProcessMessageReceived(
 
 		return true;
 	}
+	else if (message_name == "getStatus") {
+
+		int callbackID = message->GetArgumentList()->GetInt(0);
+
+		CefString jsonString = browserOBSBridge->GetStatus();
+
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("executeCallback");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetInt(0, callbackID);
+		args->SetString(1, jsonString);
+
+		browser->SendProcessMessage(PID_RENDERER, msg);
+
+		return true;
+	}
 	return false;
 }

@@ -4,3 +4,4 @@
 #include <obs-frontend-api.h>
 
 extern const char* obsSourceToJSON(obs_source_t *source);
+extern const char* obsStatusToJSON();

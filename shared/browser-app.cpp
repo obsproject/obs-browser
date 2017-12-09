@@ -78,6 +78,9 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 
 	CefRefPtr<CefV8Value> func = CefV8Value::CreateFunction("getCurrentScene", this);
   	obsStudioObj->SetValue("getCurrentScene", func, V8_PROPERTY_ATTRIBUTE_NONE);
+
+	CefRefPtr<CefV8Value> getStatus = CefV8Value::CreateFunction("getStatus", this);
+	obsStudioObj->SetValue("getStatus", getStatus, V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -164,23 +167,33 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
 		return true;
 	}
-	else if (message->GetName() == "executeCallback") {
-        CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
+	else if (message->GetName() == "executeCallback")
+	{
+		CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
+		CefRefPtr<CefV8Value> retval;
+		CefRefPtr<CefV8Exception> exception;
         
-        context->Enter();
+		context->Enter();
 
-		int callbackID = message->GetArgumentList()->GetInt(0);
-		CefString jsonString = message->GetArgumentList()->GetString(1);
+		CefRefPtr<CefListValue> arguments = message->GetArgumentList();
+		int callbackID = arguments->GetInt(0);
+		CefString jsonString = arguments->GetString(1);
+
+		std::string script = fmt::format(
+			"JSON.parse('{}');",
+			arguments->GetString(1).ToString(),
+			jsonString.ToString().c_str());
 
 		CefRefPtr<CefV8Value> callback = callbackMap[callbackID];
 		CefV8ValueList args;
-		args.push_back(CefV8Value::CreateString(jsonString));
 
-		CefRefPtr<CefV8Value> retval;
-		CefRefPtr<CefV8Exception> exception;
-        callback->ExecuteFunction(NULL, args);
+		context->Eval(script, browser->GetMainFrame()->GetURL(), 0, retval, exception);
+
+		args.push_back(retval);
+
+		callback->ExecuteFunction(NULL, args);
         
-        context->Exit();
+		context->Exit();
 
 		callbackMap.erase(callbackID);
 
@@ -198,8 +211,8 @@ bool BrowserApp::Execute(const CefString& name,
 		CefRefPtr<CefV8Value>& retval,
 		CefString& exception)
 {
-	if (name == "getCurrentScene") {
-
+	if (name == "getCurrentScene")
+	{
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
@@ -211,6 +224,22 @@ bool BrowserApp::Execute(const CefString& name,
 
 		CefRefPtr<CefBrowser> browser = 
                 CefV8Context::GetCurrentContext()->GetBrowser();
+		browser->SendProcessMessage(PID_BROWSER, msg);
+
+		return true;
+	}
+	else if (name == "getStatus")
+	{
+		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
+			callbackId++;
+			callbackMap[callbackId] = arguments[0];
+		}
+
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("getStatus");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+		args->SetInt(0, callbackId);
+
+		CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
 		browser->SendProcessMessage(PID_BROWSER, msg);
 
 		return true;

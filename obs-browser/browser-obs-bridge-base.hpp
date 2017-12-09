@@ -8,4 +8,5 @@ public:
 	BrowserOBSBridgeBase();
 
     const char* GetCurrentSceneJSONData() override;
+    const char* GetStatus() override;
 };

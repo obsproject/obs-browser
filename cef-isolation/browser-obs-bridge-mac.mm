@@ -8,3 +8,8 @@ const char* BrowserOBSBridgeMac::GetCurrentSceneJSONData()
 {
 	return [cefIsolationService getCurrentSceneJSONData];
 }
+
+const char* BrowserOBSBridgeMac::GetStatus()
+{
+	return [cefIsolationService getStatus];
+}

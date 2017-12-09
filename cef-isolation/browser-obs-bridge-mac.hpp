@@ -9,6 +9,7 @@ public:
 	BrowserOBSBridgeMac(id<CEFIsolationService> cefIsolationService);
 
     const char* GetCurrentSceneJSONData() override;
+	const char* GetStatus() override;
 
 private:
 	id<CEFIsolationService> cefIsolationService;	

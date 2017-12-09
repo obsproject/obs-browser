@@ -55,7 +55,22 @@ window.addEventListener('obsSceneChanged', function(evt) {
 
 ### Get the current scene
 ```
-window.obsstudio.getCurrentScene(function(data) {console.log(data);});
+window.obsstudio.getCurrentScene(function(data) { console.log(data); });
+
+data is a Javascript object containing the following properties:
+* width
+* height
+* name
+```
+
+### Get OBS output status
+```
+window.obsstudio.getStatus(function data) { console.log(data); });
+
+data is a Javascript object containing the following properties:
+* recording (true/false)
+* streaming (true/false)
+* replaybuffer (true/false)
 ```
 
 ## Building on OSX

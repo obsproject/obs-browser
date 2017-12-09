@@ -38,6 +38,7 @@
 		surfaceHandle:(BrowserSurfaceHandle)surfaceHandle;
 - (void)invalidateClient:(id)client withException:(NSException *)exception;
 - (const char*)getCurrentSceneJSONData;
+- (const char*)getStatus;
 @end
 
 @protocol CEFIsolatedClient

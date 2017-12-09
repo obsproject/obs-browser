@@ -120,6 +120,12 @@
 	return jsonString;
 }
 
+- (const char*)getStatus
+{
+	const char* jsonString = obsStatusToJSON();
+	return jsonString;
+}
+
 - (void)invalidateClient:(id)client withException:(NSException *)exception
 {
 	UNUSED_PARAMETER(client);
