@@ -53,7 +53,7 @@ BrowserSource::Impl::Impl(BrowserSource *parent)
 {
 	obs_enter_graphics();
 
-	drawEffect = obs_get_default_rect_effect();
+	drawEffect = obs_get_base_effect(OBS_EFFECT_DEFAULT_RECT);
 
 	struct gs_sampler_info info = {
 		.filter = GS_FILTER_LINEAR,
