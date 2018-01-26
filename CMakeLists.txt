@@ -2,15 +2,28 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(cef-isolation)
 
+set(CMAKE_PREFIX_PATH "${QTDIR}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
-
-include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/UI/obs-frontend-api")
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
 
 include(BSUtils)
 
 find_package(LibObs REQUIRED)
 find_package(CEF REQUIRED)
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Widgets REQUIRED)
+
+include_directories(SYSTEM
+	"${CMAKE_SOURCE_DIR}/UI/obs-frontend-api"
+	${Qt5Core_INCLUDES}
+	${Qt5WebSockets_INCLUDES}
+	${Qt5Widgets_INCLUDES}
+	"obs-browser/wcui/forms"
+	"obs-browser/wcui/browser")
+
+qt5_wrap_ui(WCUIBrowserDialog "obs-browser/wcui/forms/wcui-browser-dialog.ui")
 
 if(MSVC)
 	option(USE_STATIC_CRT "Use static CRT" ON)
@@ -57,7 +70,9 @@ set(obs-browser_SOURCES
 	obs-browser/main-source.cpp
 	shared/browser-source.cpp
 	shared/base64.cpp
-	shared/util.cpp)
+	shared/util.cpp
+	obs-browser/wcui/forms/wcui-browser-dialog.cpp
+)
 
 set(obs-browser_HEADERS
 	shared/browser-manager.hpp
@@ -68,7 +83,9 @@ set(obs-browser_HEADERS
 	shared/base64.hpp
 	shared/browser-types.h
 	shared/browser-version.h
-	shared/util.hpp)
+	shared/util.hpp
+	obs-browser/wcui/forms/wcui-browser-dialog.hpp
+)
 
 if (APPLE)
 	list(APPEND obs-browser_SOURCES
@@ -174,7 +191,9 @@ else(NOT APPLE)
 endif(NOT APPLE)
 
 target_link_libraries(obs-browser 
-        ${obs-browser_LIBRARIES})
+	Qt5::Core
+	Qt5::Widgets
+	${obs-browser_LIBRARIES})
 
 if(APPLE)
 	set(cef-isolation_SOURCES
@@ -366,3 +385,10 @@ else(APPLE)
 	install_obs_plugin_with_data(obs-browser data)
 	install_obs_plugin(cef-bootstrap)
 endif(APPLE)
+
+add_custom_command(TARGET obs-browser POST_BUILD
+	# Copy WCUI browser dialog content HTML
+	COMMAND ${CMAKE_COMMAND} -E copy
+	"obs-browser/wcui/forms/obs-browser-wcui-browser-dialog.html"
+	"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+)
