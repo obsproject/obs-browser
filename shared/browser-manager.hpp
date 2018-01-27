@@ -19,6 +19,8 @@
 
 #include <memory>
 #include <jansson.h>
+#include <include/cef_base.h>
+#include <include/cef_client.h>
 
 class BrowserListener;
 struct BrowserSettings;
@@ -41,6 +43,13 @@ public:
 	int CreateBrowser(const BrowserSettings &browserSettings,
 			const std::shared_ptr<BrowserListener>
 				&browserListener);
+
+	int CreateBrowser(
+		const CefWindowInfo& window_info,
+		const CefRefPtr<CefClient> &client,
+		const CefString &url,
+		const CefBrowserSettings &settings,
+		const CefRefPtr<CefRequestContext> request_context);
 
 	void DestroyBrowser(int browserIdentifier);
 

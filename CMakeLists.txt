@@ -25,6 +25,9 @@ include_directories(SYSTEM
 
 qt5_wrap_ui(WCUIBrowserDialog "obs-browser/wcui/forms/wcui-browser-dialog.ui")
 
+# Uncomment to use QT private API (QPlatformNativeInterface)
+# include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS})
+
 if(MSVC)
 	option(USE_STATIC_CRT "Use static CRT" ON)
 

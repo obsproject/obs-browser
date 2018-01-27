@@ -7,9 +7,14 @@
 #include <QWidget>
 
 #include <util/platform.h>
+#include <util/threading.h>
 #include <include/cef_version.h>
 #include <include/cef_app.h>
 #include <include/cef_task.h>
+
+#include <pthread.h>
+
+#include <functional>
 
 namespace Ui {
 	class WCUIBrowserDialog;
@@ -38,11 +43,22 @@ private:
 	std::string GetCefBootstrapProcessPath();
 
 	void InitBrowser();
-	void DestroyBrowser();
+
+private:
+	void PushEvent(std::function<void()> event);
+	static void* BrowserManagerThreadEntry(void* threadArgument);
+	void BrowserManagerEntry();
 
 private:
 	std::string m_obs_module_path;
 	std::string m_cache_path;
+
+	bool m_threadAlive;
+	os_event_t *m_dispatchEvent;
+	os_event_t *m_startupEvent;
+	pthread_t m_managerThread;
+	pthread_mutex_t m_dispatchLock;
+	std::vector<std::function<void()>> m_queue;
 
 	Ui::WCUIBrowserDialog* ui;
 };

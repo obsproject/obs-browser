@@ -35,6 +35,16 @@ int BrowserManager::CreateBrowser(
 	return pimpl->CreateBrowser(browserSettings, browserListener);
 }
 
+int BrowserManager::CreateBrowser(
+	const CefWindowInfo &window_info,
+	const CefRefPtr<CefClient> &client,
+	const CefString &url,
+	const CefBrowserSettings &settings,
+	const CefRefPtr<CefRequestContext> request_context)
+{
+	return pimpl->CreateBrowser(window_info, client, url, settings, request_context);
+}
+
 void BrowserManager::DestroyBrowser(int browserIdentifier)
 {
 	pimpl->DestroyBrowser(browserIdentifier);
@@ -169,6 +179,45 @@ int BrowserManager::Impl::CreateBrowser(
 			browserIdentifier = browser->GetIdentifier();
 			browserMap[browserIdentifier] = browser;
 		}
+		os_event_signal(createdEvent);
+	}));
+
+	os_event_wait(createdEvent);
+	os_event_destroy(createdEvent);
+	return browserIdentifier;
+}
+
+int BrowserManager::Impl::CreateBrowser(
+	const CefWindowInfo &window_info,
+	const CefRefPtr<CefClient> &client,
+	const CefString &url,
+	const CefBrowserSettings &settings,
+	const CefRefPtr<CefRequestContext> request_context)
+{
+	int browserIdentifier = 0;
+	os_event_t *createdEvent;
+	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
+
+	os_event_wait(startupEvent);
+
+	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
+
+	CefPostTask(TID_UI, BrowserTask::newTask(
+		[&]
+	{
+		CefRefPtr<CefBrowser> browser =
+			CefBrowserHost::CreateBrowserSync(
+				window_info,
+				client,
+				url,
+				settings,
+				request_context);
+
+		if (browser != nullptr) {
+			browserIdentifier = browser->GetIdentifier();
+			browserMap[browserIdentifier] = browser;
+		}
+
 		os_event_signal(createdEvent);
 	}));
 
