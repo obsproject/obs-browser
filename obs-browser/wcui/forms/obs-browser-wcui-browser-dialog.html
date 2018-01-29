@@ -1,14 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	</head>
-	<body>
-		<h1>Connect to Streaming Service</h1>
-		<ul>
-			<li>
-				<a href="http://www.streamelements.com/">Stream Elements</a>
-			</li>
-		</ul>
-	</body>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+<body>
+	<h1>Connect to Streaming Service</h1>
+	<ul>
+		<li>
+			<a href="http://www.streamelements.com/">Stream Elements</a>
+		</li>
+	</ul>
+
+	<h1>Test API calls</h1>
+	<ul>
+		<li><a href="#" onclick="test_videoCodecs(); return false">Get Video CODECs</a></li>
+		<li><a href="#" onclick="test_audioCodecs(); return false">Get Audio CODECs</a></li>
+		<li><a href="#" onclick="test_videoCaptureDevices(); return false">Get Video Capture Devices</a></li>
+		<li><a href="#" onclick="test_Setup(); return false">Setup</a></li>
+	</ul>
+
+	<h1>API Call Response</h1>
+	<div id="apiCallName"></div>
+	<div id="apiCallResponseContent"></div>
+
+	<script type="text/javascript">
+		function showApiCallResponse(apiCallName, apiCallResponseContent) {
+			document.getElementById("apiCallName").innerText = apiCallName;
+			document.getElementById("apiCallResponseContent").innerText = JSON.stringify(apiCallResponseContent);
+		}
+
+		showApiCallResponse("No call", "No response");
+
+		function test_videoCodecs() {
+			window.obsstudio.videoCodecs(function (result) {
+				showApiCallResponse("videoCodecs", result);
+			});
+		}
+
+		function test_audioCodecs() {
+			window.obsstudio.audioCodecs(function (result) {
+				showApiCallResponse("audioCodecs", result);
+			});
+		}
+
+		function test_videoCaptureDevices() {
+			window.obsstudio.videoCaptureDevices(function (result) {
+				showApiCallResponse("videoCaptureDevices", result);
+			});
+		}
+
+		function test_Setup() {
+			var config = {
+				"OBS": {
+					"My profile": {
+						"input": {
+							"My scene collection": {
+								"scenes": [
+									{
+										"type": "game"
+									},
+									{
+										"type": "browser",
+										"url": "http://streamelements.com/overlay/xxxxxxx",
+										"x": 0,
+										"y": 0,
+										"width": 1920,
+										"height": 1080,
+										"fps": 24
+									},
+									{
+										"type": "videoCapture",
+										"device": "xxx",
+										"x": 123,
+										"y": 123,
+										"width": 320,
+										"height": 240
+									}
+								]
+							}
+						},
+						"output": {
+							"audio": {
+								"bitRate": 128000,
+								"sampleRate": 44100,
+								"channels": 2,
+								"codec": "libaac"
+							},
+							"video": {
+								"bitRate": 2500000,
+								"codec": "libx264",
+								"framesPerSecond": 24,
+								"width": 1920,
+								"height": 1080
+							},
+							"stream": {
+								"type": "rtmp_common",
+								"metadata": {
+									"key": "value"
+								},
+								"settings": {
+									"server": "rtmp://.../app",
+									"key": "streamKey",
+									"useAuth": true,
+									"username": "username",
+									"password": "password"
+								}
+							}
+						}
+					}
+				}
+			};
+
+			showApiCallResponse("Setup", config);
+
+			window.obsstudio.Setup(config);
+		}
+	</script>
+</body>
 </html>

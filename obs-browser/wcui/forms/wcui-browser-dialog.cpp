@@ -1,12 +1,10 @@
 #include "wcui-browser-dialog.hpp"
 #include "ui_wcui-browser-dialog.h"
 #include "browser-manager.hpp"
+#include "browser-obs-bridge-base.hpp"
 
-#include <QMainWindow>
-#include <QWindow>
 #include <QWidget>
 #include <QFrame>
-#include <QLayout>
 
 WCUIBrowserDialog::WCUIBrowserDialog(QWidget* parent, std::string obs_module_path, std::string cache_path) :
 	QDialog(parent, Qt::Dialog),
@@ -29,12 +27,19 @@ WCUIBrowserDialog::~WCUIBrowserDialog()
 
 void WCUIBrowserDialog::ShowModal()
 {
+	// Get window handle of CEF container frame
 	auto frame = findChild<QFrame*>("frame");
 	m_window_handle = (cef_window_handle_t)frame->winId();
 
+	// Spawn CEF initialization in new thread.
+	//
+	// The window handle must be obtained in the QT UI thread and CEF initialization must be performed in a
+	// separate thread, otherwise a dead lock occurs and everything just hangs.
+	//
 	pthread_t thread;
 	pthread_create(&thread, nullptr, InitBrowserThreadEntryPoint, this);
 
+	// Start modal dialog
 	exec();
 }
 
@@ -57,42 +62,58 @@ void* WCUIBrowserDialog::InitBrowserThreadEntryPoint(void* arg)
 //
 void WCUIBrowserDialog::InitBrowser()
 {
-	CefString url;
+	std::string absoluteHtmlFilePath;
 
 	// Get initial UI HTML file full path
 	std::string parentPath(
 		m_obs_module_path.substr(0, m_obs_module_path.find_last_of('/') + 1));
 
+	// Launcher local HTML page path
 	std::string htmlPartialPath = parentPath + "/obs-browser-wcui-browser-dialog.html";
 
 #ifdef WIN32
 	char htmlFullPath[MAX_PATH + 1];
 	::GetFullPathNameA(htmlPartialPath.c_str(), MAX_PATH, htmlFullPath, NULL);
 
-	url = htmlFullPath;
+	absoluteHtmlFilePath = htmlFullPath;
 #else
 	char* htmlFullPath = realpath(htmlPartialPath.c_str(), NULL);
 
-	url = htmlFullPath;
+	absoluteHtmlFilePath = htmlFullPath;
 
 	free(htmlFullPath);
 #endif
+
+	// BrowserManager installs a custom http scheme URL handler to access local files.
+	//
+	// We don't need this on Windows, perhaps MacOS / UNIX users need this?
+	//
+	CefString url = "http://absolute/" + absoluteHtmlFilePath;
 
 	if (m_browser_handle == BROWSER_HANDLE_NONE)
 	{
 		// Browser has not been created yet
 
+		// Client area rectangle
 		RECT clientRect;
+
 		clientRect.left = 0;
 		clientRect.top = 0;
 		clientRect.right = width();
 		clientRect.bottom = height();
 
-		CefRefPtr<BrowserClient> client(new BrowserClient(NULL, NULL, NULL));
+		// CefClient
+		CefRefPtr<BrowserClient> client(new BrowserClient(NULL, NULL, new BrowserOBSBridgeBase()));
+		
+		// Window info
 		CefWindowInfo window_info;
+
 		CefBrowserSettings settings;
 
 		settings.Reset();
+
+		// Don't allow JavaScript to close the browser window
+		settings.javascript_close_windows = STATE_DISABLED;
 
 		window_info.SetAsChild(m_window_handle, clientRect);
 

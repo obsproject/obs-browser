@@ -42,14 +42,9 @@ public:
 	void ShowModal();
 
 
-private Q_SLOTS:
-	// void reject();
-
 private:
 	static void* InitBrowserThreadEntryPoint(void* arg);
 	void InitBrowser();
-
-public:
 
 private:
 	std::string m_obs_module_path;

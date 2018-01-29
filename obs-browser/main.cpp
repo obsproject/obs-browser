@@ -97,9 +97,8 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 
 static WCUIBrowserDialog* s_wcui_WCUIBrowserDialog = NULL;
 
-/*
-* Initialize WCUI (Web Configuration UI)
-*/
+// Initialize WCUI (Web Configuration UI)
+//
 static void wcui_init()
 {
 	// Browser dialog setup
@@ -114,11 +113,11 @@ static void wcui_init()
 
 	obs_frontend_pop_ui_translation();
 
-	// Toolbox item setup
+	// Tools menu item setup
 	QAction* menu_action = (QAction*)obs_frontend_add_tools_menu_qaction(
 		obs_module_text("WCUIToolsMenuItemTitle"));
 
-	// Connect toolbox item to browser dialog show/hide method
+	// Connect tools menu item to browser dialog show/hide method
 	menu_action->connect(
 		menu_action,
 		&QAction::triggered,
@@ -130,15 +129,10 @@ static void wcui_init()
 		});
 }
 
-/*
-* Destroy WCUI (Web Configuration UI)
-*/
+// Shutdown WCUI (Web Configuration UI)
+//
 static void wcui_shutdown()
 {
-	// Destroy browser dialog
-	// delete s_wcui_WCUIBrowserDialog;
-
-	// s_wcui_WCUIBrowserDialog = NULL;
 }
 
 bool obs_module_load(void)
@@ -161,9 +155,9 @@ bool obs_module_load(void)
 
 void obs_module_unload()
 {
-	wcui_shutdown();
-
 	BrowserManager::Instance()->Shutdown();
 	BrowserManager::Instance()->SetModulePath(nullptr);
 	BrowserManager::DestroyInstance();
+
+	wcui_shutdown();
 }
