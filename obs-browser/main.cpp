@@ -111,6 +111,7 @@ static void wcui_init()
 		obs_main_window,
 		obs_get_module_binary_path(obs_current_module()),
 		obs_module_config_path(""));
+
 	obs_frontend_pop_ui_translation();
 
 	// Toolbox item setup
@@ -124,7 +125,7 @@ static void wcui_init()
 		[] {
 			if (s_wcui_WCUIBrowserDialog != NULL)
 			{
-				s_wcui_WCUIBrowserDialog->ToggleShowHide();
+				s_wcui_WCUIBrowserDialog->ShowModal();
 			}
 		});
 }
@@ -135,9 +136,9 @@ static void wcui_init()
 static void wcui_shutdown()
 {
 	// Destroy browser dialog
-	delete s_wcui_WCUIBrowserDialog;
+	// delete s_wcui_WCUIBrowserDialog;
 
-	s_wcui_WCUIBrowserDialog = NULL;
+	// s_wcui_WCUIBrowserDialog = NULL;
 }
 
 bool obs_module_load(void)

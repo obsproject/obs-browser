@@ -16,6 +16,9 @@
 
 #include <functional>
 
+// TODO: Remove
+#include "shared/browser-client.hpp"
+
 namespace Ui {
 	class WCUIBrowserDialog;
 }
@@ -24,6 +27,9 @@ class WCUIBrowserDialog : public QDialog
 {
 	Q_OBJECT
 
+private:
+	const int BROWSER_HANDLE_NONE = -1;
+
 public:
 	explicit WCUIBrowserDialog(
 		QWidget* parent,
@@ -31,36 +37,30 @@ public:
 		std::string cache_path);
 
 	~WCUIBrowserDialog();
-	void ToggleShowHide();
 
-	/*
-	private Q_SLOTS:
-	void AuthCheckboxChanged();
-	void FormAccepted();
-	*/
+public:
+	void ShowModal();
+
+
+private Q_SLOTS:
+	// void reject();
 
 private:
-	std::string GetCefBootstrapProcessPath();
-
+	static void* InitBrowserThreadEntryPoint(void* arg);
 	void InitBrowser();
 
-private:
-	void PushEvent(std::function<void()> event);
-	static void* BrowserManagerThreadEntry(void* threadArgument);
-	void BrowserManagerEntry();
+public:
 
 private:
 	std::string m_obs_module_path;
 	std::string m_cache_path;
 
-	bool m_threadAlive;
-	os_event_t *m_dispatchEvent;
-	os_event_t *m_startupEvent;
-	pthread_t m_managerThread;
-	pthread_mutex_t m_dispatchLock;
-	std::vector<std::function<void()>> m_queue;
-
 	Ui::WCUIBrowserDialog* ui;
+
+	cef_window_handle_t m_window_handle;
+	int m_browser_handle = BROWSER_HANDLE_NONE;
+
+private:
 };
 
 #endif // WCUI_BROWSER_DIALOG_H

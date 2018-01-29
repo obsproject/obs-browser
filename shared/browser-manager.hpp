@@ -49,7 +49,11 @@ public:
 		const CefRefPtr<CefClient> &client,
 		const CefString &url,
 		const CefBrowserSettings &settings,
-		const CefRefPtr<CefRequestContext> request_context);
+		const CefRefPtr<CefRequestContext> &request_context);
+
+	CefBrowserHost* GetBrowserHost(int browserIdentifier);
+	CefBrowser* GetBrowser(int browserIdentifier);
+	void LoadURL(int browserIdentifier, CefString& url);
 
 	void DestroyBrowser(int browserIdentifier);
 

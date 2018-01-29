@@ -20,8 +20,7 @@ include_directories(SYSTEM
 	${Qt5Core_INCLUDES}
 	${Qt5WebSockets_INCLUDES}
 	${Qt5Widgets_INCLUDES}
-	"obs-browser/wcui/forms"
-	"obs-browser/wcui/browser")
+	"obs-browser/wcui/forms")
 
 qt5_wrap_ui(WCUIBrowserDialog "obs-browser/wcui/forms/wcui-browser-dialog.ui")
 

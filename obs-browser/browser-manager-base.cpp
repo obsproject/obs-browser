@@ -40,9 +40,24 @@ int BrowserManager::CreateBrowser(
 	const CefRefPtr<CefClient> &client,
 	const CefString &url,
 	const CefBrowserSettings &settings,
-	const CefRefPtr<CefRequestContext> request_context)
+	const CefRefPtr<CefRequestContext> &request_context)
 {
 	return pimpl->CreateBrowser(window_info, client, url, settings, request_context);
+}
+
+CefBrowserHost* BrowserManager::GetBrowserHost(int browserIdentifier)
+{
+	return pimpl->GetBrowserHost(browserIdentifier);
+}
+
+CefBrowser* BrowserManager::GetBrowser(int browserIdentifier)
+{
+	return pimpl->GetBrowser(browserIdentifier);
+}
+
+void BrowserManager::LoadURL(int browserIdentifier, CefString& url)
+{
+	return pimpl->LoadURL(browserIdentifier, url);
 }
 
 void BrowserManager::DestroyBrowser(int browserIdentifier)
@@ -192,15 +207,13 @@ int BrowserManager::Impl::CreateBrowser(
 	const CefRefPtr<CefClient> &client,
 	const CefString &url,
 	const CefBrowserSettings &settings,
-	const CefRefPtr<CefRequestContext> request_context)
+	const CefRefPtr<CefRequestContext> &request_context)
 {
 	int browserIdentifier = 0;
 	os_event_t *createdEvent;
 	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
 
 	os_event_wait(startupEvent);
-
-	BrowserOBSBridge *browserOBSBridge = new BrowserOBSBridgeBase();
 
 	CefPostTask(TID_UI, BrowserTask::newTask(
 		[&]
@@ -226,8 +239,66 @@ int BrowserManager::Impl::CreateBrowser(
 	return browserIdentifier;
 }
 
-void 
-BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
+CefBrowserHost* BrowserManager::Impl::GetBrowserHost(int browserIdentifier)
+{
+	CefBrowserHost* result = NULL;
+
+	os_event_t* complete_event;
+	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
+
+	CefPostTask(TID_UI, BrowserTask::newTask(
+	[&]
+	{
+		result = browserMap[browserIdentifier]->GetHost();
+
+		os_event_signal(complete_event);
+	}));
+
+	os_event_wait(complete_event);
+	os_event_destroy(complete_event);
+
+	return result;
+}
+
+CefBrowser* BrowserManager::Impl::GetBrowser(int browserIdentifier)
+{
+	CefBrowser* result = NULL;
+
+	os_event_t* complete_event;
+	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
+
+	CefPostTask(TID_UI, BrowserTask::newTask(
+		[&]
+	{
+		result = browserMap[browserIdentifier];
+
+		os_event_signal(complete_event);
+	}));
+
+	os_event_wait(complete_event);
+	os_event_destroy(complete_event);
+
+	return result;
+}
+
+void BrowserManager::Impl::LoadURL(int browserIdentifier, CefString& url)
+{
+	os_event_t* complete_event;
+	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
+
+	CefPostTask(TID_UI, BrowserTask::newTask(
+		[&]
+	{
+		browserMap[browserIdentifier]->GetMainFrame()->LoadURL(url);
+
+		os_event_signal(complete_event);
+	}));
+
+	os_event_wait(complete_event);
+	os_event_destroy(complete_event);
+}
+
+void BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 {
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
@@ -533,7 +604,9 @@ void BrowserManager::Impl::BrowserManagerEntry()
 			while (!queue.empty()) {
 				auto event = queue[0];
 				event();
-				queue.erase(queue.begin());
+				if (!queue.empty()) {
+					queue.erase(queue.begin());
+				}
 			}
 			thread_exit = !threadAlive;
 			pthread_mutex_unlock(&dispatchLock);
