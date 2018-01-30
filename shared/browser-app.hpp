@@ -53,6 +53,14 @@ public: /* CefV8Handler */
 			CefString& exception) OVERRIDE;
 
 private:
+	void SendExecuteFunctionWithCallbackMessage(
+		const CefString& name,
+		CefRefPtr<CefV8Value> object,
+		const CefV8ValueList& arguments,
+		CefRefPtr<CefV8Value>& retval,
+		CefString& exception);
+
+private:
 	virtual void ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 		const char *functionName,
 		CefV8ValueList arguments);

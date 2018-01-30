@@ -25,6 +25,7 @@
 #include "fmt/format.h"
 #include "include/cef_browser.h"
 #include "include/cef_command_line.h"
+#include "include/cef_parser.h"			// CefWriteJSON, CefParseJSON
 #include "include/wrapper/cef_helpers.h"
 #include "browser-version.h"
 
@@ -81,6 +82,11 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 
 	CefRefPtr<CefV8Value> getStatus = CefV8Value::CreateFunction("getStatus", this);
 	obsStudioObj->SetValue("getStatus", getStatus, V8_PROPERTY_ATTRIBUTE_NONE);
+
+	obsStudioObj->SetValue("setupEnvironment", CefV8Value::CreateFunction("setupEnvironment", this), V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("videoCaptureDevices", CefV8Value::CreateFunction("videoCaptureDevices", this), V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("audioCodecs", CefV8Value::CreateFunction("audioCodecs", this), V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("videoCodecs", CefV8Value::CreateFunction("videoCodecs", this), V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -179,29 +185,46 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		int callbackID = arguments->GetInt(0);
 		CefString jsonString = arguments->GetString(1);
 
-		std::string script = fmt::format(
-			"JSON.parse('{}');",
-			arguments->GetString(1).ToString(),
-			jsonString.ToString().c_str());
+		CefV8ValueList JSON_parse_args;
+		JSON_parse_args.push_back(CefV8Value::CreateString(jsonString));
 
-		CefRefPtr<CefV8Value> callback = callbackMap[callbackID];
+		// Call global JSON.parse JS function to parse JSON result
+		CefRefPtr<CefV8Value> JSON_parse_result =
+			context->GetGlobal()->GetValue("JSON")->GetValue("parse")->ExecuteFunction(NULL, JSON_parse_args);
+
 		CefV8ValueList args;
+		args.push_back(JSON_parse_result);
 
-		context->Eval(script, browser->GetMainFrame()->GetURL(), 0, retval, exception);
-
-		args.push_back(retval);
-
-		callback->ExecuteFunction(NULL, args);
+		callbackMap[callbackID]->ExecuteFunction(NULL, args);
         
 		context->Exit();
 
 		callbackMap.erase(callbackID);
 
-		
 		return true;
 	}
 
 	return false;
+}
+
+void BrowserApp::SendExecuteFunctionWithCallbackMessage(
+	const CefString& name,
+	CefRefPtr<CefV8Value> object,
+	const CefV8ValueList& arguments,
+	CefRefPtr<CefV8Value>& retval,
+	CefString& exception)
+{
+	if (arguments.size() == 1 && arguments[0]->IsFunction()) {
+		callbackId++;
+		callbackMap[callbackId] = arguments[0];
+	}
+
+	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create(name);
+	CefRefPtr<CefListValue> args = msg->GetArgumentList();
+	args->SetInt(0, callbackId);
+
+	CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
+	browser->SendProcessMessage(PID_BROWSER, msg);
 }
 
 // CefV8Handler::Execute
@@ -243,6 +266,39 @@ bool BrowserApp::Execute(const CefString& name,
 		browser->SendProcessMessage(PID_BROWSER, msg);
 
 		return true;
+	}
+	else if (name == "videoCodecs" || name == "audioCodecs" || name == "videoCaptureDevices")
+	{
+		SendExecuteFunctionWithCallbackMessage(name, object, arguments, retval, exception);
+
+		return true;
+	}
+	else if (name == "setupEnvironment")
+	{
+		if (arguments.size() == 1 && arguments[0]->IsObject()) {
+			CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+
+			CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("setupEnvironment");
+			CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+			// Call JSON.stringify global JS function to convert object to JSON string
+			CefRefPtr<CefV8Value> JSON_stringify_result
+				= context->GetGlobal()->GetValue("JSON")->GetValue("stringify")->ExecuteFunction(NULL, arguments);
+
+			// If JSON.stringify result is a string, it means the function call succeeded and we can pass
+			// the value to the browser process
+			if (JSON_stringify_result->IsString())
+			{
+				CefString json_value = JSON_stringify_result->GetStringValue();
+
+				args->SetString(0, json_value);
+
+				CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
+				browser->SendProcessMessage(PID_BROWSER, msg);
+
+				return true;
+			}
+		}
 	}
 
 	// Function does not exist.

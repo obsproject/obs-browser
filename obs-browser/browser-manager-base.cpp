@@ -172,7 +172,7 @@ int BrowserManager::Impl::CreateBrowser(
 				new BrowserLoadHandler(browserSettings.css));
 
 		CefRefPtr<BrowserClient> browserClient(
-				new BrowserClient(renderHandler, loadHandler, browserOBSBridge));
+				new BrowserClient(renderHandler, loadHandler, browserOBSBridge, nullptr));
 
 		CefWindowInfo windowInfo;
 #if CHROME_VERSION_BUILD < 3071

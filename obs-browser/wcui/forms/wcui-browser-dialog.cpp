@@ -3,6 +3,10 @@
 #include "browser-manager.hpp"
 #include "browser-obs-bridge-base.hpp"
 
+#include "include/cef_parser.h"		// CefParseJSON, CefWriteJSON
+
+#include "fmt/format.h"
+
 #include <QWidget>
 #include <QFrame>
 
@@ -103,7 +107,7 @@ void WCUIBrowserDialog::InitBrowser()
 		clientRect.bottom = height();
 
 		// CefClient
-		CefRefPtr<BrowserClient> client(new BrowserClient(NULL, NULL, new BrowserOBSBridgeBase()));
+		CefRefPtr<BrowserClient> client(new BrowserClient(NULL, NULL, new BrowserOBSBridgeBase(), this));
 		
 		// Window info
 		CefWindowInfo window_info;
@@ -125,4 +129,86 @@ void WCUIBrowserDialog::InitBrowser()
 
 		BrowserManager::Instance()->LoadURL(m_browser_handle, url);
 	}
+}
+
+void WCUIBrowserDialog::OnProcessMessageReceivedSendExecuteCallbackMessage(
+	CefRefPtr<CefBrowser> browser,
+	CefProcessId source_process,
+	CefRefPtr<CefProcessMessage> message,
+	CefRefPtr<CefValue> callback_arg)
+{
+	int callbackID = message->GetArgumentList()->GetInt(0);
+
+	CefString jsonString =
+		CefWriteJSON(callback_arg, JSON_WRITER_DEFAULT);
+
+	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("executeCallback");
+	CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+	args->SetInt(0, callbackID);	// Callback identifier in renderer process callbackMap
+
+	args->SetString(1, jsonString);	// Callback argument JSON string which will be converted back to CefV8Value in
+					// the renderer process
+	
+	browser->SendProcessMessage(source_process, msg); // source_process = PID_RENDERER
+}
+
+// Called when a new message is received from a different process. Return true
+// if the message was handled or false otherwise. Do not keep a reference to
+// or attempt to access the message outside of this callback.
+//
+/*--cef()--*/
+bool WCUIBrowserDialog::OnProcessMessageReceived(
+	CefRefPtr<CefBrowser> browser,
+	CefProcessId source_process,
+	CefRefPtr<CefProcessMessage> message)
+{
+	CefString name = message->GetName();
+	CefRefPtr<CefListValue> args = message->GetArgumentList();
+
+	int argsLength = args->GetSize();
+
+	if (name == "setupEnvironment")
+	{
+		CefString config_json_string = args->GetValue(0)->GetString();
+		CefRefPtr<CefValue> config =
+			CefParseJSON(config_json_string, JSON_PARSER_ALLOW_TRAILING_COMMAS);
+
+		if (config->GetDictionary() != NULL)
+		{
+			auto input = config->GetDictionary()->GetValue("input");
+			auto output = config->GetDictionary()->GetValue("output");
+
+		}
+
+		return true;
+	}
+	else if (name == "videoCodecs")
+	{
+		CefRefPtr<CefListValue> codec_list = CefListValue::Create();
+
+		CefRefPtr<CefValue> root = CefValue::Create();
+
+		root->SetList(codec_list);
+
+		for (int i = 0; i < 3; ++i) {
+			CefRefPtr<CefDictionaryValue> codec = CefDictionaryValue::Create();
+
+			std::string id = fmt::format("codec {}", i);
+			std::string codec_name = fmt::format("Video Codec {}", i);
+			bool isHardwareAccelerated = false;
+			
+			codec->SetString("id", id);
+			codec->SetString("name", name);
+			codec->SetBool("isHardwareAccelerated", isHardwareAccelerated);
+
+			codec_list->SetDictionary(i, codec);
+		}
+
+		OnProcessMessageReceivedSendExecuteCallbackMessage(browser, source_process, message, root);
+
+		return true;
+	}
+
+	return false;
 }

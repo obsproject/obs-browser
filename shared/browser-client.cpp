@@ -21,8 +21,9 @@
 #include "browser-obs-bridge.hpp"
 
 BrowserClient::BrowserClient(CefRenderHandler *renderHandler,
-	CefLoadHandler *loadHandler, BrowserOBSBridge *browserOBSBridge)
-	: renderHandler(renderHandler), loadHandler(loadHandler), browserOBSBridge(browserOBSBridge)
+	CefLoadHandler *loadHandler, BrowserOBSBridge *browserOBSBridge,
+	CefClient *onProcessMessageReceivedHandler)
+	: renderHandler(renderHandler), loadHandler(loadHandler), browserOBSBridge(browserOBSBridge), onProcessMessageReceivedHandler(onProcessMessageReceivedHandler)
 {
 }
 
@@ -120,5 +121,9 @@ bool BrowserClient::OnProcessMessageReceived(
 
 		return true;
 	}
+	else if (onProcessMessageReceivedHandler != NULL) {
+		return onProcessMessageReceivedHandler->OnProcessMessageReceived(browser, source_process, message);
+	}
+
 	return false;
 }

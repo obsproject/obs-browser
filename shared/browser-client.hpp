@@ -30,7 +30,11 @@ class BrowserClient : public CefClient, public CefLifeSpanHandler,
 public:
 	BrowserClient(CefRenderHandler *renderHandler,
 		CefLoadHandler *loadHandler,
-		BrowserOBSBridge *browserOBSBridge);
+		BrowserOBSBridge *browserOBSBridge,
+		CefClient *onProcessMessageReceivedHandler	// used for passing unhandled OnProcessMessageReceived() calls to another class
+								// do NOT call other methods of this class instance
+								// do NOT delete this class instance
+	);
 
 public: /* CefClient overrides */
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE;
@@ -63,6 +67,7 @@ private:
 	CefRefPtr<CefRenderHandler> renderHandler;
 	CefRefPtr<CefLoadHandler> loadHandler;
 	BrowserOBSBridge *browserOBSBridge;
+	CefClient* onProcessMessageReceivedHandler;
 
 public:
 	IMPLEMENT_REFCOUNTING(BrowserClient);

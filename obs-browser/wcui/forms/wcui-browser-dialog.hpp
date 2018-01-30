@@ -23,7 +23,9 @@ namespace Ui {
 	class WCUIBrowserDialog;
 }
 
-class WCUIBrowserDialog : public QDialog
+class WCUIBrowserDialog:
+	public QDialog,
+	public CefClient
 {
 	Q_OBJECT
 
@@ -41,7 +43,6 @@ public:
 public:
 	void ShowModal();
 
-
 private:
 	static void* InitBrowserThreadEntryPoint(void* arg);
 	void InitBrowser();
@@ -55,7 +56,29 @@ private:
 	cef_window_handle_t m_window_handle;
 	int m_browser_handle = BROWSER_HANDLE_NONE;
 
+public: // CefClient implementation
+
+	// Called when a new message is received from a different process. Return true
+	// if the message was handled or false otherwise. Do not keep a reference to
+	// or attempt to access the message outside of this callback.
+	///
+	/*--cef()--*/
+	virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+		CefProcessId source_process,
+		CefRefPtr<CefProcessMessage> message);
+
 private:
+
+	// To be called ONLY by OnProcessMessageReceived
+	//
+	void OnProcessMessageReceivedSendExecuteCallbackMessage(
+		CefRefPtr<CefBrowser> browser,
+		CefProcessId source_process,
+		CefRefPtr<CefProcessMessage> message,
+		CefRefPtr<CefValue> callback_arg);
+
+public:
+	IMPLEMENT_REFCOUNTING(WCUIBrowserDialog);
 };
 
 #endif // WCUI_BROWSER_DIALOG_H
