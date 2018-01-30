@@ -84,9 +84,9 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("getStatus", getStatus, V8_PROPERTY_ATTRIBUTE_NONE);
 
 	obsStudioObj->SetValue("setupEnvironment", CefV8Value::CreateFunction("setupEnvironment", this), V8_PROPERTY_ATTRIBUTE_NONE);
-	obsStudioObj->SetValue("videoCaptureDevices", CefV8Value::CreateFunction("videoCaptureDevices", this), V8_PROPERTY_ATTRIBUTE_NONE);
-	obsStudioObj->SetValue("audioCodecs", CefV8Value::CreateFunction("audioCodecs", this), V8_PROPERTY_ATTRIBUTE_NONE);
-	obsStudioObj->SetValue("videoCodecs", CefV8Value::CreateFunction("videoCodecs", this), V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("videoInputSources", CefV8Value::CreateFunction("videoInputSources", this), V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("audioEncoders", CefV8Value::CreateFunction("audioEncoders", this), V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("videoEncoders", CefV8Value::CreateFunction("videoEncoders", this), V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -267,7 +267,7 @@ bool BrowserApp::Execute(const CefString& name,
 
 		return true;
 	}
-	else if (name == "videoCodecs" || name == "audioCodecs" || name == "videoCaptureDevices")
+	else if (name == "videoEncoders" || name == "audioEncoders" || name == "videoInputSources")
 	{
 		SendExecuteFunctionWithCallbackMessage(name, object, arguments, retval, exception);
 

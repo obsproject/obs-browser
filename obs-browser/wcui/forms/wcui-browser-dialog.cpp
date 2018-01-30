@@ -188,7 +188,8 @@ void WCUIBrowserDialog::OnProcessMessageReceivedSendExecuteCallbackMessageForObs
 		continue_iteration = obs_enum_encoder_types(idx, &encoderId);
 
 		// If obs_enum_encoder_types() returned a result
-		if (continue_iteration) {
+		if (continue_iteration)
+		{
 			// If encoder is of correct type (AUDIO / VIDEO)
 			if (obs_get_encoder_type(encoderId) == encoder_type)
 			{
@@ -248,9 +249,9 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		return true;
 	}
-	else if (name == "videoCodecs")
+	else if (name == "videoEncoders")
 	{
-		// window.obsstudio.videoCodecs(callback) JS call
+		// window.obsstudio.videoEncoders(callback) JS call
 
 		OnProcessMessageReceivedSendExecuteCallbackMessageForObsEncoderOfType(
 			browser,
@@ -260,9 +261,9 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		return true;
 	}
-	else if (name == "audioCodecs")
+	else if (name == "audioEncoders")
 	{
-		// window.obsstudio.audioCodecs(callback) JS call
+		// window.obsstudio.audioEncoders(callback) JS call
 
 		OnProcessMessageReceivedSendExecuteCallbackMessageForObsEncoderOfType(
 			browser,
@@ -272,9 +273,74 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		return true;
 	}
-	else if (name == "videoCaptureDevices")
+	else if (name == "videoInputSources")
 	{
-		// window.obsstudio.videoCaptureDevices(callback) JS call
+		// window.obsstudio.videoInputSources(callback) JS call
+
+		// Response root object
+		CefRefPtr<CefValue> root = CefValue::Create();
+
+		// Response codec collection (array)
+		CefRefPtr<CefListValue> list = CefListValue::Create();
+
+		// Response codec collection is our root object
+		root->SetList(list);
+
+		// Iterate over all input sources
+		bool continue_iteration = true;
+		for (size_t idx = 0; continue_iteration; ++idx)
+		{
+			// Filled by obs_enum_input_types() call below
+			const char* sourceId;
+
+			// Get next input source type, obs_enum_input_types() returns true as long as
+			// there is data at the specified index
+			continue_iteration = obs_enum_input_types(idx, &sourceId);
+
+			if (continue_iteration)
+			{
+				// Get source caps
+				uint32_t sourceCaps = obs_get_source_output_flags(sourceId);
+
+				// If source has video
+				if (sourceCaps & OBS_SOURCE_VIDEO == OBS_SOURCE_VIDEO)
+				{
+					// Create source response dictionary
+					CefRefPtr<CefDictionaryValue> dic = CefDictionaryValue::Create();
+
+					// Set codec dictionary properties
+					dic->SetString("id", sourceId);
+					dic->SetString("name", obs_source_get_display_name(sourceId));
+					dic->SetBool("hasVideo", sourceCaps & OBS_SOURCE_VIDEO == OBS_SOURCE_VIDEO);
+					dic->SetBool("hasAudio", sourceCaps & OBS_SOURCE_AUDIO == OBS_SOURCE_AUDIO);
+
+					// Compare sourceId to known video capture devices
+					dic->SetBool("isVideoCaptureDevice",
+						strcmp(sourceId, "dshow_input") == 0 ||
+						strcmp(sourceId, "decklink-input") == 0);
+
+					// Compare sourceId to known game capture source
+					dic->SetBool("isGameCaptureDevice",
+						strcmp(sourceId, "game_capture") == 0);
+
+					// Compare sourceId to known browser source
+					dic->SetBool("isBrowserSource",
+						strcmp(sourceId, "browser_source") == 0);
+
+					// Append dictionary to response list
+					list->SetDictionary(
+						list->GetSize(),
+						dic);
+				}
+			}
+		}
+
+		// Send message to call calling web page JS callback with codec info as an argument
+		OnProcessMessageReceivedSendExecuteCallbackMessage(
+			browser,
+			source_process,
+			message,
+			root);
 
 		return true;
 	}

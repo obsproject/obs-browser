@@ -13,9 +13,9 @@
 
 	<h1>Test API calls</h1>
 	<ul>
-		<li><a href="#" onclick="test_videoCodecs(); return false">Get Video CODECs</a></li>
-		<li><a href="#" onclick="test_audioCodecs(); return false">Get Audio CODECs</a></li>
-		<li><a href="#" onclick="test_videoCaptureDevices(); return false">Get Video Capture Devices</a></li>
+		<li><a href="#" onclick="test_videoEncoders(); return false">Get Video Encoders</a></li>
+		<li><a href="#" onclick="test_audioEncoders(); return false">Get Audio Encoders</a></li>
+		<li><a href="#" onclick="test_videoInputSources(); return false">Get Video Input Sources</a></li>
 		<li><a href="#" onclick="test_setupEnvironment(); return false">setupEnvironment</a></li>
 	</ul>
 
@@ -31,23 +31,21 @@
 
 		showApiCallResponse("No call", "No response");
 
-		function test_videoCodecs() {
-			showApiCallResponse("videoCodecs call", "");
-
-			window.obsstudio.videoCodecs(function (result) {
-				showApiCallResponse("videoCodecs", result);
+		function test_videoEncoders() {
+			window.obsstudio.videoEncoders(function (result) {
+				showApiCallResponse("videoEncoders", result);
 			});
 		}
 
-		function test_audioCodecs() {
-			window.obsstudio.audioCodecs(function (result) {
-				showApiCallResponse("audioCodecs", result);
+		function test_audioEncoders() {
+			window.obsstudio.audioEncoders(function (result) {
+				showApiCallResponse("audioEncoders", result);
 			});
 		}
 
-		function test_videoCaptureDevices() {
-			window.obsstudio.videoCaptureDevices(function (result) {
-				showApiCallResponse("videoCaptureDevices", result);
+		function test_videoInputSources() {
+			window.obsstudio.videoInputSources(function (result) {
+				showApiCallResponse("videoInputSources", result);
 			});
 		}
 
