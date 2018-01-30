@@ -191,6 +191,7 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		root->SetList(codec_list);
 
+		// POC callback argument array content
 		for (int i = 0; i < 3; ++i) {
 			CefRefPtr<CefDictionaryValue> codec = CefDictionaryValue::Create();
 
@@ -208,6 +209,14 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 		OnProcessMessageReceivedSendExecuteCallbackMessage(browser, source_process, message, root);
 
 		return true;
+	}
+	else if (name == "audioCodecs")
+	{
+
+	}
+	else if (name == "videoCaptureDevices")
+	{
+
 	}
 
 	return false;
