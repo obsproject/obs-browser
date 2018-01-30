@@ -7,6 +7,9 @@
 
 #include "fmt/format.h"
 
+#include "obs.h"
+#include "obs-encoder.h"
+
 #include <QWidget>
 #include <QFrame>
 
@@ -137,20 +140,79 @@ void WCUIBrowserDialog::OnProcessMessageReceivedSendExecuteCallbackMessage(
 	CefRefPtr<CefProcessMessage> message,
 	CefRefPtr<CefValue> callback_arg)
 {
+	// Get caller callback ID
 	int callbackID = message->GetArgumentList()->GetInt(0);
 
+	// Convert callback argument to JSON
 	CefString jsonString =
 		CefWriteJSON(callback_arg, JSON_WRITER_DEFAULT);
 
+	// Create "executeCallback" message for the renderer process
 	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("executeCallback");
+
+	// Get callback arguments collection and set callback arguments
 	CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
 	args->SetInt(0, callbackID);	// Callback identifier in renderer process callbackMap
 
 	args->SetString(1, jsonString);	// Callback argument JSON string which will be converted back to CefV8Value in
 					// the renderer process
-	
+
+	// Send message to the renderer process
 	browser->SendProcessMessage(source_process, msg); // source_process = PID_RENDERER
+}
+
+void WCUIBrowserDialog::OnProcessMessageReceivedSendExecuteCallbackMessageForObsEncoderOfType(
+	CefRefPtr<CefBrowser> browser,
+	CefProcessId source_process,
+	CefRefPtr<CefProcessMessage> message,
+	obs_encoder_type encoder_type)
+{
+	// Response root object
+	CefRefPtr<CefValue> root = CefValue::Create();
+
+	// Response codec collection (array)
+	CefRefPtr<CefListValue> codec_list = CefListValue::Create();
+
+	// Response codec collection is our root object
+	root->SetList(codec_list);
+
+	// Iterate over each available codec
+	bool continue_iteration = true;
+	for (size_t idx = 0; continue_iteration; ++idx)
+	{
+		// Set by obs_enum_encoder_types() call below
+		const char* encoderId = NULL;
+
+		// Get next encoder ID
+		continue_iteration = obs_enum_encoder_types(idx, &encoderId);
+
+		// If obs_enum_encoder_types() returned a result
+		if (continue_iteration) {
+			// If encoder is of correct type (AUDIO / VIDEO)
+			if (obs_get_encoder_type(encoderId) == encoder_type)
+			{
+				CefRefPtr<CefDictionaryValue> codec = CefDictionaryValue::Create();
+
+				// Set codec dictionary properties
+				codec->SetString("id", encoderId);
+				codec->SetString("codec", obs_get_encoder_codec(encoderId));
+				codec->SetString("name", obs_encoder_get_display_name(encoderId));
+
+				// Append dictionary to codec list
+				codec_list->SetDictionary(
+					codec_list->GetSize(),
+					codec);
+			}
+		}
+	}
+
+	// Send message to call calling web page JS callback with codec info as an argument
+	OnProcessMessageReceivedSendExecuteCallbackMessage(
+		browser,
+		source_process,
+		message,
+		root);
 }
 
 // Called when a new message is received from a different process. Return true
@@ -163,13 +225,16 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 	CefProcessId source_process,
 	CefRefPtr<CefProcessMessage> message)
 {
+	// Get message name
 	CefString name = message->GetName();
+
+	// Get message arguments
 	CefRefPtr<CefListValue> args = message->GetArgumentList();
 
-	int argsLength = args->GetSize();
-
-	if (name == "setupEnvironment")
+	if (name == "setupEnvironment" && args->GetSize() > 0)
 	{
+		// window.obsstudio.setupEnvironment(config) JS call
+
 		CefString config_json_string = args->GetValue(0)->GetString();
 		CefRefPtr<CefValue> config =
 			CefParseJSON(config_json_string, JSON_PARSER_ALLOW_TRAILING_COMMAS);
@@ -185,38 +250,33 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 	}
 	else if (name == "videoCodecs")
 	{
-		CefRefPtr<CefListValue> codec_list = CefListValue::Create();
+		// window.obsstudio.videoCodecs(callback) JS call
 
-		CefRefPtr<CefValue> root = CefValue::Create();
-
-		root->SetList(codec_list);
-
-		// POC callback argument array content
-		for (int i = 0; i < 3; ++i) {
-			CefRefPtr<CefDictionaryValue> codec = CefDictionaryValue::Create();
-
-			std::string id = fmt::format("codec {}", i);
-			std::string codec_name = fmt::format("Video Codec {}", i);
-			bool isHardwareAccelerated = false;
-			
-			codec->SetString("id", id);
-			codec->SetString("name", name);
-			codec->SetBool("isHardwareAccelerated", isHardwareAccelerated);
-
-			codec_list->SetDictionary(i, codec);
-		}
-
-		OnProcessMessageReceivedSendExecuteCallbackMessage(browser, source_process, message, root);
+		OnProcessMessageReceivedSendExecuteCallbackMessageForObsEncoderOfType(
+			browser,
+			source_process,
+			message,
+			OBS_ENCODER_VIDEO);
 
 		return true;
 	}
 	else if (name == "audioCodecs")
 	{
+		// window.obsstudio.audioCodecs(callback) JS call
 
+		OnProcessMessageReceivedSendExecuteCallbackMessageForObsEncoderOfType(
+			browser,
+			source_process,
+			message,
+			OBS_ENCODER_AUDIO);
+
+		return true;
 	}
 	else if (name == "videoCaptureDevices")
 	{
+		// window.obsstudio.videoCaptureDevices(callback) JS call
 
+		return true;
 	}
 
 	return false;

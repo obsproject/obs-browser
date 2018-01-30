@@ -77,6 +77,14 @@ private:
 		CefRefPtr<CefProcessMessage> message,
 		CefRefPtr<CefValue> callback_arg);
 
+	// To be called ONLY by OnProcessMessageReceived
+	//
+	void OnProcessMessageReceivedSendExecuteCallbackMessageForObsEncoderOfType(
+		CefRefPtr<CefBrowser> browser,
+		CefProcessId source_process,
+		CefRefPtr<CefProcessMessage> message,
+		obs_encoder_type encoder_type);
+
 public:
 	IMPLEMENT_REFCOUNTING(WCUIBrowserDialog);
 };
