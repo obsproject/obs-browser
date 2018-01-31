@@ -74,6 +74,8 @@ set(obs-browser_SOURCES
 	shared/base64.cpp
 	shared/util.cpp
 	obs-browser/wcui/forms/wcui-browser-dialog.cpp
+	obs-browser/wcui/forms/wcui-browser-dialog.cpp
+	obs-browser/wcui/wcui-async-task-queue.cpp
 )
 
 set(obs-browser_HEADERS
@@ -87,6 +89,7 @@ set(obs-browser_HEADERS
 	shared/browser-version.h
 	shared/util.hpp
 	obs-browser/wcui/forms/wcui-browser-dialog.hpp
+	obs-browser/wcui/wcui-async-task-queue.hpp
 )
 
 if (APPLE)

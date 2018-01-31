@@ -16,8 +16,9 @@
 
 #include <functional>
 
-// TODO: Remove
 #include "shared/browser-client.hpp"
+
+#include "../wcui-async-task-queue.hpp"
 
 namespace Ui {
 	class WCUIBrowserDialog;
@@ -55,6 +56,34 @@ private:
 
 	cef_window_handle_t m_window_handle;
 	int m_browser_handle = BROWSER_HANDLE_NONE;
+
+	WCUIAsyncTaskQueue m_task_queue;
+
+private slots: // OBS operations
+
+	void ObsRemoveAllScenes();
+
+	void ObsAddScene(
+		const char* name,
+		bool setCurrent = true);
+
+	void ObsAddSource(
+		obs_source_t* parentScene,
+		const char* sourceId,
+		const char* sourceName,
+		obs_data_t* sourceSettings = NULL,
+		obs_data_t* sourceHotkeyData = NULL);
+
+	void ObsAddSourceBrowser(
+		obs_source_t* parentScene,
+		const char* name,
+		const long long width,
+		const long long height,
+		const long long fps,
+		const char* url,
+		const bool shutdownWhenInactive = true,
+		const char* css = "");
+
 
 public: // CefClient implementation
 
