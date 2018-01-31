@@ -43,27 +43,17 @@ void WCUIBrowserDialog::ShowModal()
 	// The window handle must be obtained in the QT UI thread and CEF initialization must be performed in a
 	// separate thread, otherwise a dead lock occurs and everything just hangs.
 	//
-	//pthread_t thread;
-	//pthread_create(&thread, nullptr, InitBrowserThreadEntryPoint, this);
+	m_task_queue.Enqueue(
+		[](void* args)
+		{
+			WCUIBrowserDialog* self = (WCUIBrowserDialog*)args;
 
-	m_task_queue.Enqueue([&]
-	{
-		InitBrowser();
-	});
+			self->InitBrowser();
+		},
+		this);
 
 	// Start modal dialog
 	exec();
-}
-
-// CEF initialization thread entry point.
-//
-void* WCUIBrowserDialog::InitBrowserThreadEntryPoint(void* arg)
-{
-	WCUIBrowserDialog* self = (WCUIBrowserDialog*)arg;
-
-	self->InitBrowser();
-
-	return nullptr;
 }
 
 // Initialize CEF.
@@ -83,7 +73,7 @@ void WCUIBrowserDialog::InitBrowser()
 	// Launcher local HTML page path
 	std::string htmlPartialPath = parentPath + "/obs-browser-wcui-browser-dialog.html";
 
-#ifdef WIN32
+#ifdef _WIN32
 	char htmlFullPath[MAX_PATH + 1];
 	::GetFullPathNameA(htmlPartialPath.c_str(), MAX_PATH, htmlFullPath, NULL);
 
@@ -252,8 +242,30 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		}
 
-		// ObsRemoveAllScenes();
-		ObsAddScene(fmt::format("New scene {}", os_gettime_ns()).c_str(), true);
+		m_task_queue.Enqueue(
+			[](void* arg)
+			{
+				WCUIBrowserDialog* self = (WCUIBrowserDialog*)arg;
+
+				size_t initSceneCount = self->ObsScenesGetCount();
+
+				self->ObsAddScene(fmt::format("New scene {}", os_gettime_ns()).c_str(), true);
+				self->ObsAddSourceBrowser(NULL, "Browser 1", 1920, 1080, 25, "http://www.streamelements.com/");
+
+				self->ObsAddScene(fmt::format("New scene {}", os_gettime_ns()).c_str(), true);
+				self->ObsAddSource(NULL, "game_capture", "Game 1", NULL, NULL, false);
+				self->ObsAddSource(NULL, "monitor_capture", "Monitor 1", NULL, NULL, false);
+				self->ObsAddSourceBrowser(NULL, "Browser 1", 1920, 1080, 25, "http://www.google.com/");
+				self->ObsAddSourceVideoCapture(NULL, "Video Capture", 10, 10, 320, 180);
+
+				size_t endSceneCount = self->ObsScenesGetCount();
+
+				if (initSceneCount > 0 && initSceneCount < endSceneCount)
+				{
+					self->ObsRemoveFirstScenes(initSceneCount);
+				}
+			},
+			this);
 
 		/*
 		QMetaObject::invokeMethod(
@@ -372,35 +384,15 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 	return false;
 }
 
-void WCUIBrowserDialog::ObsRemoveAllScenes()
+void WCUIBrowserDialog::ObsRemoveFirstScenes(size_t removeCount)
 {
-	struct obs_frontend_source_list transitions = {};
-
-	obs_frontend_get_transitions(&transitions);
-
 	struct obs_frontend_source_list scenes = {};
-
-	// For each transition
-	for (size_t idx = 0; idx < transitions.sources.num; ++idx)
-	{
-		// Get the scene (a transition is a source)
-		obs_source_t* transition = transitions.sources.array[idx];
-
-		// Remove the transition
-		obs_source_remove(transition);
-	}
-
-	// Free list of transitions.
-	// This also calls obs_release_scene() for each scene in the list.
-	obs_frontend_source_list_free(&transitions);
-
-
 
 	// Get list of scenes
 	obs_frontend_get_scenes(&scenes);
 
 	// For each scene
-	for (size_t idx = 0; idx < scenes.sources.num; ++idx)
+	for (size_t idx = 0; idx < scenes.sources.num && idx < removeCount; ++idx)
 	{
 		// Get the scene (a scene is a source)
 		obs_source_t* scene = scenes.sources.array[idx];
@@ -412,6 +404,24 @@ void WCUIBrowserDialog::ObsRemoveAllScenes()
 	// Free list of scenes.
 	// This also calls obs_release_scene() for each scene in the list.
 	obs_frontend_source_list_free(&scenes);
+}
+
+size_t WCUIBrowserDialog::ObsScenesGetCount()
+{
+	size_t result = 0;
+
+	struct obs_frontend_source_list scenes = {};
+
+	// Get list of scenes
+	obs_frontend_get_scenes(&scenes);
+
+	result = scenes.sources.num;
+
+	// Free list of scenes.
+	// This also calls obs_release_scene() for each scene in the list.
+	obs_frontend_source_list_free(&scenes);
+
+	return result;
 }
 
 void WCUIBrowserDialog::ObsAddScene(const char* name, bool setCurrent)
@@ -434,7 +444,10 @@ void WCUIBrowserDialog::ObsAddSource(
 	const char* sourceId,
 	const char* sourceName,
 	obs_data_t* sourceSettings,
-	obs_data_t* sourceHotkeyData)
+	obs_data_t* sourceHotkeyData,
+	bool preferExistingSource,
+	obs_source_t** output_source,
+	obs_sceneitem_t** output_sceneitem)
 {
 	bool releaseParentScene = false;
 
@@ -445,29 +458,92 @@ void WCUIBrowserDialog::ObsAddSource(
 		releaseParentScene = true;
 	}
 
-	obs_source_t* source = obs_source_create(sourceId, sourceName, sourceSettings, sourceHotkeyData);
+	obs_source_t* source = NULL;
+
+	if (preferExistingSource)
+	{
+		// Try locating existing source of the same type for reuse
+		//
+		// This is especially relevant for video capture sources
+		//
+
+		struct enum_sources_args {
+			const char* id;
+			obs_source_t* result;
+		};
+
+		enum_sources_args enum_args = {};
+		enum_args.id = sourceId;
+		enum_args.result = NULL;
+
+		obs_enum_sources(
+			[](void* arg, obs_source_t* iterator)
+			{
+				enum_sources_args* args = (enum_sources_args*)arg;
+
+				const char* id = obs_source_get_id(iterator);
+
+				if (strcmp(id, args->id) == 0)
+				{
+					args->result = obs_source_get_ref(iterator);
+
+					return false;
+				}
+
+				return true;
+			},
+			&enum_args);
+
+		source = enum_args.result;
+	}
+
+	if (source == NULL)
+	{
+		// Not reusing an existing source, create a new one
+		source = obs_source_create(sourceId, sourceName, sourceSettings, sourceHotkeyData);
+	}
 
 	if (source != NULL)
 	{
 		// Does not increment refcount. No obs_scene_release() call is necessary.
 		obs_scene_t* scene = obs_scene_from_source(parentScene);
 
+		struct atomic_update_args {
+			obs_source_t* source;
+			obs_sceneitem_t* sceneitem;
+		};
+
+		atomic_update_args args = {};
+
+		args.source = source;
+		args.sceneitem = NULL;
+
 		obs_enter_graphics();
 		obs_scene_atomic_update(
 			scene,
 			[](void *data, obs_scene_t *scene)
 			{
-				obs_source_t* source = (obs_source_t*)data;
+				atomic_update_args* args = (atomic_update_args*)data;
 
-				obs_sceneitem_t* sceneitem = obs_scene_add(scene, source);
-				obs_sceneitem_set_visible(sceneitem, true);
+				args->sceneitem = obs_scene_add(scene, args->source);
+				obs_sceneitem_set_visible(args->sceneitem, true);
 
 				// obs_sceneitem_release??
 			},
-			source);
+			&args);
 		obs_leave_graphics();
 
-		obs_source_release(source);
+		if (output_sceneitem != NULL)
+		{
+			obs_sceneitem_addref(args.sceneitem);
+
+			*output_sceneitem = args.sceneitem;
+		}
+
+		if (output_source != NULL)
+			*output_source = source;
+		else
+			obs_source_release(source);
 	}
 
 
@@ -487,43 +563,118 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	const bool shutdownWhenInactive,
 	const char* css)
 {
-	struct args_t
+	obs_data_t* settings = obs_data_create();
+
+	obs_data_set_bool(settings, "is_local_file", false);
+	obs_data_set_string(settings, "url", url);
+	obs_data_set_string(settings, "css", css);
+	obs_data_set_int(settings, "width", 1920);
+	obs_data_set_int(settings, "height", 1080);
+	obs_data_set_int(settings, "fps", 25);
+	obs_data_set_bool(settings, "shutdown", true);
+
+	ObsAddSource(NULL, "browser_source", name, settings, NULL, false);
+
+	obs_data_release(settings);
+}
+
+void WCUIBrowserDialog::ObsAddSourceVideoCapture(
+	obs_source_t* parentScene,
+	const char* name,
+	const int x,
+	const int y,
+	const int maxWidth,
+	const int maxHeight)
+{
+#ifdef _WIN32
+	const char* VIDEO_DEVICE_ID = "video_device_id";
+
+	const char* sourceId = "dshow_input";
+#else // APPLE / LINUX
+	const char* VIDEO_DEVICE_ID = "device";
+
+	const char* sourceId = "av_capture_input";
+#endif
+
+	// Get default settings
+	obs_data_t* settings = obs_get_source_defaults(sourceId);
+
+	if (settings != NULL)
 	{
-		WCUIBrowserDialog* self;
-		char* name;
-		obs_data_t* settings;
-	};
+		// Get source props
+		obs_properties_t* props = obs_get_source_properties(sourceId);
 
-	args_t* args = new args_t();
+		if (props != NULL)
+		{
+			// Set first available video_device_id value
+			obs_property_t* prop_video_device_id = obs_properties_get(props, VIDEO_DEVICE_ID);
 
-	args->self = this;
-	args->name = strdup(name);
-	args->settings = obs_data_create();
+			size_t count_video_device_id = obs_property_list_item_count(prop_video_device_id);
+			if (count_video_device_id > 0)
+			{
+#ifdef _WIN32
+				const size_t idx = 0;
+#else
+				const size_t idx = count_video_device_id - 1;
+#endif
+				obs_data_set_string(
+					settings,
+					VIDEO_DEVICE_ID,
+					obs_property_list_item_string(prop_video_device_id, idx));
+			}
 
-	obs_data_set_bool(args->settings, "is_local_file", false);
-	obs_data_set_string(args->settings, "url", url);
-	obs_data_set_string(args->settings, "css", css);
-	obs_data_set_int(args->settings, "width", 1920);
-	obs_data_set_int(args->settings, "height", 1080);
-	obs_data_set_int(args->settings, "fps", 25);
-	obs_data_set_bool(args->settings, "shutdown", true);
+			// Will be filled by ObsAddSource
+			obs_source_t* source = NULL;
+			obs_sceneitem_t* sceneitem = NULL;
 
-	pthread_t thread;
-	pthread_create(
-		&thread,
-		nullptr,
-		[](void* arg)
-	{
-		args_t* args = (args_t*)arg;
+			// Create source with default video_device_id
+			ObsAddSource(NULL, sourceId, name, settings, NULL, true, &source, &sceneitem);
 
-		args->self->ObsAddSource(NULL, "browser_source", args->name, args->settings, NULL);
+			// Wait for dimensions
+			for (int i = 0; i < 50 && obs_source_get_width(source) == 0; ++i)
+				os_sleep_ms(100);
 
-		obs_data_release(args->settings);
+			size_t src_width = obs_source_get_width(source);
+			size_t src_height = obs_source_get_height(source);
 
-		free(args->name);
-		delete args;
+			vec2 pos = {};
+			pos.x = x;
+			pos.y = y;
 
-		return (void*)NULL;
-	},
-	args);
+			vec2 scale = {};
+			scale.x = 1;
+			scale.y = 1;
+
+			if (maxWidth > 0 && src_width > 0 && maxWidth != src_width)
+				scale.x = (float)maxWidth / (float)src_width;
+
+			if (maxHeight > 0 && src_height > 0 && maxHeight != src_height)
+				scale.y = (float)maxHeight / (float)src_height;
+
+			if (scale.x != scale.y)
+			{
+				// Correct aspect ratio
+				scale.x = min(scale.x, scale.y);
+				scale.y = min(scale.x, scale.y);
+
+				int r_width = (int)((float)src_width * scale.x);
+				int r_height = (int)((float)src_height * scale.y);
+
+				pos.x = pos.x + (maxWidth / 2) - (r_width / 2);
+				pos.y = pos.y + (maxHeight / 2) - (r_height / 2);
+			}
+
+			obs_sceneitem_set_pos(sceneitem, &pos);
+			obs_sceneitem_set_scale(sceneitem, &scale);
+
+			// Release references
+			obs_sceneitem_release(sceneitem);
+			obs_source_release(source);
+
+			// Destroy source props
+			obs_properties_destroy(props);
+		}
+	}
+
+	obs_data_release(settings);
 }

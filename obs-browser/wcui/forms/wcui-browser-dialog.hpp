@@ -45,7 +45,6 @@ public:
 	void ShowModal();
 
 private:
-	static void* InitBrowserThreadEntryPoint(void* arg);
 	void InitBrowser();
 
 private:
@@ -61,7 +60,8 @@ private:
 
 private slots: // OBS operations
 
-	void ObsRemoveAllScenes();
+	size_t ObsScenesGetCount();
+	void ObsRemoveFirstScenes(size_t removeCount = 1);
 
 	void ObsAddScene(
 		const char* name,
@@ -72,7 +72,10 @@ private slots: // OBS operations
 		const char* sourceId,
 		const char* sourceName,
 		obs_data_t* sourceSettings = NULL,
-		obs_data_t* sourceHotkeyData = NULL);
+		obs_data_t* sourceHotkeyData = NULL,
+		bool preferExistingSource = false,
+		obs_source_t** output_source = NULL,
+		obs_sceneitem_t** output_sceneitem = NULL);
 
 	void ObsAddSourceBrowser(
 		obs_source_t* parentScene,
@@ -84,6 +87,13 @@ private slots: // OBS operations
 		const bool shutdownWhenInactive = true,
 		const char* css = "");
 
+	void ObsAddSourceVideoCapture(
+		obs_source_t* parentScene,
+		const char* name,
+		const int x,
+		const int y,
+		const int maxWidth,
+		const int maxHeight);
 
 public: // CefClient implementation
 
