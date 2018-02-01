@@ -253,7 +253,7 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				self->ObsAddSourceBrowser(NULL, "Browser 1", 1920, 1080, 25, "http://www.streamelements.com/");
 
 				self->ObsAddScene(fmt::format("New scene {}", os_gettime_ns()).c_str(), true);
-				self->ObsAddSource(NULL, "game_capture", "Game 1", NULL, NULL, false);
+				self->ObsAddSourceGame(NULL, "Game 1");
 				self->ObsAddSource(NULL, "monitor_capture", "Monitor 1", NULL, NULL, false);
 				self->ObsAddSourceBrowser(NULL, "Browser 1", 1920, 1080, 25, "http://www.google.com/");
 				self->ObsAddSourceVideoCapture(NULL, "Video Capture", 10, 10, 320, 180);
@@ -573,7 +573,7 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	obs_data_set_int(settings, "fps", 25);
 	obs_data_set_bool(settings, "shutdown", true);
 
-	ObsAddSource(NULL, "browser_source", name, settings, NULL, false);
+	ObsAddSource(parentScene, "browser_source", name, settings, NULL, false);
 
 	obs_data_release(settings);
 }
@@ -628,7 +628,7 @@ void WCUIBrowserDialog::ObsAddSourceVideoCapture(
 			obs_sceneitem_t* sceneitem = NULL;
 
 			// Create source with default video_device_id
-			ObsAddSource(NULL, sourceId, name, settings, NULL, true, &source, &sceneitem);
+			ObsAddSource(parentScene, sourceId, name, settings, NULL, true, &source, &sceneitem);
 
 			// Wait for dimensions
 			for (int i = 0; i < 50 && obs_source_get_width(source) == 0; ++i)
@@ -676,5 +676,33 @@ void WCUIBrowserDialog::ObsAddSourceVideoCapture(
 		}
 	}
 
+	obs_data_release(settings);
+}
+
+void WCUIBrowserDialog::ObsAddSourceGame(
+	obs_source_t* parentScene,
+	const char* name,
+	bool allowTransparency,
+	bool limitFramerate,
+	bool captureCursor,
+	bool antiCheatHook,
+	bool captureOverlays)
+{
+	const char* sourceId = "game_capture";
+
+	// Get default settings
+	obs_data_t* settings = obs_get_source_defaults(sourceId);
+
+	// Override default settings
+	obs_data_set_bool(settings, "allow_transparency", allowTransparency);
+	obs_data_set_bool(settings, "limit_framerate", limitFramerate);
+	obs_data_set_bool(settings, "capture_cursor", captureCursor);
+	obs_data_set_bool(settings, "anti_cheat_hook", antiCheatHook);
+	obs_data_set_bool(settings, "capture_overlays", captureOverlays);
+
+	// Add game capture source
+	ObsAddSource(parentScene, sourceId, name, settings, NULL, false);
+
+	// Release ref
 	obs_data_release(settings);
 }

@@ -95,6 +95,15 @@ private slots: // OBS operations
 		const int maxWidth,
 		const int maxHeight);
 
+	void ObsAddSourceGame(
+		obs_source_t* parentScene,
+		const char* name,
+		bool allowTransparency = false,
+		bool limitFramerate = false,
+		bool captureCursor = false,
+		bool antiCheatHook = true,
+		bool captureOverlays = true);
+
 public: // CefClient implementation
 
 	// Called when a new message is received from a different process. Return true
