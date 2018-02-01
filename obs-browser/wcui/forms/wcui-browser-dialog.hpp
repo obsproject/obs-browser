@@ -105,6 +105,8 @@ private slots: // OBS operations
 		bool antiCheatHook = true,
 		bool captureOverlays = true);
 
+	void ObsSetProfileOutputConfiguration();
+
 public: // CefClient implementation
 
 	// Called when a new message is received from a different process. Return true

@@ -1,3 +1,5 @@
+#include <util/config-file.h>
+
 #include "wcui-browser-dialog.hpp"
 #include "ui_wcui-browser-dialog.h"
 #include "browser-manager.hpp"
@@ -242,6 +244,10 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		}
 
+		// Disable main window
+		((QWidget*)obs_frontend_get_main_window())->setEnabled(false);
+		QApplication::processEvents();
+
 		m_task_queue.Enqueue(
 			[](void* arg)
 			{
@@ -264,24 +270,17 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				{
 					self->ObsRemoveFirstScenes(initSceneCount);
 				}
+
+				self->ObsSetProfileOutputConfiguration();
+
+				// Enable main window
+				((QWidget*)obs_frontend_get_main_window())->setEnabled(true);
+				QApplication::processEvents();
 			},
 			this);
 
-		/*
-		QMetaObject::invokeMethod(
-			this,
-			"ObsAddScene",
-			Q_ARG(const char*, fmt::format("New scene {}", os_gettime_ns()).c_str()),
-			Q_ARG(bool, true));
-		*/
-
-		/*
-		obs_enum_sources(
-			[](void* data, obs_source_t* source) {
-				::MessageBoxA(0, obs_source_get_name(source), obs_source_get_name(source), 0);
-				return true;
-			},
-			NULL);*/
+		// Close modal dialog
+		accept();
 
 		return true;
 	}
@@ -707,4 +706,162 @@ void WCUIBrowserDialog::ObsAddSourceGame(
 
 	// Release ref
 	obs_data_release(settings);
+}
+
+void WCUIBrowserDialog::ObsSetProfileOutputConfiguration()
+{
+	if (obs_frontend_replay_buffer_active())
+	{
+		obs_frontend_replay_buffer_stop();
+	}
+
+	if (obs_frontend_streaming_active())
+	{
+		obs_frontend_streaming_stop();
+	}
+
+	if (obs_frontend_recording_active())
+	{
+		obs_frontend_recording_stop();
+	}
+
+	uint videoWidth = 1920;
+	uint videoHeight = 1080;
+	uint videoBitrate = 2500;
+	uint videoFramesPerSecond = 25;
+	uint videoKeyframeIntervalSeconds = 2;
+	uint audioBitrate = 128;
+	uint audioSampleRate = 44100;
+	const char* videoEncoderId = "obs_x264";
+	const char* recordFormat = "mp4";
+	const char* streamingServiceServerUrl = "rtmp://localhost/app1";
+	const char* streamingServiceStreamKey = "stream1";
+	const bool streamingServiceUseAuth = false;
+	const char* streamingServiceAuthUsername = "";
+	const char* streamingServiceAuthPassword = "";
+
+	config_t* basicConfig = obs_frontend_get_profile_config(); // does not increase refcount
+
+	config_set_string(basicConfig, "Output", "Mode", "Advanced"); // Advanced???
+	config_set_uint(basicConfig, "SimpleOutput", "VBitrate", videoBitrate);
+	config_set_string(basicConfig, "SimpleOutput", "StreamEncoder", "x264");
+	config_set_uint(basicConfig, "SimpleOutput", "ABitrate", audioBitrate);
+	config_set_bool(basicConfig, "SimpleOutput", "UseAdvanced", true); // Advanced???
+	config_set_bool(basicConfig, "SimpleOutput", "EnforceBitrate", true);
+	config_set_string(basicConfig, "SimpleOutput", "Preset", "veryfast");
+
+	// Recording
+	//config_set_string(basicConfig, "SimpleOutput", "RecFormat", recordFormat);
+	config_set_string(basicConfig, "SimpleOutput", "RecQuality", "Stream");
+	config_set_string(basicConfig, "SimpleOutput", "RecEncoder", "x264");
+	//config_set_bool(basicConfig, "SimpleOutput", "RecRB", false);
+	//config_set_int(basicConfig, "SimpleOutput", "RecRBTime", 20);
+	//config_set_int(basicConfig, "SimpleOutput", "RecRBSize", 512);
+	//config_set_string(basicConfig, "SimpleOutput", "RecRBPrefix", "Replay");
+
+	config_set_bool(basicConfig, "AdvOut", "ApplyServiceSettings", true);
+	config_set_bool(basicConfig, "AdvOut", "UseRescale", false);
+	config_set_uint(basicConfig, "AdvOut", "TrackIndex", 1);
+	config_set_string(basicConfig, "AdvOut", "Encoder", videoEncoderId);
+
+	config_set_string(basicConfig, "AdvOut", "RecType", "Standard");
+
+	//config_set_string(basicConfig, "AdvOut", "RecFilePath", GetDefaultVideoSavePath().c_str());
+	//config_set_string(basicConfig, "AdvOut", "RecFormat", "mp4");
+	//config_set_bool(basicConfig, "AdvOut", "RecUseRescale", false);
+	//config_set_uint(basicConfig, "AdvOut", "RecTracks", (1 << 0));
+	//config_set_string(basicConfig, "AdvOut", "RecEncoder", "none");
+
+	//config_set_bool(basicConfig, "AdvOut", "FFOutputToFile", false);
+	// config_set_string(basicConfig, "AdvOut", "FFFilePath", GetDefaultVideoSavePath().c_str());
+	//config_set_string(basicConfig, "AdvOut", "FFExtension", recordFormat);
+	config_set_uint(basicConfig, "AdvOut", "FFVBitrate", videoBitrate);
+	config_set_uint(basicConfig, "AdvOut", "FFVGOPSize", videoKeyframeIntervalSeconds * videoFramesPerSecond);
+	config_set_bool(basicConfig, "AdvOut", "FFUseRescale", false);
+	config_set_bool(basicConfig, "AdvOut", "FFIgnoreCompat", false);
+	config_set_uint(basicConfig, "AdvOut", "FFABitrate", audioBitrate);
+	config_set_uint(basicConfig, "AdvOut", "FFAudioTrack", 1);
+
+	config_set_uint(basicConfig, "AdvOut", "Track1Bitrate", audioBitrate);
+	config_set_uint(basicConfig, "AdvOut", "Track2Bitrate", audioBitrate);
+	config_set_uint(basicConfig, "AdvOut", "Track3Bitrate", audioBitrate);
+	config_set_uint(basicConfig, "AdvOut", "Track4Bitrate", audioBitrate);
+	config_set_uint(basicConfig, "AdvOut", "Track5Bitrate", audioBitrate);
+	config_set_uint(basicConfig, "AdvOut", "Track6Bitrate", audioBitrate);
+
+	// Replay buffer
+	/*
+	config_set_bool(basicConfig, "AdvOut", "RecRB", false);
+	config_set_uint(basicConfig, "AdvOut", "RecRBTime", 20);
+	config_set_int(basicConfig, "AdvOut", "RecRBSize", 512);
+	*/
+	config_set_uint(basicConfig, "Video", "BaseCX", videoWidth);
+	config_set_uint(basicConfig, "Video", "BaseCY", videoHeight);
+
+	// Output settings
+	/*
+	config_set_string(basicConfig, "Output", "FilenameFormatting", "%CCYY-%MM-%DD %hh-%mm-%ss");
+
+	config_set_bool(basicConfig, "Output", "DelayEnable", false);
+	config_set_uint(basicConfig, "Output", "DelaySec", 20);
+	config_set_bool(basicConfig, "Output", "DelayPreserve", true);
+	*/
+	config_set_bool(basicConfig, "Output", "Reconnect", true);
+	config_set_uint(basicConfig, "Output", "RetryDelay", 10);
+	config_set_uint(basicConfig, "Output", "MaxRetries", 20);
+
+	/*
+	config_set_string(basicConfig, "Output", "BindIP", "default");
+	config_set_bool(basicConfig, "Output", "NewSocketLoopEnable", false);
+	config_set_bool(basicConfig, "Output", "LowLatencyEnable", false);
+	*/
+
+	config_set_uint(basicConfig, "Video", "OutputCX", videoWidth);
+	config_set_uint(basicConfig, "Video", "OutputCY", videoHeight);
+
+	config_set_uint(basicConfig, "Video", "FPSType", 0);
+	config_set_string(basicConfig, "Video", "FPSCommon", fmt::format("{}", videoFramesPerSecond).c_str());
+	config_set_uint(basicConfig, "Video", "FPSInt", videoFramesPerSecond);
+	config_set_uint(basicConfig, "Video", "FPSNum", videoFramesPerSecond);
+	config_set_uint(basicConfig, "Video", "FPSDen", 1);
+	/*
+	config_set_string(basicConfig, "Video", "ScaleType", "bicubic");
+	config_set_string(basicConfig, "Video", "ColorFormat", "NV12");
+	config_set_string(basicConfig, "Video", "ColorSpace", "601");
+	config_set_string(basicConfig, "Video", "ColorRange", "Partial");
+	*/
+
+	// Audio settings
+	//config_set_string(basicConfig, "Audio", "MonitoringDeviceId", "default");
+	//config_set_string(basicConfig, "Audio", "MonitoringDeviceName", Str("Basic.Settings.Advanced.Audio.MonitoringDevice.Default"));
+	config_set_uint(basicConfig, "Audio", "SampleRate", audioSampleRate);
+	//config_set_string(basicConfig, "Audio", "ChannelSetup", "Stereo");
+
+	// Streaming service
+	obs_service_t* service = obs_service_create("rtmp_custom", "default_service", NULL, NULL);
+	obs_data_t* service_settings = obs_service_get_settings(service);
+
+	obs_data_set_string(service_settings, "server", streamingServiceServerUrl);
+	obs_data_set_string(service_settings, "key", streamingServiceStreamKey);
+	obs_data_set_bool(service_settings, "use_auth", streamingServiceUseAuth);
+	obs_data_set_string(service_settings, "username", streamingServiceAuthUsername);
+	obs_data_set_string(service_settings, "password", streamingServiceAuthPassword);
+
+	obs_service_update(service, service_settings);
+
+	obs_data_release(service_settings);
+
+	// Set streaming service used by UI
+	obs_frontend_set_streaming_service(service);
+
+	obs_output_set_service(obs_frontend_get_streaming_output(), service);
+
+	// Save streaming service used by UI
+	obs_frontend_save_streaming_service();
+
+	// Release service reference
+	obs_service_release(service);
+
+	// Save UI configuration
+	obs_frontend_save();
 }
