@@ -98,6 +98,7 @@ private slots: // OBS operations
 	void ObsAddSourceGame(
 		obs_source_t* parentScene,
 		const char* name,
+		bool multiGpuCompatibility = true,
 		bool allowTransparency = false,
 		bool limitFramerate = false,
 		bool captureCursor = false,

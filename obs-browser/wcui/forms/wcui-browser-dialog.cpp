@@ -682,6 +682,7 @@ void WCUIBrowserDialog::ObsAddSourceVideoCapture(
 void WCUIBrowserDialog::ObsAddSourceGame(
 	obs_source_t* parentScene,
 	const char* name,
+	bool multiGpuCompatibility,
 	bool allowTransparency,
 	bool limitFramerate,
 	bool captureCursor,
@@ -694,6 +695,7 @@ void WCUIBrowserDialog::ObsAddSourceGame(
 	obs_data_t* settings = obs_get_source_defaults(sourceId);
 
 	// Override default settings
+	obs_data_set_bool(settings, "sli_compatibility", multiGpuCompatibility);
 	obs_data_set_bool(settings, "allow_transparency", allowTransparency);
 	obs_data_set_bool(settings, "limit_framerate", limitFramerate);
 	obs_data_set_bool(settings, "capture_cursor", captureCursor);
