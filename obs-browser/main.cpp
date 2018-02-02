@@ -151,7 +151,15 @@ bool obs_module_load(void)
 	obs_register_source(&browser_source_info);
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 
+	// Web Configuration UI is currently supported
+	// on Windows builds only.
+	//
+	// Need to check how Video Capture Source works
+	// on APPLE / Linux to support those platforms
+	// as well.
+#ifdef _WIN32
 	wcui_init();
+#endif
 
 	return true;
 }
