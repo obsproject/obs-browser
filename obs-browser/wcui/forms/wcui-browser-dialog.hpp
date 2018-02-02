@@ -63,8 +63,8 @@ private slots: // OBS operations
 
 	void CloseModalDialog();
 
-	static void ObsEnableMainWindow();
-	static void ObsDisableMainWindow();
+	void ObsEnableMainWindow();
+	void ObsDisableMainWindow();
 
 	std::string ObsGetUniqueSourceName(std::string name);
 

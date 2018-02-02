@@ -42,6 +42,8 @@ void WCUIBrowserDialog::ShowModal()
 	auto frame = findChild<QFrame*>("frame");
 	m_window_handle = (cef_window_handle_t)frame->winId();
 
+	ObsDisableMainWindow();
+
 	// Spawn CEF initialization in new thread.
 	//
 	// The window handle must be obtained in the QT UI thread and CEF initialization must be performed in a
@@ -57,8 +59,8 @@ void WCUIBrowserDialog::ShowModal()
 		this);
 
 	// Start modal dialog
-	ObsDisableMainWindow();
 	exec();
+
 	ObsEnableMainWindow();
 }
 
