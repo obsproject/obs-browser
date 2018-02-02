@@ -69,7 +69,6 @@ private slots: // OBS operations
 	std::string ObsGetUniqueSourceName(std::string name);
 
 	size_t ObsScenesGetCount();
-	//void ObsRemoveFirstScenes(size_t removeCount = 1);
 
 	obs_frontend_source_list& ObsStoreScenes();
 	void ObsRemoveStoredScenes(obs_frontend_source_list& scenes);

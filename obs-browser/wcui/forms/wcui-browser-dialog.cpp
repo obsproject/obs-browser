@@ -56,12 +56,24 @@ void WCUIBrowserDialog::ShowModal()
 		this);
 
 	// Start modal dialog
-	exec();
+	if (exec() == QDialog::Rejected)
+	{
+		// Spawn CEF initialization again to reset initial URL.
+		//
+		m_task_queue.Enqueue(
+			[](void* args)
+		{
+			WCUIBrowserDialog* self = (WCUIBrowserDialog*)args;
+
+			self->InitBrowser();
+		},
+		this);
+	}
 }
 
 // Initialize CEF.
 //
-// This function is called in a separate thread by InitBrowserThreadEntryPoint() above.
+// This function is called in a separate thread.
 //
 // DO NOT call this function from the QT UI thread: it will lead to a dead lock.
 //
@@ -411,11 +423,11 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				delete task_args;
 
 				ObsEnableMainWindow();
+
+				// Close modal dialog
+				self->CloseModalDialog();
 			},
 			task_args);
-
-		// Close modal dialog
-		CloseModalDialog();
 
 		return true;
 	}
@@ -577,29 +589,6 @@ std::string WCUIBrowserDialog::ObsGetUniqueSourceName(std::string name)
 
 	return result;
 }
-/*
-void WCUIBrowserDialog::ObsRemoveFirstScenes(size_t removeCount)
-{
-	struct obs_frontend_source_list scenes = {};
-
-	// Get list of scenes
-	obs_frontend_get_scenes(&scenes);
-
-	// For each scene
-	for (size_t idx = 0; idx < scenes.sources.num && idx < removeCount; ++idx)
-	{
-		// Get the scene (a scene is a source)
-		obs_source_t* scene = scenes.sources.array[idx];
-
-		// Remove the scene
-		obs_source_remove(scene);
-	}
-
-	// Free list of scenes.
-	// This also calls obs_release_scene() for each scene in the list.
-	obs_frontend_source_list_free(&scenes);
-}
-*/
 
 size_t WCUIBrowserDialog::ObsScenesGetCount()
 {
