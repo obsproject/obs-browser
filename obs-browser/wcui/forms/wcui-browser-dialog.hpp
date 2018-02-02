@@ -71,6 +71,7 @@ private slots: // OBS operations
 	size_t ObsScenesGetCount();
 
 	obs_frontend_source_list& ObsStoreScenes();
+	void ObsScenesRemoveAllSources(obs_frontend_source_list& scenes);
 	void ObsRemoveStoredScenes(obs_frontend_source_list& scenes);
 	void ObsReleaseStoredScenes(obs_frontend_source_list& scenes);
 

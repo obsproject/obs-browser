@@ -102,58 +102,94 @@ void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 {
 	(void)browser;
 
-	if (type == PET_VIEW)
-	{
-		viewWidth = width;
-		viewHeight = height;
-		if (surfaceHandles.size() < 2) {
-			BrowserSurfaceHandle newSurfaceHandle = 0;
-			browserListener->CreateSurface(width, height,
-				&newSurfaceHandle);
+	LockPreventDraw();
 
-			if (newSurfaceHandle != nullptr) {
-				surfaceHandles.push_back(newSurfaceHandle);
+	if (!IsDrawPrevented())
+	{
+		if (type == PET_VIEW)
+		{
+			viewWidth = width;
+			viewHeight = height;
+			if (surfaceHandles.size() < 2) {
+				BrowserSurfaceHandle newSurfaceHandle = 0;
+				browserListener->CreateSurface(width, height,
+					&newSurfaceHandle);
+
+				if (newSurfaceHandle != nullptr) {
+					surfaceHandles.push_back(newSurfaceHandle);
+				}
+			}
+
+			int previousSurfaceHandle = currentSurfaceHandle;
+
+			currentSurfaceHandle = (++currentSurfaceHandle % surfaceHandles.size());
+
+			if (currentSurfaceHandle != previousSurfaceHandle) {
+				obs_enter_graphics();
+				gs_texture_set_image(surfaceHandles[currentSurfaceHandle],
+					(const uint8_t*)data, width * 4, false);
+				obs_leave_graphics();
 			}
 		}
+		else if (type == PET_POPUP && popupRect.width > 0 &&
+			popupRect.height > 0)
+		{
+			int x = popupRect.x;
+			int y = popupRect.y;
+			int w = width;
+			int h = height;
 
-		int previousSurfaceHandle = currentSurfaceHandle;
+			if (x < 0)
+				x = 0;
 
-		currentSurfaceHandle = (++currentSurfaceHandle % surfaceHandles.size());
+			if (y < 0)
+				y = 0;
 
-		if (currentSurfaceHandle != previousSurfaceHandle) {
+			if (x + w > viewWidth)
+				w -= x + w - viewWidth;
+			if (y + h > viewHeight)
+				h -= y + h - viewHeight;
+
 			obs_enter_graphics();
-			gs_texture_set_image(surfaceHandles[currentSurfaceHandle],
-				(const uint8_t*)data, width * 4, false);
+			BrowserSurfaceHandle newTexture = 0;
+			browserListener->CreatePopupSurface(width, height, x, y, &newTexture);
+			gs_texture_set_image(newTexture,
+				(const uint8_t*)data, w * 4, false);
 			obs_leave_graphics();
 		}
+
+		browserListener->OnDraw(surfaceHandles[currentSurfaceHandle], viewWidth, viewHeight);
 	}
-	else if (type == PET_POPUP && popupRect.width > 0 &&
-		popupRect.height > 0)
-	{
-		int x = popupRect.x;
-		int y = popupRect.y;
-		int w = width;
-		int h = height;
 
-		if (x < 0)
-			x = 0;
+	UnlockPreventDraw();
+}
 
-		if (y < 0)
-			y = 0;
+bool BrowserRenderHandler::s_preventDraw = false;
+pthread_mutex_t BrowserRenderHandler::s_preventDrawLock = NULL;
 
-		if (x + w > viewWidth)
-			w -= x + w - viewWidth;
-		if (y + h > viewHeight)
-			h -= y + h - viewHeight;
-		
-		obs_enter_graphics();
-		BrowserSurfaceHandle newTexture = 0;
-		browserListener->CreatePopupSurface(width, height, x, y, &newTexture);
-		gs_texture_set_image(newTexture,
-			(const uint8_t*)data, w * 4, false);
-		obs_leave_graphics();
-	}
-	
+// initializer static class to init BrowserRenderHandler::s_preventDrawLock above
+BrowserRenderHandler::_InitPreventDraw BrowserRenderHandler::s_initPreventDraw;
 
-	browserListener->OnDraw(surfaceHandles[currentSurfaceHandle], viewWidth, viewHeight);
+void BrowserRenderHandler::LockPreventDraw()
+{
+	pthread_mutex_lock(&s_preventDrawLock);
+}
+
+void BrowserRenderHandler::UnlockPreventDraw()
+{
+	pthread_mutex_unlock(&s_preventDrawLock);
+}
+
+void BrowserRenderHandler::SetPreventDraw(bool preventDraw)
+{
+	LockPreventDraw();
+
+	s_preventDraw = preventDraw;
+
+	UnlockPreventDraw();
+}
+
+bool BrowserRenderHandler::IsDrawPrevented()
+{
+	return s_preventDraw;
 }

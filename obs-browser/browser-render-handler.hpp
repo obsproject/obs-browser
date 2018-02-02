@@ -23,12 +23,13 @@
 
 #include <obs-module.h>
 
+#include <util/threading.h>
+
 class BrowserListener;
 
 class BrowserRenderHandler : public CefRenderHandler
 {
 public:
-
 	BrowserRenderHandler(const int width, const int height,
 		const std::shared_ptr<BrowserListener> &browserListener);
 
@@ -69,6 +70,24 @@ private:
 	int viewHeight;
 	CefRect popupRect;
 	CefRect originalPopupRect;
+
+private:
+	static bool s_preventDraw;
+	static pthread_mutex_t s_preventDrawLock;
+
+	static class _InitPreventDraw
+	{
+	public:
+		_InitPreventDraw() { pthread_mutex_init(&s_preventDrawLock, nullptr); }
+		~_InitPreventDraw() { pthread_mutex_destroy(&s_preventDrawLock); }
+	} s_initPreventDraw;
+
+	static void LockPreventDraw();
+	static void UnlockPreventDraw();
+	static bool IsDrawPrevented();
+
+public:
+	static void SetPreventDraw(bool preventDraw);
 
 private:
 	IMPLEMENT_REFCOUNTING(BrowserRenderHandler);

@@ -54,41 +54,7 @@
 				"input": {
 					"scenes": [
 						{
-							"name": "Scene 1",
-							"sources":
-							[
-								{
-									"type": "game",
-									"name": "Game Capture",
-
-									"multiGpuCompatibility": true,
-									"allowTransparency": false,
-									"limitFramerate": true,
-									"captureCursor": false,
-									"antiCheatHook": true,
-									"captureOverlays": true
-								},
-								{
-									"type": "browser",
-									"name": "Browser",
-
-									"url": "http://streamelements.com/",
-
-									"shutdownWhenInactive": false
-								},
-								{
-									"type": "video_capture",
-									"name": "Video Capture",
-
-									"left": 10,
-									"top": 10,
-									"width": 320,
-									"height": 240
-								}
-							]
-						},
-						{
-							"name": "Scene 2",
+							"name": "In Game",
 							"sources":
 							[
 								{
@@ -103,28 +69,93 @@
 									"captureOverlays": false
 								},
 								{
+									"type": "video_capture",
+									"name": "Video Capture",
+
+									"left": 42,
+									"top": 440,
+									"width": 430,
+									"height": 242
+								},
+								{
 									"type": "browser",
 									"name": "Browser",
 
-									"url": "http://www.google.com/",
+									"url": "https://streamelements.com/overlay/5a2017112d2aca0001e21556/HZWIhjyRP2hIkiP7YZQ0",
 
 									"shutdownWhenInactive": false
-								},
+								}
+							]
+						},
+						{
+							"name": "Talk",
+							"sources":
+							[
 								{
 									"type": "video_capture",
 									"name": "Video Capture",
 
-									"left": 1590,
-									"top": 830,
-									"width": 320,
-									"height": 240
+									"left": 310,
+									"top": 78,
+									"width": 1280,
+									"height": 710
+								},
+								{
+									"type": "browser",
+									"name": "Browser",
+
+									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f1f/HZWIhjyRP2hIkiP7YZQ0",
+
+									"shutdownWhenInactive": false
+								}
+							]
+						},
+						{
+							"name": "Starting Soon",
+							"sources":
+							[
+								{
+									"type": "browser",
+									"name": "Browser",
+
+									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f20/HZWIhjyRP2hIkiP7YZQ0",
+
+									"shutdownWhenInactive": false
+								}
+							]
+						},
+						{
+							"name": "Be Right Back",
+							"sources":
+							[
+								{
+									"type": "browser",
+									"name": "Browser",
+
+									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f21/HZWIhjyRP2hIkiP7YZQ0",
+
+									"shutdownWhenInactive": false
+								}
+							]
+						},
+						{
+							"name": "Ended",
+							"sources":
+							[
+								{
+									"type": "browser",
+									"name": "Browser",
+
+									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f22/HZWIhjyRP2hIkiP7YZQ0",
+
+									"shutdownWhenInactive": false
 								}
 							]
 						}
 					]
 				},
 				"output": {
-					"defaultSceneName": "Scene 1",
+					"defaultSceneName": "Starting Soon",
 					"audio": {
 						"bitRate": 128,
 						"sampleRate": 44100,

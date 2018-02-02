@@ -4,6 +4,7 @@
 #include "ui_wcui-browser-dialog.h"
 #include "browser-manager.hpp"
 #include "browser-obs-bridge-base.hpp"
+#include "browser-render-handler.hpp"
 
 #include "include/cef_parser.h"		// CefParseJSON, CefWriteJSON
 
@@ -56,19 +57,9 @@ void WCUIBrowserDialog::ShowModal()
 		this);
 
 	// Start modal dialog
-	if (exec() == QDialog::Rejected)
-	{
-		// Spawn CEF initialization again to reset initial URL.
-		//
-		m_task_queue.Enqueue(
-			[](void* args)
-		{
-			WCUIBrowserDialog* self = (WCUIBrowserDialog*)args;
-
-			self->InitBrowser();
-		},
-		this);
-	}
+	ObsDisableMainWindow();
+	exec();
+	ObsEnableMainWindow();
 }
 
 // Initialize CEF.
@@ -261,8 +252,6 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 		task_args->dialog = this;
 		task_args->config = new c_config_container(config_value); // parse configuration input
 
-		ObsDisableMainWindow();
-
 		m_task_queue.Enqueue(
 			[](void* arg)
 			{
@@ -281,6 +270,13 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 				// Store current scene list to be removed later
 				obs_frontend_source_list stored_scenes = self->ObsStoreScenes();
+
+				// Globally prevent OnDraw calls in browser render handlers
+				// this prevents a nasty race condition in BrowserRenderHandler::OnPaint
+				// when CPU is at 100% and we're adding/removing browser sources
+				BrowserRenderHandler::SetPreventDraw(true);
+
+				self->ObsScenesRemoveAllSources(stored_scenes);
 
 				// Unique scene name -> Requested scene name map, will be used
 				// later to rename generated unique scene names to scene names
@@ -445,7 +441,8 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				delete config;
 				delete task_args;
 
-				ObsEnableMainWindow();
+				// Globally allow OnDraw calls in browser render handlers
+				BrowserRenderHandler::SetPreventDraw(false);
 
 				// Close modal dialog
 				self->CloseModalDialog();
@@ -561,6 +558,32 @@ obs_frontend_source_list& WCUIBrowserDialog::ObsStoreScenes()
 	obs_frontend_get_scenes(&scenes);
 
 	return scenes;
+}
+
+void WCUIBrowserDialog::ObsScenesRemoveAllSources(obs_frontend_source_list& scenes)
+{
+	// For each scene
+	for (size_t idx = 0; idx < scenes.sources.num; ++idx)
+	{
+		// Get the scene (a scene is a source)
+		obs_source_t* source = scenes.sources.array[idx];
+
+		// Get scene handle
+		obs_scene_t* scene = obs_scene_from_source(source); // does not increment refcount
+
+		// For each scene item
+		obs_scene_enum_items(
+			scene,
+			[](obs_scene_t* scene, obs_sceneitem_t* sceneitem, void* param)
+			{
+				// Remove the scene item
+				obs_sceneitem_remove(sceneitem);
+
+				// Continue iteration
+				return true;
+			},
+			NULL);
+	}
 }
 
 void WCUIBrowserDialog::ObsRemoveStoredScenes(obs_frontend_source_list& scenes)
@@ -707,7 +730,9 @@ void WCUIBrowserDialog::ObsAddSource(
 	if (source == NULL)
 	{
 		// Not reusing an existing source, create a new one
-		source = obs_source_create(sourceId, sourceName, sourceSettings, sourceHotkeyData);
+		source = obs_source_create(sourceId, sourceName, NULL, sourceHotkeyData);
+
+		obs_source_update(source, sourceSettings);
 	}
 
 	if (source != NULL)
@@ -1107,7 +1132,6 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration(
 void WCUIBrowserDialog::ObsEnableMainWindow()
 {
 	// Enable main window
-	//((QWidget*)obs_frontend_get_main_window())->setEnabled(true);
 
 	QMetaObject::invokeMethod(
 		(QWidget*)obs_frontend_get_main_window(),
@@ -1120,7 +1144,6 @@ void WCUIBrowserDialog::ObsEnableMainWindow()
 void WCUIBrowserDialog::ObsDisableMainWindow()
 {
 	// Disable main window
-	// ((QWidget*)obs_frontend_get_main_window())->setEnabled(false);
 
 	QMetaObject::invokeMethod(
 		(QWidget*)obs_frontend_get_main_window(),

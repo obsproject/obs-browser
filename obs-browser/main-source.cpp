@@ -211,7 +211,10 @@ static void browser_source_destroy(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
+	blog(LOG_INFO, "browser_source_destroy");
+
 	delete bs;
+
 	bs = nullptr;
 }
 
