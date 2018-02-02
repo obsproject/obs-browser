@@ -54,53 +54,96 @@
 				"input": {
 					"scenes": [
 						{
-							"type": "game"
+							"name": "Scene 1",
+							"sources":
+							[
+								{
+									"type": "game",
+									"name": "Game Capture",
+
+									"multiGpuCompatibility": true,
+									"allowTransparency": false,
+									"limitFramerate": true,
+									"captureCursor": false,
+									"antiCheatHook": true,
+									"captureOverlays": true
+								},
+								{
+									"type": "browser",
+									"name": "Browser",
+
+									"url": "http://streamelements.com/",
+
+									"shutdownWhenInactive": false
+								},
+								{
+									"type": "video_capture",
+									"name": "Video Capture",
+
+									"left": 10,
+									"top": 10,
+									"width": 320,
+									"height": 240
+								}
+							]
 						},
 						{
-							"type": "browser",
-							"url": "http://streamelements.com/overlay/xxxxxxx",
-							"x": 0,
-							"y": 0,
-							"width": 1920,
-							"height": 1080,
-							"fps": 24
-						},
-						{
-							"type": "videoCapture",
-							"device": "xxx",
-							"x": 123,
-							"y": 123,
-							"width": 320,
-							"height": 240
+							"name": "Scene 2",
+							"sources":
+							[
+								{
+									"type": "game",
+									"name": "Game Capture",
+
+									"multiGpuCompatibility": false,
+									"allowTransparency": false,
+									"limitFramerate": false,
+									"captureCursor": false,
+									"antiCheatHook": false,
+									"captureOverlays": false
+								},
+								{
+									"type": "browser",
+									"name": "Browser",
+
+									"url": "http://www.google.com/",
+
+									"shutdownWhenInactive": false
+								},
+								{
+									"type": "video_capture",
+									"name": "Video Capture",
+
+									"left": 1590,
+									"top": 830,
+									"width": 320,
+									"height": 240
+								}
+							]
 						}
 					]
 				},
 				"output": {
 					"audio": {
-						"bitRate": 128000,
+						"bitRate": 128,
 						"sampleRate": 44100,
-						"channels": 2,
-						"codec": "libaac"
+						"channels": 2
 					},
 					"video": {
-						"bitRate": 2500000,
-						"codec": "libx264",
+						"bitRate": 2500,
+						"codec": "obs_qsv11",
 						"framesPerSecond": 24,
+						"keyframeIntervalSeconds": 1,
 						"width": 1920,
 						"height": 1080
 					},
 					"stream": {
-						"type": "rtmp_common",
-						"metadata": {
-							"key": "value"
-						},
-						"settings": {
-							"server": "rtmp://.../app",
-							"key": "streamKey",
-							"useAuth": true,
-							"username": "username",
-							"password": "password"
-						}
+						"serverUrl": "rtmp://localhost/autoapp",
+						"streamKey": "autoStreamKey",
+						"useAuth": true,
+						"username": "username",
+						"password": "password",
+						"autoStart": true
 					}
 				}
 			};

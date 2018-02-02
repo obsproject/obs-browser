@@ -235,53 +235,187 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 		// window.obsstudio.setupEnvironment(config) JS call
 
 		CefString config_json_string = args->GetValue(0)->GetString();
-		CefRefPtr<CefValue> config =
+		CefRefPtr<CefValue> config_value =
 			CefParseJSON(config_json_string, JSON_PARSER_ALLOW_TRAILING_COMMAS);
 
-		if (config->GetDictionary() != NULL)
+		struct async_args
 		{
-			auto input = config->GetDictionary()->GetValue("input");
-			auto output = config->GetDictionary()->GetValue("output");
+			WCUIBrowserDialog* dialog;
+			c_config_container* config;
+		};
 
-		}
+		async_args* task_args = new async_args();
 
-		// Disable main window
-		((QWidget*)obs_frontend_get_main_window())->setEnabled(false);
-		QApplication::processEvents();
+		task_args->dialog = this;
+		task_args->config = new c_config_container(config_value); // parse configuration input
+
+		ObsDisableMainWindow();
 
 		m_task_queue.Enqueue(
 			[](void* arg)
 			{
-				WCUIBrowserDialog* self = (WCUIBrowserDialog*)arg;
+				async_args* task_args = (async_args*)arg;
 
+				WCUIBrowserDialog* self = task_args->dialog;
+				c_config_container* config = task_args->config;
+
+				///////////////////////////////////////////////
+				// Setup scenes
+				///////////////////////////////////////////////
+
+				// Get current scene count, we'll use it later to determine
+				// whether we added any new scenes or not.
 				size_t initSceneCount = self->ObsScenesGetCount();
 
-				self->ObsAddScene(fmt::format("New scene {}", os_gettime_ns()).c_str(), true);
-				self->ObsAddSourceBrowser(NULL, "Browser 1", 1920, 1080, 25, "http://www.streamelements.com/");
+				// Store current scene list to be removed later
+				obs_frontend_source_list stored_scenes = self->ObsStoreScenes();
 
-				self->ObsAddScene(fmt::format("New scene {}", os_gettime_ns()).c_str(), true);
-				self->ObsAddSourceGame(NULL, "Game 1");
-				self->ObsAddSource(NULL, "monitor_capture", "Monitor 1", NULL, NULL, false);
-				self->ObsAddSourceBrowser(NULL, "Browser 1", 1920, 1080, 25, "http://www.google.com/");
-				self->ObsAddSourceVideoCapture(NULL, "Video Capture", 10, 10, 320, 180);
+				// Unique scene name -> Requested scene name map, will be used
+				// later to rename generated unique scene names to scene names
+				// requested in the API call
+				std::map<std::string, std::string> sceneRenameMap;
 
-				size_t endSceneCount = self->ObsScenesGetCount();
-
-				if (initSceneCount > 0 && initSceneCount < endSceneCount)
+				// For each requested scene
+				for (size_t scene_idx = 0; scene_idx < config->input.scenes.items.size(); ++scene_idx)
 				{
-					self->ObsRemoveFirstScenes(initSceneCount);
+					c_scene_container* scene = &config->input.scenes.items[scene_idx];
+
+					// Make sure scene name is unique. This is necessary since
+					// OBS may already contain scene with the same name
+					std::string unique_name = self->ObsGetUniqueSourceName(scene->name);
+
+					if (unique_name != scene->name)
+					{
+						// Unique scene name was generated: put it into
+						// the scene rename map to be renamed back after
+						// previously existing scenes are removed
+						sceneRenameMap[unique_name] = scene->name;
+					}
+
+					// Add scene
+					self->ObsAddScene(unique_name.c_str(), true);
+
+					// For each requested source in the scene
+					for (size_t source_idx = 0; source_idx < scene->sources.items.size(); ++source_idx)
+					{
+						c_values_container* source = &scene->sources.items[source_idx];
+
+						std::string source_type =
+							source->string("type", "");
+
+						std::string source_name =
+							self->ObsGetUniqueSourceName(source->string("name", source_type));
+
+						if (source_type == "video_capture")
+						{
+							self->ObsAddSourceVideoCapture(
+								NULL,
+								source_name.c_str(),
+								source->integer("left", 0),
+								source->integer("top", 0),
+								source->integer("width", 320),
+								source->integer("height", 240));
+						}
+						else if (source_type == "browser")
+						{
+							self->ObsAddSourceBrowser(
+								NULL,
+								source_name.c_str(),
+								config->output.video.integer("width", 1920),
+								config->output.video.integer("height", 1080),
+								config->output.video.integer("framesPerSecond", 25),
+								source->string("url", "http://obsproject.com/").c_str(),
+								source->boolean("shutdownWhenInactive", true));
+						}
+						else if (source_type == "game")
+						{
+							self->ObsAddSourceGame(
+								NULL,
+								source_name.c_str(),
+								source->boolean("multiGpuCompatibility", true),
+								source->boolean("allowTransparency", false),
+								source->boolean("limitFramerate", false),
+								source->boolean("captureCursor", false),
+								source->boolean("antiCheatHook", true),
+								source->boolean("captureOverlays", true));
+						}
+						else if (source_type == "monitor_capture")
+						{
+							self->ObsAddSource(
+								NULL,
+								"monitor_capture",
+								source_name.c_str(),
+								NULL,
+								NULL,
+								false);
+						}
+					}
 				}
 
-				self->ObsSetProfileOutputConfiguration();
+				// Count scenes again
+				size_t endSceneCount = self->ObsScenesGetCount();
 
-				// Enable main window
-				((QWidget*)obs_frontend_get_main_window())->setEnabled(true);
-				QApplication::processEvents();
+				// If scenes previously existed and we added new scenes
+				if (initSceneCount > 0 && initSceneCount < endSceneCount)
+				{
+					// Remove scenes stored before adding new scenes
+					self->ObsRemoveStoredScenes(stored_scenes);
+				}
+
+				// Release stored (and removed!) scenes
+				self->ObsReleaseStoredScenes(stored_scenes);
+
+				// Rename unique scene names back to requested scene names
+				for (const auto& sceneRenamePair : sceneRenameMap)
+				{
+					// Get scene by it's unique name
+					obs_source_t* sceneSource =
+						obs_get_source_by_name(sceneRenamePair.first.c_str());
+
+					if (sceneSource != NULL)
+					{
+						// Rename scene back to requested scene name
+						obs_source_set_name(sceneSource, sceneRenamePair.second.c_str());
+
+						// Release reference to renamed scene
+						obs_source_release(sceneSource);
+					}
+				}
+
+				///////////////////////////////////////////////
+				// Setup output
+				///////////////////////////////////////////////		
+
+				self->ObsSetProfileOutputConfiguration(
+					config->output.stream.string("serverUrl", "").c_str(),
+					config->output.stream.string("streamKey", "").c_str(),
+					config->output.stream.boolean("useAuth", false),
+					config->output.stream.string("username", "").c_str(),
+					config->output.stream.string("password", "").c_str(),
+					config->output.video.string("codec", "obs_x264").c_str(),
+					config->output.video.integer("bitRate", 2500),
+					config->output.video.integer("width", 1920),
+					config->output.video.integer("height", 1080),
+					config->output.video.integer("framesPerSecond", 25),
+					config->output.audio.integer("bitRate", 128),
+					config->output.video.integer("keyframeIntervalSeconds", 2),
+					config->output.audio.integer("sampleRate", 44100),
+					config->output.audio.integer("channels", 2));
+
+				// Start streaming if autoStart requested
+				if (config->output.stream.boolean("autoStart", false))
+					obs_frontend_streaming_start();
+
+				// We're done!
+				delete config;
+				delete task_args;
+
+				ObsEnableMainWindow();
 			},
-			this);
+			task_args);
 
 		// Close modal dialog
-		accept();
+		CloseModalDialog();
 
 		return true;
 	}
@@ -384,6 +518,66 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 	return false;
 }
 
+obs_frontend_source_list& WCUIBrowserDialog::ObsStoreScenes()
+{
+	struct obs_frontend_source_list scenes = {};
+
+	// Get list of scenes
+	obs_frontend_get_scenes(&scenes);
+
+	return scenes;
+}
+
+void WCUIBrowserDialog::ObsRemoveStoredScenes(obs_frontend_source_list& scenes)
+{
+	// For each scene
+	for (size_t idx = 0; idx < scenes.sources.num; ++idx)
+	{
+		// Get the scene (a scene is a source)
+		obs_source_t* scene = scenes.sources.array[idx];
+
+		// Remove the scene
+		obs_source_remove(scene);
+	}
+}
+
+void WCUIBrowserDialog::ObsReleaseStoredScenes(obs_frontend_source_list& scenes)
+{
+	// Free list of scenes.
+	// This also calls obs_release_scene() for each scene in the list.
+	obs_frontend_source_list_free(&scenes);
+}
+
+std::string WCUIBrowserDialog::ObsGetUniqueSourceName(std::string name)
+{
+	std::string result(name);
+
+	int sequence = 0;
+	bool isUnique = false;
+
+	while (!isUnique)
+	{
+		isUnique = true;
+
+		obs_source_t* source = obs_get_source_by_name(result.c_str());
+		if (source != NULL)
+		{
+			obs_source_release(source);
+
+			isUnique = false;
+		}
+
+		if (!isUnique)
+		{
+			++sequence;
+
+			result = fmt::format("{} ({})", name.c_str(), sequence);
+		}
+	}
+
+	return result;
+}
+/*
 void WCUIBrowserDialog::ObsRemoveFirstScenes(size_t removeCount)
 {
 	struct obs_frontend_source_list scenes = {};
@@ -405,6 +599,7 @@ void WCUIBrowserDialog::ObsRemoveFirstScenes(size_t removeCount)
 	// This also calls obs_release_scene() for each scene in the list.
 	obs_frontend_source_list_free(&scenes);
 }
+*/
 
 size_t WCUIBrowserDialog::ObsScenesGetCount()
 {
@@ -568,10 +763,10 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	obs_data_set_bool(settings, "is_local_file", false);
 	obs_data_set_string(settings, "url", url);
 	obs_data_set_string(settings, "css", css);
-	obs_data_set_int(settings, "width", 1920);
-	obs_data_set_int(settings, "height", 1080);
-	obs_data_set_int(settings, "fps", 25);
-	obs_data_set_bool(settings, "shutdown", true);
+	obs_data_set_int(settings, "width", width);
+	obs_data_set_int(settings, "height", height);
+	obs_data_set_int(settings, "fps", fps);
+	obs_data_set_bool(settings, "shutdown", shutdownWhenInactive);
 
 	ObsAddSource(parentScene, "browser_source", name, settings, NULL, false);
 
@@ -709,7 +904,21 @@ void WCUIBrowserDialog::ObsAddSourceGame(
 	obs_data_release(settings);
 }
 
-void WCUIBrowserDialog::ObsSetProfileOutputConfiguration()
+void WCUIBrowserDialog::ObsSetProfileOutputConfiguration(
+	const char* streamingServiceServerUrl,
+	const char* streamingServiceStreamKey,
+	const bool streamingServiceUseAuth,
+	const char* streamingServiceAuthUsername,
+	const char* streamingServiceAuthPassword,
+	const char* videoEncoderId,
+	uint videoBitrate,
+	uint videoWidth,
+	uint videoHeight,
+	uint videoFramesPerSecond,
+	uint audioBitrate,
+	uint videoKeyframeIntervalSeconds,
+	uint audioSampleRate,
+	uint audioChannels)
 {
 	if (obs_frontend_replay_buffer_active())
 	{
@@ -726,20 +935,7 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration()
 		obs_frontend_recording_stop();
 	}
 
-	uint videoWidth = 1920;
-	uint videoHeight = 1080;
-	uint videoBitrate = 2500;
-	uint videoFramesPerSecond = 25;
-	uint videoKeyframeIntervalSeconds = 2;
-	uint audioBitrate = 128;
-	uint audioSampleRate = 44100;
-	const char* videoEncoderId = "obs_x264";
-	const char* recordFormat = "mp4";
-	const char* streamingServiceServerUrl = "rtmp://localhost/app1";
-	const char* streamingServiceStreamKey = "stream1";
-	const bool streamingServiceUseAuth = false;
-	const char* streamingServiceAuthUsername = "";
-	const char* streamingServiceAuthPassword = "";
+	//const char* recordFormat = "mp4";
 
 	config_t* basicConfig = obs_frontend_get_profile_config(); // does not increase refcount
 
@@ -763,7 +959,9 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration()
 	config_set_bool(basicConfig, "AdvOut", "ApplyServiceSettings", true);
 	config_set_bool(basicConfig, "AdvOut", "UseRescale", false);
 	config_set_uint(basicConfig, "AdvOut", "TrackIndex", 1);
-	config_set_string(basicConfig, "AdvOut", "Encoder", videoEncoderId);
+
+	if (videoEncoderId != NULL)
+		config_set_string(basicConfig, "AdvOut", "Encoder", videoEncoderId);
 
 	config_set_string(basicConfig, "AdvOut", "RecType", "Standard");
 
@@ -820,7 +1018,7 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration()
 	config_set_uint(basicConfig, "Video", "OutputCX", videoWidth);
 	config_set_uint(basicConfig, "Video", "OutputCY", videoHeight);
 
-	config_set_uint(basicConfig, "Video", "FPSType", 0);
+	config_set_uint(basicConfig, "Video", "FPSType", 1);
 	config_set_string(basicConfig, "Video", "FPSCommon", fmt::format("{}", videoFramesPerSecond).c_str());
 	config_set_uint(basicConfig, "Video", "FPSInt", videoFramesPerSecond);
 	config_set_uint(basicConfig, "Video", "FPSNum", videoFramesPerSecond);
@@ -836,17 +1034,41 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration()
 	//config_set_string(basicConfig, "Audio", "MonitoringDeviceId", "default");
 	//config_set_string(basicConfig, "Audio", "MonitoringDeviceName", Str("Basic.Settings.Advanced.Audio.MonitoringDevice.Default"));
 	config_set_uint(basicConfig, "Audio", "SampleRate", audioSampleRate);
-	//config_set_string(basicConfig, "Audio", "ChannelSetup", "Stereo");
+
+	switch (audioChannels)
+	{
+	case 1: config_set_string(basicConfig, "Audio", "ChannelSetup", "Mono"); break;
+	case 2: config_set_string(basicConfig, "Audio", "ChannelSetup", "Stereo"); break;
+	case 3: config_set_string(basicConfig, "Audio", "ChannelSetup", "2.1"); break;
+	case 4: config_set_string(basicConfig, "Audio", "ChannelSetup", "4.0"); break;
+	case 5: config_set_string(basicConfig, "Audio", "ChannelSetup", "4.1"); break;
+	case 6: config_set_string(basicConfig, "Audio", "ChannelSetup", "5.1"); break;
+
+	case 7: config_set_string(basicConfig, "Audio", "ChannelSetup", "7.1"); break;
+	case 8: config_set_string(basicConfig, "Audio", "ChannelSetup", "7.1"); break;
+
+	default: config_set_string(basicConfig, "Audio", "ChannelSetup", "Stereo"); break;
+	}
 
 	// Streaming service
 	obs_service_t* service = obs_service_create("rtmp_custom", "default_service", NULL, NULL);
 	obs_data_t* service_settings = obs_service_get_settings(service);
 
-	obs_data_set_string(service_settings, "server", streamingServiceServerUrl);
-	obs_data_set_string(service_settings, "key", streamingServiceStreamKey);
+	if (streamingServiceServerUrl != NULL)
+		obs_data_set_string(service_settings, "server", streamingServiceServerUrl);
+
+	if (streamingServiceStreamKey != NULL)
+		obs_data_set_string(service_settings, "key", streamingServiceStreamKey);
+
 	obs_data_set_bool(service_settings, "use_auth", streamingServiceUseAuth);
-	obs_data_set_string(service_settings, "username", streamingServiceAuthUsername);
-	obs_data_set_string(service_settings, "password", streamingServiceAuthPassword);
+	if (streamingServiceUseAuth)
+	{
+		obs_data_set_string(service_settings, "username",
+			streamingServiceAuthUsername != NULL ? streamingServiceAuthUsername : "");
+
+		obs_data_set_string(service_settings, "password",
+			streamingServiceAuthPassword != NULL ? streamingServiceAuthPassword : "");
+	}
 
 	obs_service_update(service, service_settings);
 
@@ -865,4 +1087,37 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration()
 
 	// Save UI configuration
 	obs_frontend_save();
+}
+
+void WCUIBrowserDialog::ObsEnableMainWindow()
+{
+	// Enable main window
+	//((QWidget*)obs_frontend_get_main_window())->setEnabled(true);
+
+	QMetaObject::invokeMethod(
+		(QWidget*)obs_frontend_get_main_window(),
+		"setEnabled",
+		Q_ARG(bool, true));
+
+	QApplication::processEvents();
+}
+
+void WCUIBrowserDialog::ObsDisableMainWindow()
+{
+	// Disable main window
+	// ((QWidget*)obs_frontend_get_main_window())->setEnabled(false);
+
+	QMetaObject::invokeMethod(
+		(QWidget*)obs_frontend_get_main_window(),
+		"setEnabled",
+		Q_ARG(bool, false));
+
+	QApplication::processEvents();
+}
+
+void WCUIBrowserDialog::CloseModalDialog()
+{
+	QMetaObject::invokeMethod(
+		this,
+		"accept");
 }
