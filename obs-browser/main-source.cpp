@@ -176,12 +176,18 @@ static void browser_source_show(void *data)
 	else {
 		bs->ExecuteVisiblityJSCallback(true);
 	}
+
+	// Start animation
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(false);
 }
 
 // Called when the source is no longer visible
 static void browser_source_hide(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
+
+	// Stop animation
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(true);
 
 	if (bs->GetShutdown()) {
 		BrowserManager::Instance()->DestroyBrowser(bs->GetBrowserIdentifier());
