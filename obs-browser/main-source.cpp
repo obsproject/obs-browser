@@ -179,6 +179,13 @@ static void browser_source_show(void *data)
 
 	// Start animation
 	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(false);
+
+#ifdef APPLE
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->SetWindowVisibility(true);
+#endif
+
+	// Repaint the view
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->Invalidate(PET_VIEW);
 }
 
 // Called when the source is no longer visible
@@ -188,6 +195,10 @@ static void browser_source_hide(void *data)
 
 	// Stop animation
 	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(true);
+
+#ifdef APPLE
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->SetWindowVisibility(false);
+#endif
 
 	if (bs->GetShutdown()) {
 		BrowserManager::Instance()->DestroyBrowser(bs->GetBrowserIdentifier());
