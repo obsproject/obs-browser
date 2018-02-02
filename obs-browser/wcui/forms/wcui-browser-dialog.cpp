@@ -398,6 +398,8 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				// Setup output
 				///////////////////////////////////////////////		
 
+				config_t* basicConfig = obs_frontend_get_profile_config(); // does not increase refcount
+
 				self->ObsSetProfileOutputConfiguration(
 					config->output.stream.string("serverUrl", "").c_str(),
 					config->output.stream.string("streamKey", "").c_str(),
@@ -412,7 +414,28 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 					config->output.audio.integer("bitRate", 128),
 					config->output.video.integer("keyframeIntervalSeconds", 2),
 					config->output.audio.integer("sampleRate", 44100),
-					config->output.audio.integer("channels", 2));
+					config->output.audio.integer("channels", 2),
+					config->output.stream.boolean("reconnectOnFailure", config_get_bool(basicConfig, "Output", "Reconnect")),
+					config->output.stream.integer("reconnectRetryDelaySeconds", (int)config_get_uint(basicConfig, "Output", "RetryDelay")),
+					config->output.stream.integer("reconnectRetryMaxAttempts", (int)config_get_uint(basicConfig, "Output", "MaxRetries"))
+				);
+
+				// If default scene was requested
+				if (config->output.defaultScene.size() > 0)
+				{
+					// Get the default scene
+					obs_source_t* sceneSource =
+						obs_get_source_by_name(config->output.defaultScene.c_str());
+
+					if (sceneSource != NULL)
+					{
+						// If matching scene found, set it as current scene
+						obs_frontend_set_current_scene(sceneSource);
+
+						// And release reference to the scene
+						obs_source_release(sceneSource);
+					}
+				}
 
 				// Start streaming if autoStart requested
 				if (config->output.stream.boolean("autoStart", false))
@@ -907,7 +930,10 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration(
 	uint audioBitrate,
 	uint videoKeyframeIntervalSeconds,
 	uint audioSampleRate,
-	uint audioChannels)
+	uint audioChannels,
+	bool reconnectOnFailure,
+	uint reconnectRetryDelaySeconds,
+	uint reconnectRetryMaxAttempts)
 {
 	if (obs_frontend_replay_buffer_active())
 	{
@@ -994,9 +1020,9 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration(
 	config_set_uint(basicConfig, "Output", "DelaySec", 20);
 	config_set_bool(basicConfig, "Output", "DelayPreserve", true);
 	*/
-	config_set_bool(basicConfig, "Output", "Reconnect", true);
-	config_set_uint(basicConfig, "Output", "RetryDelay", 10);
-	config_set_uint(basicConfig, "Output", "MaxRetries", 20);
+	config_set_bool(basicConfig, "Output", "Reconnect", reconnectOnFailure);
+	config_set_uint(basicConfig, "Output", "RetryDelay", reconnectRetryDelaySeconds);
+	config_set_uint(basicConfig, "Output", "MaxRetries", reconnectRetryMaxAttempts);
 
 	/*
 	config_set_string(basicConfig, "Output", "BindIP", "default");

@@ -124,6 +124,7 @@
 					]
 				},
 				"output": {
+					"defaultSceneName": "Scene 1",
 					"audio": {
 						"bitRate": 128,
 						"sampleRate": 44100,
@@ -143,7 +144,10 @@
 						"useAuth": true,
 						"username": "username",
 						"password": "password",
-						"autoStart": true
+						"autoStart": true,
+						"reconnectOnFailure": true,
+						"reconnectRetryDelaySeconds": 5,
+						"reconnectRetryMaxAttempts": 1000
 					}
 				}
 			};

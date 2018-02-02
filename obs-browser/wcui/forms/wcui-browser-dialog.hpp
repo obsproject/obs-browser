@@ -131,7 +131,10 @@ private slots: // OBS operations
 		uint audioBitrate = 128,
 		uint videoKeyframeIntervalSeconds = 2,
 		uint audioSampleRate = 44100,
-		uint audioChannels = 2
+		uint audioChannels = 2,
+		bool reconnectOnFailure = true,
+		uint reconnectRetryDelaySeconds = 10,
+		uint reconnectRetryMaxAttempts = 20
 	);
 
 public: // CefClient implementation
@@ -402,7 +405,8 @@ private:
 		c_output_container(c_output_container& other):
 			audio(other.audio),
 			video(other.video),
-			stream(other.stream)
+			stream(other.stream),
+			defaultScene(other.defaultScene)
 		{
 		}
 
@@ -415,6 +419,11 @@ private:
 
 			if (dic != NULL)
 			{
+				CefRefPtr<CefValue> defaultSceneValue = dic->GetValue("defaultSceneName");
+
+				if (defaultSceneValue != NULL)
+					defaultScene = defaultSceneValue->GetString();
+
 				audio = c_values_container(dic->GetValue("audio"));
 				video = c_values_container(dic->GetValue("video"));
 				stream = c_values_container(dic->GetValue("stream"));
@@ -422,6 +431,7 @@ private:
 		}
 
 	public:
+		std::string defaultScene;
 		c_values_container audio;
 		c_values_container video;
 		c_values_container stream;
