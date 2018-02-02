@@ -101,6 +101,9 @@ static WCUIBrowserDialog* s_wcui_WCUIBrowserDialog = NULL;
 //
 static void wcui_init()
 {
+	// Enable CEF high DPI support
+	CefEnableHighDPISupport();
+
 	// Browser dialog setup
 	obs_frontend_push_ui_translation(obs_module_get_string);
 

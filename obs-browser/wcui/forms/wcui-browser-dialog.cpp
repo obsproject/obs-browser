@@ -12,6 +12,7 @@
 #include "obs.h"
 #include "obs-encoder.h"
 
+#include <QWindow>
 #include <QWidget>
 #include <QFrame>
 
