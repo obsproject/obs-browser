@@ -335,7 +335,9 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 								config->output.video.integer("height", 1080),
 								config->output.video.integer("framesPerSecond", 25),
 								source->string("url", "http://obsproject.com/").c_str(),
-								source->boolean("shutdownWhenInactive", true));
+								source->boolean("shutdownWhenInactive", true),
+								"", // css
+								source->boolean("stopElementsWhenInactive", false));
 						}
 						else if (source_type == "game")
 						{
@@ -795,7 +797,8 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	const long long fps,
 	const char* url,
 	const bool shutdownWhenInactive,
-	const char* css)
+	const char* css,
+	const bool stopElementsWhenInactive)
 {
 	obs_data_t* settings = obs_data_create();
 
@@ -806,6 +809,7 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	obs_data_set_int(settings, "height", height);
 	obs_data_set_int(settings, "fps", fps);
 	obs_data_set_bool(settings, "shutdown", shutdownWhenInactive);
+	obs_data_set_bool(settings, "stop_elements_when_inactive", stopElementsWhenInactive);
 
 	ObsAddSource(parentScene, "browser_source", name, settings, NULL, false);
 

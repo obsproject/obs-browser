@@ -169,7 +169,7 @@ int BrowserManager::Impl::CreateBrowser(
 				browserSettings.height, browserListener));
 
 		CefRefPtr<BrowserLoadHandler> loadHandler(
-				new BrowserLoadHandler(browserSettings.css));
+				new BrowserLoadHandler(browserSettings.css, browserSettings.stopElementsWhenInactive));
 
 		CefRefPtr<BrowserClient> browserClient(
 				new BrowserClient(renderHandler, loadHandler, browserOBSBridge, nullptr));

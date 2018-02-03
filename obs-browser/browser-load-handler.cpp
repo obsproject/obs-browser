@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "browser-listener.hpp"
 #include "base64.hpp"
 
-BrowserLoadHandler::BrowserLoadHandler(const std::string css)
-	: css(css)
+BrowserLoadHandler::BrowserLoadHandler(const std::string css, const bool stopElementsWhenInactive)
+	: css(css), stopElementsWhenInactive(stopElementsWhenInactive)
 {
 }
 
@@ -44,5 +44,73 @@ void BrowserLoadHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefF
 		script += "document.getElementsByTagName('head')[0].appendChild(link);";
 		
 		frame->ExecuteJavaScript(script, href, 0);
+	}
+
+	if (frame->IsMain() && stopElementsWhenInactive)
+	{
+		///
+		// The following JavaScript code will be executed on load, and will
+		// pause and unpause video elements according to the main browser
+		// frame visibility state.
+		//
+		// The effect of this is no CPU usage on invisible browser sources
+		// which is very handy for multi-stage setups with multiple
+		// browser sources.
+		//
+		// This functionality is guarded by the stopElementsWhenInactive
+		// configuration property.
+		//
+
+		std::string code;
+
+		code += "(function() {\n";
+		code += "var last = null;";
+
+		code += "function react() {\n";
+		code += "var visible = !window.document.hidden;\n";
+		code += "var list = window.document.getElementsByTagName('video');\n";
+		code += "for (var i = 0; i < list.length; ++i) {\n";
+		code += "var e = list[i];\n";
+		code += "if (!visible) {\n";
+		code += "  if (e.currentSrc) {\n";
+		code += "    if (!e.paused) {\n";
+		code += "      e.__obs_auto_playpause_toggle_was_playing = true; \n";
+		code += "      e.pause();\n";
+		code += "    }\n";
+		code += "  }\n";
+		code += "} else {\n";
+		code += "  if (e.paused) {\n";
+		code += "    if (e.__obs_auto_playpause_toggle_was_playing) {\n";
+		code += "      e.play();\n";
+		code += "      e.__obs_auto_playpause_toggle_was_playing = false;\n";
+		code += "    }\n";
+		code += "  } else e.__obs_auto_playpause_toggle_was_playing = true;\n";
+		code += "}\n";
+		code += "}\n";
+		code += "}\n";
+
+		code += "function update() {\n";
+		code += "if (last == null || last != window.document.hidden || window.document.hidden) {\n";
+		code += "try { last = window.document.hidden;\n";
+		code += "react(); } catch(e) {}\n";
+		code += "}\n";
+		code += "setTimeout(update, 100);\n";
+		code += "}\n";
+
+		code += "function setup() {\n";
+		code += "window.document.addEventListener('visibilitychange', function() {\n";
+		code += "react();\n";
+		code += "});\n";
+		code += "react();\n";
+		code += "update();\n";
+		code += "}\n";
+
+		code += "function init() { try { setup(); } catch(e) { setTimeout(init, 100); } }\n";
+
+		code += "init();\n";
+
+		code += "})();\n";
+
+		frame->ExecuteJavaScript(code, frame->GetURL(), 0);
 	}
 }

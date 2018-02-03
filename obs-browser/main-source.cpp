@@ -31,6 +31,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", "body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }");
+	obs_data_set_default_bool(settings, "stop_elements_when_inactive", false);
 }
 
 static bool restart_button_clicked(obs_properties_t *props,
@@ -110,6 +111,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
 		obs_module_text("RefreshBrowserActive"));
+	obs_properties_add_bool(props, "stop_elements_when_inactive",
+		obs_module_text("StopElementsWhenInactive"));
 
 	obs_properties_add_button(props, "refreshnocache",
 		obs_module_text("RefreshNoCache"), refreshnocache_button_clicked);
@@ -165,6 +168,22 @@ static void browser_source_deactivate(void *data)
 	bs->ExecuteActiveJSCallback(false);
 }
 
+static void browser_source_internal_set_visible(const BrowserSource *bs, const bool visible)
+{
+	// Start animation
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(!visible);
+
+#ifdef APPLE
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->SetWindowVisibility(visible);
+#endif
+
+	if (visible)
+	{
+		// Repaint the view
+		BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->Invalidate(PET_VIEW);
+	}
+}
+
 // Called when the source is visible
 static void browser_source_show(void *data)
 {
@@ -178,14 +197,7 @@ static void browser_source_show(void *data)
 	}
 
 	// Start animation
-	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(false);
-
-#ifdef APPLE
-	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->SetWindowVisibility(true);
-#endif
-
-	// Repaint the view
-	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->Invalidate(PET_VIEW);
+	browser_source_internal_set_visible(bs, true);
 }
 
 // Called when the source is no longer visible
@@ -194,11 +206,7 @@ static void browser_source_hide(void *data)
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 
 	// Stop animation
-	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(true);
-
-#ifdef APPLE
-	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->SetWindowVisibility(false);
-#endif
+	browser_source_internal_set_visible(bs, false);
 
 	if (bs->GetShutdown()) {
 		BrowserManager::Instance()->DestroyBrowser(bs->GetBrowserIdentifier());
@@ -213,7 +221,17 @@ static void *browser_source_create(obs_data_t *settings, obs_source_t *source)
 	BrowserSource *browserSource = new BrowserSource(settings, source);
 
 	if (browserSource->GetShutdown() && !obs_source_showing(source))
+	{
 		BrowserManager::Instance()->DestroyBrowser(browserSource->GetBrowserIdentifier());
+	}
+	else
+	{
+		if (!obs_source_showing(source))
+		{
+			// Stop animation until source will be shown
+			browser_source_internal_set_visible(browserSource, false);
+		}
+	}
 
 	return browserSource;
 }

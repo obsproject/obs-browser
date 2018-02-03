@@ -97,7 +97,8 @@ private slots: // OBS operations
 		const long long fps,
 		const char* url,
 		const bool shutdownWhenInactive = true,
-		const char* css = "");
+		const char* css = "",
+		const bool stopElementsWhenInactive = false);
 
 	void ObsAddSourceVideoCapture(
 		obs_source_t* parentScene,
