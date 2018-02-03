@@ -2,27 +2,150 @@
 <html lang="en">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<style>
+		body {
+			background-color: #4c4c4c;
+		}
+
+		.main {
+			width: 492px;
+			background-color: #3a393a;
+			border: solid 1px #666666;
+			padding-top: 19px;
+			padding-bottom: 19px;
+
+			position: absolute;
+
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+
+		h1 {
+			width: 499px;
+			height: 35px;
+			font-family: Arial;
+			font-size: 20px;
+			font-weight: normal;
+			font-style: normal;
+			font-stretch: normal;
+			line-height: normal;
+			letter-spacing: normal;
+			text-align: center;
+			color: #ffffff;
+			margin-top: 0px;
+			margin-bottom: 10px;
+		}
+
+		.services a {
+			width: 250px !important;
+			display: block;
+			margin-top: 10px;
+			margin-bottom: 10px;
+			border-radius: 5px;
+			background-color: #585758;
+			box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
+			margin-left: auto;
+			margin-right: auto;
+			padding: 11px;
+			font-family: Arial;
+			font-size: 16px;
+			font-weight: normal;
+			font-style: normal;
+			font-stretch: normal;
+			line-height: normal;
+			letter-spacing: normal;
+			color: white;
+			text-decoration: none;
+		}
+
+			.services a:hover {
+				background-color: #5c5c5c !important;
+			}
+
+		.disclaimer {
+			width: 399px;
+			font-family: Arial;
+			font-size: 12px;
+			font-weight: normal;
+			font-style: normal;
+			font-stretch: normal;
+			line-height: normal;
+			letter-spacing: normal;
+			text-align: center;
+			color: rgba(255, 255, 255, 0.5);
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		.services {
+			text-align: center;
+			min-height: 160px;
+		}
+	</style>
 </head>
 <body>
-	<h1>Connect to Streaming Service</h1>
-	<ul>
-		<li>
-			<a href="http://www.streamelements.com/">Stream Elements</a>
-		</li>
-	</ul>
+	<div class="main">
+		<h1>Connect to Streaming Service</h1>
 
-	<h1>Test API calls</h1>
-	<ul>
-		<li><a href="#" onclick="test_videoEncoders(); return false">Get Video Encoders</a></li>
-		<li><a href="#" onclick="test_audioEncoders(); return false">Get Audio Encoders</a></li>
-		<li><a href="#" onclick="test_videoInputSources(); return false">Get Video Input Sources</a></li>
-		<li><a href="#" onclick="test_setupEnvironment(); return false">setupEnvironment</a></li>
-	</ul>
+		<div class="services">
+			<a class="button" href="http://www.streamelements.com/">StreamElements</a>
+		</div>
 
-	<h1>API Call Response</h1>
-	<div id="apiCallName"></div>
-	<div id="apiCallResponseContent"></div>
+		<div class="disclaimer">
+			You are about to connect to an external site
+		</div>
+	</div>
 
+	<div id="divLoader" style="position: absolute; z-index: 1000; top: 0; left: 0; right: 0; bottom: 0; background-color: transparent; display: none">
+		<div style="position: absolute; z-index: 1001; top: 0; left: 0; right: 0; bottom: 0; background-color: #888888; opacity: 0.7"></div>
+		<div style="position: absolute; z-index: 1002; top: 0; left: 0; right: 0; bottom: 0; background-color: transparent;">
+			<div style="position: absolute; width: 400px; text-align: center; border: 1px solid white; border-radius: 5px; background-color: #4c4c4c; padding: 10px; color: white; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: Arial">Please wait...</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		(function () {
+			var buttons = document.getElementsByClassName("button");
+
+			for (var i = 0; i < buttons.length; ++i) {
+				var button = buttons[i];
+
+				button.onclick = function () {
+					document.getElementById("divLoader").style.display = "block";
+
+					return true;
+				}
+			}
+		})();
+
+		window.addEventListener("contextmenu", function (event) {
+			console.log(event);
+
+			if (event.altKey && event.ctrlKey && event.shiftKey) {
+				document.getElementById("divTesting").style.display = "block";
+			}
+		});
+	</script>
+
+	<div class="main" id="divTesting" style="display: none">
+		<h1>User-Agent</h1>
+		<div class="disclaimer">
+			<script type="text/javascript">
+				document.write(navigator.userAgent);
+			</script>
+		</div>
+		<h1>Test API calls</h1>
+		<div class="services">
+			<a href="#" onclick="test_videoEncoders(); return false">Get Video Encoders</a>
+			<a href="#" onclick="test_audioEncoders(); return false">Get Audio Encoders</a>
+			<a href="#" onclick="test_videoInputSources(); return false">Get Video Input Sources</a>
+			<a href="#" onclick="test_setupEnvironment(); return false">setupEnvironment</a>
+		</div>
+		<h1>API Call Response</h1>
+		<div class="disclaimer" id="apiCallName"></div>
+		<div class="disclaimer" id="apiCallResponseContent"></div>
+	</div>
 	<script type="text/javascript">
 		function showApiCallResponse(apiCallName, apiCallResponseContent) {
 			document.getElementById("apiCallName").innerText = apiCallName;

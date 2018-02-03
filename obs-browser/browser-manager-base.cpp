@@ -583,6 +583,11 @@ void BrowserManager::Impl::BrowserManagerEntry()
 	PushEvent([this] {
 		CefMainArgs mainArgs;
 		CefSettings settings;
+
+		// Set User-Agent product information
+		std::wstring userAgentProductInfoString = L"(OBS, Open Broadcast Studio, Browser Source)";
+		cef_string_set(userAgentProductInfoString.c_str(), userAgentProductInfoString.size(), &settings.product_version, true);
+
 		settings.log_severity = LOGSEVERITY_VERBOSE;
 		settings.windowless_rendering_enabled = true;
 		settings.no_sandbox = true;
