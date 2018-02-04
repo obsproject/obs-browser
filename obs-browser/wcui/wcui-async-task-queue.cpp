@@ -16,6 +16,8 @@ WCUIAsyncTaskQueue::WCUIAsyncTaskQueue():
 		{
 			WCUIAsyncTaskQueue* self = (WCUIAsyncTaskQueue*)threadArgument;
 
+			os_set_thread_name("WCUIAsyncTaskQueue: worker");
+
 			while (self->m_continue_running)
 			{
 				if (os_event_timedwait(self->m_dispatchEvent, 10) != ETIMEDOUT) {
