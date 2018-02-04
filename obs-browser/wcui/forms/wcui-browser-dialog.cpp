@@ -278,7 +278,14 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				// when CPU is at 100% and we're adding/removing browser sources
 				BrowserRenderHandler::SetPreventDraw(true);
 
+				// Suspend saving in frontend
+				obs_frontend_save_suspend();
+
 				self->ObsScenesRemoveAllSources(stored_scenes);
+
+				///////////////////////////////////////////////
+				// Setup audio sources
+				///////////////////////////////////////////////		
 
 				// Unique scene name -> Requested scene name map, will be used
 				// later to rename generated unique scene names to scene names
@@ -445,6 +452,9 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				delete config;
 				delete task_args;
 
+				// Resume saving in frontend
+				obs_frontend_save_resume();
+
 				// Globally allow OnDraw calls in browser render handlers
 				BrowserRenderHandler::SetPreventDraw(false);
 
@@ -580,6 +590,9 @@ void WCUIBrowserDialog::ObsScenesRemoveAllSources(obs_frontend_source_list& scen
 			scene,
 			[](obs_scene_t* scene, obs_sceneitem_t* sceneitem, void* param)
 			{
+				obs_source_t* source =
+					obs_sceneitem_get_source(sceneitem); // does not increas refcount
+
 				// Remove the scene item
 				obs_sceneitem_remove(sceneitem);
 
