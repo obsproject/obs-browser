@@ -406,7 +406,7 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 					config->output.stream.boolean("useAuth", false),
 					config->output.stream.string("username", "").c_str(),
 					config->output.stream.string("password", "").c_str(),
-					config->output.video.string("codec", "obs_x264").c_str(),
+					config->output.video.string("encoder", "obs_x264").c_str(),
 					config->output.video.integer("bitRate", 2500),
 					config->output.video.integer("width", 1920),
 					config->output.video.integer("height", 1080),

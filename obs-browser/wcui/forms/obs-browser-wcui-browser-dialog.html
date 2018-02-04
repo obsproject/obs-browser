@@ -12,7 +12,6 @@
 			background-color: #3a393a;
 			border: solid 1px #666666;
 			padding-top: 19px;
-			padding-bottom: 19px;
 
 			position: absolute;
 
@@ -59,9 +58,9 @@
 			text-decoration: none;
 		}
 
-			.services a:hover {
-				background-color: #5c5c5c !important;
-			}
+		.services a:hover {
+			background-color: #5c5c5c !important;
+		}
 
 		.disclaimer {
 			width: 399px;
@@ -76,6 +75,7 @@
 			color: rgba(255, 255, 255, 0.5);
 			margin-left: auto;
 			margin-right: auto;
+			margin-bottom: 19px;
 		}
 
 		.services {
@@ -173,147 +173,197 @@
 		}
 
 		function test_setupEnvironment() {
-			var config = {
-				"input": {
-					"scenes": [
-						{
-							"name": "In Game",
-							"sources":
-							[
-								{
-									"type": "game",
-									"name": "Game Capture",
+			window.obsstudio.videoEncoders(function (videoEncoders) {
+				// Known encoders in order of priority
+				var knownEncoderIds = [
+					// Hardware encoders
+					"ffmpeg_nvenc",		// NVIDIA
+					"amd_amf_h264",		// AMD
+					"obs_qsv11",		// QuickSync
+					"dshow_c985_h264",	// DirectShow: AVerMedia H.264 Encoder (c985, Live Gamer HD)
+					"dshow_c353_h264",	// DirectShow: AVerMedia H.264 Encoder (C353, DarkCrystal HD Capture Mini-PCIe)
 
-									"multiGpuCompatibility": false,
-									"allowTransparency": false,
-									"limitFramerate": false,
-									"captureCursor": false,
-									"antiCheatHook": false,
-									"captureOverlays": false
-								},
-								{
-									"type": "video_capture",
-									"name": "Video Capture",
+					// Software encoders
+					"obs_x264"		// ffmpeg libx264
+				];
 
-									"left": 42,
-									"top": 440,
-									"width": 430,
-									"height": 242
-								},
-								{
-									"type": "browser",
-									"name": "Browser",
+				var selectedEncoder = undefined;
 
-									"url": "https://streamelements.com/overlay/5a2017112d2aca0001e21556/HZWIhjyRP2hIkiP7YZQ0",
-
-									"shutdownWhenInactive": false,
-									"stopElementsWhenInactive": true
-								}
-							]
-						},
-						{
-							"name": "Talk",
-							"sources":
-							[
-								{
-									"type": "video_capture",
-									"name": "Video Capture",
-
-									"left": 310,
-									"top": 78,
-									"width": 1280,
-									"height": 710
-								},
-								{
-									"type": "browser",
-									"name": "Browser",
-
-									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f1f/HZWIhjyRP2hIkiP7YZQ0",
-
-									"shutdownWhenInactive": false,
-									"stopElementsWhenInactive": true
-								}
-							]
-						},
-						{
-							"name": "Starting Soon",
-							"sources":
-							[
-								{
-									"type": "browser",
-									"name": "Browser",
-
-									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f20/HZWIhjyRP2hIkiP7YZQ0",
-
-									"shutdownWhenInactive": false,
-									"stopElementsWhenInactive": true
-								}
-							]
-						},
-						{
-							"name": "Be Right Back",
-							"sources":
-							[
-								{
-									"type": "browser",
-									"name": "Browser",
-
-									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f21/HZWIhjyRP2hIkiP7YZQ0",
-
-									"shutdownWhenInactive": false,
-									"stopElementsWhenInactive": true
-								}
-							]
-						},
-						{
-							"name": "Ended",
-							"sources":
-							[
-								{
-									"type": "browser",
-									"name": "Browser",
-
-									"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f22/HZWIhjyRP2hIkiP7YZQ0",
-
-									"shutdownWhenInactive": false,
-									"stopElementsWhenInactive": true
-								}
-							]
-						}
-					]
-				},
-				"output": {
-					"defaultSceneName": "Starting Soon",
-					"audio": {
-						"bitRate": 128,
-						"sampleRate": 44100,
-						"channels": 2
-					},
-					"video": {
-						"bitRate": 2500,
-						"codec": "obs_qsv11",
-						"framesPerSecond": 24,
-						"keyframeIntervalSeconds": 1,
-						"width": 1920,
-						"height": 1080
-					},
-					"stream": {
-						"serverUrl": "rtmp://localhost/autoapp",
-						"streamKey": "autoStreamKey",
-						"useAuth": true,
-						"username": "username",
-						"password": "password",
-						"autoStart": true,
-						"reconnectOnFailure": true,
-						"reconnectRetryDelaySeconds": 5,
-						"reconnectRetryMaxAttempts": 1000
-					}
+				for (var knownEncoderIndex = 0; !selectedEncoder && knownEncoderIndex < knownEncoderIds.length; ++knownEncoderIndex) {
+					selectedEncoder = videoEncoders.find(function (currentValue, index, array) {
+						return currentValue.codec == "h264" &&
+							currentValue.id == knownEncoderIds[knownEncoderIndex];
+					});
 				}
-			};
 
-			showApiCallResponse("setupEnvironment", config);
+				if (!selectedEncoder && videoEncoders.length > 0) {
+					selectedEncoder = videoEncoders[0];
+				}
 
-			window.obsstudio.setupEnvironment(config);
+				if (!selectedEncoder) {
+					// Clearly a bug, at least one software encoder should be
+					// present, but it's good practice to check for this anyway.
+					alert("No video encoders were found.");
+
+					return;
+				}
+
+				// This will be used in the config block below
+				var selectedEncoderId = selectedEncoder.id;
+
+				// Show "please wait..." message
+				document.getElementById("divLoader").style.display = "block";
+
+				// Configure environment
+
+				var config = {
+					"input": {
+						"scenes": [
+							{
+								"name": "In Game",					// Scene name
+								"sources":
+								[
+									{
+										"type": "game",				// Game source
+										"name": "Game Capture",			// Source name
+
+										"multiGpuCompatibility": false,		// Multi-adapter compatibility (multiple GPU support)
+										"allowTransparency": false,		// Allow transparency
+										"limitFramerate": false,		// Limit capture framerate
+										"captureCursor": false,			// Capture cursor
+										"antiCheatHook": false,			// Use anti-cheat compatibility hook
+										"captureOverlays": false		// Capture third-party overlays (such as steam)
+									},
+									{
+										"type": "video_capture",		// Video Capture Device source
+										"name": "Video Capture",		// Source name
+
+										"left": 42,				// Position: left
+										"top": 440,				// Position: top
+										"width": 430,				// Rectangle max width
+										"height": 242				// Rectangle max height
+															// Aspect ratio is maintained around the center of the rectangle,
+															// May decrease width or height to fit video in the rectangle
+									},
+									{
+										"type": "browser",			// Browser source
+										"name": "Browser",			// Source name
+
+										// Source URL
+										"url": "https://streamelements.com/overlay/5a2017112d2aca0001e21556/HZWIhjyRP2hIkiP7YZQ0",
+
+										"shutdownWhenInactive": false,		// Shutdown source when not visible
+										"stopElementsWhenInactive": true	// Suspend video content when not visible
+
+										// Width and height are always 100% of the video area
+									}
+								]
+							},
+							{
+								"name": "Talk",
+								"sources":
+								[
+									{
+										"type": "video_capture",
+										"name": "Video Capture",
+
+										"left": 310,
+										"top": 78,
+										"width": 1280,
+										"height": 710
+									},
+									{
+										"type": "browser",
+										"name": "Browser",
+
+										"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f1f/HZWIhjyRP2hIkiP7YZQ0",
+
+										"shutdownWhenInactive": false,
+										"stopElementsWhenInactive": true
+									}
+								]
+							},
+							{
+								"name": "Starting Soon",
+								"sources":
+								[
+									{
+										"type": "browser",
+										"name": "Browser",
+
+										"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f20/HZWIhjyRP2hIkiP7YZQ0",
+
+										"shutdownWhenInactive": false,
+										"stopElementsWhenInactive": true
+									}
+								]
+							},
+							{
+								"name": "Be Right Back",
+								"sources":
+								[
+									{
+										"type": "browser",
+										"name": "Browser",
+
+										"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f21/HZWIhjyRP2hIkiP7YZQ0",
+
+										"shutdownWhenInactive": false,
+										"stopElementsWhenInactive": true
+									}
+								]
+							},
+							{
+								"name": "Ended",
+								"sources":
+								[
+									{
+										"type": "browser",
+										"name": "Browser",
+
+										"url": "https://streamelements.com/overlay/5a200c704b463a0001c24f22/HZWIhjyRP2hIkiP7YZQ0",
+
+										"shutdownWhenInactive": false,
+										"stopElementsWhenInactive": true
+									}
+								]
+							}
+						]
+					},
+					"output": {
+						"defaultSceneName": "Starting Soon",			// Default active scene name (see scene names above)
+						"audio": {
+							"bitRate": 128,					// Audio bitrate (Kbps)
+							"sampleRate": 44100,				// Audio sample rate
+							"channels": 2					// Audio channels. Valid values are: 1, 2, 3, 4, 5, 6, 8 (7 is the same as 8)
+						},
+						"video": {
+							"bitRate": 2500,				// Video bitrate (Kbps)
+							"encoder": selectedEncoderId,			// Video encoder ID (see selection code above)
+							"framesPerSecond": 24,				// Video frames per second (used globally for OBS output and sources)
+							"keyframeIntervalSeconds": 1,			// Video keyframe interval
+							"width": 1920,					// Video width (used globally for OBS output and browser source)
+							"height": 1080					// Video height (used globally for OBS output and browser source)
+						},
+						"stream": {
+							"serverUrl": "rtmp://localhost/autoapp",	// Output stream server URL
+							"streamKey": "autoStreamKey",			// Output stream name
+							"useAuth": true,				// Use auth?
+							"username": "username",				// Auth username. Valid if useAuth == true
+							"password": "password",				// Auth password. Valid if useAuth == true
+							"autoStart": true,				// Auto start streaming? If true will automatically start streaming to the server.
+							"reconnectOnFailure": true,			// Retry on failure?
+							"reconnectRetryDelaySeconds": 5,		// Delay in seconds between a failure and the next retry
+							"reconnectRetryMaxAttempts": 1000		// Maximum retry attempts
+						}
+					}
+				};
+
+				// showApiCallResponse("setupEnvironment", config);
+
+				// Setup OBS environment according to the configuration above
+				window.obsstudio.setupEnvironment(config);
+			});
 		}
 	</script>
 </body>
