@@ -25,6 +25,12 @@ namespace Ui {
 	class WCUIBrowserDialog;
 }
 
+///
+// Web Configuration UI dialog.
+//
+// Loads obs-browser-wcui-browser-dialog.html and responds to API call
+// messages from CEF runtime vis CefClient::OnProcessMessageReceived.
+//
 class WCUIBrowserDialog:
 	public QDialog,
 	public CefClient
@@ -32,53 +38,138 @@ class WCUIBrowserDialog:
 	Q_OBJECT
 
 private:
+	// Default browser handle when browser is not yet initialized
 	const int BROWSER_HANDLE_NONE = -1;
 
 public:
+	///
+	// Class constructor
+	//
+	// @param obs_module_path	path to obs-browser.dll, used to locate obs-browser-wcui-browser-dialog.html
+	// @param cache_path		CEF cache path
+	//
 	explicit WCUIBrowserDialog(
 		QWidget* parent,
 		std::string obs_module_path,
 		std::string cache_path);
 
+	///
+	// Class destructor
+	//
 	~WCUIBrowserDialog();
 
 public:
+	///
+	// Disable OBS main window, initialize browser, show modal dialog, enable OBS main window when done
+	//
 	void ShowModal();
 
 private:
+	///
+	// Browser initialization
+	//
+	// Create browser or navigate back to home page (obs-browser-wcui-browser-dialog.html)
+	//
 	void InitBrowser();
 
 private:
+	// Path to obs-browser.dll, used to locate obs-browser-wcui-browser-dialog.html
 	std::string m_obs_module_path;
+
+	// CEF cache path
 	std::string m_cache_path;
 
+	// QT generated UI
 	Ui::WCUIBrowserDialog* ui;
 
+	// Dialog window handle to embed CEF browser in
 	cef_window_handle_t m_window_handle;
+
+	// BrowserManager CEF browser handle
 	int m_browser_handle = BROWSER_HANDLE_NONE;
 
+	// Task queue for asynchronous tasks
 	WCUIAsyncTaskQueue m_task_queue;
 
 private slots: // OBS operations
 
+	///
+	// End modal dialog
+	//
 	void CloseModalDialog();
 
+	///
+	// Enable main OBS window
+	//
 	void ObsEnableMainWindow();
+
+	///
+	// Disable main OBS window
+	//
 	void ObsDisableMainWindow();
 
+	///
+	// Generate unique OBS source name
+	//
+	// @param name	source name to generate unique source from
+	// @returns	unique source name
+	//
 	std::string ObsGetUniqueSourceName(std::string name);
 
+	///
+	// Get current number of OBS scenes
 	size_t ObsScenesGetCount();
 
+	///
+	// Get current OBS scenes list
+	//
+	// @returns	OBS scenes list to be released with ObsReleaseStoredScenes()
+	//
 	obs_frontend_source_list& ObsStoreScenes();
+
+	///
+	// Remove all sources from supplied OBS scenes list
+	//
+	// @param scenes	OBS scenes list obtained via ObsStoreScenes()
+	//
 	void ObsScenesRemoveAllSources(obs_frontend_source_list& scenes);
+
+	///
+	// Remove all scenes from supplied scenes list
+	//
+	// @param scenes	OBS scenes list obtained via ObsStoreScenes()
+	//
 	void ObsRemoveStoredScenes(obs_frontend_source_list& scenes);
+
+	///
+	// Release stored OBS scenes list obtained via ObsStoreScenes()
+	//
+	// @param scenes	OBS scenes list obtained via ObsStoreScenes()
+	//
 	void ObsReleaseStoredScenes(obs_frontend_source_list& scenes);
 
+	///
+	// Add OBS scene
+	//
+	// @param name		OBS scene name
+	// @param setCurrent	if true, the new scene will be set as current scene
+	//
 	void ObsAddScene(
 		const char* name,
 		bool setCurrent = true);
 
+	///
+	// Add OBS source to scene
+	//
+	// @param parentScene		OBS scene to add source to. If NULL, the current OBS scene will be used as parent
+	// @param sourceId		OBS source type ID
+	// @param sourceName		New source name
+	// @param sourceSettings	New source settings
+	// @param sourceHotkeyData	New source hotkey data
+	// @param preferExistingSource	If true and a source of the same type exists, the existing source will be used instead of creating a new one
+	// @param output_source		If not NULL, the new obs_source_t* reference will not be released and the source will be returned via this param
+	// @param output_sceneitem	If not NULL, the new obs_sceneitem_t* reference will not be released and the scene item will be returned via this param
+	//
 	void ObsAddSource(
 		obs_source_t* parentScene,
 		const char* sourceId,
@@ -89,6 +180,19 @@ private slots: // OBS operations
 		obs_source_t** output_source = NULL,
 		obs_sceneitem_t** output_sceneitem = NULL);
 
+	///
+	// Add browser source via ObsAddSource()
+	//
+	// @param parentScene			OBS scene to add source to. If NULL, the current OBS scene will be used as parent
+	// @param name				New source name
+	// @param width				Browser width
+	// @param height			Browser height
+	// @param fps				Frames Per Second
+	// @param url				Page URL to navigate to
+	// @param shutdownWhenInactive		Shutdown browser source when not visible
+	// @param css				Additional CSS
+	// @param suspendElementsWhenInactive	Suspend active elements on page (video) when not visible
+	//
 	void ObsAddSourceBrowser(
 		obs_source_t* parentScene,
 		const char* name,
@@ -98,16 +202,42 @@ private slots: // OBS operations
 		const char* url,
 		const bool shutdownWhenInactive = true,
 		const char* css = "",
-		const bool stopElementsWhenInactive = false);
+		const bool suspendElementsWhenInactive = false);
 
+	///
+	// Add browser source via ObsAddSource()
+	//
+	// @param parentScene			OBS scene to add source to. If NULL, the current OBS scene will be used as parent
+	// @param name				New source name
+	// @param left				Capture source position left
+	// @param top				Capture source position top
+	// @param maxWidth			Capture source maximum width.
+	//					We will keep the video source aspect ratio and may reduce this value actual width to accomodate.
+	//					When reduced, the source will be center aligned around the original coordinates center.
+	// @param maxHeight			Capture source maximum height.
+	//					We will keep the video source aspect ratio and may reduce this value actual width to accomodate.
+	//					When reduced, the source will be center aligned around the original coordinates center.
+	//
 	void ObsAddSourceVideoCapture(
 		obs_source_t* parentScene,
 		const char* name,
-		const int x,
-		const int y,
+		const int left,
+		const int top,
 		const int maxWidth,
 		const int maxHeight);
 
+	///
+	// Add game capture source via ObsAddSource()
+	//
+	// @param parentScene			OBS scene to add source to. If NULL, the current OBS scene will be used as parent
+	// @param name				New source name
+	// @param multiGpuCompatibility		Support multiple GPUs
+	// @param allowTransparency		Allow transparency
+	// @param limitFramerate		Limit capture frame rate
+	// @param captureCursor			Capture cursor
+	// @param antiCheatHook			Install anti-cheat hook
+	// @param captureOverlays		Capture third-party game overlays (such as steam)
+	//
 	void ObsAddSourceGame(
 		obs_source_t* parentScene,
 		const char* name,
@@ -118,6 +248,27 @@ private slots: // OBS operations
 		bool antiCheatHook = true,
 		bool captureOverlays = true);
 
+	///
+	// Setup output configuration (audio, video, streaming)
+	//
+	// @param streamingServiceServerUrl		RTMP server URL (rtmp://server/app)
+	// @param streamingServiceStreamKey		RTMP server stream key
+	// @param streamingServiceUseAuth		Use authentication?
+	// @param streamingServiceAuthUsername		If streamingServiceUseAuth is true, specifies authentication username
+	// @param streamingServiceAuthPassword		If streamingServiceUseAuth is true, specifies authentication password
+	// @param videoEncoderId			Video encoder type ID
+	// @param videoBitrate				Video bitrate (Kbps)
+	// @param videoWidth				Video width
+	// @param videoHeight				Video height
+	// @param videoFramesPerSecond			Video frames per second
+	// @param audioBitrate				Audio bitrate (Kbps)
+	// @param videoKeyframeIntervalSeconds		Video keyframe interval
+	// @param audioSampleRate			Audio sample rate
+	// @param audioChannels				Number of audio channels
+	// @param reconnectOnFailure			Reconnect to server on failure?
+	// @param reconnectRetryDelaySeconds		Delay between server reconnect attempts
+	// @param reconnectRetryMaxAttempts		Maximum number of server reconnect attempts
+	//
 	void ObsSetProfileOutputConfiguration(
 		const char* streamingServiceServerUrl, // "rtmp://localhost/app1",
 		const char* streamingServiceStreamKey, // "stream1",
@@ -152,6 +303,7 @@ public: // CefClient implementation
 
 private:
 
+	///
 	// To be called ONLY by OnProcessMessageReceived
 	//
 	void OnProcessMessageReceivedSendExecuteCallbackMessage(
@@ -160,6 +312,7 @@ private:
 		CefRefPtr<CefProcessMessage> message,
 		CefRefPtr<CefValue> callback_arg);
 
+	///
 	// To be called ONLY by OnProcessMessageReceived
 	//
 	void OnProcessMessageReceivedSendExecuteCallbackMessageForObsEncoderOfType(
@@ -172,6 +325,14 @@ public:
 	IMPLEMENT_REFCOUNTING(WCUIBrowserDialog);
 
 private:
+	////////////////////////////////////////////////////////////////////////////
+	//
+	// Parse setupEnvironment request Javascript object content
+	//
+	// See obs-browser-wcui-browser-dialog.html setupEnvironment() call example
+	// for more information.
+	//
+	////////////////////////////////////////////////////////////////////////////
 	class c_values_container
 	{
 	public:

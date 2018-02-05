@@ -811,7 +811,7 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	const char* url,
 	const bool shutdownWhenInactive,
 	const char* css,
-	const bool stopElementsWhenInactive)
+	const bool suspendElementsWhenInactive)
 {
 	obs_data_t* settings = obs_data_create();
 
@@ -822,7 +822,7 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	obs_data_set_int(settings, "height", height);
 	obs_data_set_int(settings, "fps", fps);
 	obs_data_set_bool(settings, "shutdown", shutdownWhenInactive);
-	obs_data_set_bool(settings, "suspend_elements_when_inactive", stopElementsWhenInactive);
+	obs_data_set_bool(settings, "suspend_elements_when_inactive", suspendElementsWhenInactive);
 
 	ObsAddSource(parentScene, "browser_source", name, settings, NULL, false);
 
@@ -832,8 +832,8 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 void WCUIBrowserDialog::ObsAddSourceVideoCapture(
 	obs_source_t* parentScene,
 	const char* name,
-	const int x,
-	const int y,
+	const int left,
+	const int top,
 	const int maxWidth,
 	const int maxHeight)
 {
@@ -889,8 +889,8 @@ void WCUIBrowserDialog::ObsAddSourceVideoCapture(
 			size_t src_height = obs_source_get_height(source);
 
 			vec2 pos = {};
-			pos.x = x;
-			pos.y = y;
+			pos.x = left;
+			pos.y = top;
 
 			vec2 scale = {};
 			scale.x = 1;
