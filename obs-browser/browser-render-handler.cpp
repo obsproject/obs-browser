@@ -164,7 +164,7 @@ void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 	UnlockPreventDraw();
 }
 
-bool BrowserRenderHandler::s_preventDraw = false;
+long BrowserRenderHandler::s_preventDraw = 0;
 pthread_mutex_t BrowserRenderHandler::s_preventDrawLock = NULL;
 
 // initializer static class to init BrowserRenderHandler::s_preventDrawLock above
@@ -182,14 +182,17 @@ void BrowserRenderHandler::UnlockPreventDraw()
 
 void BrowserRenderHandler::SetPreventDraw(bool preventDraw)
 {
-	LockPreventDraw();
+	BrowserRenderHandler::LockPreventDraw();
 
-	s_preventDraw = preventDraw;
+	if (preventDraw)
+		++s_preventDraw;
+	else
+		--s_preventDraw;
 
-	UnlockPreventDraw();
+	BrowserRenderHandler::UnlockPreventDraw();
 }
 
 bool BrowserRenderHandler::IsDrawPrevented()
 {
-	return s_preventDraw;
+	return s_preventDraw > 0;
 }

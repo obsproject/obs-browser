@@ -89,6 +89,7 @@ private:
 	os_event_t *startupEvent;
 	pthread_t managerThread;
 	pthread_mutex_t dispatchLock;
+	pthread_mutex_t browserLock;
 
 	std::map<int, std::shared_ptr<BrowserListener>> listenerMap;
 	std::map<int, CefRefPtr<CefBrowser> > browserMap;

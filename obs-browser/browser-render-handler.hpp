@@ -72,7 +72,7 @@ private:
 	CefRect originalPopupRect;
 
 private:
-	static bool s_preventDraw;
+	static long s_preventDraw;
 	static pthread_mutex_t s_preventDrawLock;
 
 	static class _InitPreventDraw

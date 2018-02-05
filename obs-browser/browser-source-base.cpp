@@ -24,6 +24,7 @@
 
 #include "browser-source-base.hpp"
 #include "browser-source-listener-base.hpp"
+#include "browser-render-handler.hpp"
 
 BrowserSource::BrowserSource(obs_data_t *settings, obs_source_t *source)
 : pimpl(new Impl(this)), source(source), browserIdentifier(0)
@@ -35,7 +36,11 @@ BrowserSource::BrowserSource(obs_data_t *settings, obs_source_t *source)
 BrowserSource::~BrowserSource()
 {
 	if (browserIdentifier != 0) {
+		BrowserRenderHandler::SetPreventDraw(false);
+
 		BrowserManager::Instance()->DestroyBrowser(browserIdentifier);
+
+		BrowserRenderHandler::SetPreventDraw(true);
 	}
 }
 

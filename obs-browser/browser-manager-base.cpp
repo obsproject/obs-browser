@@ -140,10 +140,12 @@ BrowserManager::Impl::Impl()
 	os_event_init(&dispatchEvent, OS_EVENT_TYPE_AUTO);
 	os_event_init(&startupEvent, OS_EVENT_TYPE_MANUAL);
 	pthread_mutex_init(&dispatchLock, nullptr);
+	pthread_mutex_init(&browserLock, nullptr);
 }
 
 BrowserManager::Impl::~Impl()
 {
+	pthread_mutex_destroy(&browserLock);
 	pthread_mutex_destroy(&dispatchLock);
 	os_event_destroy(startupEvent);
 	os_event_destroy(dispatchEvent);
@@ -164,6 +166,8 @@ int BrowserManager::Impl::CreateBrowser(
 	CefPostTask(TID_UI, BrowserTask::newTask(
 			[&] 
 	{
+		pthread_mutex_lock(&browserLock);
+
 		CefRefPtr<BrowserRenderHandler> renderHandler(
 				new BrowserRenderHandler(browserSettings.width, 
 				browserSettings.height, browserListener));
@@ -192,13 +196,18 @@ int BrowserManager::Impl::CreateBrowser(
 
 		if (browser != nullptr) {
 			browserIdentifier = browser->GetIdentifier();
+
 			browserMap[browserIdentifier] = browser;
 		}
+
+		pthread_mutex_unlock(&browserLock);
+
 		os_event_signal(createdEvent);
 	}));
 
 	os_event_wait(createdEvent);
 	os_event_destroy(createdEvent);
+
 	return browserIdentifier;
 }
 
@@ -218,6 +227,8 @@ int BrowserManager::Impl::CreateBrowser(
 	CefPostTask(TID_UI, BrowserTask::newTask(
 		[&]
 	{
+		pthread_mutex_lock(&browserLock);
+
 		CefRefPtr<CefBrowser> browser =
 			CefBrowserHost::CreateBrowserSync(
 				window_info,
@@ -230,6 +241,8 @@ int BrowserManager::Impl::CreateBrowser(
 			browserIdentifier = browser->GetIdentifier();
 			browserMap[browserIdentifier] = browser;
 		}
+
+		pthread_mutex_unlock(&browserLock);
 
 		os_event_signal(createdEvent);
 	}));
@@ -249,7 +262,11 @@ CefBrowserHost* BrowserManager::Impl::GetBrowserHost(int browserIdentifier)
 	CefPostTask(TID_UI, BrowserTask::newTask(
 	[&]
 	{
+		pthread_mutex_lock(&browserLock);
+
 		result = browserMap[browserIdentifier]->GetHost();
+
+		pthread_mutex_unlock(&browserLock);
 
 		os_event_signal(complete_event);
 	}));
@@ -270,7 +287,11 @@ CefBrowser* BrowserManager::Impl::GetBrowser(int browserIdentifier)
 	CefPostTask(TID_UI, BrowserTask::newTask(
 		[&]
 	{
+		pthread_mutex_lock(&browserLock);
+
 		result = browserMap[browserIdentifier];
+
+		pthread_mutex_unlock(&browserLock);
 
 		os_event_signal(complete_event);
 	}));
@@ -289,7 +310,11 @@ void BrowserManager::Impl::LoadURL(int browserIdentifier, CefString& url)
 	CefPostTask(TID_UI, BrowserTask::newTask(
 		[&]
 	{
+		pthread_mutex_lock(&browserLock);
+
 		browserMap[browserIdentifier]->GetMainFrame()->LoadURL(url);
+
+		pthread_mutex_unlock(&browserLock);
 
 		os_event_signal(complete_event);
 	}));
@@ -300,6 +325,8 @@ void BrowserManager::Impl::LoadURL(int browserIdentifier, CefString& url)
 
 void BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 {
+	pthread_mutex_lock(&browserLock);
+
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
 		os_event_t *closeEvent;
@@ -313,6 +340,8 @@ void BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 		os_event_destroy(closeEvent);
 		browserMap.erase(browserIdentifier);
 	}
+
+	pthread_mutex_unlock(&browserLock);
 }
 
 void 
@@ -323,6 +352,8 @@ void BrowserManager::Impl::ExecuteOnBrowser(int browserIdentifier,
 		std::function<void(CefRefPtr<CefBrowser>)> f, 
 		bool async)
 {
+	pthread_mutex_lock(&browserLock);
+
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
 		if (async) {
@@ -340,12 +371,16 @@ void BrowserManager::Impl::ExecuteOnBrowser(int browserIdentifier,
 			os_event_destroy(finishedEvent);
 		}
 	}
+
+	pthread_mutex_unlock(&browserLock);
 }
 
 void BrowserManager::Impl::ExecuteOnAllBrowsers(
 	std::function<void(CefRefPtr<CefBrowser>)> f, 
 			bool async)
 {
+	pthread_mutex_lock(&browserLock);
+
 	for (auto& x: browserMap) {
 		CefRefPtr<CefBrowser> browser = x.second;
 		if (async) {
@@ -363,6 +398,8 @@ void BrowserManager::Impl::ExecuteOnAllBrowsers(
 			os_event_destroy(finishedEvent);
 		}
 	}
+
+	pthread_mutex_unlock(&browserLock);
 }
 
 void BrowserManager::Impl::SendMouseClick(int browserIdentifier,
