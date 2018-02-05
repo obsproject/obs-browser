@@ -31,7 +31,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", "body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }");
-	obs_data_set_default_bool(settings, "stop_elements_when_inactive", false);
+	obs_data_set_default_bool(settings, "suspend_elements_when_inactive", false);
 }
 
 static bool restart_button_clicked(obs_properties_t *props,
@@ -111,7 +111,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
 		obs_module_text("RefreshBrowserActive"));
-	obs_properties_add_bool(props, "stop_elements_when_inactive",
+	obs_properties_add_bool(props, "suspend_elements_when_inactive",
 		obs_module_text("StopElementsWhenInactive"));
 
 	obs_properties_add_button(props, "refreshnocache",

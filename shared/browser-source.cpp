@@ -29,7 +29,7 @@ void BrowserSource::UpdateSettings(obs_data_t *settings)
 	height = (uint32_t)obs_data_get_int(settings, "height");
 	fps = (uint32_t)obs_data_get_int(settings, "fps");
 	shutdown = obs_data_get_bool(settings, "shutdown");
-	stopElementsWhenInactive = obs_data_get_bool(settings, "stop_elements_when_inactive");
+	stopElementsWhenInactive = obs_data_get_bool(settings, "suspend_elements_when_inactive");
 
 	UpdateBrowser();
 }

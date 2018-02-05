@@ -822,7 +822,7 @@ void WCUIBrowserDialog::ObsAddSourceBrowser(
 	obs_data_set_int(settings, "height", height);
 	obs_data_set_int(settings, "fps", fps);
 	obs_data_set_bool(settings, "shutdown", shutdownWhenInactive);
-	obs_data_set_bool(settings, "stop_elements_when_inactive", stopElementsWhenInactive);
+	obs_data_set_bool(settings, "suspend_elements_when_inactive", stopElementsWhenInactive);
 
 	ObsAddSource(parentScene, "browser_source", name, settings, NULL, false);
 
