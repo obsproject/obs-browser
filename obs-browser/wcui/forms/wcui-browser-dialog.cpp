@@ -274,8 +274,14 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				obs_frontend_source_list stored_scenes = self->ObsStoreScenes();
 
 				// Globally prevent OnDraw calls in browser render handlers
-				// this prevents a nasty race condition in BrowserRenderHandler::OnPaint
-				// when CPU is at 100% and we're adding/removing browser sources
+				// this is an extra safety to prevent a nasty race condition in
+				// BrowserRenderHandler::OnPaint when CPU is at 100% and we're removing browser sources
+				//
+				// This is superseded by checking whether the browser source has been destroyed before
+				// accessing the browser source in BrowserSource::Impl::Listener::OnDraw
+				//
+				// Must be followed by BrowserRenderHandler::SetPreventDraw(false)
+				//
 				BrowserRenderHandler::SetPreventDraw(true);
 
 				// Suspend saving in frontend
