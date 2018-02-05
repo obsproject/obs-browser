@@ -32,17 +32,11 @@ void BrowserSource::Impl::Listener::OnDraw( BrowserSurfaceHandle surfaceHandle,
 		{
 			if (browserSource->GetParent())
 			{
-				try
-				{
-					if (browserSource->GetParent()->TryLockTexture()) {
-						if (popupSurface != nullptr)
-							gs_copy_texture_region(surfaceHandle, popupX, popupY, popupSurface, 0, 0, gs_texture_get_width(popupSurface), gs_texture_get_height(popupSurface));
-						browserSource->SetActiveTexture(surfaceHandle);
-						browserSource->GetParent()->UnlockTexture();
-					}
-				}
-				catch (...)
-				{
+				if (browserSource->GetParent()->TryLockTexture()) {
+					if (popupSurface != nullptr)
+						gs_copy_texture_region(surfaceHandle, popupX, popupY, popupSurface, 0, 0, gs_texture_get_width(popupSurface), gs_texture_get_height(popupSurface));
+					browserSource->SetActiveTexture(surfaceHandle);
+					browserSource->GetParent()->UnlockTexture();
 				}
 			}
 		}
