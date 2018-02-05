@@ -675,11 +675,13 @@ void WCUIBrowserDialog::ObsAddScene(const char* name, bool setCurrent)
 {
 	// Create scene, this will also trigger UI update
 	obs_scene_t* scene = obs_scene_create(name);
+	QApplication::processEvents();
 
 	if (setCurrent)
 	{
 		// If setCurrent requested, set the new scene as current scene
 		obs_frontend_set_current_scene(obs_scene_get_source(scene));
+		QApplication::processEvents();
 	}
 
 	// Release reference to new scene
@@ -748,6 +750,8 @@ void WCUIBrowserDialog::ObsAddSource(
 	{
 		// Not reusing an existing source, create a new one
 		source = obs_source_create(sourceId, sourceName, NULL, sourceHotkeyData);
+
+		QApplication::processEvents();
 
 		obs_source_update(source, sourceSettings);
 	}
@@ -992,6 +996,12 @@ void WCUIBrowserDialog::ObsSetProfileOutputConfiguration(
 	if (obs_frontend_recording_active())
 	{
 		obs_frontend_recording_stop();
+	}
+
+	// Wait for streaming to stop
+	while (obs_frontend_streaming_active())
+	{
+		os_sleep_ms(10);
 	}
 
 	//const char* recordFormat = "mp4";
