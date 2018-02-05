@@ -52,6 +52,7 @@ public:
 		const CefRefPtr<CefRequestContext> &request_context);
 
 	CefBrowserHost* GetBrowserHost(int browserIdentifier);
+	bool IsValidBrowserIdentifier(int browserIdentifier);
 	CefBrowser* GetBrowser(int browserIdentifier);
 	void LoadURL(int browserIdentifier, CefString& url);
 

@@ -41,6 +41,7 @@ public:
 		const CefRefPtr<CefRequestContext> &request_context);
 
 	CefBrowserHost* GetBrowserHost(int browserIdentifier);
+	bool IsValidBrowserIdentifier(int browserIdentifier);
 	CefBrowser* GetBrowser(int browserIdentifier);
 	void LoadURL(int browserIdentifier, CefString& url);
 
@@ -89,7 +90,6 @@ private:
 	os_event_t *startupEvent;
 	pthread_t managerThread;
 	pthread_mutex_t dispatchLock;
-	pthread_mutex_t browserLock;
 
 	std::map<int, std::shared_ptr<BrowserListener>> listenerMap;
 	std::map<int, CefRefPtr<CefBrowser> > browserMap;

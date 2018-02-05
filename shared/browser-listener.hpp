@@ -81,4 +81,18 @@ public:
 	}
 
 	virtual void Invalidated() override {}
+
+private:
+	int m_browserIdentifier = -1;
+
+public:
+	void SetBrowserIdentifier(const int browserIdentifier)
+	{
+		m_browserIdentifier = browserIdentifier;
+	}
+
+	const int GetBrowserIdentifier()
+	{
+		return m_browserIdentifier;
+	}
 };
