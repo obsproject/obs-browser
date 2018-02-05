@@ -329,6 +329,12 @@ void BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 		os_event_init(&closeEvent, OS_EVENT_TYPE_AUTO);
 		CefPostTask(TID_UI, BrowserTask::newTask([&, browser] 
 		{
+			// This stops rendering
+			// http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
+			// https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
+			browser->GetHost()->WasHidden(false);
+			browser->GetHost()->WasHidden(true);
+
 			browser->GetHost()->CloseBrowser(true);
 
 			os_event_signal(closeEvent);
