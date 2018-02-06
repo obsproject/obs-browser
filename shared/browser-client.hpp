@@ -18,14 +18,18 @@
 #pragma once
 
 #include <include/cef_client.h>
+#include <include/cef_display_handler.h>
 #include "browser-obs-bridge.hpp"
 
 class BrowserSource;
 class BrowserRenderHandler;
 class BrowserLoadHandler;
 
-class BrowserClient : public CefClient, public CefLifeSpanHandler,
-		public CefContextMenuHandler
+class BrowserClient :
+		public CefClient,
+		public CefLifeSpanHandler,
+		public CefContextMenuHandler,
+		public CefDisplayHandler
 {
 public:
 	BrowserClient(CefRenderHandler *renderHandler,
@@ -42,9 +46,9 @@ public:
 public: /* CefClient overrides */
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() OVERRIDE;
-	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler()
-			OVERRIDE;
+	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() OVERRIDE;
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() OVERRIDE;
+	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() OVERRIDE;
 	virtual bool OnProcessMessageReceived(
 			CefRefPtr<CefBrowser> browser,
 			CefProcessId source_process,
@@ -65,6 +69,14 @@ public: /* CefContextMenuHandler overrides */
 			CefRefPtr<CefFrame> frame,
 			CefRefPtr<CefContextMenuParams> params,
 			CefRefPtr<CefMenuModel> model);
+
+public: /* CefDisplayHandler overrides */
+
+	///
+	// Called when the page title changes.
+	///
+	/*--cef(optional_param=title)--*/
+	virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) OVERRIDE;
 
 private:
 	CefRefPtr<CefRenderHandler> renderHandler;

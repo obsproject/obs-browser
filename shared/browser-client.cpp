@@ -39,6 +39,11 @@ CefRefPtr<CefLoadHandler> BrowserClient::GetLoadHandler()
 	return loadHandler;
 }
 
+CefRefPtr<CefDisplayHandler> BrowserClient::GetDisplayHandler()
+{
+	return this;
+}
+
 CefRefPtr<CefLifeSpanHandler> BrowserClient::GetLifeSpanHandler()
 {
 	return this;
@@ -47,6 +52,17 @@ CefRefPtr<CefLifeSpanHandler> BrowserClient::GetLifeSpanHandler()
 CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 {
 	return this;
+}
+
+void BrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title)
+{
+#ifdef _WIN32
+	cef_window_handle_t handle = browser->GetHost()->GetWindowHandle();
+
+	if (handle) {
+		::SetWindowText(handle, title.c_str());
+	}
+#endif
 }
 
 bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser,
