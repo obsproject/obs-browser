@@ -83,7 +83,7 @@ private:
 	uint32_t height;
 	uint32_t fps;
 	bool shutdown;
-	bool stopElementsWhenInactive;
+	bool suspendElementsWhenInactive;
 	bool restart_when_active;
 
 	int browserIdentifier;

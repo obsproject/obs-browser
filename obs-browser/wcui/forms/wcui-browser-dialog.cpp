@@ -273,12 +273,14 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 				// Store current scene list to be removed later
 				obs_frontend_source_list stored_scenes = self->ObsStoreScenes();
 
-				// Globally prevent OnDraw calls in browser render handlers
-				// this is an extra safety to prevent a nasty race condition in
-				// BrowserRenderHandler::OnPaint when CPU is at 100% and we're removing browser sources
+				// Globally prevent OnDraw calls in browser render handlers.
+				// This is an extra safety to prevent a nasty race condition in
+				// BrowserRenderHandler::OnPaint when removing browser sources.
 				//
-				// This is superseded by checking whether the browser source has been destroyed before
-				// accessing the browser source in BrowserSource::Impl::Listener::OnDraw
+				// This is augmented by checking whether the browser source has been destroyed
+				// before accessing the browser source in BrowserSource::Impl::Listener::OnDraw
+				// and setting CefBrowserHost::WasHidden(true) (which SHOULD stop OnPaint
+				// events to be sent), before calling CefBrowserHost::CloseWindow()
 				//
 				// Must be followed by BrowserRenderHandler::SetPreventDraw(false)
 				//
@@ -350,7 +352,7 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 								source->string("url", "http://obsproject.com/").c_str(),
 								source->boolean("shutdownWhenInactive", true),
 								"", // css
-								source->boolean("stopElementsWhenInactive", false));
+								source->boolean("suspendElementsWhenInactive", false));
 						}
 						else if (source_type == "game")
 						{

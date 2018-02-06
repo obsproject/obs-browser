@@ -22,7 +22,7 @@
 struct BrowserSettings {
 	std::string url;
 	std::string css;
-	bool stopElementsWhenInactive;
+	bool suspendElementsWhenInactive;
 	unsigned int width;
 	unsigned int height;
 	unsigned int fps;

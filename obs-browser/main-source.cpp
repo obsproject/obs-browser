@@ -112,7 +112,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_bool(props, "restart_when_active",
 		obs_module_text("RefreshBrowserActive"));
 	obs_properties_add_bool(props, "suspend_elements_when_inactive",
-		obs_module_text("StopElementsWhenInactive"));
+		obs_module_text("SuspendElementsWhenInactive"));
 
 	obs_properties_add_button(props, "refreshnocache",
 		obs_module_text("RefreshNoCache"), refreshnocache_button_clicked);

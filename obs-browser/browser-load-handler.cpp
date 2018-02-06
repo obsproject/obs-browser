@@ -19,8 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "browser-listener.hpp"
 #include "base64.hpp"
 
-BrowserLoadHandler::BrowserLoadHandler(const std::string css, const bool stopElementsWhenInactive)
-	: css(css), stopElementsWhenInactive(stopElementsWhenInactive)
+BrowserLoadHandler::BrowserLoadHandler(const std::string css, const bool suspendElementsWhenInactive)
+	: css(css), suspendElementsWhenInactive(suspendElementsWhenInactive)
 {
 }
 
@@ -46,7 +46,7 @@ void BrowserLoadHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefF
 		frame->ExecuteJavaScript(script, href, 0);
 	}
 
-	if (frame->IsMain() && stopElementsWhenInactive)
+	if (frame->IsMain() && suspendElementsWhenInactive)
 	{
 		///
 		// The following JavaScript code will be executed on load, and will
@@ -57,7 +57,7 @@ void BrowserLoadHandler::OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefF
 		// which is very handy for multi-stage setups with multiple
 		// browser sources.
 		//
-		// This functionality is guarded by the stopElementsWhenInactive
+		// This functionality is guarded by the suspendElementsWhenInactive
 		// configuration property.
 		//
 

@@ -27,7 +27,7 @@ class BrowserLoadHandler : public CefLoadHandler
 {
 public:
 
-	BrowserLoadHandler(const std::string css, const bool stopElementsWhenInactive);
+	BrowserLoadHandler(const std::string css, const bool suspendElementsWhenInactive);
 
 	~BrowserLoadHandler();
 
@@ -37,7 +37,7 @@ public: /* CefLoadHandler overrides */
 
 private:
 	const std::string css;
-	const bool stopElementsWhenInactive;
+	const bool suspendElementsWhenInactive;
 
 private:
 	IMPLEMENT_REFCOUNTING(BrowserLoadHandler);
