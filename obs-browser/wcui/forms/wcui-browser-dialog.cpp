@@ -113,7 +113,7 @@ void WCUIBrowserDialog::InitBrowser()
 		clientRect.bottom = height();
 
 		// CefClient
-		CefRefPtr<BrowserClient> client(new BrowserClient(NULL, NULL, new BrowserOBSBridgeBase(), this));
+		CefRefPtr<BrowserClient> client(new BrowserClient(NULL, NULL, new BrowserOBSBridgeBase(), this, true));
 		
 		// Window info
 		CefWindowInfo window_info;
@@ -124,6 +124,9 @@ void WCUIBrowserDialog::InitBrowser()
 
 		// Don't allow JavaScript to close the browser window
 		settings.javascript_close_windows = STATE_DISABLED;
+
+		// Disable local storage
+		settings.local_storage = STATE_DISABLED;
 
 		window_info.SetAsChild(m_window_handle, clientRect);
 

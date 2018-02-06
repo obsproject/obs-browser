@@ -31,9 +31,12 @@ public:
 	BrowserClient(CefRenderHandler *renderHandler,
 		CefLoadHandler *loadHandler,
 		BrowserOBSBridge *browserOBSBridge,
-		CefClient *onProcessMessageReceivedHandler	// used for passing unhandled OnProcessMessageReceived() calls to another class
+
+		CefClient *onProcessMessageReceivedHandler,	// used for passing unhandled OnProcessMessageReceived() calls to another class
 								// do NOT call other methods of this class instance
 								// do NOT delete this class instance
+
+		bool allowPopupWindows				// allow opening pop-up windows with window.open() or target="_blank"
 	);
 
 public: /* CefClient overrides */
@@ -68,6 +71,7 @@ private:
 	CefRefPtr<CefLoadHandler> loadHandler;
 	BrowserOBSBridge *browserOBSBridge;
 	CefClient* onProcessMessageReceivedHandler;
+	bool allowPopupWindows;
 
 public:
 	IMPLEMENT_REFCOUNTING(BrowserClient);

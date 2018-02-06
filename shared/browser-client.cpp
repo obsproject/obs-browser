@@ -22,8 +22,10 @@
 
 BrowserClient::BrowserClient(CefRenderHandler *renderHandler,
 	CefLoadHandler *loadHandler, BrowserOBSBridge *browserOBSBridge,
-	CefClient *onProcessMessageReceivedHandler)
-	: renderHandler(renderHandler), loadHandler(loadHandler), browserOBSBridge(browserOBSBridge), onProcessMessageReceivedHandler(onProcessMessageReceivedHandler)
+	CefClient *onProcessMessageReceivedHandler,
+	bool allowPopupWindows)
+	: renderHandler(renderHandler), loadHandler(loadHandler), browserOBSBridge(browserOBSBridge),
+	onProcessMessageReceivedHandler(onProcessMessageReceivedHandler), allowPopupWindows(allowPopupWindows)
 {
 }
 
@@ -69,8 +71,8 @@ bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser> browser,
 	(void)settings;
 	(void)no_javascript_access;
 
-	// block popups
-	return true;
+	// block/allow popups
+	return !allowPopupWindows;
 }
 
 void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
