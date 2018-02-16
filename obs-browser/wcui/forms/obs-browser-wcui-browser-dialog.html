@@ -129,6 +129,20 @@
 	</script>
 
 	<div class="main" id="divTesting" style="display: none">
+		<h1>Navigate</h1>
+		<div class="disclaimer">
+			<input type="text" id="txtURL" placeholder="http://" />
+			<button id="cmdNavigate" onclick="navigate_url()"> Go </button>
+			<script type="text/javascript">
+				function navigate_url() {
+					var url = document.getElementById("txtURL").value;
+
+					if (url === '') return;
+
+					location.href = url;
+				}
+			</script>
+		</div>
 		<h1>User-Agent</h1>
 		<div class="disclaimer">
 			<script type="text/javascript">
