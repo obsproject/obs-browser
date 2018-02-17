@@ -125,8 +125,8 @@ void WCUIBrowserDialog::InitBrowser()
 		// Don't allow JavaScript to close the browser window
 		settings.javascript_close_windows = STATE_DISABLED;
 
-		// Disable local storage
-		settings.local_storage = STATE_DISABLED;
+		// TODO: Disable local storage
+		// settings.local_storage = STATE_DISABLED;
 
 		window_info.SetAsChild(m_window_handle, clientRect);
 
