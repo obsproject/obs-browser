@@ -500,6 +500,31 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		return true;
 	}
+	else if (name == "deleteAllCookies")
+	{
+		// window.obsstudio.deleteAllCookies(callback) JS call
+
+		// Delete all cookies
+		bool result =
+			BrowserManager::Instance()->DeleteCookies(
+				CefString(""),	// empty value = all URLs
+				CefString("")	// empty value = all cookie names
+			);
+
+		// Response root object
+		CefRefPtr<CefValue> root = CefValue::Create();
+
+		// Set result value
+		root->SetBool(result);
+
+		// Send message to call calling web page JS callback with boolean value
+		// as argument indicating success / failure
+		OnProcessMessageReceivedSendExecuteCallbackMessage(
+			browser,
+			source_process,
+			message,
+			root);
+	}
 	else if (name == "videoInputSources")
 	{
 		// window.obsstudio.videoInputSources(callback) JS call

@@ -29,6 +29,11 @@ void BrowserManager::Shutdown()
 	pimpl->Shutdown();
 }
 
+bool BrowserManager::DeleteCookies(CefString& url, CefString& cookie_name)
+{
+	return pimpl->DeleteCookies(url, cookie_name);
+}
+
 int BrowserManager::CreateBrowser(
 	const BrowserSettings &browserSettings,
 	const std::shared_ptr<BrowserListener> &browserListener)
@@ -153,6 +158,33 @@ BrowserManager::Impl::~Impl()
 	pthread_mutex_destroy(&dispatchLock);
 	os_event_destroy(startupEvent);
 	os_event_destroy(dispatchEvent);
+}
+
+bool BrowserManager::Impl::DeleteCookies(CefString& url, CefString& cookie_name)
+{
+	bool result = false;
+
+	os_event_t *doneEvent;
+	os_event_init(&doneEvent, OS_EVENT_TYPE_AUTO);
+
+	os_event_wait(startupEvent);
+
+	CefPostTask(TID_IO, BrowserTask::newTask(
+		[&]
+	{
+		CefRefPtr<CefCookieManager> globalCookieManager =
+			CefCookieManager::GetGlobalManager(NULL);
+
+		result =
+			globalCookieManager->DeleteCookies(url, cookie_name, NULL);
+
+		os_event_signal(doneEvent);
+	}));
+
+	os_event_wait(doneEvent);
+	os_event_destroy(doneEvent);
+
+	return result;
 }
 
 int BrowserManager::Impl::CreateBrowser(

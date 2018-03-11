@@ -40,6 +40,8 @@ public:
 	void Shutdown();
 	void Restart();
 
+	bool DeleteCookies(CefString& url, CefString& cookie_name);
+
 	int CreateBrowser(const BrowserSettings &browserSettings,
 			const std::shared_ptr<BrowserListener>
 				&browserListener);

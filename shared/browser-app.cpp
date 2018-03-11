@@ -87,6 +87,8 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("videoInputSources", CefV8Value::CreateFunction("videoInputSources", this), V8_PROPERTY_ATTRIBUTE_NONE);
 	obsStudioObj->SetValue("audioEncoders", CefV8Value::CreateFunction("audioEncoders", this), V8_PROPERTY_ATTRIBUTE_NONE);
 	obsStudioObj->SetValue("videoEncoders", CefV8Value::CreateFunction("videoEncoders", this), V8_PROPERTY_ATTRIBUTE_NONE);
+
+	obsStudioObj->SetValue("deleteAllCookies", CefV8Value::CreateFunction("deleteAllCookies", this), V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -268,6 +270,12 @@ bool BrowserApp::Execute(const CefString& name,
 		return true;
 	}
 	else if (name == "videoEncoders" || name == "audioEncoders" || name == "videoInputSources")
+	{
+		SendExecuteFunctionWithCallbackMessage(name, object, arguments, retval, exception);
+
+		return true;
+	}
+	else if (name == "deleteAllCookies")
 	{
 		SendExecuteFunctionWithCallbackMessage(name, object, arguments, retval, exception);
 
