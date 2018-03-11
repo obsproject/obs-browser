@@ -89,6 +89,8 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("videoEncoders", CefV8Value::CreateFunction("videoEncoders", this), V8_PROPERTY_ATTRIBUTE_NONE);
 
 	obsStudioObj->SetValue("deleteAllCookies", CefV8Value::CreateFunction("deleteAllCookies", this), V8_PROPERTY_ATTRIBUTE_NONE);
+
+	obsStudioObj->SetValue("openDefaultBrowser", CefV8Value::CreateFunction("openDefaultBrowser", this), V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -280,6 +282,27 @@ bool BrowserApp::Execute(const CefString& name,
 		SendExecuteFunctionWithCallbackMessage(name, object, arguments, retval, exception);
 
 		return true;
+	}
+	else if (name == "openDefaultBrowser")
+	{
+		if (arguments.size() == 1 && arguments[0]->IsString())
+		{
+			// Get URL (first argument)
+			CefString url = arguments[0]->GetStringValue();
+
+			// Create openDefaultBrowser message
+			CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("openDefaultBrowser");
+			CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+			// Set message first argument
+			args->SetString(0, url);
+
+			// Send message to the browser process
+			CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
+			browser->SendProcessMessage(PID_BROWSER, msg);
+
+			return true;
+		}
 	}
 	else if (name == "setupEnvironment")
 	{

@@ -157,6 +157,7 @@
 			<a href="#" onclick="window.open('http://www.obsproject.com/'); return false">window.open()</a>
 			<a href="http://www.obsproject.com" target="_blank">target="_blank"</a>
 			<a href="#" onclick="test_deleteAllCookies(); return false">deleteAllCookies</a>
+			<a href="#" onclick="test_openDefaultBrowser(); return false">openDefaultBrowser</a>
 		</div>
 		<h1>API Call Response</h1>
 		<div class="disclaimer" id="apiCallName"></div>
@@ -186,6 +187,10 @@
 			window.obsstudio.deleteAllCookies(function (result) {
 				showApiCallResponse("deleteAllCookies", result);
 			});
+		}
+
+		function test_openDefaultBrowser() {
+			window.obsstudio.openDefaultBrowser("http://www.google.com");
 		}
 
 		function test_videoInputSources() {

@@ -16,6 +16,8 @@
 #include <QWindow>
 #include <QWidget>
 #include <QFrame>
+#include <QDesktopServices>
+#include <QUrl>
 
 WCUIBrowserDialog::WCUIBrowserDialog(QWidget* parent, std::string obs_module_path, std::string cache_path) :
 	QDialog(parent, Qt::Dialog),
@@ -524,6 +526,15 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 			source_process,
 			message,
 			root);
+	}
+	else if (name == "openDefaultBrowser")
+	{
+		// window.obsstudio.openDefaultBrowser(url) JS call
+
+		CefString url = args->GetValue(0)->GetString();
+
+		QUrl navigate_url = QUrl(url.ToString().c_str(), QUrl::TolerantMode);
+		QDesktopServices::openUrl(navigate_url);
 	}
 	else if (name == "videoInputSources")
 	{
