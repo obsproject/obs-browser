@@ -158,6 +158,7 @@
 			<a href="http://www.obsproject.com" target="_blank">target="_blank"</a>
 			<a href="#" onclick="test_deleteAllCookies(); return false">deleteAllCookies</a>
 			<a href="#" onclick="test_openDefaultBrowser(); return false">openDefaultBrowser</a>
+			<a href="#" onclick="test_createSceneCollectionCopy(); return false">createSceneCollectionCopy</a>
 		</div>
 		<h1>API Call Response</h1>
 		<div class="disclaimer" id="apiCallName"></div>
@@ -191,6 +192,12 @@
 
 		function test_openDefaultBrowser() {
 			window.obsstudio.openDefaultBrowser("http://www.google.com");
+		}
+
+		function test_createSceneCollectionCopy() {
+			window.obsstudio.createSceneCollectionCopy("Scene Collection Copy", function (createdSceneCollectionName) {
+				showApiCallResponse("createSceneCollectionCopy", createdSceneCollectionName);
+			});
 		}
 
 		function test_videoInputSources() {
@@ -388,8 +395,10 @@
 
 				// showApiCallResponse("setupEnvironment", config);
 
-				// Setup OBS environment according to the configuration above
-				window.obsstudio.setupEnvironment(config);
+				window.obsstudio.createSceneCollectionCopy("setupEnvironment Demo", function (createdSceneCollectionName) {
+					// Setup OBS environment according to the configuration above
+					window.obsstudio.setupEnvironment(config);
+				});
 			});
 		}
 	</script>

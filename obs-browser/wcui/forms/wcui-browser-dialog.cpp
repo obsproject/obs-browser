@@ -478,6 +478,32 @@ bool WCUIBrowserDialog::OnProcessMessageReceived(
 
 		return true;
 	}
+	else if (name == "createSceneCollectionCopy")
+	{
+		// 1st arg is the callback ID, 2nd arg is the requested
+		// scene collection name
+		CefString requestedSceneCollectionsName =
+			args->GetValue(1)->GetString();
+
+		std::string uniqueSceneCollectionName =
+			ObsGetUniqueSceneCollectionName(requestedSceneCollectionsName.ToString());
+
+		obs_frontend_add_scene_collection(uniqueSceneCollectionName.c_str());
+
+		// Response root object
+		CefRefPtr<CefValue> root = CefValue::Create();
+
+		// Set result value
+		root->SetString(CefString(uniqueSceneCollectionName));
+
+		// Send message to call calling web page JS callback with string value
+		// as argument indicating actual created scene collection name
+		OnProcessMessageReceivedSendExecuteCallbackMessage(
+			browser,
+			source_process,
+			message,
+			root);
+	}
 	else if (name == "videoEncoders")
 	{
 		// window.obsstudio.videoEncoders(callback) JS call
@@ -668,6 +694,42 @@ void WCUIBrowserDialog::ObsReleaseStoredScenes(obs_frontend_source_list& scenes)
 	// Free list of scenes.
 	// This also calls obs_release_scene() for each scene in the list.
 	obs_frontend_source_list_free(&scenes);
+}
+
+std::string WCUIBrowserDialog::ObsGetUniqueSceneCollectionName(std::string name)
+{
+	char** sceneCollectionNames =
+		obs_frontend_get_scene_collections();
+
+	std::string result(name);
+
+	int sequence = 0;
+	bool isUnique = false;
+
+	while (!isUnique)
+	{
+		isUnique = true;
+
+		// Look for result in sceneCollectionNames
+		for (int index = 0; sceneCollectionNames[index] && isUnique; ++index)
+		{
+			if (stricmp(sceneCollectionNames[index], result.c_str()) == 0)
+			{
+				isUnique = false;
+			}
+		}
+
+		if (!isUnique)
+		{
+			++sequence;
+
+			result = fmt::format("{} ({})", name.c_str(), sequence);
+		}
+	}
+
+	bfree(sceneCollectionNames);
+
+	return result;
 }
 
 std::string WCUIBrowserDialog::ObsGetUniqueSourceName(std::string name)

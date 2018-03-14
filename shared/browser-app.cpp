@@ -91,6 +91,8 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("deleteAllCookies", CefV8Value::CreateFunction("deleteAllCookies", this), V8_PROPERTY_ATTRIBUTE_NONE);
 
 	obsStudioObj->SetValue("openDefaultBrowser", CefV8Value::CreateFunction("openDefaultBrowser", this), V8_PROPERTY_ATTRIBUTE_NONE);
+
+	obsStudioObj->SetValue("createSceneCollectionCopy", CefV8Value::CreateFunction("createSceneCollectionCopy", this), V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -296,6 +298,33 @@ bool BrowserApp::Execute(const CefString& name,
 
 			// Set message first argument
 			args->SetString(0, url);
+
+			// Send message to the browser process
+			CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
+			browser->SendProcessMessage(PID_BROWSER, msg);
+
+			return true;
+		}
+	}
+	else if (name == "createSceneCollectionCopy")
+	{
+		if (arguments.size() == 2 && arguments[0]->IsString() && arguments[1]->IsFunction())
+		{
+			// Get URL (first argument)
+			CefString sceneCollectionName = arguments[0]->GetStringValue();
+
+			callbackId++;
+			callbackMap[callbackId] = arguments[1];
+
+			// Create 'createSceneCollectionCopy' message
+			CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("createSceneCollectionCopy");
+			CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+			// Callback ID is the 1st argument
+			args->SetInt(0, callbackId);
+
+			// Scene collection name is the 2nd
+			args->SetString(1, sceneCollectionName);
 
 			// Send message to the browser process
 			CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();

@@ -109,6 +109,14 @@ private slots: // OBS operations
 	void ObsDisableMainWindow();
 
 	///
+	// Generate unique OBS scene collection name
+	//
+	// @param name	scene collection name to generate unique name from
+	// @returns	unique scene collection name
+	//
+	std::string ObsGetUniqueSceneCollectionName(std::string name);
+
+	///
 	// Generate unique OBS source name
 	//
 	// @param name	source name to generate unique source from
