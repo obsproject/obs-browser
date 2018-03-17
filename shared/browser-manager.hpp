@@ -42,6 +42,8 @@ public:
 			const std::shared_ptr<BrowserListener>
 				&browserListener);
 
+	bool IsValidBrowserIdentifier(int browserIdentifier);
+
 	void DestroyBrowser(int browserIdentifier);
 
 	void TickBrowser(int browserIdentifier);

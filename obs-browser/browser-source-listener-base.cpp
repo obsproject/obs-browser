@@ -19,12 +19,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "browser-source-base.hpp"
 #include "browser-types.h"
 #include "browser-source-listener-base.hpp"
+#include "browser-manager-base.hpp"
 
 void BrowserSource::Impl::Listener::OnDraw( BrowserSurfaceHandle surfaceHandle,
 		int width, int height)
 {
 	UNUSED_PARAMETER(width);
 	UNUSED_PARAMETER(height);
+
+	// Check if our browser has not been destroyed yet.
+	//
+	// Due to the asynchronous nature of CEF, we can get an OnDraw call after
+	// BrowserManager::Instance()->DestroyBrowser() call has been made.
+	//
+	if (!BrowserManager::Instance()->IsValidBrowserIdentifier(GetBrowserIdentifier()))
+		return;
 
 	if (textureSet.count(surfaceHandle) > 0) {
 		obs_enter_graphics();

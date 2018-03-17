@@ -10,6 +10,7 @@
 #include "browser-render-handler.hpp"
 #include "browser-load-handler.hpp"
 #include "browser-obs-bridge-base.hpp"
+#include "browser-listener.hpp"
 
 BrowserManager::BrowserManager()
 : pimpl(new BrowserManager::Impl())
@@ -33,6 +34,11 @@ int BrowserManager::CreateBrowser(
 	const std::shared_ptr<BrowserListener> &browserListener)
 {
 	return pimpl->CreateBrowser(browserSettings, browserListener);
+}
+
+bool BrowserManager::IsValidBrowserIdentifier(int browserIdentifier)
+{
+	return pimpl->IsValidBrowserIdentifier(browserIdentifier);
 }
 
 void BrowserManager::DestroyBrowser(int browserIdentifier)
@@ -128,7 +134,7 @@ int BrowserManager::Impl::CreateBrowser(
 		const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener)
 {
-	int browserIdentifier = 0;
+	int browserIdentifier = -1;
 	os_event_t *createdEvent;
 	os_event_init(&createdEvent, OS_EVENT_TYPE_AUTO);
 
@@ -167,6 +173,7 @@ int BrowserManager::Impl::CreateBrowser(
 
 		if (browser != nullptr) {
 			browserIdentifier = browser->GetIdentifier();
+			browserListener->SetBrowserIdentifier(browserIdentifier);
 			browserMap[browserIdentifier] = browser;
 		}
 		os_event_signal(createdEvent);
@@ -177,11 +184,17 @@ int BrowserManager::Impl::CreateBrowser(
 	return browserIdentifier;
 }
 
+bool BrowserManager::Impl::IsValidBrowserIdentifier(int browserIdentifier)
+{
+	return browserIdentifier >= 0 && browserMap.count(browserIdentifier) > 0;
+}
+
 void 
 BrowserManager::Impl::DestroyBrowser(int browserIdentifier)
 {
 	if (browserMap.count(browserIdentifier) > 0) {
 		CefRefPtr<CefBrowser> browser = browserMap[browserIdentifier];
+		browserMap.erase(browserIdentifier);
 		os_event_t *closeEvent;
 		os_event_init(&closeEvent, OS_EVENT_TYPE_AUTO);
 		CefPostTask(TID_UI, BrowserTask::newTask([&, browser] 
