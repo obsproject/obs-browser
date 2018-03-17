@@ -43,10 +43,10 @@ public:
 		const CefRefPtr<CefRequestContext> &request_context);
 
 	CefBrowserHost* GetBrowserHost(int browserIdentifier);
-	bool IsValidBrowserIdentifier(int browserIdentifier);
 	CefBrowser* GetBrowser(int browserIdentifier);
 	void LoadURL(int browserIdentifier, CefString& url);
 
+	bool IsValidBrowserIdentifier(int browserIdentifier);
 	void DestroyBrowser(int browserIdentifier);
 	void TickBrowser(int browserIdentifier);
 
@@ -75,15 +75,15 @@ public:
 	void ExecuteSceneChangeJSCallback(const char *name);
 
 	void RefreshPageNoCache(int browserIdentifier);
-	
+
 	void DispatchJSEvent(const char *eventName, const char *jsonString);
 
-private: 
-	void ExecuteOnBrowser(int browserIdentifier, 
-			std::function<void(CefRefPtr<CefBrowser>)> f, 
+private:
+	void ExecuteOnBrowser(int browserIdentifier,
+			std::function<void(CefRefPtr<CefBrowser>)> f,
 			bool async = false);
 
-	void ExecuteOnAllBrowsers(std::function<void(CefRefPtr<CefBrowser>)> f, 
+	void ExecuteOnAllBrowsers(std::function<void(CefRefPtr<CefBrowser>)> f,
 			bool async = false);
 
 private:
