@@ -176,12 +176,29 @@ static void browser_source_show(void *data)
 	else {
 		bs->ExecuteVisiblityJSCallback(true);
 	}
+
+	// Start animation
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(false);
+
+#ifdef APPLE
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->SetWindowVisibility(true);
+#endif
+
+	// Repaint the view
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->Invalidate(PET_VIEW);
 }
 
 // Called when the source is no longer visible
 static void browser_source_hide(void *data)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
+
+	// Stop animation
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->WasHidden(true);
+
+#ifdef APPLE
+	BrowserManager::Instance()->GetBrowser(bs->GetBrowserIdentifier())->GetHost()->SetWindowVisibility(false);
+#endif
 
 	if (bs->GetShutdown()) {
 		BrowserManager::Instance()->DestroyBrowser(bs->GetBrowserIdentifier());
@@ -196,7 +213,17 @@ static void *browser_source_create(obs_data_t *settings, obs_source_t *source)
 	BrowserSource *browserSource = new BrowserSource(settings, source);
 
 	if (browserSource->GetShutdown() && !obs_source_showing(source))
+	{
 		BrowserManager::Instance()->DestroyBrowser(browserSource->GetBrowserIdentifier());
+	}
+	else
+	{
+		if (!obs_source_showing(source))
+		{
+			// Stop animation
+			BrowserManager::Instance()->GetBrowser(browserSource->GetBrowserIdentifier())->GetHost()->WasHidden(true);
+		}
+	}
 
 	return browserSource;
 }

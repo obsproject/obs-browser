@@ -33,6 +33,10 @@ public:
 		const BrowserSettings &browserSettings,
 		const std::shared_ptr<BrowserListener> &browserListener);
 
+	CefBrowserHost* GetBrowserHost(int browserIdentifier);
+	CefBrowser* GetBrowser(int browserIdentifier);
+	void LoadURL(int browserIdentifier, CefString& url);
+
 	bool IsValidBrowserIdentifier(int browserIdentifier);
 	void DestroyBrowser(int browserIdentifier);
 	void TickBrowser(int browserIdentifier);

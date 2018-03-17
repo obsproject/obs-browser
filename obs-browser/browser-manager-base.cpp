@@ -36,6 +36,21 @@ int BrowserManager::CreateBrowser(
 	return pimpl->CreateBrowser(browserSettings, browserListener);
 }
 
+CefBrowserHost* BrowserManager::GetBrowserHost(int browserIdentifier)
+{
+	return pimpl->GetBrowserHost(browserIdentifier);
+}
+
+CefBrowser* BrowserManager::GetBrowser(int browserIdentifier)
+{
+	return pimpl->GetBrowser(browserIdentifier);
+}
+
+void BrowserManager::LoadURL(int browserIdentifier, CefString& url)
+{
+	return pimpl->LoadURL(browserIdentifier, url);
+}
+
 bool BrowserManager::IsValidBrowserIdentifier(int browserIdentifier)
 {
 	return pimpl->IsValidBrowserIdentifier(browserIdentifier);
@@ -182,6 +197,65 @@ int BrowserManager::Impl::CreateBrowser(
 	os_event_wait(createdEvent);
 	os_event_destroy(createdEvent);
 	return browserIdentifier;
+}
+
+CefBrowserHost* BrowserManager::Impl::GetBrowserHost(int browserIdentifier)
+{
+	CefBrowserHost* result = NULL;
+
+	os_event_t* complete_event;
+	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
+
+	CefPostTask(TID_UI, BrowserTask::newTask(
+		[&]
+	{
+		result = browserMap[browserIdentifier]->GetHost();
+
+		os_event_signal(complete_event);
+	}));
+
+	os_event_wait(complete_event);
+	os_event_destroy(complete_event);
+
+	return result;
+}
+
+CefBrowser* BrowserManager::Impl::GetBrowser(int browserIdentifier)
+{
+	CefBrowser* result = NULL;
+
+	os_event_t* complete_event;
+	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
+
+	CefPostTask(TID_UI, BrowserTask::newTask(
+		[&]
+	{
+		result = browserMap[browserIdentifier];
+
+		os_event_signal(complete_event);
+	}));
+
+	os_event_wait(complete_event);
+	os_event_destroy(complete_event);
+
+	return result;
+}
+
+void BrowserManager::Impl::LoadURL(int browserIdentifier, CefString& url)
+{
+	os_event_t* complete_event;
+	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
+
+	CefPostTask(TID_UI, BrowserTask::newTask(
+		[&]
+	{
+		browserMap[browserIdentifier]->GetMainFrame()->LoadURL(url);
+
+		os_event_signal(complete_event);
+	}));
+
+	os_event_wait(complete_event);
+	os_event_destroy(complete_event);
 }
 
 bool BrowserManager::Impl::IsValidBrowserIdentifier(int browserIdentifier)
