@@ -16,7 +16,10 @@ find_library(CEF_LIBRARY_DEBUG
 
 find_library(CEFWRAPPER_LIBRARY
 	NAMES cef_dll_wrapper libcef_dll_wrapper
-	PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Release ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Release)
+	PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Release
+		${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Release
+		${CEF_ROOT_DIR}/build/libcef_dll
+		${CEF_ROOT_DIR}/build/libcef_dll_wrapper)
 find_library(CEFWRAPPER_LIBRARY_DEBUG
 	NAMES cef_dll_wrapper libcef_dll_wrapper
 	PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Debug ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Debug)
