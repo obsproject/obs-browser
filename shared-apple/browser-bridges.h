@@ -56,4 +56,3 @@ struct obs_key_event;
 + (id)fromObsKeyEvent: (const obs_key_event *)event;
 
 @end
-

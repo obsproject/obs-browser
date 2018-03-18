@@ -27,4 +27,3 @@
 	std::map<int, std::shared_ptr<BrowserHandle> > map;
 }
 @end
-
