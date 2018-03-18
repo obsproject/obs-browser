@@ -60,4 +60,3 @@ private:
 
 	std::unique_ptr<BrowserTexture> browserTexture;
 };
-
