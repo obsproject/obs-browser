@@ -106,7 +106,7 @@ void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 	{
 		viewWidth = width;
 		viewHeight = height;
-		if (surfaceHandles.size() < 2) {
+		if (surfaceHandles.size() < 1) {
 			BrowserSurfaceHandle newSurfaceHandle = 0;
 			browserListener->CreateSurface(width, height,
 				&newSurfaceHandle);
@@ -116,16 +116,10 @@ void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 			}
 		}
 
-		int previousSurfaceHandle = currentSurfaceHandle;
-
-		currentSurfaceHandle = (++currentSurfaceHandle % surfaceHandles.size());
-
-		if (currentSurfaceHandle != previousSurfaceHandle) {
-			obs_enter_graphics();
-			gs_texture_set_image(surfaceHandles[currentSurfaceHandle],
-				(const uint8_t*)data, width * 4, false);
-			obs_leave_graphics();
-		}
+		obs_enter_graphics();
+		gs_texture_set_image(surfaceHandles[currentSurfaceHandle],
+			(const uint8_t*)data, width * 4, false);
+		obs_leave_graphics();
 	}
 	else if (type == PET_POPUP && popupRect.width > 0 &&
 		popupRect.height > 0)

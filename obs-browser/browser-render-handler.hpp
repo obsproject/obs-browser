@@ -64,7 +64,7 @@ private:
 	const int height;
 	const std::shared_ptr<BrowserListener> browserListener;
 	std::vector<struct gs_texture *> surfaceHandles;
-	int currentSurfaceHandle;
+	int currentSurfaceHandle = 0;
 	int viewWidth;
 	int viewHeight;
 	CefRect popupRect;
