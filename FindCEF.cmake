@@ -16,7 +16,10 @@ find_library(CEF_LIBRARY_DEBUG
 
 find_library(CEFWRAPPER_LIBRARY
 	NAMES cef_dll_wrapper libcef_dll_wrapper
-	PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Release ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Release)
+	PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Release
+		${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Release
+		${CEF_ROOT_DIR}/build/libcef_dll
+		${CEF_ROOT_DIR}/build/libcef_dll_wrapper)
 find_library(CEFWRAPPER_LIBRARY_DEBUG
 	NAMES cef_dll_wrapper libcef_dll_wrapper
 	PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Debug ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Debug)
@@ -30,10 +33,14 @@ if (NOT CEFWRAPPER_LIBRARY)
 endif (NOT CEFWRAPPER_LIBRARY)
 
 set(CEF_LIBRARIES
-	debug ${CEFWRAPPER_LIBRARY_DEBUG}
-	debug ${CEF_LIBRARY_DEBUG}
-	optimized ${CEFWRAPPER_LIBRARY}
-	optimized ${CEF_LIBRARY})
+		optimized ${CEFWRAPPER_LIBRARY}
+		optimized ${CEF_LIBRARY})
+
+if (CEF_LIBRARY_DEBUG AND CEFWRAPPER_LIBRARY_DEBUG)
+	list(APPEND CEF_LIBRARIES
+			debug ${CEFWRAPPER_LIBRARY_DEBUG}
+			debug ${CEF_LIBRARY_DEBUG})
+endif()
 
 find_package_handle_standard_args(CEF DEFAULT_MSG CEF_LIBRARY 
 	CEFWRAPPER_LIBRARY CEF_INCLUDE_DIR)

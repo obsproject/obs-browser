@@ -96,7 +96,7 @@ CefRect BrowserRenderHandler::GetPopupRectInWebView(const CefRect& originalRect)
 	return rc;
 }
 
-void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser, 
+void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 		PaintElementType type, const RectList &dirtyRects,
 		const void *data, int width, int height)
 {
@@ -106,29 +106,15 @@ void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 
 	if (!IsDrawPrevented())
 	{
-		if (type == PET_VIEW)
-		{
-			viewWidth = width;
-			viewHeight = height;
-			if (surfaceHandles.size() < 2) {
-				BrowserSurfaceHandle newSurfaceHandle = 0;
-				browserListener->CreateSurface(width, height,
-					&newSurfaceHandle);
+		viewWidth = width;
+		viewHeight = height;
+		if (surfaceHandles.size() < 1) {
+			BrowserSurfaceHandle newSurfaceHandle = 0;
+			browserListener->CreateSurface(width, height,
+				&newSurfaceHandle);
 
-				if (newSurfaceHandle != nullptr) {
-					surfaceHandles.push_back(newSurfaceHandle);
-				}
-			}
-
-			int previousSurfaceHandle = currentSurfaceHandle;
-
-			currentSurfaceHandle = (++currentSurfaceHandle % surfaceHandles.size());
-
-			if (currentSurfaceHandle != previousSurfaceHandle) {
-				obs_enter_graphics();
-				gs_texture_set_image(surfaceHandles[currentSurfaceHandle],
-					(const uint8_t*)data, width * 4, false);
-				obs_leave_graphics();
+			if (newSurfaceHandle != nullptr) {
+				surfaceHandles.push_back(newSurfaceHandle);
 			}
 		}
 		else if (type == PET_POPUP && popupRect.width > 0 &&
@@ -142,24 +128,13 @@ void BrowserRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser,
 			if (x < 0)
 				x = 0;
 
-			if (y < 0)
-				y = 0;
-
-			if (x + w > viewWidth)
-				w -= x + w - viewWidth;
-			if (y + h > viewHeight)
-				h -= y + h - viewHeight;
-
-			obs_enter_graphics();
-			BrowserSurfaceHandle newTexture = 0;
-			browserListener->CreatePopupSurface(width, height, x, y, &newTexture);
-			gs_texture_set_image(newTexture,
-				(const uint8_t*)data, w * 4, false);
-			obs_leave_graphics();
-		}
-
-		browserListener->OnDraw(surfaceHandles[currentSurfaceHandle], viewWidth, viewHeight);
+		obs_enter_graphics();
+		gs_texture_set_image(surfaceHandles[currentSurfaceHandle],
+			(const uint8_t*)data, width * 4, false);
+		obs_leave_graphics();
 	}
+
+	browserListener->OnDraw(surfaceHandles[currentSurfaceHandle], viewWidth, viewHeight);
 
 	UnlockPreventDraw();
 }

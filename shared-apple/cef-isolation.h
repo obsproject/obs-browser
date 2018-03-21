@@ -64,5 +64,3 @@
 - (void)executeSceneChangeJSCallback:(const char *)name;
 - (void)dispatchJSEvent:(const char *)eventName data:(const char*) jsonString;
 @end
-
-
