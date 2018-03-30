@@ -89,6 +89,15 @@ void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 	model->Clear();
 }
 
+bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser> browser,
+	const CefString& message,
+	const CefString& source,
+	int line)
+{
+	blog( LOG_INFO, "obs-browser: %s (source: %s:%d)", message.ToString( ).c_str( ), source.ToString( ).c_str( ), line );
+	return false;
+}
+
 bool BrowserClient::OnProcessMessageReceived(
 	CefRefPtr<CefBrowser> browser,
 	CefProcessId source_process,
