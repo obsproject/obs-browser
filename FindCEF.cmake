@@ -2,7 +2,7 @@ include(FindPackageHandleStandardArgs)
 
 SET(CEF_ROOT_DIR "" CACHE PATH "Path to a CEF distributed build")
 
-message("Looking for Chromium Embedded Framework in ${CEF_ROOT_DIR}")
+message(STATUS "Looking for Chromium Embedded Framework in ${CEF_ROOT_DIR}")
 
 find_path(CEF_INCLUDE_DIR "include/cef_version.h"
 	HINTS ${CEF_ROOT_DIR})
@@ -24,13 +24,17 @@ find_library(CEFWRAPPER_LIBRARY_DEBUG
 	NAMES cef_dll_wrapper libcef_dll_wrapper
 	PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Debug ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Debug)
 
-if (NOT CEF_LIBRARY)
-	message(FATAL_ERROR "Could not find the CEF shared library" )
-endif (NOT CEF_LIBRARY)
+if(NOT CEF_LIBRARY)
+	message(WARNING "Could not find the CEF shared library" )
+	set(CEF_FOUND FALSE)
+	return()
+endif()
 
-if (NOT CEFWRAPPER_LIBRARY)
-	message(FATAL_ERROR "Could not find the CEF wrapper library" )
-endif (NOT CEFWRAPPER_LIBRARY)
+if(NOT CEFWRAPPER_LIBRARY)
+	message(WARNING "Could not find the CEF wrapper library" )
+	set(CEF_FOUND FALSE)
+	return()
+endif()
 
 set(CEF_LIBRARIES
 		optimized ${CEFWRAPPER_LIBRARY}
@@ -42,8 +46,7 @@ if (CEF_LIBRARY_DEBUG AND CEFWRAPPER_LIBRARY_DEBUG)
 			debug ${CEF_LIBRARY_DEBUG})
 endif()
 
-find_package_handle_standard_args(CEF DEFAULT_MSG CEF_LIBRARY 
+find_package_handle_standard_args(CEF DEFAULT_MSG CEF_LIBRARY
 	CEFWRAPPER_LIBRARY CEF_INCLUDE_DIR)
-
-mark_as_advanced(CEF_LIBRARY CEF_WRAPPER_LIBRARY CEF_LIBRARIES 
+mark_as_advanced(CEF_LIBRARY CEF_WRAPPER_LIBRARY CEF_LIBRARIES
 	CEF_INCLUDE_DIR)
