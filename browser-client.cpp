@@ -158,7 +158,7 @@ void BrowserClient::OnPaint(
 	if (!bs->texture && width && height) {
 		obs_enter_graphics();
 		bs->texture = gs_texture_create(
-				width, height, GS_RGBA, 1,
+				width, height, GS_BGRA, 1,
 				(const uint8_t **)&buffer,
 				GS_DYNAMIC);
 		bs->width = width;
