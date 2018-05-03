@@ -132,7 +132,7 @@ bool BrowserClient::GetViewRect(
 }
 
 void BrowserClient::OnPaint(
-		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefBrowser> cefBrowser,
 		PaintElementType type,
 		const RectList &,
 		const void *buffer,
@@ -140,6 +140,12 @@ void BrowserClient::OnPaint(
 		int height)
 {
 	if (type != PET_VIEW) {
+		return;
+	}
+
+	if (!static_cast<BrowserClient*>(
+		cefBrowser->GetHost()->GetClient().get())->isValid) {
+		// The browser has been destroyed
 		return;
 	}
 
@@ -175,12 +181,18 @@ void BrowserClient::OnPaint(
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 void BrowserClient::OnAcceleratedPaint(
-		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefBrowser> cefBrowser,
 		PaintElementType type,
 		const RectList &,
 		void *shared_handle,
 		uint64)
 {
+	if (!static_cast<BrowserClient*>(
+		cefBrowser->GetHost()->GetClient().get())->isValid) {
+		// The browser has been destroyed
+		return;
+	}
+
 	if (shared_handle != last_handle) {
 		obs_enter_graphics();
 		gs_texture_destroy(texture);
