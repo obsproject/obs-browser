@@ -203,11 +203,6 @@ void RegisterBrowserSource()
 	};
 	info.create = [] (obs_data_t *settings, obs_source_t *source) -> void *
 	{
-		static bool manager_initialized = false;
-		if (!os_atomic_set_bool(&manager_initialized, true)) {
-			manager_thread = thread(BrowserManagerThread);
-		}
-
 		return new BrowserSource(settings, source);
 	};
 	info.destroy = [] (void *data)
@@ -350,6 +345,8 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 
 bool obs_module_load(void)
 {
+	manager_thread = thread(BrowserManagerThread);
+
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 	return true;
