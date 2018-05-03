@@ -126,6 +126,14 @@ void BrowserSource::DestroyBrowser(bool async)
 {
 	ExecuteOnBrowser([this] ()
 	{
+		CefRefPtr<CefClient> client =
+				cefBrowser->GetHost()->GetClient();
+		BrowserClient *bc =
+				reinterpret_cast<BrowserClient*>(client.get());
+		if (bc) {
+			bc->bs = nullptr;
+		}
+
 		/*
 		 * This stops rendering
 		 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079

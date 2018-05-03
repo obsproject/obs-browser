@@ -93,6 +93,10 @@ bool BrowserClient::OnProcessMessageReceived(
 	const std::string &name = message->GetName();
 	Json json;
 
+	if (!bs) {
+		return false;
+	}
+
 	if (name == "getCurrentScene") {
 		json = Json::object {
 			{"name", obs_source_get_name(bs->source)},
@@ -127,6 +131,10 @@ bool BrowserClient::GetViewRect(
 		CefRefPtr<CefBrowser>,
 		CefRect &rect)
 {
+	if (!bs) {
+		return false;
+	}
+
 	rect.Set(0, 0, bs->width, bs->height);
 	return true;
 }
@@ -148,6 +156,10 @@ void BrowserClient::OnPaint(
 		return;
 	}
 #endif
+
+	if (!bs) {
+		return;
+	}
 
 	if (bs->width != width || bs->height != height) {
 		obs_enter_graphics();
@@ -181,6 +193,10 @@ void BrowserClient::OnAcceleratedPaint(
 		void *shared_handle,
 		uint64)
 {
+	if (!bs) {
+		return false;
+	}
+
 	if (shared_handle != last_handle) {
 		obs_enter_graphics();
 		gs_texture_destroy(texture);
@@ -214,6 +230,10 @@ void BrowserClient::OnLoadEnd(
 		CefRefPtr<CefFrame> frame,
 		int)
 {
+	if (!bs) {
+		return;
+	}
+
 	if (frame->IsMain()) {
 		std::string base64EncodedCSS = base64_encode(bs->css);
 
