@@ -42,8 +42,13 @@ public:
 	CefRect popupRect;
 	CefRect originalPopupRect;
 
+	// This flag is checked by BrowserClient::OnPaint and
+	// BrowserClient::OnAcceleratedPaint
+	// If its value is false, the paint events are discarded.
+	bool isValid;
+
 	inline BrowserClient(BrowserSource *bs_, bool sharing_avail)
-		: bs(bs_)
+		: bs(bs_), isValid(true)
 	{
 		sharing_available = sharing_avail;
 	}

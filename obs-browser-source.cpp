@@ -126,6 +126,13 @@ void BrowserSource::DestroyBrowser(bool async)
 {
 	ExecuteOnBrowser([this] ()
 	{
+		// Mark the BrowserClient as INVALID
+		//
+		// This is checked by BrowserClient::OnPaint and BrowserClient::OnAcceleratedPaint
+		static_cast<BrowserClient*>(
+			cefBrowser->GetHost()->GetClient().get())->isValid =
+				false;
+
 		/*
 		 * This stops rendering
 		 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
