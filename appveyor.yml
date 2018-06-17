@@ -1,0 +1,152 @@
+version: '{build}'
+image: Previous Visual Studio 2017
+configuration: RelWithDebInfo
+clone_folder: c:\local\source
+init:
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+install:
+- cmd: >-
+    cinst -y git
+
+    cinst -y wget
+
+    cinst -y cmake
+
+    cinst -y archiver
+
+    cinst -y curl
+
+
+    if not exist c:\local md c:\local
+
+
+    git clone --recursive https://github.com/jp9000/obs-studio.git c:\local\obs-studio
+
+
+    cd /d c:\local\obs-studio
+
+    git submodule update --init --recursive
+
+    rd /s /q c:\local\obs-studio\plugins\obs-browser
+
+    cd /d c:\local
+
+
+    xcopy c:\local\source\*.* c:\local\obs-studio\plugins\obs-browser /S /E /I /Y
+
+
+    echo add_subdirectory(obs-browser) >c:\local\obs-studio\plugins\CMakeLists.txt
+
+
+    wget -O c:\local\cef32.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3396.1779.g36f9eab_windows32_minimal.tar.bz2" 2>&1 >nul:
+
+
+    wget -O c:\local\cef64.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3396.1779.g36f9eab_windows64_minimal.tar.bz2" 2>&1 >nul:
+
+
+    archiver open c:\local\cef32.tar.bz2 c:\local
+
+    archiver open c:\local\cef64.tar.bz2 c:\local
+
+
+    if exist dependencies2017.zip (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -z dependencies2017.zip) else (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -C -)
+
+
+    if exist vlc.zip (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -z vlc.zip) else (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -C -)
+
+
+    7z x dependencies2017.zip -odependencies2017
+
+    7z x vlc.zip -ovlc
+
+
+    set DepsPath32=c:\local\dependencies2017\win32
+
+    set DepsPath64=c:\local\dependencies2017\win64
+
+    set VLCPath=c:\local\vlc
+
+    set QTDIR32=C:\Qt\5.10.1\msvc2015
+
+    set QTDIR64=C:\Qt\5.10.1\msvc2017_64
+
+    set build_config=RelWithDebInfo
+cache:
+- c:\local\dependencies2017.zip
+- c:\local\vlc.zip
+build_script:
+- cmd: >-
+    echo "#define STREAMELEMENTS_PLUGIN_VERSION " + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") >c:\local\generate_version.ps1
+
+    powershell -File c:\local\generate_version.ps1 >c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp
+
+
+    cd /d c:\local\cef_binary_3.3396.1779.g36f9eab_windows32_minimal
+
+    mkdir build
+
+    cd build
+
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" ..
+
+    msbuild cef.sln /p:Configuration=Release /t:Build
+
+
+    cd /d c:\local\cef_binary_3.3396.1779.g36f9eab_windows64_minimal
+
+    mkdir build
+
+    cd build
+
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" ..
+
+    msbuild cef.sln /p:Configuration=Release /t:Build
+
+
+    cd /d c:\local\obs-studio
+
+    mkdir build build32 build64
+
+
+    cd /d c:\local\obs-studio\build32
+
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3396.1779.g36f9eab_windows32_minimal ..
+
+
+    cd /d c:\local\obs-studio\build64
+
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3396.1779.g36f9eab_windows64_minimal ..
+
+
+    cd /d c:\local\obs-studio\build32
+
+    msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
+
+    cd /d c:\local\obs-studio\build64
+
+    msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
+
+
+    cd /d c:\local\obs-studio\build32\rundir\%build_config%
+
+    archiver make c:\local\source\build32.zip .
+
+
+    cd /d c:\local\obs-studio\build64\rundir\%build_config%
+
+    archiver make c:\local\source\build64.zip .
+test: off
+artifacts:
+- path: build32.zip
+  name: build32
+- path: build64.zip
+  name: build64
+deploy:
+- provider: S3
+  access_key_id: AKIAJESHQW2DGHPN57KQ
+  secret_access_key:
+    secure: lhOyqT4/E0Oqv8BOQR81rx/SweOIbDELTYW7iJTqRz5shmkZ8eXMCgFzcIuXyvpB
+  bucket: obs-builds
+  folder: obs-browser/latest
+  artifact: build32,build64
+  max_error_retry: 5
