@@ -56,6 +56,10 @@ BrowserSource::~BrowserSource()
 
 void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
 {
+	if (!cefBrowser) {
+		return;
+	}
+
 	if (!async) {
 		os_event_t *finishedEvent;
 		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
@@ -128,25 +132,32 @@ bool BrowserSource::CreateBrowser()
 
 void BrowserSource::DestroyBrowser(bool async)
 {
-	ExecuteOnBrowser([this] ()
+	auto destroyFunc = [this]()
 	{
 		CefRefPtr<CefClient> client =
-				cefBrowser->GetHost()->GetClient();
+			cefBrowser->GetHost()->GetClient();
 		BrowserClient *bc =
-				reinterpret_cast<BrowserClient*>(client.get());
+			reinterpret_cast<BrowserClient*>(client.get());
 		if (bc) {
 			bc->bs = nullptr;
 		}
 
 		/*
-		 * This stops rendering
-		 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
-		 * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
-		 */
+		* This stops rendering
+		* http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
+		* https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
+		*/
 		cefBrowser->GetHost()->WasHidden(true);
 		cefBrowser->GetHost()->CloseBrowser(true);
 		cefBrowser = nullptr;
-	}, async);
+	};
+
+	if (CefCurrentlyOn(TID_UI) && !async) {
+		destroyFunc();
+	}
+	else {
+		ExecuteOnBrowser(destroyFunc, async);
+	}
 }
 
 void BrowserSource::SendMouseClick(
@@ -396,7 +407,7 @@ void BrowserSource::Render()
 #endif
 }
 
-static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func)
+static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func, bool async = false)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
 
@@ -404,21 +415,59 @@ static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func)
 	while (bs) {
 		BrowserSource *bsw =
 			reinterpret_cast<BrowserSource *>(bs);
-		bsw->ExecuteOnBrowser([&] () {func(bsw);});
+		bsw->ExecuteOnBrowser([=] () {func(bsw);}, async);
 		bs = bs->next;
 	}
 }
 
 void DispatchJSEvent(const char *eventName, const char *jsonString)
 {
-	ExecuteOnAllBrowsers([&] (BrowserSource *bsw)
+	class local_context: public CefBaseRefCounted {
+	public:
+		std::string eventName;
+		char* jsonString = nullptr;
+
+		~local_context()
+		{
+			if (jsonString) delete jsonString;
+		}
+
+		IMPLEMENT_REFCOUNTING(local_context)
+	};
+
+	CefRefPtr<local_context> context = new local_context();
+
+	context->AddRef();
+
+	context->eventName = eventName;
+
+	if (jsonString)
+		context->jsonString = strdup(jsonString);
+
+	auto func = [context](BrowserSource *bsw)
 	{
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("DispatchJSEvent");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
-		args->SetString(0, eventName);
-		args->SetString(1, jsonString);
+		args->SetString(0, context->eventName);
+		args->SetString(1, context->jsonString);
 		bsw->cefBrowser->SendProcessMessage(PID_RENDERER, msg);
-	});
+
+		context->Release();
+	};
+
+	// Execute on all browsers
+	lock_guard<mutex> lock(browser_list_mutex);
+
+	BrowserSource *bs = first_browser;
+	while (bs) {
+		BrowserSource *bsw =
+			reinterpret_cast<BrowserSource *>(bs);
+		context->AddRef();
+		bsw->ExecuteOnBrowser([=]() {func(bsw); }, true);
+		bs = bs->next;
+	}
+
+	context->Release();
 }

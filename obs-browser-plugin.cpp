@@ -22,6 +22,7 @@
 #include <util/util.hpp>
 #include <util/dstr.hpp>
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 #include <thread>
 #include <mutex>
 
@@ -49,6 +50,7 @@ using namespace json11;
 static thread manager_thread;
 
 static int adapterCount = 0;
+#include "streamelements/StreamElementsGlobalStateManager.hpp"
 
 /* ========================================================================= */
 
@@ -158,6 +160,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	return props;
 }
 
+static os_event_t* s_BrowserManagerThreadInitializedEvent = nullptr;
+
 static void BrowserManagerThread(void)
 {
 	string path = obs_get_module_binary_path(obs_current_module());
@@ -195,6 +199,9 @@ static void BrowserManagerThread(void)
 	CefInitialize(args, settings, app, nullptr);
 	CefRegisterSchemeHandlerFactory("http", "absolute",
 			new BrowserSchemeHandlerFactory());
+
+	os_event_signal(s_BrowserManagerThreadInitializedEvent);
+
 	CefRunMessageLoop();
 	CefShutdown();
 }
@@ -402,13 +409,31 @@ bool obs_module_load(void)
 #ifdef _WIN32
 	EnumAdapterCount();
 #endif
+	// Enable CEF high DPI support
+	CefEnableHighDPISupport();
+
+	os_event_init(&s_BrowserManagerThreadInitializedEvent, OS_EVENT_TYPE_AUTO);
+	obs_browser_initialize(void);
+	os_event_wait(s_BrowserManagerThreadInitializedEvent);
+	os_event_destroy(s_BrowserManagerThreadInitializedEvent);
+	s_BrowserManagerThreadInitializedEvent = nullptr;
+
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
+
+	// Initialize StreamElements plug-in
+	StreamElementsGlobalStateManager::GetInstance()->Initialize((QMainWindow*)obs_frontend_get_main_window());
+
 	return true;
 }
 
 void obs_module_unload(void)
 {
+	obs_frontend_remove_event_callback(handle_obs_frontend_event, nullptr);
+
+	// Shutdown StreamElements plug-in
+	StreamElementsGlobalStateManager::GetInstance()->Shutdown();
+
 	if (manager_thread.joinable()) {
 		while (!QueueCEFTask([] () {CefQuitMessageLoop();}))
 			os_sleep_ms(5);

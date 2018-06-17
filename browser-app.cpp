@@ -19,6 +19,7 @@
 #include "browser-app.hpp"
 #include "browser-version.h"
 #include <json11/json11.hpp>
+#include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
 
 using namespace json11;
 
@@ -60,7 +61,7 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 			"no-user-gesture-required");
 }
 
-void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser>,
+void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 		CefRefPtr<CefFrame>,
 		CefRefPtr<CefV8Context> context)
 {
@@ -84,6 +85,12 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser>,
 		CefV8Value::CreateFunction("getStatus", this);
 	obsStudioObj->SetValue("getStatus",
 			getStatus, V8_PROPERTY_ATTRIBUTE_NONE);
+
+	///
+	// signal CefClient that render process context has been created
+	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("CefRenderProcessHandler::OnContextCreated");
+	//CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
+	browser->SendProcessMessage(PID_BROWSER, msg);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -162,7 +169,8 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
 		context->Exit();
 
-	} else if (message->GetName() == "executeCallback") {
+	}
+	else if (message->GetName() == "executeCallback") {
 		CefRefPtr<CefV8Context> context =
 			browser->GetMainFrame()->GetV8Context();
 		CefRefPtr<CefV8Value> retval;
@@ -183,7 +191,7 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		CefV8ValueList args;
 
 		context->Eval(script, browser->GetMainFrame()->GetURL(),
-				0, retval, exception);
+			0, retval, exception);
 
 		args.push_back(retval);
 
@@ -192,7 +200,135 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		context->Exit();
 
 		callbackMap.erase(callbackID);
+	}
+	else if (message->GetName() == "CefRenderProcessHandler::BindJavaScriptProperties") {
+		CefRefPtr<CefV8Context> context =
+			browser->GetMainFrame()->GetV8Context();
 
+		context->Enter();
+
+		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
+
+		CefString containerName = args->GetValue(0)->GetString();
+		CefString root_json_string = args->GetValue(1)->GetString();
+		CefRefPtr<CefDictionaryValue> root =
+			CefParseJSON(root_json_string, JSON_PARSER_ALLOW_TRAILING_COMMAS)->GetDictionary();
+
+		CefDictionaryValue::KeyList propsList;
+		if (root->GetKeys(propsList)) {
+			for (auto propName : propsList) {
+				// Get/create function container
+				CefRefPtr<CefV8Value> containerObj = nullptr;
+
+				if (!globalObj->HasValue(containerName)) {
+					containerObj = CefV8Value::CreateObject(0, 0);
+
+					globalObj->SetValue(containerName,
+						containerObj, V8_PROPERTY_ATTRIBUTE_NONE);
+				}
+				else {
+					containerObj = globalObj->GetValue(containerName);
+				}
+
+				std::string propFullName = "window.";
+				propFullName.append(containerName);
+				propFullName.append(".");
+				propFullName.append(propName);
+
+				CefRefPtr<CefV8Value> propValue;
+
+				switch (root->GetType(propName)) {
+				case VTYPE_NULL:
+					propValue = CefV8Value::CreateNull();
+					break;
+				case VTYPE_BOOL:
+					propValue = CefV8Value::CreateBool(root->GetBool(propName));
+					break;
+				case VTYPE_INT:
+					propValue = CefV8Value::CreateInt(root->GetInt(propName));
+					break;
+				case VTYPE_DOUBLE:
+					propValue = CefV8Value::CreateDouble(root->GetDouble(propName));
+					break;
+				case VTYPE_STRING:
+					propValue = CefV8Value::CreateString(root->GetString(propName));
+					break;
+				// case VTYPE_BINARY:
+				// case VTYPE_DICTIONARY:
+				// case VTYPE_LIST:
+				// case VTYPE_INVALID:
+				default:
+					propValue = CefV8Value::CreateUndefined();
+					break;
+				}
+
+				// Create function
+				containerObj->SetValue(propName,
+					propValue,
+					V8_PROPERTY_ATTRIBUTE_NONE);
+			}
+		}
+
+		context->Exit();
+	}
+	else if (message->GetName() == "CefRenderProcessHandler::BindJavaScriptFunctions") {
+		CefRefPtr<CefV8Context> context =
+			browser->GetMainFrame()->GetV8Context();
+
+		context->Enter();
+
+		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
+
+		CefString containerName = args->GetValue(0)->GetString();
+		CefString root_json_string = args->GetValue(1)->GetString();
+		CefRefPtr<CefDictionaryValue> root =
+			CefParseJSON(root_json_string, JSON_PARSER_ALLOW_TRAILING_COMMAS)->GetDictionary();
+
+		CefDictionaryValue::KeyList functionsList;
+		if (root->GetKeys(functionsList)) {
+			for (auto functionName : functionsList) {
+				CefRefPtr<CefDictionaryValue> function =
+					root->GetDictionary(functionName);
+
+				auto messageName = function->GetString("message");
+
+				if (!messageName.empty()) {
+					// Get/create function container
+					CefRefPtr<CefV8Value> containerObj = nullptr;
+
+					if (!globalObj->HasValue(containerName)) {
+						containerObj = CefV8Value::CreateObject(0, 0);
+
+						globalObj->SetValue(containerName,
+							containerObj, V8_PROPERTY_ATTRIBUTE_NONE);
+					}
+					else {
+						containerObj = globalObj->GetValue(containerName);
+					}
+
+					std::string functionFullName = "window.";
+					functionFullName.append(containerName);
+					functionFullName.append(".");
+					functionFullName.append(functionName);
+
+					// Create function
+					containerObj->SetValue(functionName,
+						CefV8Value::CreateFunction(functionFullName, this),
+						V8_PROPERTY_ATTRIBUTE_NONE);
+
+
+					// Add function name -> metadata map
+					APIFunctionItem item;
+
+					item.message = messageName;
+					item.fullName = functionFullName;
+
+					cefClientFunctions[functionFullName] = item;
+				}
+			}
+		}
+
+		context->Exit();
 	} else {
 		return false;
 	}
@@ -221,7 +357,8 @@ bool BrowserApp::Execute(const CefString &name,
 			CefV8Context::GetCurrentContext()->GetBrowser();
 		browser->SendProcessMessage(PID_BROWSER, msg);
 
-	} else if (name == "getStatus") {
+	}
+	else if (name == "getStatus") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
@@ -235,7 +372,55 @@ bool BrowserApp::Execute(const CefString &name,
 		CefRefPtr<CefBrowser> browser =
 			CefV8Context::GetCurrentContext()->GetBrowser();
 		browser->SendProcessMessage(PID_BROWSER, msg);
+	} else if (cefClientFunctions.count(name)) {
+		/* dynamic API function binding from CefClient, see "CefRenderProcessHandler::BindJavaScriptFunctions"
+		   message for more details */
 
+		CefRefPtr<CefV8Context> context = CefV8Context::GetCurrentContext();
+		CefRefPtr<CefBrowser> browser = context->GetBrowser();
+
+		context->Enter();
+
+		APIFunctionItem item = cefClientFunctions[name];
+
+		CefRefPtr<CefProcessMessage> msg =
+			CefProcessMessage::Create(item.message);
+
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+		// Set header
+		args->SetInt(args->GetSize(), 4); // header length, including first arg
+		args->SetString(args->GetSize(), item.message);
+		args->SetString(args->GetSize(), item.fullName);
+		args->SetString(args->GetSize(), name);
+
+		// Convert args except functions to JSON
+		for (int i = 0; i < arguments.size() && !arguments[i]->IsFunction(); ++i) {
+			CefV8ValueList JSON_value_list;
+			JSON_value_list.push_back(arguments[i]);
+
+			// Call global JSON.stringify JS function to stringify JSON value
+			CefRefPtr<CefV8Value> JSON_string_value =
+				context->GetGlobal()->GetValue("JSON")->GetValue("stringify")->ExecuteFunction(NULL, JSON_value_list);
+
+			args->SetString(args->GetSize(), JSON_string_value->GetStringValue());
+		}
+
+		if (arguments.size() > 0 && arguments[arguments.size() - 1]->IsFunction()) {
+			callbackId++;
+			callbackMap[callbackId] = arguments[arguments.size() - 1];
+
+			args->SetInt(args->GetSize(), callbackId);
+		} else {
+			args->SetInt(args->GetSize(), -1); // invalid callback ID
+		}
+
+		// Send message to CefClient
+		browser->SendProcessMessage(PID_BROWSER, msg);
+
+		context->Exit();
+
+		return true;
 	} else {
 		/* Function does not exist. */
 		return false;
