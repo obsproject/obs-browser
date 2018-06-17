@@ -1,14 +1,27 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(obs-browser)
 
+set(CMAKE_PREFIX_PATH "${QTDIR}")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
 
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/UI/obs-frontend-api")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
 find_package(CEF QUIET)
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Widgets REQUIRED)
+
+include_directories(SYSTEM
+	${Qt5Core_INCLUDES}
+	${Qt5Widgets_INCLUDES}
+)
+
+#qt5_wrap_ui(NetworkDialog "networkdialog.ui")
+qt5_add_resources(obs-browser-streamelements_QRC_SOURCES "streamelements/streamelements.qrc")
 
 if(NOT CEF_FOUND)
 	message(STATUS "CEF Not found -- obs-browser plugin disabled.")
@@ -29,6 +42,9 @@ include_directories("${CEF_ROOT_DIR}")
 set(obs-browser_LIBRARIES
 	libobs
 	obs-frontend-api
+	Qt5::Core
+	Qt5::Widgets
+	w32-pthreads
 	)
 
 list(APPEND obs-browser_LIBRARIES
@@ -64,6 +80,21 @@ set(obs-browser_SOURCES
 	deps/json11/json11.cpp
 	deps/base64/base64.cpp
 	deps/wide-string.cpp
+	streamelements/Version.cpp
+	streamelements/StreamElementsAsyncTaskQueue.cpp
+	streamelements/StreamElementsCefClient.cpp
+	streamelements/StreamElementsBrowserWidget.cpp
+	streamelements/StreamElementsBrowserWidgetManager.cpp
+	streamelements/StreamElementsBandwidthTestClient.cpp
+	streamelements/StreamElementsObsBandwidthTestClient.cpp
+	streamelements/StreamElementsWidgetManager.cpp
+	streamelements/StreamElementsObsAppMonitor.cpp
+	streamelements/StreamElementsApiMessageHandler.cpp
+	streamelements/StreamElementsConfig.cpp
+	streamelements/StreamElementsGlobalStateManager.cpp
+	streamelements/StreamElementsMenuManager.cpp
+	streamelements/StreamElementsBandwidthTestManager.cpp
+	streamelements/StreamElementsOutputSettingsManager.cpp
 	)
 set(obs-browser_HEADERS
 	obs-browser-source.hpp
@@ -75,11 +106,30 @@ set(obs-browser_HEADERS
 	deps/base64/base64.hpp
 	deps/wide-string.hpp
 	cef-headers.hpp
+	streamelements/Version.hpp
+	streamelements/Version.generated.hpp
+	streamelements/StreamElementsUtils.hpp
+	streamelements/StreamElementsAsyncTaskQueue.hpp
+	streamelements/StreamElementsCefClient.hpp
+	streamelements/StreamElementsBrowserWidget.hpp
+	streamelements/StreamElementsBrowserWidgetManager.hpp
+	streamelements/StreamElementsBandwidthTestClient.hpp
+	streamelements/StreamElementsObsBandwidthTestClient.hpp
+	streamelements/StreamElementsWidgetManager.hpp
+	streamelements/StreamElementsObsAppMonitor.hpp
+	streamelements/StreamElementsBrowserMessageHandler.hpp
+	streamelements/StreamElementsApiMessageHandler.hpp
+	streamelements/StreamElementsConfig.hpp
+	streamelements/StreamElementsGlobalStateManager.hpp
+	streamelements/StreamElementsMenuManager.hpp
+	streamelements/StreamElementsBandwidthTestManager.hpp
+	streamelements/StreamElementsOutputSettingsManager.hpp
 	)
 
 add_library(obs-browser MODULE
 	${obs-browser_SOURCES}
 	${obs-browser_HEADERS}
+	${obs-browser-streamelements_QRC_SOURCES}
 	)
 
 target_link_libraries(obs-browser

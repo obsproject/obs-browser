@@ -22,6 +22,7 @@
 #include <util/util.hpp>
 #include <util/dstr.hpp>
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 #include <thread>
 #include <mutex>
 
@@ -39,6 +40,8 @@ using namespace std;
 using namespace json11;
 
 static thread manager_thread;
+
+#include "streamelements/StreamElementsGlobalStateManager.hpp"
 
 /* ========================================================================= */
 
@@ -140,6 +143,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	return props;
 }
 
+static os_event_t* s_BrowserManagerThreadInitializedEvent = nullptr;
+
 static void BrowserManagerThread(void)
 {
 	string path = obs_get_module_binary_path(obs_current_module());
@@ -181,6 +186,9 @@ static void BrowserManagerThread(void)
 	CefInitialize(args, settings, app, nullptr);
 	CefRegisterSchemeHandlerFactory("http", "absolute",
 			new BrowserSchemeHandlerFactory());
+
+	os_event_signal(s_BrowserManagerThreadInitializedEvent);
+
 	CefRunMessageLoop();
 	CefShutdown();
 }
@@ -203,11 +211,6 @@ void RegisterBrowserSource()
 	};
 	info.create = [] (obs_data_t *settings, obs_source_t *source) -> void *
 	{
-		static bool manager_initialized = false;
-		if (!os_atomic_set_bool(&manager_initialized, true)) {
-			manager_thread = thread(BrowserManagerThread);
-		}
-
 		return new BrowserSource(settings, source);
 	};
 	info.destroy = [] (void *data)
@@ -350,13 +353,31 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 
 bool obs_module_load(void)
 {
+	// Enable CEF high DPI support
+	CefEnableHighDPISupport();
+
+	os_event_init(&s_BrowserManagerThreadInitializedEvent, OS_EVENT_TYPE_AUTO);
+	manager_thread = thread(BrowserManagerThread);
+	os_event_wait(s_BrowserManagerThreadInitializedEvent);
+	os_event_destroy(s_BrowserManagerThreadInitializedEvent);
+	s_BrowserManagerThreadInitializedEvent = nullptr;
+
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
+
+	// Initialize StreamElements plug-in
+	StreamElementsGlobalStateManager::GetInstance()->Initialize((QMainWindow*)obs_frontend_get_main_window());
+
 	return true;
 }
 
 void obs_module_unload(void)
 {
+	obs_frontend_remove_event_callback(handle_obs_frontend_event, nullptr);
+
+	// Shutdown StreamElements plug-in
+	StreamElementsGlobalStateManager::GetInstance()->Shutdown();
+
 	if (manager_thread.joinable()) {
 		while (!QueueCEFTask([] () {CefQuitMessageLoop();}))
 			os_sleep_ms(5);
