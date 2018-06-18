@@ -15,8 +15,6 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-
-#include <obs-frontend-api.h>
 #include <util/threading.h>
 #include <util/platform.h>
 #include <util/util.hpp>
@@ -31,6 +29,10 @@
 
 #include "json11/json11.hpp"
 #include "cef-headers.hpp"
+
+#if defined(USE_OBS_FRONTEND_API)
+#include <obs-frontend-api.h>
+#endif
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
@@ -299,6 +301,7 @@ void RegisterBrowserSource()
 
 extern void DispatchJSEvent(const char *eventName, const char *jsonString);
 
+#ifdef USE_OBS_FRONTEND_API
 static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 {
 	switch (event) {
@@ -347,11 +350,16 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	default:;
 	}
 }
+#endif
 
 bool obs_module_load(void)
 {
 	RegisterBrowserSource();
+
+	#ifdef USE_OBS_FRONTEND_API
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
+	#endif
+
 	return true;
 }
 
