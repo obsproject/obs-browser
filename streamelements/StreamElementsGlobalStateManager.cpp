@@ -162,7 +162,7 @@ void StreamElementsGlobalStateManager::Reset()
 	GetWidgetManager()->HideNotificationBar();
 	GetWidgetManager()->RemoveAllDockWidgets();
 	GetWidgetManager()->DestroyCurrentCentralBrowserWidget();
-	GetWidgetManager()->PushCentralBrowserWidget(obs_module_text("StreamElementsOnBoardingURL"), nullptr);
+	GetWidgetManager()->PushCentralBrowserWidget(obs_module_text("StreamElements.OnBoarding.URL"), nullptr);
 
 	StreamElementsConfig::GetInstance()->SetStartupFlags(StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
 
