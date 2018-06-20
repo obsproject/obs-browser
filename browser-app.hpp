@@ -25,6 +25,7 @@ class BrowserApp : public CefApp,
                    public CefRenderProcessHandler,
                    public CefV8Handler {
 
+private:
 	void ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 			const char *functionName,
 			CefV8ValueList arguments);
@@ -34,6 +35,15 @@ class BrowserApp : public CefApp,
 	bool shared_texture_available;
 	CallbackMap callbackMap;
 	int callbackId;
+
+	class APIFunctionItem
+	{
+	public:
+		std::string message;
+		std::string fullName;
+	};
+
+	std::map<std::string, APIFunctionItem> cefClientFunctions;
 
 public:
 	inline BrowserApp(bool shared_texture_available_ = false)
