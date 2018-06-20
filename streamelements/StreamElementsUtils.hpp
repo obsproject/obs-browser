@@ -86,3 +86,20 @@ inline std::string DockWidgetAreaToString(const Qt::DockWidgetArea area)
 		return "floating";
 	}
 }
+
+inline std::string GetCommandLineOptionValue(const std::string key)
+{
+	QStringList args = QCoreApplication::instance()->arguments();
+
+	std::string search = "--" + key + "=";
+
+	for (int i = 0; i < args.size(); ++i) {
+		std::string arg = args.at(i).toStdString();
+
+		if (arg.substr(0, search.size()) == search) {
+			return arg.substr(search.size());
+		}
+	}
+
+	return std::string();
+}
