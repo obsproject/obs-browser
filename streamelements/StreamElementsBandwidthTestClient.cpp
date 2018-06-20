@@ -276,8 +276,9 @@ void StreamElementsBandwidthTestClient::TestServerBitsPerSecondAsync(
 	context->authPassword = authPassword != nullptr ? authPassword : "";
 	context->maxBitrateBitsPerSecond = maxBitrateBitsPerSecond;
 
-	if (bindToIP)
+	if (bindToIP) {
 		context->bindToIP = bindToIP;
+	}
 
 	context->durationSeconds = durationSeconds;
 	context->callback = callback;

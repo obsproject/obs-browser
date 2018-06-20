@@ -125,7 +125,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_menuManager->Update();
 	}, &context);
 
-	QtPostTask([](void* data) {
+	QtPostTask([](void* /*data*/) {
 		// Update visible state
 		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
 	}, this);
@@ -154,6 +154,12 @@ void StreamElementsGlobalStateManager::Shutdown()
 
 void StreamElementsGlobalStateManager::Reset()
 {
+	std::string onBoardingURL = GetCommandLineOptionValue("streamelements-onboarding-url");
+
+	if (!onBoardingURL.size()) {
+		onBoardingURL = obs_module_text("StreamElements.OnBoarding.URL");
+	}
+
 	CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
 		CefString(""), // URL
 		CefString(""), // Cookie name
@@ -162,7 +168,7 @@ void StreamElementsGlobalStateManager::Reset()
 	GetWidgetManager()->HideNotificationBar();
 	GetWidgetManager()->RemoveAllDockWidgets();
 	GetWidgetManager()->DestroyCurrentCentralBrowserWidget();
-	GetWidgetManager()->PushCentralBrowserWidget(obs_module_text("StreamElements.OnBoarding.URL"), nullptr);
+	GetWidgetManager()->PushCentralBrowserWidget(onBoardingURL.c_str(), nullptr);
 
 	StreamElementsConfig::GetInstance()->SetStartupFlags(StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
 

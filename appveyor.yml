@@ -3,6 +3,7 @@ image: Previous Visual Studio 2017
 configuration: RelWithDebInfo
 clone_folder: c:\local\source
 init:
+- cmd: set
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 install:
 - cmd: >-

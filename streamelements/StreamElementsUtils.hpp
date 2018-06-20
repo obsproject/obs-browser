@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <cstdio>
+#include <cstdarg>
 
 #include <functional>
 #include <QTimer>
@@ -13,12 +14,24 @@
 #include <util/threading.h>
 
 template<typename ... Args>
-std::string FormatString(const std::string& format, Args ... args)
+std::string FormatString(const char* format, ...)
 {
-	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
-	std::unique_ptr<char[]> buf(new char[size]);
-	snprintf(buf.get(), size, format.c_str(), args ...);
-	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+	int size = 512;
+	char* buffer = 0;
+	buffer = new char[size];
+	va_list vl;
+	va_start(vl, format);
+	int nsize = vsnprintf(buffer, size, format, vl);
+	if (size <= nsize) { //fail delete buffer and try again
+		delete[] buffer;
+		buffer = 0;
+		buffer = new char[nsize + 1]; //+1 for /0
+		nsize = vsnprintf(buffer, size, format, vl);
+	}
+	std::string ret(buffer);
+	va_end(vl);
+	delete[] buffer;
+	return ret;
 }
 
 inline static void QtPostTask(void(*func)(void*), void* const data)
@@ -85,4 +98,21 @@ inline std::string DockWidgetAreaToString(const Qt::DockWidgetArea area)
 	default:
 		return "floating";
 	}
+}
+
+inline static std::string GetCommandLineOptionValue(const std::string key)
+{
+	QStringList args = QCoreApplication::instance()->arguments();
+
+	std::string search = "--" + key + "=";
+
+	for (int i = 0; i < args.size(); ++i) {
+		std::string arg = args.at(i).toStdString();
+
+		if (arg.substr(0, search.size()) == search) {
+			return arg.substr(search.size());
+		}
+	}
+
+	return std::string();
 }

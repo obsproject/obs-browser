@@ -23,7 +23,7 @@ const char* MSG_BIND_JAVASCRIPT_PROPS = "CefRenderProcessHandler::BindJavaScript
 
 bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 	CefRefPtr<CefBrowser> browser,
-	CefProcessId source_process,
+	CefProcessId /*source_process*/,
 	CefRefPtr<CefProcessMessage> message)
 {
 	const std::string &name = message->GetName();
