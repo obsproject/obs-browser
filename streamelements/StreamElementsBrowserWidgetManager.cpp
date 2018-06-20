@@ -150,9 +150,9 @@ std::string StreamElementsBrowserWidgetManager::AddDockBrowserWidget(CefRefPtr<C
 
 			return id;
 		}
-
-		return "";
 	}
+
+	return "";
 }
 
 bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
@@ -169,6 +169,8 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 
 	if (AddDockWidget(id, title, widget, area, allowedAreas, features)) {
 		m_browserWidgets[id] = widget;
+
+		return true;
 	} else {
 		return false;
 	}
