@@ -125,7 +125,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_menuManager->Update();
 	}, &context);
 
-	QtPostTask([](void* data) {
+	QtPostTask([](void* /*data*/) {
 		// Update visible state
 		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
 	}, this);

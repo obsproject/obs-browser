@@ -319,7 +319,7 @@ bool StreamElementsOutputSettingsManager::SetEncodingSettings(CefRefPtr<CefValue
 		std::string profileName = obs_frontend_get_current_profile();
 		char* profileParentFolder = obs_module_get_config_path(obs_current_module(), "../../basic/profiles");
 
-		std::string streamEncoderJsonPath = FormatString("%s/%s/streamEncoder.json", profileParentFolder, profileName);
+		std::string streamEncoderJsonPath = FormatString("%s/%s/streamEncoder.json", profileParentFolder, profileName.c_str());
 		bfree(profileParentFolder);
 
 		obs_data_t* settings = obs_data_create_from_json_file_safe(streamEncoderJsonPath.c_str(), "bak");

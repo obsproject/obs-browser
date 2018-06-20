@@ -18,9 +18,9 @@ using namespace json11;
 /* ========================================================================= */
 
 void StreamElementsCefClient::OnLoadEnd(
-	CefRefPtr<CefBrowser> browser,
+	CefRefPtr<CefBrowser> /*browser*/,
 	CefRefPtr<CefFrame> frame,
-	int httpStatusCode)
+	int /*httpStatusCode*/)
 {
 	if (m_executeJavaScriptCodeOnLoad.empty() || !frame->IsMain()) {
 		return;
