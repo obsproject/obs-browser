@@ -135,11 +135,15 @@ std::string StreamElementsBrowserWidgetManager::AddDockBrowserWidget(CefRefPtr<C
 				QApplication::sendPostedEvents();
 
 				widget->setSizePolicy(sizePolicy);
+				widget->widget()->setSizePolicy(sizePolicy);
+
 				widget->setMinimumSize(requestWidth, requestHeight);
+				widget->widget()->setMinimumSize(requestWidth, requestHeight);
 
 				QApplication::sendPostedEvents();
 
 				widget->setMinimumSize(minWidth, minHeight);
+				widget->widget()->setMinimumSize(minWidth, minHeight);
 
 				if (left >= 0 || top >= 0) {
 					widget->move(left, top);
