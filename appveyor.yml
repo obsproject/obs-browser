@@ -140,20 +140,24 @@ build_script:
     cd /d c:\local\obs-studio\build64\rundir\%build_config%
 
     archiver make c:\local\source\build64.zip .
+
+    copy /Y c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp c:\local\source\streamelements\Version.generated.hpp
 test: off
 artifacts:
 - path: build32.zip
   name: build32
 - path: build64.zip
   name: build64
+- path: streamelements\Version.generated.hpp
+  name: version.generated.hpp
 deploy:
 - provider: S3
   access_key_id: AKIAJESHQW2DGHPN57KQ
   secret_access_key:
     secure: lhOyqT4/E0Oqv8BOQR81rx/SweOIbDELTYW7iJTqRz5shmkZ8eXMCgFzcIuXyvpB
   bucket: obs-builds
-  folder: obs-browser/latest
-  artifact: build32,build64
+  folder: obs-browser/latest/windows
+  artifact: build32,build64,version.generated.hpp
   max_error_retry: 5
   on:
     branch: master
