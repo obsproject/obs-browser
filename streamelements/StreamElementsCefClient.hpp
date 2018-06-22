@@ -1,5 +1,7 @@
 #pragma once
 
+#include <obs-frontend-api.h>
+
 #include "cef-headers.hpp"
 
 #include "StreamElementsBrowserMessageHandler.hpp"
@@ -52,12 +54,14 @@ public:
 		const CefString& /*target_frame_name*/,
 		WindowOpenDisposition /*target_disposition*/,
 		bool /*user_gesture*/,
-		const CefPopupFeatures& /* popupFeatures */,
+		const CefPopupFeatures& /*popupFeatures*/,
 		CefWindowInfo& windowInfo,
 		CefRefPtr<CefClient>& client,
 		CefBrowserSettings& /*settings*/,
 		bool* /*no_javascript_access*/) override
 	{
+		windowInfo.parent_window = (cef_window_handle_t)obs_frontend_get_main_window_handle();
+
 		client = new StreamElementsCefClient("", nullptr);
 
 		// Allow pop-ups
