@@ -8,14 +8,15 @@ class StreamElementsCefClient :
 	public CefClient,
 	public CefLifeSpanHandler,
 	public CefContextMenuHandler,
-	public CefLoadHandler
+	public CefLoadHandler,
+	public CefDisplayHandler
 {
 private:
 	std::string m_containerId = "";
 	std::string m_locationArea = "unknown";
 
 public:
-	StreamElementsCefClient(std::string& executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler) :
+	StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler) :
 		m_executeJavaScriptCodeOnLoad(executeJavaScriptCodeOnLoad),
 		m_messageHandler(messageHandler)
 	{
@@ -36,6 +37,7 @@ public:
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override { return this; }
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
+	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
 
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
@@ -50,14 +52,16 @@ public:
 		const CefString& /*target_frame_name*/,
 		WindowOpenDisposition /*target_disposition*/,
 		bool /*user_gesture*/,
-		const CefPopupFeatures& /*popupFeatures*/,
-		CefWindowInfo& /*windowInfo*/,
-		CefRefPtr<CefClient>& /*client*/,
+		const CefPopupFeatures& /* popupFeatures */,
+		CefWindowInfo& windowInfo,
+		CefRefPtr<CefClient>& client,
 		CefBrowserSettings& /*settings*/,
 		bool* /*no_javascript_access*/) override
 	{
-		// Block pop-ups
-		return true;
+		client = new StreamElementsCefClient("", nullptr);
+
+		// Allow pop-ups
+		return false;
 	}
 
 	/* CefContextMenuHandler */
@@ -82,6 +86,13 @@ public:
 		ErrorCode errorCode,
 		const CefString& errorText,
 		const CefString& failedUrl) override;
+
+	/* CefDisplayHandler */
+	virtual void OnTitleChange(CefRefPtr<CefBrowser> browser,
+		const CefString& title) override;
+
+	virtual void OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
+		const std::vector<CefString>& icon_urls) override;
 
 public:
 	std::string GetExecuteJavaScriptCodeOnLoad()

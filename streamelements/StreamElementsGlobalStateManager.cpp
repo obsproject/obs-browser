@@ -1,4 +1,5 @@
 #include "StreamElementsGlobalStateManager.hpp"
+#include "StreamElementsApiMessageHandler.hpp"
 #include "StreamElementsUtils.hpp"
 #include "Version.hpp"
 
@@ -7,6 +8,23 @@
 #include <util/threading.h>
 
 #include <QPushButton>
+
+static class BrowserTask : public CefTask {
+public:
+	std::function<void()> task;
+
+	inline BrowserTask(std::function<void()> task_) : task(task_) {}
+	virtual void Execute() override { task(); }
+
+	IMPLEMENT_REFCOUNTING(BrowserTask);
+};
+
+static bool QueueCEFTask(std::function<void()> task)
+{
+	return CefPostTask(TID_UI, CefRefPtr<BrowserTask>(new BrowserTask(task)));
+}
+
+/* ========================================================================= */
 
 StreamElementsGlobalStateManager* StreamElementsGlobalStateManager::s_instance = nullptr;
 
@@ -256,3 +274,47 @@ bool StreamElementsGlobalStateManager::DeserializeStatusBarTemporaryMessage(CefR
 
 	return false;
 }
+
+bool StreamElementsGlobalStateManager::DeserializePopupWindow(CefRefPtr<CefValue> input)
+{
+	CefRefPtr<CefDictionaryValue> d = input->GetDictionary();
+
+	if (d.get() && d->HasKey("url")) {
+		std::string url = d->GetString("url").ToString();
+		std::string executeJavaScriptOnLoad;
+
+		bool enableHostApi = d->HasKey("enableHostApi") && d->GetBool("enableHostApi");
+
+		if (d->HasKey("executeJavaScriptOnLoad")) {
+			executeJavaScriptOnLoad = d->GetString("executeJavaScriptOnLoad");
+		}
+
+
+		QueueCEFTask([this, url, executeJavaScriptOnLoad, enableHostApi]() {
+			CefWindowInfo windowInfo;
+			windowInfo.SetAsPopup(0, ""); // Initial title
+
+			CefBrowserSettings cefBrowserSettings;
+
+			cefBrowserSettings.Reset();
+			cefBrowserSettings.javascript_close_windows = STATE_ENABLED;
+			cefBrowserSettings.local_storage = STATE_ENABLED;
+
+			CefRefPtr<StreamElementsCefClient> cefClient =
+				new StreamElementsCefClient(
+					executeJavaScriptOnLoad,
+					enableHostApi ? new StreamElementsApiMessageHandler() : nullptr);
+
+			CefRefPtr<CefBrowser> browser =
+				CefBrowserHost::CreateBrowserSync(
+					windowInfo,
+					cefClient,
+					url.c_str(),
+					cefBrowserSettings,
+					nullptr);
+		});
+	}
+
+	return false;
+}
+

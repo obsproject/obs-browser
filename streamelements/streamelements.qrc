@@ -2,6 +2,7 @@
 	<qresource prefix="/">
 		<file>images/logo.png</file>
 		<file>images/icon.png</file>
+		<file>images/icon.ico</file>
 		<file>images/logo_137x30.png</file>
 		<file>images/logo_100x30.png</file>
 
