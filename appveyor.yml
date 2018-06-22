@@ -1,12 +1,16 @@
 version: '{build}'
+branches:
+  only:
+  - master
 image: Previous Visual Studio 2017
 configuration: RelWithDebInfo
 clone_folder: c:\local\source
 init:
-- cmd: set
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 install:
 - cmd: >-
+    set
+    
     cinst -y git
 
     cinst -y wget
@@ -45,15 +49,15 @@ install:
     wget -O c:\local\cef64.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3396.1779.g36f9eab_windows64_minimal.tar.bz2" 2>&1 >nul:
 
 
-    archiver open c:\local\cef32.tar.bz2 c:\local
+    archiver open c:\local\cef32.tar.bz2 c:\local 2>&1 >nul:
 
-    archiver open c:\local\cef64.tar.bz2 c:\local
-
-
-    if exist dependencies2017.zip (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -z dependencies2017.zip) else (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -C -)
+    archiver open c:\local\cef64.tar.bz2 c:\local 2>&1 >nul:
 
 
-    if exist vlc.zip (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -z vlc.zip) else (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -C -)
+    if exist dependencies2017.zip (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -z dependencies2017.zip) else (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -C -) 2>&1 >nul:
+
+
+    if exist vlc.zip (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -z vlc.zip) else (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -C -) 2>&1 >nul:
 
 
     7z x dependencies2017.zip -odependencies2017
@@ -151,3 +155,7 @@ deploy:
   folder: obs-browser/latest
   artifact: build32,build64
   max_error_retry: 5
+  on:
+    branch: master
+on_success:
+- cmd: set
