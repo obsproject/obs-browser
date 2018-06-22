@@ -34,6 +34,7 @@ public:
 
 public:
 	bool DeserializeStatusBarTemporaryMessage(CefRefPtr<CefValue> input);
+	bool DeserializePopupWindow(CefRefPtr<CefValue> input);
 
 protected:
 	virtual void OnObsExit() override;

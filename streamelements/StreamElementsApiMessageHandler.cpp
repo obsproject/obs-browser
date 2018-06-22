@@ -443,4 +443,11 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		d->SetString("area", client->GetLocationArea());
 		d->SetString("url", browser->GetMainFrame()->GetURL().ToString());
 	API_HANDLER_END();
+
+	API_HANDLER_BEGIN("openPopupWindow");
+		if (args->GetSize()) {
+			result->SetBool(
+				StreamElementsGlobalStateManager::GetInstance()->DeserializePopupWindow(args->GetValue(0)));
+		}
+	API_HANDLER_END();
 }

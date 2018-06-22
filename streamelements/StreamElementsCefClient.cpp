@@ -1,10 +1,14 @@
 #include "StreamElementsCefClient.hpp"
+#include "StreamElementsUtils.hpp"
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
 #include <obs-frontend-api.h>
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
 #include <regex>
 #include <sstream>
+
+#include <QWindow>
+#include <QIcon>
 
 using namespace json11;
 
@@ -123,4 +127,20 @@ bool StreamElementsCefClient::OnProcessMessageReceived(
 	browser->SendProcessMessage(PID_RENDERER, msg);
 
 	return true;
+}
+
+void StreamElementsCefClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
+	const CefString& title)
+{
+	cef_window_handle_t handle = browser->GetHost()->GetWindowHandle();
+
+#ifdef WIN32
+	::SetWindowTextW(handle, title.ToWString().c_str());
+#endif
+}
+
+void StreamElementsCefClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
+	const std::vector<CefString>& icon_urls)
+{
+	// TODO: Implement
 }
