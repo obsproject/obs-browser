@@ -147,7 +147,7 @@ void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 
 		cefBrowserSettings.Reset();
 		cefBrowserSettings.javascript_close_windows = STATE_DISABLED;
-		cefBrowserSettings.local_storage = STATE_DISABLED;
+		cefBrowserSettings.local_storage = STATE_ENABLED;
 
 		CefRefPtr<StreamElementsCefClient> cefClient =
 			new StreamElementsCefClient(
