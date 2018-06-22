@@ -129,14 +129,39 @@ bool StreamElementsCefClient::OnProcessMessageReceived(
 	return true;
 }
 
+#include <QWidget>
 void StreamElementsCefClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 	const CefString& title)
 {
-	cef_window_handle_t handle = browser->GetHost()->GetWindowHandle();
+	struct local_context {
+		cef_window_handle_t handle;
+		CefString title;
+	};
 
-#ifdef WIN32
-	::SetWindowTextW(handle, title.ToWString().c_str());
-#endif
+	local_context* context = new local_context();
+	
+	context->handle = browser->GetHost()->GetWindowHandle();;
+	context->title = title;
+
+	QtPostTask([](void* data) {
+		local_context* context = (local_context*)data;
+
+		QWindow* win = QWindow::fromWinId((WId)context->handle);
+		win->setTitle(QString(context->title.ToString().c_str()));
+
+		// TODO: Figure why this does not work
+		//
+		// QIcon icon(":/images/icon.ico");
+		// win->setIcon(icon);
+
+		delete win;
+
+		delete context;
+	},
+	context);
+
+	//cef_window_handle_t handle = browser->GetHost()->GetWindowHandle();
+
 }
 
 void StreamElementsCefClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
