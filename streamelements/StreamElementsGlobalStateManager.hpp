@@ -21,7 +21,7 @@ public:
 	void Initialize(QMainWindow* obs_main_window);
 	void Shutdown();
 
-	void Reset();
+	void Reset(bool deleteAllCookies = true);
 
 	void PersistState();
 	void RestoreState();
