@@ -130,7 +130,8 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		if (StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE) {
 			// On-boarding
 
-			context->self->Reset();
+			// Reset state but don't erase all cookies
+			context->self->Reset(false);
 		}
 		else {
 			// Regular
@@ -158,6 +159,8 @@ void StreamElementsGlobalStateManager::Shutdown()
 		return;
 	}
 
+	CefCookieManager::GetGlobalManager(NULL)->FlushStore(nullptr);
+
 	QtExecSync([](void* data) -> void {
 		StreamElementsGlobalStateManager* self = (StreamElementsGlobalStateManager*)data;
 
@@ -170,7 +173,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 	m_initialized = false;
 }
 
-void StreamElementsGlobalStateManager::Reset()
+void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
 {
 	std::string onBoardingURL = GetCommandLineOptionValue("streamelements-onboarding-url");
 
@@ -178,10 +181,12 @@ void StreamElementsGlobalStateManager::Reset()
 		onBoardingURL = obs_module_text("StreamElements.OnBoarding.URL");
 	}
 
-	CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
-		CefString(""), // URL
-		CefString(""), // Cookie name
-		nullptr);      // On-complete callback
+	if (deleteAllCookies) {
+		CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
+			CefString(""), // URL
+			CefString(""), // Cookie name
+			nullptr);      // On-complete callback
+	}
 
 	GetWidgetManager()->HideNotificationBar();
 	GetWidgetManager()->RemoveAllDockWidgets();
@@ -199,6 +204,8 @@ void StreamElementsGlobalStateManager::PersistState()
 	if (!m_persistStateEnabled) {
 		return;
 	}
+
+	CefCookieManager::GetGlobalManager(NULL)->FlushStore(nullptr);
 
 	CefRefPtr<CefValue> root = CefValue::Create();
 	CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
