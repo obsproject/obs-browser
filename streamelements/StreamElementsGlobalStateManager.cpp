@@ -79,8 +79,11 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 
 			QPushButton* liveSupport = new QPushButton(obs_module_text("StreamElements.Action.LiveSupport"));
 
-			//liveSupport->setStyleSheet(QString("QPushButton { 	border-radius: 15px; 	background-color: #444444; 	color: white; 	padding: 8px; 	padding-left: 40px; 	padding-right: 40px; }  QPushButton:hover { 	background-color: #666666; }  QPushButton:pressed { 	background-color: #eeeeee; 	color: black; }"));
-			liveSupport->setStyleSheet(QString("QPushButton { background-color: #d9dded; border: 1px solid #5771dc; color: #5771dc; padding: 2px; }"));
+			liveSupport->setStyleSheet(QString(
+				"QPushButton { background-color: #d9dded; border: 1px solid #546ac8; color: #032ee1; padding: 2px; border-radius: 0px; } "
+				"QPushButton:hover { background-color: #99aaec; border: 1px solid #546ac8; color: #ffffff; } "
+				"QPushButton:pressed { background-color: #808dc0; border: 1px solid #546ac8; color: #ffffff; } "
+			));
 
 			QDockWidget* controlsDock = (QDockWidget*)context->obs_main_window->findChild<QDockWidget*>("controlsDock");
 			QVBoxLayout* buttonsVLayout = (QVBoxLayout*)controlsDock->findChild<QVBoxLayout*>("buttonsVLayout");
