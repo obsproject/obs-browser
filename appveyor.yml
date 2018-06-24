@@ -81,7 +81,7 @@ cache:
 - c:\local\vlc.zip
 build_script:
 - cmd: >-
-    echo "#define STREAMELEMENTS_PLUGIN_VERSION " + (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") >c:\local\generate_version.ps1
+    echo ("#define STREAMELEMENTS_PLUGIN_VERSION " + (Get-Date).ToUniversalTime().ToString("yyyyMMdd") + "${Env:APPVEYOR_BUILD_NUMBER}".PadLeft(6, '0')) >c:\local\generate_version.ps1
 
     powershell -File c:\local\generate_version.ps1 >c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp
 
