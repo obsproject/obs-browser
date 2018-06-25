@@ -57,60 +57,6 @@ StreamElementsBrowserWidget::~StreamElementsBrowserWidget()
 	DestroyBrowser();
 }
 
-#ifdef ___NO_SUCH_THING___
-void StreamElementsBrowserWidget::OnAfterCreated(CefRefPtr<CefBrowser> browser)
-{
-	// Must be executed on the UI thread.
-	//CEF_REQUIRE_UI_THREAD();
-	
-	//if (!m_cef_browser.get()) {
-		// Keep a reference to the main browser.
-		//m_cef_browser = browser;
-		//m_BrowserId = browser->GetIdentifier();
-	//}
-
-	// Keep track of how many browsers currently exist.
-	//m_BrowserCount++;
-}
-
-bool StreamElementsBrowserWidget::DoClose(CefRefPtr<CefBrowser> browser)
-{
-	// Must be executed on the UI thread.
-	//CEF_REQUIRE_UI_THREAD();
-
-	// Closing the main window requires special handling. See the DoClose()
-	// documentation in the CEF header for a detailed description of this
-	// process.
-	//if (m_BrowserId == browser->GetIdentifier()) {
-	//	// Set a flag to indicate that the window close should be allowed.
-	//	m_bIsClosing = true;
-	//}
-
-	// Allow the close. For windowed browsers this will result in the OS close
-	// event being sent.
-
-	m_cef_browser = NULL;
-
-	return false;
-}
-
-void StreamElementsBrowserWidget::OnBeforeClose(CefRefPtr<CefBrowser> browser)
-{
-	// Must be executed on the UI thread.
-	//CEF_REQUIRE_UI_THREAD();
-
-	//if (m_BrowserId == browser->GetIdentifier()) {
-	//	// Free the browser pointer so that the browser can be destroyed.
-	//	m_Browser = NULL;
-	//}
-
-	//if (--m_BrowserCount == 0) {
-	//	// All browser windows have closed. Quit the application message loop.
-	//	CefQuitMessageLoop();
-	//}
-}
-#endif
-
 void StreamElementsBrowserWidget::InitBrowserAsync()
 {
 	// Make sure InitBrowserAsyncInternal() runs in Qt UI thread

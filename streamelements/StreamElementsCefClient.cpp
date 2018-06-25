@@ -4,11 +4,54 @@
 #include "json11/json11.hpp"
 #include <obs-frontend-api.h>
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
+#include <include/cef_urlrequest.h>	// CefURLRequestClient
 #include <regex>
 #include <sstream>
 
 #include <QWindow>
 #include <QIcon>
+#include <QWidget>
+#include <QFile>
+
+static bool SetWindowIconFromBuffer(cef_window_handle_t windowHandle, void* buffer, size_t buffer_len)
+{
+	size_t offset = ::LookupIconIdFromDirectoryEx((PBYTE)buffer, TRUE, 0, 0, LR_DEFAULTCOLOR);
+
+	if (offset) {
+		size_t size = buffer_len - offset;
+
+		HICON hIcon = ::CreateIconFromResourceEx((PBYTE)buffer + offset, size, TRUE, 0x00030000, 0, 0, LR_SHARED);
+
+		if (hIcon) {
+			::SendMessage(windowHandle, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+			::SendMessage(windowHandle, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool SetWindowIconFromResource(cef_window_handle_t windowHandle, QString& resource)
+{
+	QFile file(resource);
+
+	if (file.open(QIODevice::ReadOnly)) {
+		QByteArray data = file.readAll();
+
+		return SetWindowIconFromBuffer(windowHandle, data.begin(), data.size());
+	}
+
+	return false;
+}
+
+static bool SetWindowDefaultIcon(cef_window_handle_t windowHandle)
+{
+	return SetWindowIconFromResource(windowHandle, QString(":/images/icon.ico"));
+}
+
+/* ========================================================================= */
 
 using namespace json11;
 
@@ -18,6 +61,18 @@ using namespace json11;
 #define CEF_REQUIRE_IO_THREAD()       DCHECK(CefCurrentlyOn(TID_IO));
 #define CEF_REQUIRE_FILE_THREAD()     DCHECK(CefCurrentlyOn(TID_FILE));
 #define CEF_REQUIRE_RENDERER_THREAD() DCHECK(CefCurrentlyOn(TID_RENDERER));
+
+/* ========================================================================= */
+
+StreamElementsCefClient::StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler) :
+	m_executeJavaScriptCodeOnLoad(executeJavaScriptCodeOnLoad),
+	m_messageHandler(messageHandler)
+{
+}
+
+StreamElementsCefClient::~StreamElementsCefClient()
+{
+}
 
 /* ========================================================================= */
 
@@ -129,7 +184,6 @@ bool StreamElementsCefClient::OnProcessMessageReceived(
 	return true;
 }
 
-#include <QWidget>
 void StreamElementsCefClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 	const CefString& title)
 {
@@ -149,23 +203,20 @@ void StreamElementsCefClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 		QWindow* win = QWindow::fromWinId((WId)context->handle);
 		win->setTitle(QString(context->title.ToString().c_str()));
 
-		// TODO: Figure why this does not work
-		//
-		// QIcon icon(":/images/icon.ico");
-		// win->setIcon(icon);
-
 		delete win;
 
 		delete context;
 	},
 	context);
-
-	//cef_window_handle_t handle = browser->GetHost()->GetWindowHandle();
-
 }
 
 void StreamElementsCefClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
 	const std::vector<CefString>& icon_urls)
 {
-	// TODO: Implement
+}
+
+void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
+{
+	SetWindowDefaultIcon(
+		browser->GetHost()->GetWindowHandle());
 }
