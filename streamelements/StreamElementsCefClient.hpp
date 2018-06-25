@@ -18,16 +18,10 @@ private:
 	std::string m_locationArea = "unknown";
 
 public:
-	StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler) :
-		m_executeJavaScriptCodeOnLoad(executeJavaScriptCodeOnLoad),
-		m_messageHandler(messageHandler)
-	{
-	}
+	StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler);
+	virtual ~StreamElementsCefClient();
 
-	inline ~StreamElementsCefClient()
-	{
-	}
-
+public:
 	/* Own */
 	std::string GetContainerId() { return m_containerId; }
 	void SetContainerId(std::string id) { m_containerId = id; }
@@ -47,6 +41,8 @@ public:
 		CefRefPtr<CefProcessMessage> message) override;
 
 	/* CefLifeSpanHandler */
+	virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
+
 	virtual bool OnBeforePopup(
 		CefRefPtr<CefBrowser> /*browser*/,
 		CefRefPtr<CefFrame> /*frame*/,
