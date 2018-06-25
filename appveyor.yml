@@ -43,10 +43,10 @@ install:
     echo add_subdirectory(obs-browser) >c:\local\obs-studio\plugins\CMakeLists.txt
 
 
-    wget -O c:\local\cef32.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3396.1779.g36f9eab_windows32_minimal.tar.bz2" 2>&1 >nul:
+    wget -O c:\local\cef32.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3239.1723.g071d1c1_windows32_minimal.tar.bz2" 2>&1 >nul:
 
 
-    wget -O c:\local\cef64.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3396.1779.g36f9eab_windows64_minimal.tar.bz2" 2>&1 >nul:
+    wget -O c:\local\cef64.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3239.1723.g071d1c1_windows64_minimal.tar.bz2" 2>&1 >nul:
 
 
     archiver open c:\local\cef32.tar.bz2 c:\local 2>&1 >nul:
@@ -86,7 +86,7 @@ build_script:
     powershell -File c:\local\generate_version.ps1 >c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp
 
 
-    cd /d c:\local\cef_binary_3.3396.1779.g36f9eab_windows32_minimal
+    cd /d c:\local\cef_binary_3.3239.1723.g071d1c1_windows32_minimal
 
     mkdir build
 
@@ -97,7 +97,7 @@ build_script:
     msbuild cef.sln /p:Configuration=Release /t:Build
 
 
-    cd /d c:\local\cef_binary_3.3396.1779.g36f9eab_windows64_minimal
+    cd /d c:\local\cef_binary_3.3239.1723.g071d1c1_windows64_minimal
 
     mkdir build
 
@@ -115,12 +115,12 @@ build_script:
 
     cd /d c:\local\obs-studio\build32
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3396.1779.g36f9eab_windows32_minimal ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3239.1723.g071d1c1_windows32_minimal ..
 
 
     cd /d c:\local\obs-studio\build64
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3396.1779.g36f9eab_windows64_minimal ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3239.1723.g071d1c1_windows64_minimal ..
 
 
     cd /d c:\local\obs-studio\build32
