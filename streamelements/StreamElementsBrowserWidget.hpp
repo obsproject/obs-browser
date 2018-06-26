@@ -101,15 +101,21 @@ private:
 	void UpdateBrowserSize()
 	{
 		if (!!m_cef_browser.get()) {
-			HWND hWnd = m_cef_browser->GetHost()->GetWindowHandle();
+			cef_window_handle_t hWnd = m_cef_browser->GetHost()->GetWindowHandle();
 
-			SetWindowPos(hWnd, HWND_TOP, 0, 0, width(), height(), SWP_DRAWFRAME | SWP_SHOWWINDOW);
+#ifdef WIN32
+			::SetWindowPos(hWnd, HWND_TOP, 0, 0, width(), height(), SWP_DRAWFRAME | SWP_SHOWWINDOW);
+#endif
 		}
 	}
 
 	void DestroyBrowser()
 	{
 		if (m_cef_browser.get() != NULL) {
+			::ShowWindow(
+				m_cef_browser->GetHost()->GetWindowHandle(),
+				SW_HIDE);
+
 			// Detach browser to prevent WM_CLOSE event from being sent
 			// from CEF to the parent window.
 			::SetParent(
