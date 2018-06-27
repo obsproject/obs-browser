@@ -24,6 +24,50 @@ static bool QueueCEFTask(std::function<void()> task)
 	return CefPostTask(TID_UI, CefRefPtr<BrowserTask>(new BrowserTask(task)));
 }
 
+static void FlushCookiesSync()
+{
+	static std::mutex s_flush_cookies_sync_mutex;
+
+	std::lock_guard<std::mutex> guard(s_flush_cookies_sync_mutex);
+
+	os_event_t* complete_event;
+
+	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
+
+	class CompletionCallback : public CefCompletionCallback
+	{
+	public:
+		CompletionCallback(os_event_t* complete_event): m_complete_event(complete_event)
+		{
+		}
+
+		virtual void OnComplete() override
+		{
+			os_event_signal(m_complete_event);
+		}
+
+		IMPLEMENT_REFCOUNTING(CompletionCallback);
+
+	private:
+		os_event_t* m_complete_event;
+	};
+
+	CefRefPtr<CefCompletionCallback> callback = new CompletionCallback(complete_event);
+
+	auto task = [&]() {
+		if (!CefCookieManager::GetGlobalManager(NULL)->FlushStore(callback)) {
+			blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->FlushStore() failed.");
+
+			os_event_signal(complete_event);
+		}
+	};
+
+	CefPostTask(TID_IO, CefRefPtr<BrowserTask>(new BrowserTask(task)));
+
+	os_event_wait(complete_event);
+	os_event_destroy(complete_event);
+}
+
 /* ========================================================================= */
 
 StreamElementsGlobalStateManager* StreamElementsGlobalStateManager::s_instance = nullptr;
@@ -162,7 +206,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 		return;
 	}
 
-	CefCookieManager::GetGlobalManager(NULL)->FlushStore(nullptr);
+	FlushCookiesSync();
 
 	QtExecSync([](void* data) -> void {
 		StreamElementsGlobalStateManager* self = (StreamElementsGlobalStateManager*)data;
@@ -185,10 +229,12 @@ void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
 	}
 
 	if (deleteAllCookies) {
-		CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
+		if (!CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
 			CefString(""), // URL
 			CefString(""), // Cookie name
-			nullptr);      // On-complete callback
+			nullptr)) {    // On-complete callback
+			blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->DeleteCookies() failed.");
+		}
 	}
 
 	GetWidgetManager()->HideNotificationBar();
@@ -208,7 +254,7 @@ void StreamElementsGlobalStateManager::PersistState()
 		return;
 	}
 
-	CefCookieManager::GetGlobalManager(NULL)->FlushStore(nullptr);
+	FlushCookiesSync();
 
 	CefRefPtr<CefValue> root = CefValue::Create();
 	CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
