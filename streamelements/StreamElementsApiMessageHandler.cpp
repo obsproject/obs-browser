@@ -218,10 +218,12 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 
 	API_HANDLER_BEGIN("deleteAllCookies");
 	{
-		CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
+		if (!CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
 			CefString(""), // URL
 			CefString(""), // Cookie name
-			nullptr);      // On-complete callback
+			nullptr)) {    // On-complete callback
+			blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->DeleteCookies() failed.");
+		}
 
 		result->SetBool(true);
 	}
