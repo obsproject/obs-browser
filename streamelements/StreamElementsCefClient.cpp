@@ -13,6 +13,23 @@
 #include <QWidget>
 #include <QFile>
 
+static class BrowserTask : public CefTask {
+public:
+	std::function<void()> task;
+
+	inline BrowserTask(std::function<void()> task_) : task(task_) {}
+	virtual void Execute() override { task(); }
+
+	IMPLEMENT_REFCOUNTING(BrowserTask);
+};
+
+static bool QueueCEFTask(std::function<void()> task)
+{
+	return CefPostTask(TID_UI, CefRefPtr<BrowserTask>(new BrowserTask(task)));
+}
+
+/* ========================================================================= */
+
 static bool SetWindowIconFromBuffer(cef_window_handle_t windowHandle, void* buffer, size_t buffer_len)
 {
 	size_t offset = ::LookupIconIdFromDirectoryEx((PBYTE)buffer, TRUE, 0, 0, LR_DEFAULTCOLOR);
@@ -81,22 +98,14 @@ void StreamElementsCefClient::OnLoadEnd(
 	CefRefPtr<CefFrame> frame,
 	int /*httpStatusCode*/)
 {
-	if (frame->IsMain() && m_pending_url.size()) {
-		std::string url = m_pending_url;
-		m_pending_url = "";
-
-		frame->LoadURL(url);
+	if (m_executeJavaScriptCodeOnLoad.empty() || !frame->IsMain()) {
+		return;
 	}
-	else {
-		if (m_executeJavaScriptCodeOnLoad.empty() || !frame->IsMain()) {
-			return;
-		}
 
-		frame->ExecuteJavaScript(
-			CefString(m_executeJavaScriptCodeOnLoad),
-			frame->GetURL(),
-			0);
-	}
+	frame->ExecuteJavaScript(
+		CefString(m_executeJavaScriptCodeOnLoad),
+		frame->GetURL(),
+		0);
 }
 
 void StreamElementsCefClient::OnLoadError(CefRefPtr<CefBrowser> browser,

@@ -16,7 +16,6 @@ class StreamElementsCefClient :
 private:
 	std::string m_containerId = "";
 	std::string m_locationArea = "unknown";
-	std::string m_pending_url = "";
 
 public:
 	StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler);
@@ -26,7 +25,6 @@ public:
 	/* Own */
 	std::string GetContainerId() { return m_containerId; }
 	void SetContainerId(std::string id) { m_containerId = id; }
-	void SetPendingURL(std::string url) { m_pending_url = url;  }
 
 	std::string GetLocationArea() { return m_locationArea; }
 	void SetLocationArea(std::string area) { m_locationArea = area; }
