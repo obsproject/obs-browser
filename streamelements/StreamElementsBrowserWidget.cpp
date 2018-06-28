@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <mutex>
+#include <regex>
 
 static class BrowserTask : public CefTask {
 public:
@@ -117,9 +118,8 @@ void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 		cefClient->SetContainerId(m_pendingId);
 
 		std::string htmlString = LoadResourceString(":/html/loading.html");
+		htmlString = std::regex_replace(htmlString, std::regex("\\$\\{URL\\}"), m_url);
 		std::string base64uri = "data:text/html;base64," + CefBase64Encode(htmlString.c_str(), htmlString.size()).ToString();
-
-		cefClient->SetPendingURL(m_url);
 
 		m_cef_browser =
 			CefBrowserHost::CreateBrowserSync(
