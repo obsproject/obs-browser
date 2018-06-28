@@ -15,6 +15,7 @@
 
 #include <pthread.h>
 #include <functional>
+#include <mutex>
 
 #include "../browser-client.hpp"
 
@@ -111,6 +112,8 @@ private:
 
 	void DestroyBrowser()
 	{
+		std::lock_guard<std::mutex> guard(m_create_destroy_mutex);
+
 		if (m_cef_browser.get() != NULL) {
 			::ShowWindow(
 				m_cef_browser->GetHost()->GetWindowHandle(),
@@ -130,7 +133,8 @@ private:
 
 
 
-
+private:
+	std::mutex m_create_destroy_mutex;
 
 public:
 //	IMPLEMENT_REFCOUNTING(StreamElementsBrowserWidget)

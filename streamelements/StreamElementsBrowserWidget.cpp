@@ -2,6 +2,7 @@
 #include "StreamElementsCefClient.hpp"
 #include "StreamElementsApiMessageHandler.hpp"
 #include <functional>
+#include <mutex>
 
 static class BrowserTask : public CefTask {
 public:
@@ -65,12 +66,19 @@ void StreamElementsBrowserWidget::InitBrowserAsync()
 
 void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 {
-	if (!!m_cef_browser.get())
+	if (!!m_cef_browser.get()) {
 		return;
+	}
 
 	m_window_handle = (cef_window_handle_t)winId();
 
 	CefUIThreadExecute([this]() {
+		std::lock_guard<std::mutex> guard(m_create_destroy_mutex);
+
+		if (!!m_cef_browser.get()) {
+			return;
+		}
+
 		StreamElementsBrowserWidget* self = this;
 
 		// Client area rectangle
