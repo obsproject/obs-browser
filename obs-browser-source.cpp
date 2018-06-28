@@ -131,6 +131,8 @@ bool BrowserSource::CreateBrowser()
 				url,
 				cefBrowserSettings,
 				nullptr);
+
+		cefBrowser->GetHost()->WasHidden(!obs_source_showing(source));
 	});
 }
 
