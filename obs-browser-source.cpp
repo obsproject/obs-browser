@@ -81,8 +81,16 @@ void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
 
 bool BrowserSource::CreateBrowser()
 {
-	return QueueCEFTask([this] ()
+	static std::mutex sync_mutex;
+
+	return QueueCEFTask([this]()
 	{
+		std::lock_guard<std::mutex> guard(sync_mutex);
+
+		if (!!cefBrowser.get()) {
+			return;
+		}
+
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
 			obs_enter_graphics();
@@ -276,7 +284,7 @@ void BrowserSource::SetShowing(bool showing)
 		if (showing) {
 			Update();
 		} else {
-			DestroyBrowser(true);
+			DestroyBrowser();
 		}
 	} else {
 		ExecuteOnBrowser([this, showing] ()
@@ -382,7 +390,7 @@ void BrowserSource::Update(obs_data_t *settings)
 #endif
 	}
 
-	DestroyBrowser(true);
+	DestroyBrowser();
 	DestroyTextures();
 	create_browser = true;
 }
