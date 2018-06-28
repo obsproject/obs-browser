@@ -10,6 +10,9 @@
 #include <QTimer>
 #include <QApplication>
 #include <QThread>
+#include <QFile>
+#include <QTextStream>
+#include <QString>
 
 #include <util/threading.h>
 
@@ -115,4 +118,19 @@ inline static std::string GetCommandLineOptionValue(const std::string key)
 	}
 
 	return std::string();
+}
+
+inline static std::string LoadResourceString(std::string path)
+{
+	std::string result = "";
+
+	QFile file(QString(path.c_str()));
+
+	if (file.open(QFile::ReadOnly | QFile::Text)) {
+		QTextStream stream(&file);
+
+		result = stream.readAll().toStdString();
+	}
+
+	return result;
 }

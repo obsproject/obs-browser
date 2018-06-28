@@ -7,5 +7,6 @@
 		<file>images/logo_100x30.png</file>
 
 		<file>html/error.html</file>
+		<file>html/loading.html</file>
 	</qresource>
 </RCC>
