@@ -1,6 +1,8 @@
 #include "StreamElementsBrowserWidget.hpp"
 #include "StreamElementsCefClient.hpp"
 #include "StreamElementsApiMessageHandler.hpp"
+#include "StreamElementsUtils.hpp"
+
 #include <functional>
 #include <mutex>
 
@@ -114,11 +116,16 @@ void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 		cefClient->SetLocationArea(m_pendingLocationArea);
 		cefClient->SetContainerId(m_pendingId);
 
+		std::string htmlString = LoadResourceString(":/html/loading.html");
+		std::string base64uri = "data:text/html;base64," + CefBase64Encode(htmlString.c_str(), htmlString.size()).ToString();
+
+		cefClient->SetPendingURL(m_url);
+
 		m_cef_browser =
 			CefBrowserHost::CreateBrowserSync(
 				windowInfo,
 				cefClient,
-				m_url.c_str(),
+				base64uri.c_str(),
 				cefBrowserSettings,
 				nullptr);
 

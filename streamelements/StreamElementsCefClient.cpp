@@ -81,33 +81,22 @@ void StreamElementsCefClient::OnLoadEnd(
 	CefRefPtr<CefFrame> frame,
 	int /*httpStatusCode*/)
 {
-	if (m_executeJavaScriptCodeOnLoad.empty() || !frame->IsMain()) {
-		return;
+	if (frame->IsMain() && m_pending_url.size()) {
+		std::string url = m_pending_url;
+		m_pending_url = "";
+
+		frame->LoadURL(url);
 	}
+	else {
+		if (m_executeJavaScriptCodeOnLoad.empty() || !frame->IsMain()) {
+			return;
+		}
 
-	frame->ExecuteJavaScript(
-		CefString(m_executeJavaScriptCodeOnLoad),
-		frame->GetURL(),
-		0);
-}
-
-#include <QFile>
-#include <QTextStream>
-#include <QString>
-
-static std::string LoadResourceString(std::string path)
-{
-	std::string result = "";
-
-	QFile file(QString(path.c_str()));
-
-	if (file.open(QFile::ReadOnly | QFile::Text)) {
-		QTextStream stream(&file);
-
-		result = stream.readAll().toStdString();
+		frame->ExecuteJavaScript(
+			CefString(m_executeJavaScriptCodeOnLoad),
+			frame->GetURL(),
+			0);
 	}
-
-	return result;
 }
 
 void StreamElementsCefClient::OnLoadError(CefRefPtr<CefBrowser> browser,
