@@ -220,21 +220,12 @@ void StreamElementsGlobalStateManager::Shutdown()
 	m_initialized = false;
 }
 
-void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
+void StreamElementsGlobalStateManager::StartOnBoardingUI()
 {
 	std::string onBoardingURL = GetCommandLineOptionValue("streamelements-onboarding-url");
 
 	if (!onBoardingURL.size()) {
 		onBoardingURL = obs_module_text("StreamElements.OnBoarding.URL");
-	}
-
-	if (deleteAllCookies) {
-		if (!CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
-			CefString(""), // URL
-			CefString(""), // Cookie name
-			nullptr)) {    // On-complete callback
-			blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->DeleteCookies() failed.");
-		}
 	}
 
 	GetWidgetManager()->HideNotificationBar();
@@ -246,6 +237,20 @@ void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
 
 	GetMenuManager()->Update();
 	PersistState();
+}
+
+void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
+{
+	if (deleteAllCookies) {
+		if (!CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
+			CefString(""), // URL
+			CefString(""), // Cookie name
+			nullptr)) {    // On-complete callback
+			blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->DeleteCookies() failed.");
+		}
+	}
+
+	StartOnBoardingUI();
 }
 
 void StreamElementsGlobalStateManager::PersistState()

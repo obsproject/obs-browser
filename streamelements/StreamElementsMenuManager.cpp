@@ -112,6 +112,17 @@ void StreamElementsMenuManager::Update()
 	}
 	m_menu->addSeparator();
 	addURL(obs_module_text("StreamElements.Action.Import"), obs_module_text("StreamElements.Action.Import.URL"));
+
+	QAction* start_onboarding_ui_action = new QAction(obs_module_text("StreamElements.Action.StartOnBoardingUI"));
+	m_menu->addAction(start_onboarding_ui_action);
+	start_onboarding_ui_action->connect(
+		start_onboarding_ui_action,
+		&QAction::triggered,
+		[this]
+	{
+		StreamElementsGlobalStateManager::GetInstance()->StartOnBoardingUI();
+	});
+
 	m_menu->addSeparator();
 	addURL(obs_module_text("StreamElements.Action.LiveSupport"), obs_module_text("StreamElements.Action.LiveSupport.URL"));
 }
