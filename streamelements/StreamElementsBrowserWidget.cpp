@@ -157,7 +157,7 @@ void StreamElementsBrowserWidget::CefUIThreadExecute(std::function<void()> func,
 std::string StreamElementsBrowserWidget::GetCurrentUrl()
 {
 	if (!m_cef_browser.get()) {
-		return std::string();
+		return m_url;
 	}
 
 	std::string url = m_cef_browser->GetMainFrame()->GetURL().ToString();
