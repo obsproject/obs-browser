@@ -33,5 +33,5 @@ void StreamElementsConfig::SaveConfig()
 {
 	if (!m_config) return;
 
-	config_save(m_config);
+	config_save_safe(m_config, "tmp", "bak");
 }
