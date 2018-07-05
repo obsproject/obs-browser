@@ -114,10 +114,14 @@ void StreamElementsCefClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 	const CefString& errorText,
 	const CefString& failedUrl)
 {
-	/*if (errorCode == ERR_ABORTED) {
+	if (errorCode == ERR_ABORTED) {
 		// Don't display an error for downloaded files.
 		return;
-	}*/
+	}
+
+	if (!frame->IsMain()) {
+		return;
+	}
 
 	std::string htmlString = LoadResourceString(":/html/error.html");
 
