@@ -34,7 +34,7 @@ private:
 
 	bool shared_texture_available;
 	CallbackMap callbackMap;
-	int callbackId;
+	int callbackId = 0;
 
 	class APIFunctionItem
 	{
