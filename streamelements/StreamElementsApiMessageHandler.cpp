@@ -83,20 +83,28 @@ bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 			context->complete = [] (void* data) {
 				local_context* context = (local_context*)data;
 
-				// Invoke result callback
-				CefRefPtr<CefProcessMessage> msg =
-					CefProcessMessage::Create("executeCallback");
+				blog(LOG_INFO, "obs-browser: API: completed call to '%s', callback id %d", context->id.c_str(), context->cef_app_callback_id);
 
-				CefRefPtr<CefListValue> callbackArgs = msg->GetArgumentList();
-				callbackArgs->SetInt(0, context->cef_app_callback_id);
-				callbackArgs->SetString(1, CefWriteJSON(context->result, JSON_WRITER_DEFAULT));
+				if (context->cef_app_callback_id != -1) {
+					// Invoke result callback
+					CefRefPtr<CefProcessMessage> msg =
+						CefProcessMessage::Create("executeCallback");
 
-				context->browser->SendProcessMessage(PID_RENDERER, msg);
+					CefRefPtr<CefListValue> callbackArgs = msg->GetArgumentList();
+					callbackArgs->SetInt(0, context->cef_app_callback_id);
+					callbackArgs->SetString(1, CefWriteJSON(context->result, JSON_WRITER_DEFAULT));
+
+					context->browser->SendProcessMessage(PID_RENDERER, msg);
+				}
 			};
+
+			blog(LOG_INFO, "obs-browser: API: posting call to '%s', callback id %d", context->id.c_str(), context->cef_app_callback_id);
 
 			QtPostTask([](void* data)
 			{
 				local_context* context = (local_context*)data;
+
+				blog(LOG_INFO, "obs-browser: API: performing call to '%s', callback id %d", context->id.c_str(), context->cef_app_callback_id);
 
 				context->self->m_apiCallHandlers[context->id](
 					context->self,
@@ -191,7 +199,9 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandler(std::string
 	m_apiCallHandlers[id] = handler;
 }
 
-#define API_HANDLER_BEGIN(name) RegisterIncomingApiCallHandler(name, [](StreamElementsApiMessageHandler*, CefRefPtr<CefProcessMessage> message, CefRefPtr<CefListValue> args, CefRefPtr<CefValue>& result, CefRefPtr<CefBrowser> browser, void (*complete_callback)(void*), void* complete_context) {
+static std::mutex s_sync_api_call_mutex;
+
+#define API_HANDLER_BEGIN(name) RegisterIncomingApiCallHandler(name, [](StreamElementsApiMessageHandler*, CefRefPtr<CefProcessMessage> message, CefRefPtr<CefListValue> args, CefRefPtr<CefValue>& result, CefRefPtr<CefBrowser> browser, void (*complete_callback)(void*), void* complete_context) { std::lock_guard<std::mutex> _api_sync_guard(s_sync_api_call_mutex);
 #define API_HANDLER_END() complete_callback(complete_context); });
 
 void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
