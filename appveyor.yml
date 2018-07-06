@@ -92,7 +92,7 @@ build_script:
 
     cd build
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 14 2015" -DUSE_SANDBOX=true -DUSE_ATL=true -DCEF_RUNTIME_LIBRARY_FLAG=/MT -DCEF_DEBUG_INFO_FLAG=/Zi ..
 
     msbuild cef.sln /p:Configuration=Release /t:Build
 
@@ -103,7 +103,7 @@ build_script:
 
     cd build
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 14 2015 Win64" -DUSE_SANDBOX=true -DUSE_ATL=true -DCEF_RUNTIME_LIBRARY_FLAG=/MT -DCEF_DEBUG_INFO_FLAG=/Zi ..
 
     msbuild cef.sln /p:Configuration=Release /t:Build
 
