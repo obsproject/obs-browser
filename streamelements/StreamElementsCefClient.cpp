@@ -116,7 +116,7 @@ void StreamElementsCefClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 {
 	if (errorCode == ERR_ABORTED) {
 		// Don't display an error for downloaded files.
-		return;
+		// return;
 	}
 
 	if (!frame->IsMain()) {
