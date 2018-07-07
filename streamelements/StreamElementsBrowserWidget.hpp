@@ -84,11 +84,15 @@ protected:
 		QWidget::showEvent(showEvent);
 
 		InitBrowserAsync();
+
+		ShowBrowser();
 	}
 
 	virtual void hideEvent(QHideEvent *hideEvent) override
 	{
 		QWidget::hideEvent(hideEvent);
+
+		HideBrowser();
 	}
 
 	virtual void resizeEvent(QResizeEvent* event) override
@@ -102,13 +106,9 @@ protected:
 	{
 		QWidget::changeEvent(event);
 
-		if (m_cef_browser.get()) {
-			if (event->type() == QEvent::ParentChange) {
-				if (!parent()) {
-					::ShowWindow(
-						m_cef_browser->GetHost()->GetWindowHandle(),
-						SW_HIDE);
-				}
+		if (event->type() == QEvent::ParentChange) {
+			if (!parent()) {
+				HideBrowser();
 			}
 		}
 	}
@@ -125,14 +125,30 @@ private:
 		}
 	}
 
+	void HideBrowser()
+	{
+		if (m_cef_browser.get() != NULL) {
+			::ShowWindow(
+				m_cef_browser->GetHost()->GetWindowHandle(),
+				SW_HIDE);
+		}
+	}
+
+	void ShowBrowser()
+	{
+		if (m_cef_browser.get() != NULL) {
+			::ShowWindow(
+				m_cef_browser->GetHost()->GetWindowHandle(),
+				SW_SHOW);
+		}
+	}
+
 	void DestroyBrowser()
 	{
 		std::lock_guard<std::mutex> guard(m_create_destroy_mutex);
 
 		if (m_cef_browser.get() != NULL) {
-			::ShowWindow(
-				m_cef_browser->GetHost()->GetWindowHandle(),
-				SW_HIDE);
+			HideBrowser();
 
 			// Detach browser to prevent WM_CLOSE event from being sent
 			// from CEF to the parent window.
