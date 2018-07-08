@@ -31,6 +31,14 @@ public:
 	void SaveConfig();
 
 public:
+	int64_t GetStreamElementsPluginVersion()
+	{
+		return config_get_uint(
+			StreamElementsConfig::GetInstance()->GetConfig(),
+			"Header",
+			"Version");
+	}
+
 	int GetStartupFlags()
 	{
 		return (int)config_get_uint(

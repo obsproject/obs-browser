@@ -98,7 +98,11 @@ bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 				}
 			};
 
-			blog(LOG_INFO, "obs-browser: API: posting call to '%s', callback id %d", context->id.c_str(), context->cef_app_callback_id);
+			{
+				CefRefPtr<CefValue> callArgsValue = CefValue::Create();
+				callArgsValue->SetList(context->callArgs);
+				blog(LOG_INFO, "obs-browser: API: posting call to '%s', callback id %d, args: %s", context->id.c_str(), context->cef_app_callback_id, CefWriteJSON(callArgsValue, JSON_WRITER_DEFAULT).ToString().c_str());
+			}
 
 			QtPostTask([](void* data)
 			{

@@ -173,8 +173,20 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			context->obs_main_window->statusBar()->addPermanentWidget(container);
 		}
 
+		bool isOnBoarding = false;
 
-		if (StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE) {
+		if (StreamElementsConfig::GetInstance()->GetStreamElementsPluginVersion() != STREAMELEMENTS_PLUGIN_VERSION) {
+			blog(LOG_INFO, "obs-browser: init: set on-boarding mode due to configuration version mismatch");
+
+			isOnBoarding = true;
+		}
+		else if (StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE) {
+			blog(LOG_INFO, "obs-browser: init: set on-boarding mode due to start-up flags");
+
+			isOnBoarding = true;
+		}
+
+		if (isOnBoarding) {
 			// On-boarding
 
 			// Reset state but don't erase all cookies
@@ -289,11 +301,15 @@ void StreamElementsGlobalStateManager::RestoreState()
 		return;
 	}
 
+	blog(LOG_INFO, "obs-browser: state: restoring state from base64: %s", base64EncodedJSON.c_str());
+
 	CefString json = base64_decode(base64EncodedJSON);
 
 	if (!json.size()) {
 		return;
 	}
+
+	blog(LOG_INFO, "obs-browser: state: restoring state from json: %s", json.ToString().c_str());
 
 	CefRefPtr<CefValue> root = CefParseJSON(json, JSON_PARSER_ALLOW_TRAILING_COMMAS);
 	CefRefPtr<CefDictionaryValue> rootDictionary = root->GetDictionary();
@@ -305,8 +321,15 @@ void StreamElementsGlobalStateManager::RestoreState()
 	auto dockingWidgetsState = rootDictionary->GetValue("dockingBrowserWidgets");
 	auto notificationBarState = rootDictionary->GetValue("notificationBar");
 
-	GetWidgetManager()->DeserializeDockingWidgets(dockingWidgetsState);
-	GetWidgetManager()->DeserializeNotificationBar(notificationBarState);
+	if (dockingWidgetsState.get()) {
+		blog(LOG_INFO, "obs-browser: state: restoring docking widgets: %s", CefWriteJSON(dockingWidgetsState, JSON_WRITER_DEFAULT).ToString().c_str());
+		GetWidgetManager()->DeserializeDockingWidgets(dockingWidgetsState);
+	}
+
+	if (notificationBarState.get()) {
+		blog(LOG_INFO, "obs-browser: state: restoring notification bar: %s", CefWriteJSON(notificationBarState, JSON_WRITER_DEFAULT).ToString().c_str());
+		GetWidgetManager()->DeserializeNotificationBar(notificationBarState);
+	}
 }
 
 void StreamElementsGlobalStateManager::OnObsExit()
