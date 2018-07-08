@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <cstdio>
 #include <cstdarg>
@@ -15,6 +16,8 @@
 #include <QString>
 
 #include <util/threading.h>
+
+#define SYNC_ACCESS() static std::mutex __sync_access_mutex; std::lock_guard<std::mutex> __sync_access_mutex_guard(__sync_access_mutex);
 
 template<typename ... Args>
 std::string FormatString(const char* format, ...)

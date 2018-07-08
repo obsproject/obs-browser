@@ -16,6 +16,8 @@ StreamElementsOutputSettingsManager::~StreamElementsOutputSettingsManager()
 
 void StreamElementsOutputSettingsManager::GetAvailableEncoders(CefRefPtr<CefValue>& result, obs_encoder_type* encoder_type)
 {
+	SYNC_ACCESS();
+
 	// Response codec collection (array)
 	CefRefPtr<CefListValue> codec_list = CefListValue::Create();
 
@@ -69,6 +71,8 @@ void StreamElementsOutputSettingsManager::GetAvailableEncoders(CefRefPtr<CefValu
 
 void StreamElementsOutputSettingsManager::StopAllOutputs()
 {
+	SYNC_ACCESS();
+
 	if (obs_frontend_replay_buffer_active()) {
 		obs_frontend_replay_buffer_stop();
 	}
@@ -89,6 +93,8 @@ void StreamElementsOutputSettingsManager::StopAllOutputs()
 
 bool StreamElementsOutputSettingsManager::SetStreamingSettings(CefRefPtr<CefValue> input)
 {
+	SYNC_ACCESS();
+
 	if (!input.get()) return false;
 	CefRefPtr<CefDictionaryValue> d = input->GetDictionary();
 
@@ -146,6 +152,8 @@ bool StreamElementsOutputSettingsManager::SetStreamingSettings(CefRefPtr<CefValu
 
 bool StreamElementsOutputSettingsManager::SetEncodingSettings(CefRefPtr<CefValue> input)
 {
+	SYNC_ACCESS();
+
 	if (!input.get()) return false;
 	CefRefPtr<CefDictionaryValue> d = input->GetDictionary();
 

@@ -25,6 +25,8 @@ StreamElementsMenuManager::~StreamElementsMenuManager()
 
 void StreamElementsMenuManager::Update()
 {
+	SYNC_ACCESS();
+
 	if (!m_menu) return;
 
 	m_menu->clear();

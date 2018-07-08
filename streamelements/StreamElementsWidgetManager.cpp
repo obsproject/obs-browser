@@ -33,6 +33,8 @@ StreamElementsWidgetManager::~StreamElementsWidgetManager()
 //
 void StreamElementsWidgetManager::PushCentralWidget(QWidget* widget)
 {
+	SYNC_ACCESS();
+
 	QApplication::sendPostedEvents();
 	QSize prevSize = mainWindow()->centralWidget()->size();
 
@@ -52,6 +54,8 @@ void StreamElementsWidgetManager::PushCentralWidget(QWidget* widget)
 
 bool StreamElementsWidgetManager::DestroyCurrentCentralWidget()
 {
+	SYNC_ACCESS();
+
 	if (m_centralWidgetStack.size()) {
 		SaveDockWidgetsGeometry();
 
@@ -77,6 +81,8 @@ bool StreamElementsWidgetManager::DestroyCurrentCentralWidget()
 
 void StreamElementsWidgetManager::OnObsExit()
 {
+	SYNC_ACCESS();
+
 	// Empty stack
 	while (DestroyCurrentCentralWidget()) {
 	}
@@ -93,6 +99,8 @@ bool StreamElementsWidgetManager::AddDockWidget(
 	assert(id);
 	assert(title);
 	assert(widget);
+
+	SYNC_ACCESS();
 
 	if (m_dockWidgets.count(id)) {
 		return false;
@@ -119,6 +127,8 @@ bool StreamElementsWidgetManager::AddDockWidget(
 	std::string savedId = id;
 
 	QObject::connect(dock, &QDockWidget::dockLocationChanged, [savedId, dock, this](Qt::DockWidgetArea area) {
+		SYNC_ACCESS();
+
 		if (!m_dockWidgets.count(savedId)) {
 			return;
 		}
@@ -129,6 +139,8 @@ bool StreamElementsWidgetManager::AddDockWidget(
 	});
 
 	QObject::connect(dock, &QDockWidget::visibilityChanged, []() {
+		SYNC_ACCESS();
+
 		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
 		StreamElementsGlobalStateManager::GetInstance()->PersistState();
 	});
@@ -139,6 +151,8 @@ bool StreamElementsWidgetManager::AddDockWidget(
 bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 {
 	assert(id);
+
+	SYNC_ACCESS();
 
 	if (!m_dockWidgets.count(id)) {
 		return false;
@@ -158,6 +172,8 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 
 void StreamElementsWidgetManager::GetDockWidgetIdentifiers(std::vector<std::string>& result)
 {
+	SYNC_ACCESS();
+
 	for (auto imap : m_dockWidgets) {
 		result.emplace_back(imap.first);
 	}
@@ -166,6 +182,8 @@ void StreamElementsWidgetManager::GetDockWidgetIdentifiers(std::vector<std::stri
 QDockWidget* StreamElementsWidgetManager::GetDockWidget(const char* const id)
 {
 	assert(id);
+
+	SYNC_ACCESS();
 
 	if (!m_dockWidgets.count(id)) {
 		return nullptr;
@@ -177,6 +195,8 @@ QDockWidget* StreamElementsWidgetManager::GetDockWidget(const char* const id)
 StreamElementsWidgetManager::DockWidgetInfo* StreamElementsWidgetManager::GetDockWidgetInfo(const char* const id)
 {
 	assert(id);
+
+	SYNC_ACCESS();
 
 	QDockWidget* dockWidget = GetDockWidget(id);
 
@@ -243,6 +263,8 @@ void StreamElementsWidgetManager::DeserializeDockingWidgets(std::string& input)
 
 void StreamElementsWidgetManager::SaveDockWidgetsGeometry()
 {
+	SYNC_ACCESS();
+
 	m_dockWidgetSavedMinSize.clear();
 
 	QApplication::sendPostedEvents();
@@ -254,6 +276,8 @@ void StreamElementsWidgetManager::SaveDockWidgetsGeometry()
 
 void StreamElementsWidgetManager::RestoreDockWidgetsGeometry()
 {
+	SYNC_ACCESS();
+
 	QApplication::sendPostedEvents();
 
 	std::map<std::string, QSize> maxSize;

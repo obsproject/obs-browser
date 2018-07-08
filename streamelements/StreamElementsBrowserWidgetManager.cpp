@@ -35,8 +35,12 @@ std::string StreamElementsBrowserWidgetManager::AddDockBrowserWidget(CefRefPtr<C
 {
 	std::string id = QUuid::createUuid().toString().toStdString();
 
-	if (requestId.size() && !m_browserWidgets.count(requestId)) {
-		id = requestId;
+	{
+		SYNC_ACCESS();
+
+		if (requestId.size() && !m_browserWidgets.count(requestId)) {
+			id = requestId;
+		}
 	}
 
 	CefRefPtr<CefDictionaryValue> widgetDictionary = input->GetDictionary();
@@ -168,6 +172,8 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 	const Qt::DockWidgetAreas allowedAreas,
 	const QDockWidget::DockWidgetFeatures features)
 {
+	SYNC_ACCESS();
+
 	StreamElementsBrowserWidget* widget = new StreamElementsBrowserWidget(
 		nullptr, url, executeJavaScriptCodeOnLoad, DockWidgetAreaToString(area).c_str(), id);
 
@@ -182,6 +188,8 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 
 void StreamElementsBrowserWidgetManager::RemoveAllDockWidgets()
 {
+	SYNC_ACCESS();
+
 	while (m_browserWidgets.size()) {
 		RemoveDockWidget(m_browserWidgets.begin()->first.c_str());
 	}
@@ -189,9 +197,12 @@ void StreamElementsBrowserWidgetManager::RemoveAllDockWidgets()
 
 bool StreamElementsBrowserWidgetManager::RemoveDockWidget(const char* const id)
 {
+	SYNC_ACCESS();
+
 	if (m_browserWidgets.count(id)) {
 		m_browserWidgets.erase(id);
 	}
+
 	return StreamElementsWidgetManager::RemoveDockWidget(id);
 }
 
@@ -202,6 +213,8 @@ void StreamElementsBrowserWidgetManager::GetDockBrowserWidgetIdentifiers(std::ve
 
 StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo* StreamElementsBrowserWidgetManager::GetDockBrowserWidgetInfo(const char* const id)
 {
+	SYNC_ACCESS();
+
 	StreamElementsBrowserWidgetManager::DockWidgetInfo* baseInfo = GetDockWidgetInfo(id);
 
 	if (!baseInfo) {
@@ -222,6 +235,8 @@ StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo* StreamElementsBrowser
 
 void StreamElementsBrowserWidgetManager::SerializeDockingWidgets(CefRefPtr<CefValue>& output)
 {
+	SYNC_ACCESS();
+
 	CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
 	output->SetDictionary(rootDictionary);
 
@@ -266,6 +281,8 @@ void StreamElementsBrowserWidgetManager::SerializeDockingWidgets(CefRefPtr<CefVa
 
 void StreamElementsBrowserWidgetManager::DeserializeDockingWidgets(CefRefPtr<CefValue>& input)
 {
+	SYNC_ACCESS();
+
 	if (!input.get()) {
 		return;
 	}
@@ -291,6 +308,8 @@ void StreamElementsBrowserWidgetManager::ShowNotificationBar(
 	const int height,
 	const char* const executeJavaScriptCodeOnLoad)
 {
+	SYNC_ACCESS();
+
 	HideNotificationBar();
 
 	m_notificationBarBrowserWidget = new StreamElementsBrowserWidget(nullptr, url, executeJavaScriptCodeOnLoad, "notification", "");
@@ -311,6 +330,8 @@ void StreamElementsBrowserWidgetManager::ShowNotificationBar(
 
 void StreamElementsBrowserWidgetManager::HideNotificationBar()
 {
+	SYNC_ACCESS();
+
 	if (m_notificationBarToolBar) {
 		m_notificationBarToolBar->setVisible(false);
 
@@ -327,6 +348,8 @@ void StreamElementsBrowserWidgetManager::HideNotificationBar()
 
 void StreamElementsBrowserWidgetManager::SerializeNotificationBar(CefRefPtr<CefValue>& output)
 {
+	SYNC_ACCESS();
+
 	if (m_notificationBarToolBar) {
 		CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
 		output->SetDictionary(rootDictionary);
@@ -342,6 +365,8 @@ void StreamElementsBrowserWidgetManager::SerializeNotificationBar(CefRefPtr<CefV
 
 void StreamElementsBrowserWidgetManager::DeserializeNotificationBar(CefRefPtr<CefValue>& input)
 {
+	SYNC_ACCESS();
+
 	if (input->GetType() == VTYPE_DICTIONARY) {
 		CefRefPtr<CefDictionaryValue> rootDictionary = input->GetDictionary();
 
