@@ -9,6 +9,7 @@
 #include "../cef-headers.hpp"
 
 #include "StreamElementsObsAppMonitor.hpp"
+#include "StreamElementsUtils.hpp"
 
 class StreamElementsWidgetManager :
 	public StreamElementsObsAppMonitor
