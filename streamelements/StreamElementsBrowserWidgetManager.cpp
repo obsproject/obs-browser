@@ -339,7 +339,7 @@ void StreamElementsBrowserWidgetManager::HideNotificationBar()
 
 		mainWindow()->removeToolBar(m_notificationBarToolBar);
 
-		delete m_notificationBarToolBar;
+		m_notificationBarToolBar->deleteLater();
 
 		m_notificationBarToolBar = nullptr;
 		m_notificationBarBrowserWidget = nullptr;
