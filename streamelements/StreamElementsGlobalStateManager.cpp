@@ -267,6 +267,8 @@ void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
 
 void StreamElementsGlobalStateManager::PersistState()
 {
+	SYNC_ACCESS();
+
 	if (!m_persistStateEnabled) {
 		return;
 	}
