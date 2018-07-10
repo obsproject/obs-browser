@@ -21,6 +21,8 @@ void StreamElementsBrowserWidgetManager::PushCentralBrowserWidget(
 	const char* const url,
 	const char* const executeJavaScriptCodeOnLoad)
 {
+	blog(LOG_INFO, "obs-browser: central widget: loading url: %s", url);
+
 	StreamElementsBrowserWidget* widget = new StreamElementsBrowserWidget(nullptr, url, executeJavaScriptCodeOnLoad, "center", "");
 
 	PushCentralWidget(widget);
