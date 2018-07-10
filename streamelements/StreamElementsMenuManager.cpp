@@ -128,5 +128,7 @@ void StreamElementsMenuManager::Update()
 	*/
 
 	m_menu->addSeparator();
+	addURL(obs_module_text("StreamElements.Action.Uninstall"), obs_module_text("StreamElements.Action.Uninstall.URL"));
+	m_menu->addSeparator();
 	addURL(obs_module_text("StreamElements.Action.LiveSupport"), obs_module_text("StreamElements.Action.LiveSupport.URL"));
 }
