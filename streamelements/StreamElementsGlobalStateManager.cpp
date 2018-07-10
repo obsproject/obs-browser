@@ -237,7 +237,7 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 	std::string onBoardingURL = GetCommandLineOptionValue("streamelements-onboarding-url");
 
 	if (!onBoardingURL.size()) {
-		onBoardingURL = obs_module_text("StreamElements.OnBoarding.URL");
+		onBoardingURL = "https://obs.streamelements.com/welcome";
 	}
 
 	GetWidgetManager()->HideNotificationBar();
