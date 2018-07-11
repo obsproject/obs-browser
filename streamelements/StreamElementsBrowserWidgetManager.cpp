@@ -7,6 +7,8 @@
 
 #include <QUuid>
 
+#include <algorithm>    // std::sort
+
 StreamElementsBrowserWidgetManager::StreamElementsBrowserWidgetManager(QMainWindow* parent) :
 	StreamElementsWidgetManager(parent),
 	m_notificationBarToolBar(nullptr)
@@ -262,9 +264,9 @@ void StreamElementsBrowserWidgetManager::SerializeDockingWidgets(CefRefPtr<CefVa
 			widgetDictionary->SetString("executeJavaScriptOnLoad", info->m_executeJavaScriptOnLoad);
 			widgetDictionary->SetBool("visible", info->m_visible);
 
-			QWidget* widget = GetDockWidget(id.c_str());
+			QDockWidget* widget = GetDockWidget(id.c_str());
 
-			QSize minSize = widget->minimumSize();
+			QSize minSize = widget->widget()->minimumSize();
 			QSize size = widget->size();
 
 			widgetDictionary->SetInt("minWidth", minSize.width());
@@ -298,10 +300,93 @@ void StreamElementsBrowserWidgetManager::DeserializeDockingWidgets(CefRefPtr<Cef
 		return;
 	}
 
+	// 1. Build maps:
+	//	area -> start coord -> vector of ids
+	//	id -> secondary start coord
+	//	id -> minimum size
+	//
+	typedef std::vector<std::string> id_arr_t;
+	typedef std::map<int, id_arr_t> start_to_ids_map_t;
+	typedef std::map<std::string, start_to_ids_map_t> docks_map_t;
+
+	docks_map_t docksMap;
+	std::map<std::string, int> secondaryStartMap;
+
 	for (auto id : rootDictionaryKeys) {
 		CefRefPtr<CefValue> widgetValue = rootDictionary->GetValue(id);
 
-		AddDockBrowserWidget(widgetValue, id);
+		if (widgetValue->GetDictionary()->HasKey("dockingArea")) {
+			std::string area = widgetValue->GetDictionary()->GetString("dockingArea").ToString();
+
+			int start = -1;
+			int secondary = -1;
+
+			if (widgetValue->GetDictionary()->HasKey("left") && widgetValue->GetDictionary()->HasKey("top")) {
+				if ((area == "left" || area == "right")) {
+					start = widgetValue->GetDictionary()->GetInt("top");
+					secondary = widgetValue->GetDictionary()->GetInt("left");
+				}
+				else if ((area == "top" || area == "bottom")) {
+					start = widgetValue->GetDictionary()->GetInt("left");
+					secondary = widgetValue->GetDictionary()->GetInt("top");
+				}
+			}
+
+			docksMap[area][start].emplace_back(id.ToString());
+			secondaryStartMap[id.ToString()] = secondary;
+		}
+	}
+
+	// 2. For each area
+	//
+	for (docks_map_t::iterator areaPair = docksMap.begin(); areaPair != docksMap.end(); ++areaPair) {
+		std::string area = areaPair->first;
+
+		for (start_to_ids_map_t::iterator startPair = areaPair->second.begin(); startPair != areaPair->second.end(); ++startPair) {
+			int start = startPair->first;
+			id_arr_t dockIds = startPair->second;
+
+			// 3. Sort dock IDs by secondary start coord
+			std::sort(dockIds.begin(), dockIds.end(), [&](std::string i, std::string j) -> bool {
+				return secondaryStartMap[i] < secondaryStartMap[j];
+			});
+
+			std::map<std::string, QSize> idToMinSizeMap;
+
+			// 4. For each dock Id
+			//
+			for (int i = 0; i < dockIds.size(); ++i) {
+				CefRefPtr<CefValue> widgetValue = rootDictionary->GetValue(dockIds[i]);
+
+				// 5. Create docking widget
+				//
+				dockIds[i] = AddDockBrowserWidget(widgetValue, dockIds[i]);
+
+				QDockWidget* prev = i > 0 ? GetDockWidget(dockIds[i - 1].c_str()) : nullptr;
+				QDockWidget* curr = GetDockWidget(dockIds[i].c_str());
+
+				idToMinSizeMap[dockIds[i]] = curr->widget()->minimumSize();
+
+				if (prev && curr) {
+					// 6. If it's not the first: split dock widgets which should occupy the
+					//    same space, and set previous minimum size
+					//
+					if (area == "left" || area == "right") {
+						mainWindow()->splitDockWidget(prev, curr, Qt::Horizontal);
+
+					}
+					else if (area == "top" || area == "bottom") {
+						mainWindow()->splitDockWidget(prev, curr, Qt::Vertical);
+					}
+
+					QApplication::sendPostedEvents();
+					prev->setMinimumSize(idToMinSizeMap[dockIds[i - 1]]);
+					prev->widget()->setMinimumSize(idToMinSizeMap[dockIds[i - 1]]);
+					QApplication::sendPostedEvents();
+				}
+			}
+		}
+
 	}
 }
 
