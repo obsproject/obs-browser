@@ -110,6 +110,11 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 	QtExecSync([](void* data) -> void {
 		local_context* context = (local_context*)data;
 
+		// http://doc.qt.io/qt-5/qmainwindow.html#DockOption-enum
+		context->obs_main_window->setDockOptions(
+			QMainWindow::AnimatedDocks
+		);
+
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
 		context->self->m_menuManager = new StreamElementsMenuManager(context->obs_main_window);
 		context->self->m_bwTestManager = new StreamElementsBandwidthTestManager();
