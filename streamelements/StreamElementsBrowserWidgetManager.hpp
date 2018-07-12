@@ -68,6 +68,8 @@ public:
 	DockBrowserWidgetInfo* GetDockBrowserWidgetInfo(const char* const id);
 
 	QDockWidget* GetDockWidget(const char* const id) {
+		std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 		return StreamElementsWidgetManager::GetDockWidget(id);
 	}
 
@@ -94,12 +96,22 @@ public:
 	void SerializeNotificationBar(std::string& output);
 	void DeserializeNotificationBar(std::string& input);
 
+	/********************/
+	/* Critical section */
+	/********************/
+
+	void EnterCriticalSection() {
+		m_mutex.lock();
+	}
+
+	void LeaveCriticalSection() {
+		m_mutex.unlock();
+	}
+
+
 private:
 	std::map<std::string, StreamElementsBrowserWidget*> m_browserWidgets;
 
 	QToolBar* m_notificationBarToolBar;
 	StreamElementsBrowserWidget* m_notificationBarBrowserWidget;
-
-	std::mutex m_remove_all_mutex;
-	std::mutex m_remove_mutex;
 };
