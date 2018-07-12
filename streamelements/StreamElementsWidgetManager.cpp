@@ -165,7 +165,7 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 
 	m_parent->removeDockWidget(dock);
 
-	delete dock;
+	dock->deleteLater();
 
 	return true;
 }
