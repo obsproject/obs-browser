@@ -160,7 +160,13 @@ std::string StreamElementsBrowserWidget::GetCurrentUrl()
 		return m_url;
 	}
 
-	std::string url = m_cef_browser->GetMainFrame()->GetURL().ToString();
+	CefRefPtr<CefFrame> mainFrame = m_cef_browser->GetMainFrame();
+
+	if (!mainFrame.get()) {
+		return m_url;
+	}
+
+	std::string url = mainFrame->GetURL().ToString();
 
 	if (url.substr(0, 5) == "data:") {
 		// "data:" scheme means we're still at the loading page URL.
