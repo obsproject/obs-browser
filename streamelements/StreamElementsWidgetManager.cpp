@@ -33,7 +33,7 @@ StreamElementsWidgetManager::~StreamElementsWidgetManager()
 //
 void StreamElementsWidgetManager::PushCentralWidget(QWidget* widget)
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	QApplication::sendPostedEvents();
 	QSize prevSize = mainWindow()->centralWidget()->size();
@@ -54,7 +54,7 @@ void StreamElementsWidgetManager::PushCentralWidget(QWidget* widget)
 
 bool StreamElementsWidgetManager::DestroyCurrentCentralWidget()
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (m_centralWidgetStack.size()) {
 		SaveDockWidgetsGeometry();
@@ -81,7 +81,7 @@ bool StreamElementsWidgetManager::DestroyCurrentCentralWidget()
 
 void StreamElementsWidgetManager::OnObsExit()
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	// Empty stack
 	while (DestroyCurrentCentralWidget()) {
@@ -100,9 +100,7 @@ bool StreamElementsWidgetManager::AddDockWidget(
 	assert(title);
 	assert(widget);
 
-	SYNC_ACCESS();
-
-	std::lock_guard<std::mutex> guard(m_mutex);
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (m_dockWidgets.count(id)) {
 		return false;
@@ -129,7 +127,7 @@ bool StreamElementsWidgetManager::AddDockWidget(
 	std::string savedId = id;
 
 	QObject::connect(dock, &QDockWidget::dockLocationChanged, [savedId, dock, this](Qt::DockWidgetArea area) {
-		SYNC_ACCESS();
+		std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 		if (!m_dockWidgets.count(savedId)) {
 			return;
@@ -142,8 +140,8 @@ bool StreamElementsWidgetManager::AddDockWidget(
 		}, nullptr);
 	});
 
-	QObject::connect(dock, &QDockWidget::visibilityChanged, []() {
-		SYNC_ACCESS();
+	QObject::connect(dock, &QDockWidget::visibilityChanged, [this]() {
+		std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 		QtPostTask([](void*) -> void {
 			StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
@@ -158,9 +156,7 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 {
 	assert(id);
 
-	SYNC_ACCESS();
-
-	std::lock_guard<std::mutex> guard(m_mutex);
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (!m_dockWidgets.count(id)) {
 		return false;
@@ -180,9 +176,7 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 
 void StreamElementsWidgetManager::GetDockWidgetIdentifiers(std::vector<std::string>& result)
 {
-	SYNC_ACCESS();
-
-	std::lock_guard<std::mutex> guard(m_mutex);
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	for (auto imap : m_dockWidgets) {
 		result.emplace_back(imap.first);
@@ -193,7 +187,7 @@ QDockWidget* StreamElementsWidgetManager::GetDockWidget(const char* const id)
 {
 	assert(id);
 
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (!m_dockWidgets.count(id)) {
 		return nullptr;
@@ -206,7 +200,7 @@ StreamElementsWidgetManager::DockWidgetInfo* StreamElementsWidgetManager::GetDoc
 {
 	assert(id);
 
-	std::lock_guard<std::mutex> guard(m_mutex);
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	QDockWidget* dockWidget = GetDockWidget(id);
 
@@ -251,6 +245,8 @@ StreamElementsWidgetManager::DockWidgetInfo* StreamElementsWidgetManager::GetDoc
 
 void StreamElementsWidgetManager::SerializeDockingWidgets(std::string& output)
 {
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	CefRefPtr<CefValue> root = CefValue::Create();
 
 	SerializeDockingWidgets(root);
@@ -264,6 +260,8 @@ void StreamElementsWidgetManager::SerializeDockingWidgets(std::string& output)
 
 void StreamElementsWidgetManager::DeserializeDockingWidgets(std::string& input)
 {
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	// Convert JSON string to CefValue
 	CefRefPtr<CefValue> root =
 		CefParseJSON(CefString(input), JSON_PARSER_ALLOW_TRAILING_COMMAS);
@@ -273,7 +271,7 @@ void StreamElementsWidgetManager::DeserializeDockingWidgets(std::string& input)
 
 void StreamElementsWidgetManager::SaveDockWidgetsGeometry()
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	m_dockWidgetSavedMinSize.clear();
 
@@ -286,7 +284,7 @@ void StreamElementsWidgetManager::SaveDockWidgetsGeometry()
 
 void StreamElementsWidgetManager::RestoreDockWidgetsGeometry()
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	QApplication::sendPostedEvents();
 

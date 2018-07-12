@@ -25,6 +25,8 @@ void StreamElementsBrowserWidgetManager::PushCentralBrowserWidget(
 {
 	blog(LOG_INFO, "obs-browser: central widget: loading url: %s", url);
 
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	StreamElementsBrowserWidget* widget = new StreamElementsBrowserWidget(nullptr, url, executeJavaScriptCodeOnLoad, "center", "");
 
 	PushCentralWidget(widget);
@@ -32,19 +34,19 @@ void StreamElementsBrowserWidgetManager::PushCentralBrowserWidget(
 
 bool StreamElementsBrowserWidgetManager::DestroyCurrentCentralBrowserWidget()
 {
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	return DestroyCurrentCentralWidget();
 }
 
 std::string StreamElementsBrowserWidgetManager::AddDockBrowserWidget(CefRefPtr<CefValue> input, std::string requestId)
 {
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	std::string id = QUuid::createUuid().toString().toStdString();
 
-	{
-		SYNC_ACCESS();
-
-		if (requestId.size() && !m_browserWidgets.count(requestId)) {
-			id = requestId;
-		}
+	if (requestId.size() && !m_browserWidgets.count(requestId)) {
+		id = requestId;
 	}
 
 	CefRefPtr<CefDictionaryValue> widgetDictionary = input->GetDictionary();
@@ -176,7 +178,7 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 	const Qt::DockWidgetAreas allowedAreas,
 	const QDockWidget::DockWidgetFeatures features)
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	StreamElementsBrowserWidget* widget = new StreamElementsBrowserWidget(
 		nullptr, url, executeJavaScriptCodeOnLoad, DockWidgetAreaToString(area).c_str(), id);
@@ -192,9 +194,7 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 
 void StreamElementsBrowserWidgetManager::RemoveAllDockWidgets()
 {
-	SYNC_ACCESS();
-
-	std::lock_guard<std::mutex> guard(m_remove_all_mutex);
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	while (m_browserWidgets.size()) {
 		RemoveDockWidget(m_browserWidgets.begin()->first.c_str());
@@ -203,9 +203,7 @@ void StreamElementsBrowserWidgetManager::RemoveAllDockWidgets()
 
 bool StreamElementsBrowserWidgetManager::RemoveDockWidget(const char* const id)
 {
-	SYNC_ACCESS();
-
-	std::lock_guard<std::mutex> guard(m_remove_mutex);
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (StreamElementsWidgetManager::RemoveDockWidget(id)) {
 		if (m_browserWidgets.count(id)) {
@@ -216,15 +214,14 @@ bool StreamElementsBrowserWidgetManager::RemoveDockWidget(const char* const id)
 
 void StreamElementsBrowserWidgetManager::GetDockBrowserWidgetIdentifiers(std::vector<std::string>& result)
 {
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	return GetDockWidgetIdentifiers(result);
 }
 
 StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo* StreamElementsBrowserWidgetManager::GetDockBrowserWidgetInfo(const char* const id)
 {
-	SYNC_ACCESS();
-
-	std::lock_guard<std::mutex> guard1(m_remove_all_mutex);
-	std::lock_guard<std::mutex> guard2(m_remove_mutex);
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	StreamElementsBrowserWidgetManager::DockWidgetInfo* baseInfo = GetDockWidgetInfo(id);
 
@@ -246,7 +243,7 @@ StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo* StreamElementsBrowser
 
 void StreamElementsBrowserWidgetManager::SerializeDockingWidgets(CefRefPtr<CefValue>& output)
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
 	output->SetDictionary(rootDictionary);
@@ -292,7 +289,7 @@ void StreamElementsBrowserWidgetManager::SerializeDockingWidgets(CefRefPtr<CefVa
 
 void StreamElementsBrowserWidgetManager::DeserializeDockingWidgets(CefRefPtr<CefValue>& input)
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (!input.get()) {
 		return;
@@ -402,7 +399,7 @@ void StreamElementsBrowserWidgetManager::ShowNotificationBar(
 	const int height,
 	const char* const executeJavaScriptCodeOnLoad)
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	HideNotificationBar();
 
@@ -424,7 +421,7 @@ void StreamElementsBrowserWidgetManager::ShowNotificationBar(
 
 void StreamElementsBrowserWidgetManager::HideNotificationBar()
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (m_notificationBarToolBar) {
 		m_notificationBarToolBar->setVisible(false);
@@ -442,7 +439,7 @@ void StreamElementsBrowserWidgetManager::HideNotificationBar()
 
 void StreamElementsBrowserWidgetManager::SerializeNotificationBar(CefRefPtr<CefValue>& output)
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (m_notificationBarToolBar) {
 		CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
@@ -459,7 +456,7 @@ void StreamElementsBrowserWidgetManager::SerializeNotificationBar(CefRefPtr<CefV
 
 void StreamElementsBrowserWidgetManager::DeserializeNotificationBar(CefRefPtr<CefValue>& input)
 {
-	SYNC_ACCESS();
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (input->GetType() == VTYPE_DICTIONARY) {
 		CefRefPtr<CefDictionaryValue> rootDictionary = input->GetDictionary();
@@ -486,6 +483,8 @@ void StreamElementsBrowserWidgetManager::DeserializeNotificationBar(CefRefPtr<Ce
 
 void StreamElementsBrowserWidgetManager::SerializeNotificationBar(std::string& output)
 {
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	CefRefPtr<CefValue> root = CefValue::Create();
 
 	SerializeNotificationBar(root);
@@ -499,6 +498,8 @@ void StreamElementsBrowserWidgetManager::SerializeNotificationBar(std::string& o
 
 void StreamElementsBrowserWidgetManager::DeserializeNotificationBar(std::string& input)
 {
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
 	// Convert JSON string to CefValue
 	CefRefPtr<CefValue> root =
 		CefParseJSON(CefString(input), JSON_PARSER_ALLOW_TRAILING_COMMAS);

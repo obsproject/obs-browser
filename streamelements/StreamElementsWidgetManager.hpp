@@ -93,7 +93,8 @@ private:
 
 	std::map<std::string, QSize> m_dockWidgetSavedMinSize;
 
-	std::mutex m_mutex;
+protected:
+	std::recursive_mutex m_mutex;
 
 protected:
 	void SaveDockWidgetsGeometry();

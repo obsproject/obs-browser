@@ -65,6 +65,8 @@ void StreamElementsMenuManager::Update()
 	addURL(obs_module_text("StreamElements.Action.GroundControl"), obs_module_text("StreamElements.Action.GroundControl.URL"));
 	m_menu->addSeparator();
 	{
+		StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->EnterCriticalSection();
+
 		std::vector<std::string> widgetIds;
 		StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->GetDockBrowserWidgetIdentifiers(widgetIds);
 
@@ -85,6 +87,8 @@ void StreamElementsMenuManager::Update()
 		{
 			return a->m_title < b->m_title;
 		});
+
+		StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->LeaveCriticalSection();
 
 		for (auto widget : widgets) {
 			// widget->m_visible
