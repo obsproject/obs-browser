@@ -102,6 +102,8 @@ bool StreamElementsWidgetManager::AddDockWidget(
 
 	SYNC_ACCESS();
 
+	std::lock_guard<std::mutex> guard(m_mutex);
+
 	if (m_dockWidgets.count(id)) {
 		return false;
 	}
@@ -135,14 +137,18 @@ bool StreamElementsWidgetManager::AddDockWidget(
 
 		m_dockWidgetAreas[savedId] = area;
 
-		StreamElementsGlobalStateManager::GetInstance()->PersistState();
+		QtPostTask([](void*) -> void {
+			StreamElementsGlobalStateManager::GetInstance()->PersistState();
+		}, nullptr);
 	});
 
 	QObject::connect(dock, &QDockWidget::visibilityChanged, []() {
 		SYNC_ACCESS();
 
-		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
-		StreamElementsGlobalStateManager::GetInstance()->PersistState();
+		QtPostTask([](void*) -> void {
+			StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+			StreamElementsGlobalStateManager::GetInstance()->PersistState();
+		}, nullptr);
 	});
 
 	return true;
@@ -153,6 +159,8 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 	assert(id);
 
 	SYNC_ACCESS();
+
+	std::lock_guard<std::mutex> guard(m_mutex);
 
 	if (!m_dockWidgets.count(id)) {
 		return false;
@@ -173,6 +181,8 @@ bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 void StreamElementsWidgetManager::GetDockWidgetIdentifiers(std::vector<std::string>& result)
 {
 	SYNC_ACCESS();
+
+	std::lock_guard<std::mutex> guard(m_mutex);
 
 	for (auto imap : m_dockWidgets) {
 		result.emplace_back(imap.first);
