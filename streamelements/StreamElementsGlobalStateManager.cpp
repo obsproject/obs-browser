@@ -112,8 +112,9 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 
 		// http://doc.qt.io/qt-5/qmainwindow.html#DockOption-enum
 		context->obs_main_window->setDockOptions(
-			QMainWindow::AnimatedDocks |
-			QMainWindow::AllowNestedDocks
+			QMainWindow::AnimatedDocks
+			| QMainWindow::AllowNestedDocks
+			//| QMainWindow::AllowTabbedDocks
 		);
 
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
