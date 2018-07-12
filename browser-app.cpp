@@ -59,6 +59,7 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 
 	command_line->AppendSwitchWithValue("autoplay-policy",
 			"no-user-gesture-required");
+	command_line->AppendSwitchWithValue("plugin-policy", "allow");
 }
 
 void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,

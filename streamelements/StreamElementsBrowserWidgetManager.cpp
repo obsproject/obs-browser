@@ -194,6 +194,8 @@ void StreamElementsBrowserWidgetManager::RemoveAllDockWidgets()
 {
 	SYNC_ACCESS();
 
+	std::lock_guard<std::mutex> guard(m_remove_all_mutex);
+
 	while (m_browserWidgets.size()) {
 		RemoveDockWidget(m_browserWidgets.begin()->first.c_str());
 	}
@@ -203,11 +205,13 @@ bool StreamElementsBrowserWidgetManager::RemoveDockWidget(const char* const id)
 {
 	SYNC_ACCESS();
 
-	if (m_browserWidgets.count(id)) {
-		m_browserWidgets.erase(id);
-	}
+	std::lock_guard<std::mutex> guard(m_remove_mutex);
 
-	return StreamElementsWidgetManager::RemoveDockWidget(id);
+	if (StreamElementsWidgetManager::RemoveDockWidget(id)) {
+		if (m_browserWidgets.count(id)) {
+			m_browserWidgets.erase(id);
+		}
+	}
 }
 
 void StreamElementsBrowserWidgetManager::GetDockBrowserWidgetIdentifiers(std::vector<std::string>& result)
@@ -218,6 +222,9 @@ void StreamElementsBrowserWidgetManager::GetDockBrowserWidgetIdentifiers(std::ve
 StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo* StreamElementsBrowserWidgetManager::GetDockBrowserWidgetInfo(const char* const id)
 {
 	SYNC_ACCESS();
+
+	std::lock_guard<std::mutex> guard1(m_remove_all_mutex);
+	std::lock_guard<std::mutex> guard2(m_remove_mutex);
 
 	StreamElementsBrowserWidgetManager::DockWidgetInfo* baseInfo = GetDockWidgetInfo(id);
 

@@ -254,8 +254,10 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 
 	StreamElementsConfig::GetInstance()->SetStartupFlags(StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
 
-	GetMenuManager()->Update();
-	PersistState();
+	QtPostTask([](void*) -> void {
+		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+		StreamElementsGlobalStateManager::GetInstance()->PersistState();
+	}, nullptr);
 }
 
 void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)

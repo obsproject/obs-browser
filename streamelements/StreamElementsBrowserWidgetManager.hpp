@@ -99,4 +99,7 @@ private:
 
 	QToolBar* m_notificationBarToolBar;
 	StreamElementsBrowserWidget* m_notificationBarBrowserWidget;
+
+	std::mutex m_remove_all_mutex;
+	std::mutex m_remove_mutex;
 };
