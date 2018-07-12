@@ -206,7 +206,7 @@ StreamElementsWidgetManager::DockWidgetInfo* StreamElementsWidgetManager::GetDoc
 {
 	assert(id);
 
-	SYNC_ACCESS();
+	std::lock_guard<std::mutex> guard(m_mutex);
 
 	QDockWidget* dockWidget = GetDockWidget(id);
 

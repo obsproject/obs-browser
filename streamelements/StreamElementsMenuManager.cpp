@@ -52,7 +52,9 @@ void StreamElementsMenuManager::Update()
 		&QAction::triggered,
 		[this]
 		{
-			StreamElementsGlobalStateManager::GetInstance()->Reset();
+			QtPostTask([](void*) -> void {
+				StreamElementsGlobalStateManager::GetInstance()->Reset();
+			}, nullptr);
 		});
 
 
@@ -68,9 +70,12 @@ void StreamElementsMenuManager::Update()
 
 		std::vector<StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo*> widgets;
 		for (auto id : widgetIds) {
-			widgets.emplace_back(
-				StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->GetDockBrowserWidgetInfo(
-					id.c_str()));
+			auto info = StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->GetDockBrowserWidgetInfo(
+				id.c_str());
+
+			if (info) {
+				widgets.emplace_back(info);
+			}
 		}
 
 		std::sort(
