@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <stack>
 #include <map>
+#include <mutex>
 
 #include "../cef-headers.hpp"
 
@@ -91,6 +92,8 @@ private:
 	std::map<std::string, Qt::DockWidgetArea> m_dockWidgetAreas;
 
 	std::map<std::string, QSize> m_dockWidgetSavedMinSize;
+
+	std::mutex m_mutex;
 
 protected:
 	void SaveDockWidgetsGeometry();
