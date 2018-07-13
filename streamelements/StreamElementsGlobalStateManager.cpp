@@ -114,7 +114,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->obs_main_window->setDockOptions(
 			QMainWindow::AnimatedDocks
 			| QMainWindow::AllowNestedDocks
-			//| QMainWindow::AllowTabbedDocks
+			| QMainWindow::AllowTabbedDocks
 		);
 
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
@@ -297,6 +297,12 @@ void StreamElementsGlobalStateManager::PersistState()
 	rootDictionary->SetValue("dockingBrowserWidgets", dockingWidgetsState);
 	rootDictionary->SetValue("notificationBar", notificationBarState);
 
+	QByteArray geometry = mainWindow()->saveGeometry();
+	QByteArray windowState = mainWindow()->saveState();
+
+	rootDictionary->SetString("geometry", base64_encode(geometry.begin(), geometry.size()));
+	rootDictionary->SetString("windowState", base64_encode(windowState.begin(), windowState.size()));
+
 	CefString json = CefWriteJSON(root, JSON_WRITER_DEFAULT);
 
 	std::string base64EncodedJSON = base64_encode(json.ToString());
@@ -340,6 +346,23 @@ void StreamElementsGlobalStateManager::RestoreState()
 	if (notificationBarState.get()) {
 		blog(LOG_INFO, "obs-browser: state: restoring notification bar: %s", CefWriteJSON(notificationBarState, JSON_WRITER_DEFAULT).ToString().c_str());
 		GetWidgetManager()->DeserializeNotificationBar(notificationBarState);
+	}
+
+	auto geometry = rootDictionary->GetValue("geometry");
+	auto windowState = rootDictionary->GetValue("windowState");
+
+	if (geometry.get() && geometry->GetType() == VTYPE_STRING) {
+		blog(LOG_INFO, "obs-browser: state: restoring geometry: %s", geometry->GetString());
+
+		mainWindow()->restoreGeometry(
+			QByteArray::fromStdString(base64_decode(geometry->GetString().ToString())));
+	}
+
+	if (windowState.get() && windowState->GetType() == VTYPE_STRING) {
+		blog(LOG_INFO, "obs-browser: state: restoring windowState: %s", windowState->GetString());
+
+		mainWindow()->restoreState(
+			QByteArray::fromStdString(base64_decode(windowState->GetString().ToString())));
 	}
 }
 

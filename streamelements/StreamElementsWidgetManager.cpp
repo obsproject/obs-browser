@@ -108,6 +108,8 @@ bool StreamElementsWidgetManager::AddDockWidget(
 
 	QDockWidget* dock = new QDockWidget(title, m_parent);
 
+	dock->setObjectName(QString(id));
+
 	dock->setAllowedAreas(allowedAreas);
 	dock->setFeatures(features);
 	dock->setWidget(widget);
