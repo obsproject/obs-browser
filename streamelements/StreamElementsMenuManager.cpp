@@ -1,6 +1,8 @@
 #include "StreamElementsMenuManager.hpp"
 #include "StreamElementsGlobalStateManager.hpp"
 
+#include <callback/signal.h>
+
 #include "../cef-headers.hpp"
 
 #include <QObjectList>
@@ -135,6 +137,17 @@ void StreamElementsMenuManager::Update()
 		StreamElementsGlobalStateManager::GetInstance()->StartOnBoardingUI();
 	});
 	*/
+	m_menu->addSeparator();
+
+	QAction* check_for_updates_action = new QAction(obs_module_text("StreamElements.Action.CheckForUpdates"));
+	m_menu->addAction(check_for_updates_action);
+	check_for_updates_action->connect(
+		check_for_updates_action,
+		&QAction::triggered,
+		[this]
+	{
+		signal_handler_signal(obs_get_signal_handler(), "streamelements_request_check_for_updates", nullptr);
+	});
 
 	m_menu->addSeparator();
 	addURL(obs_module_text("StreamElements.Action.Uninstall"), obs_module_text("StreamElements.Action.Uninstall.URL"));
