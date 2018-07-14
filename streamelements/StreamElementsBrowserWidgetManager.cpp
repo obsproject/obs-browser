@@ -144,15 +144,15 @@ std::string StreamElementsBrowserWidgetManager::AddDockBrowserWidget(CefRefPtr<C
 				widget->setVisible(visible);
 				QApplication::sendPostedEvents();
 
-				widget->setSizePolicy(sizePolicy);
+				//widget->setSizePolicy(sizePolicy);
 				widget->widget()->setSizePolicy(sizePolicy);
 
-				widget->setMinimumSize(requestWidth, requestHeight);
+				//widget->setMinimumSize(requestWidth, requestHeight);
 				widget->widget()->setMinimumSize(requestWidth, requestHeight);
 
 				QApplication::sendPostedEvents();
 
-				widget->setMinimumSize(minWidth, minHeight);
+				//widget->setMinimumSize(minWidth, minHeight);
 				widget->widget()->setMinimumSize(minWidth, minHeight);
 
 				if (left >= 0 || top >= 0) {
@@ -366,6 +366,7 @@ void StreamElementsBrowserWidgetManager::DeserializeDockingWidgets(CefRefPtr<Cef
 				//
 				dockIds[i] = AddDockBrowserWidget(widgetValue, dockIds[i]);
 
+				/*
 				QDockWidget* prev = i > 0 ? GetDockWidget(dockIds[i - 1].c_str()) : nullptr;
 				QDockWidget* curr = GetDockWidget(dockIds[i].c_str());
 
@@ -388,6 +389,7 @@ void StreamElementsBrowserWidgetManager::DeserializeDockingWidgets(CefRefPtr<Cef
 					prev->widget()->setMinimumSize(idToMinSizeMap[dockIds[i - 1]]);
 					QApplication::sendPostedEvents();
 				}
+				*/
 			}
 		}
 
