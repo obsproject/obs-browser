@@ -356,6 +356,11 @@ void StreamElementsGlobalStateManager::RestoreState()
 
 		mainWindow()->restoreGeometry(
 			QByteArray::fromStdString(base64_decode(geometry->GetString().ToString())));
+
+		// https://bugreports.qt.io/browse/QTBUG-46620
+		if (mainWindow()->isMaximized()) {
+			mainWindow()->setGeometry(QApplication::desktop()->availableGeometry(mainWindow()));
+		}
 	}
 
 	if (windowState.get() && windowState->GetType() == VTYPE_STRING) {
