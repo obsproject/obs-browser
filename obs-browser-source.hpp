@@ -48,6 +48,7 @@ struct BrowserSource {
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	bool                  hwaccel                  = false;
 #endif
+	bool                  is_showing               = false;
 
 	inline void DestroyTextures()
 	{
