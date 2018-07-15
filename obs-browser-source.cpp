@@ -81,6 +81,10 @@ void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
 
 bool BrowserSource::CreateBrowser()
 {
+	if (!is_showing && shutdown_on_invisible) {
+		return false;
+	}
+
 	static std::mutex sync_mutex;
 
 	return QueueCEFTask([this]()
@@ -271,6 +275,8 @@ void BrowserSource::SendKeyClick(
 
 void BrowserSource::SetShowing(bool showing)
 {
+	is_showing = showing;
+
 	if (!showing) {
 		ExecuteOnBrowser([this] ()
 		{

@@ -45,6 +45,7 @@ struct BrowserSource {
 	bool                  restart                  = false;
 	bool                  shutdown_on_invisible    = false;
 	bool                  is_local                 = false;
+	bool                  is_showing               = false;
 
 	inline void DestroyTextures()
 	{
