@@ -23,6 +23,7 @@ public:
 	void Shutdown();
 
 	void Reset(bool deleteAllCookies = true);
+	void DeleteCookies();
 	void StartOnBoardingUI();
 
 	void PersistState();

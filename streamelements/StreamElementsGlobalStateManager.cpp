@@ -327,15 +327,55 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 	}, nullptr);
 }
 
+void StreamElementsGlobalStateManager::DeleteCookies()
+{
+	class CookieVisitor :
+		public CefCookieVisitor,
+		public CefBaseRefCounted
+	{
+	public:
+		CookieVisitor() { }
+		~CookieVisitor() { }
+
+		virtual bool Visit(const CefCookie& cookie, int count, int total, bool& deleteCookie) override
+		{
+			deleteCookie = true;
+
+			CefString domain(&cookie.domain);
+			CefString name(&cookie.name);
+
+			// Process cookie whitelist. This is used for
+			// preserving two-factor-authentication (2FA)
+			// "remember this computer" state.
+			//
+			if (domain == ".twitch.tv" && name == "authy_id") {
+				deleteCookie = false;
+			}
+
+			return true;
+		}
+	public:
+		IMPLEMENT_REFCOUNTING(CookieVisitor);
+	};
+
+	if (!CefCookieManager::GetGlobalManager(NULL)->VisitAllCookies(new CookieVisitor())) {
+		blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->VisitAllCookies() failed.");
+	}
+
+	/*
+	if (!CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
+	CefString(""), // URL
+	CefString(""), // Cookie name
+	nullptr)) {    // On-complete callback
+	blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->DeleteCookies() failed.");
+	}
+	*/
+}
+
 void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
 {
 	if (deleteAllCookies) {
-		if (!CefCookieManager::GetGlobalManager(NULL)->DeleteCookies(
-			CefString(""), // URL
-			CefString(""), // Cookie name
-			nullptr)) {    // On-complete callback
-			blog(LOG_ERROR, "CefCookieManager::GetGlobalManager(NULL)->DeleteCookies() failed.");
-		}
+		DeleteCookies();
 	}
 
 	StartOnBoardingUI();
