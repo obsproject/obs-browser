@@ -28,6 +28,7 @@ private:
 	void RegisterIncomingApiCallHandlersInternal(CefRefPtr<CefBrowser> browser);
 	void RegisterApiPropsInternal(CefRefPtr<CefBrowser> browser);
 	void DispatchHostReadyEventInternal(CefRefPtr<CefBrowser> browser);
+	void DispatchEventInternal(CefRefPtr<CefBrowser> browser, std::string event, std::string eventArgsJson);
 
 public:
 	IMPLEMENT_REFCOUNTING(StreamElementsApiMessageHandler)

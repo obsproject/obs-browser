@@ -4,10 +4,71 @@
 #include "Version.hpp"
 
 #include "base64/base64.hpp"
+#include "json11/json11.hpp"
 
 #include <util/threading.h>
 
 #include <QPushButton>
+
+/* ========================================================================= */
+
+static void handle_obs_frontend_event(enum obs_frontend_event event, void* data)
+{
+	std::string name;
+	std::string args = "null";
+
+	switch (event) {
+	case OBS_FRONTEND_EVENT_STREAMING_STARTING:
+		name = "hostStreamingStarting";
+		break;
+	case OBS_FRONTEND_EVENT_STREAMING_STARTED:
+		name = "hostStreamingStarted";
+		break;
+	case OBS_FRONTEND_EVENT_STREAMING_STOPPING:
+		name = "hostStreamingStopping";
+		break;
+	case OBS_FRONTEND_EVENT_STREAMING_STOPPED:
+		name = "hostStreamingStopped";
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STARTING:
+		name = "hostRecordingStarting";
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
+		name = "hostRecordingStarted";
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STOPPING:
+		name = "hostRecordingStopping";
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
+		name = "hostRecordingStopped";
+		break;
+	case OBS_FRONTEND_EVENT_SCENE_CHANGED:
+	{
+		obs_source_t *source = obs_frontend_get_current_scene();
+
+		json11::Json json = json11::Json::object{
+			{ "name", obs_source_get_name(source) },
+			{ "width", (int)obs_source_get_width(source) },
+			{ "height", (int)obs_source_get_height(source) }
+		};
+
+		obs_source_release(source);
+
+		name = "hostActiveSceneChanged";
+		args = json.dump();
+		break;
+	}
+	case OBS_FRONTEND_EVENT_EXIT:
+		name = "hostExit";
+		break;
+	default:
+		return;
+	}
+
+	StreamElementsCefClient::DispatchJSEvent(name, args);
+}
+
+/* ========================================================================= */
 
 static class BrowserTask : public CefTask {
 public:
@@ -218,6 +279,8 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 
 	m_initialized = true;
 	m_persistStateEnabled = true;
+
+	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 }
 
 void StreamElementsGlobalStateManager::Shutdown()
@@ -225,6 +288,8 @@ void StreamElementsGlobalStateManager::Shutdown()
 	if (!m_initialized) {
 		return;
 	}
+
+	obs_frontend_remove_event_callback(handle_obs_frontend_event, nullptr);
 
 	FlushCookiesSync();
 

@@ -43,6 +43,16 @@ public:
 	/* CefLifeSpanHandler */
 	virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
 
+	///
+	// Called just before a browser is destroyed. Release all references to the
+	// browser object and do not attempt to execute any methods on the browser
+	// object after this callback returns. This callback will be the last
+	// notification that references |browser|. See DoClose() documentation for
+	// additional usage information.
+	///
+	/*--cef()--*/
+	virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
+
 	virtual bool OnBeforePopup(
 		CefRefPtr<CefBrowser> /*browser*/,
 		CefRefPtr<CefFrame> /*frame*/,
@@ -103,6 +113,9 @@ public:
 private:
 	std::string m_executeJavaScriptCodeOnLoad;
 	CefRefPtr<StreamElementsBrowserMessageHandler> m_messageHandler;
+
+public:
+	static void DispatchJSEvent(std::string event, std::string eventArgsJson);
 
 public:
 	IMPLEMENT_REFCOUNTING(StreamElementsCefClient)
