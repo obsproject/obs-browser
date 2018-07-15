@@ -121,6 +121,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_menuManager = new StreamElementsMenuManager(context->obs_main_window);
 		context->self->m_bwTestManager = new StreamElementsBandwidthTestManager();
 		context->self->m_outputSettingsManager = new StreamElementsOutputSettingsManager();
+		context->self->m_workerManager = new StreamElementsWorkerManager();
 
 		{
 			// Set up "Live Support" button
@@ -247,6 +248,7 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 		onBoardingURL = "https://obs.streamelements.com/welcome";
 	}
 
+	GetWorkerManager()->RemoveAll();
 	GetWidgetManager()->HideNotificationBar();
 	GetWidgetManager()->RemoveAllDockWidgets();
 	GetWidgetManager()->DestroyCurrentCentralBrowserWidget();
@@ -290,12 +292,15 @@ void StreamElementsGlobalStateManager::PersistState()
 
 	CefRefPtr<CefValue> dockingWidgetsState = CefValue::Create();
 	CefRefPtr<CefValue> notificationBarState = CefValue::Create();
+	CefRefPtr<CefValue> workersState = CefValue::Create();
 
 	GetWidgetManager()->SerializeDockingWidgets(dockingWidgetsState);
 	GetWidgetManager()->SerializeNotificationBar(notificationBarState);
+	GetWorkerManager()->Serialize(workersState);
 
 	rootDictionary->SetValue("dockingBrowserWidgets", dockingWidgetsState);
 	rootDictionary->SetValue("notificationBar", notificationBarState);
+	rootDictionary->SetValue("workers", workersState);
 
 	QByteArray geometry = mainWindow()->saveGeometry();
 	QByteArray windowState = mainWindow()->saveState();
@@ -337,6 +342,12 @@ void StreamElementsGlobalStateManager::RestoreState()
 
 	auto dockingWidgetsState = rootDictionary->GetValue("dockingBrowserWidgets");
 	auto notificationBarState = rootDictionary->GetValue("notificationBar");
+	auto workersState = rootDictionary->GetValue("workers");
+
+	if (workersState.get()) {
+		blog(LOG_INFO, "obs-browser: state: restoring workers: %s", CefWriteJSON(workersState, JSON_WRITER_DEFAULT).ToString().c_str());
+		GetWorkerManager()->Deserialize(workersState);
+	}
 
 	if (dockingWidgetsState.get()) {
 		blog(LOG_INFO, "obs-browser: state: restoring docking widgets: %s", CefWriteJSON(dockingWidgetsState, JSON_WRITER_DEFAULT).ToString().c_str());

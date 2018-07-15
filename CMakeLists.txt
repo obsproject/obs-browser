@@ -100,6 +100,7 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsMenuManager.cpp
 	streamelements/StreamElementsBandwidthTestManager.cpp
 	streamelements/StreamElementsOutputSettingsManager.cpp
+	streamelements/StreamElementsWorkerManager.cpp
 	)
 set(obs-browser_HEADERS
 	obs-browser-source.hpp
@@ -129,6 +130,7 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsMenuManager.hpp
 	streamelements/StreamElementsBandwidthTestManager.hpp
 	streamelements/StreamElementsOutputSettingsManager.hpp
+	streamelements/StreamElementsWorkerManager.cpp
 	)
 
 # only allow browser panels on win32 for now -- other operating systems
