@@ -189,12 +189,17 @@ void StreamElementsApiMessageHandler::RegisterApiPropsInternal(CefRefPtr<CefBrow
 
 void StreamElementsApiMessageHandler::DispatchHostReadyEventInternal(CefRefPtr<CefBrowser> browser)
 {
+	DispatchEventInternal(browser, "hostReady", "null");
+}
+
+void StreamElementsApiMessageHandler::DispatchEventInternal(CefRefPtr<CefBrowser> browser, std::string event, std::string eventArgsJson)
+{
 	CefRefPtr<CefProcessMessage> msg =
 		CefProcessMessage::Create("DispatchJSEvent");
 	CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
-	args->SetString(0, "hostReady");
-	args->SetString(1, "null");
+	args->SetString(0, event);
+	args->SetString(1, eventArgsJson);
 	browser->SendProcessMessage(PID_RENDERER, msg);
 }
 

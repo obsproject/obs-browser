@@ -7,11 +7,15 @@
 #include <include/cef_urlrequest.h>	// CefURLRequestClient
 #include <regex>
 #include <sstream>
+#include <algorithm>
 
 #include <QWindow>
 #include <QIcon>
 #include <QWidget>
 #include <QFile>
+
+static std::mutex s_browsers_mutex;
+static std::vector<CefRefPtr<CefBrowser>> s_browsers;
 
 static class BrowserTask : public CefTask {
 public:
@@ -196,7 +200,7 @@ void StreamElementsCefClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 
 	local_context* context = new local_context();
 	
-	context->handle = browser->GetHost()->GetWindowHandle();;
+	context->handle = browser->GetHost()->GetWindowHandle();
 	context->title = title;
 
 	QtPostTask([](void* data) {
@@ -221,4 +225,37 @@ void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 {
 	SetWindowDefaultIcon(
 		browser->GetHost()->GetWindowHandle());
+
+	{
+		std::lock_guard<std::mutex> guard(s_browsers_mutex);
+
+		s_browsers.emplace_back(browser);
+	}
+}
+
+
+void StreamElementsCefClient::OnBeforeClose(CefRefPtr<CefBrowser> browser)
+{
+	std::lock_guard<std::mutex> guard(s_browsers_mutex);
+
+	auto index = std::find(s_browsers.begin(), s_browsers.end(), browser.get());
+
+	if (index != s_browsers.end()) {
+		s_browsers.erase(index);
+	}
+}
+
+void StreamElementsCefClient::DispatchJSEvent(std::string event, std::string eventArgsJson)
+{
+	std::lock_guard<std::mutex> guard(s_browsers_mutex);
+
+	for (CefRefPtr<CefBrowser> browser : s_browsers) {
+		CefRefPtr<CefProcessMessage> msg =
+			CefProcessMessage::Create("DispatchJSEvent");
+		CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+		args->SetString(0, event);
+		args->SetString(1, eventArgsJson);
+		browser->SendProcessMessage(PID_RENDERER, msg);
+	}
 }
