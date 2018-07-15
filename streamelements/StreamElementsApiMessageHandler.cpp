@@ -466,4 +466,35 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 				StreamElementsGlobalStateManager::GetInstance()->DeserializePopupWindow(args->GetValue(0)));
 		}
 	API_HANDLER_END();
+
+	API_HANDLER_BEGIN("addBackgroundWorker");
+		if (args->GetSize()) {
+			result->SetString(
+				StreamElementsGlobalStateManager::GetInstance()->GetWorkerManager()->DeserializeOne(args->GetValue(0)));
+
+			StreamElementsGlobalStateManager::GetInstance()->PersistState();
+		}
+	API_HANDLER_END();
+
+	API_HANDLER_BEGIN("getAllBackgroundWorkers");
+		StreamElementsGlobalStateManager::GetInstance()->GetWorkerManager()->Serialize(result);
+	API_HANDLER_END();
+
+	API_HANDLER_BEGIN("removeBackgroundWorkersByIds");
+		if (args->GetSize()) {
+			CefRefPtr<CefListValue> list = args->GetList(0);
+
+			if (list.get()) {
+				for (int i = 0; i < list->GetSize(); ++i) {
+					CefString id = list->GetString(i);
+
+					StreamElementsGlobalStateManager::GetInstance()->GetWorkerManager()->Remove(id);
+				}
+
+				StreamElementsGlobalStateManager::GetInstance()->PersistState();
+
+				result->SetBool(true);
+			}
+		}
+	API_HANDLER_END();
 }

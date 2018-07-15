@@ -23,6 +23,15 @@
 
 using namespace json11;
 
+static std::string StringReplaceAll(std::string str, const std::string& from, const std::string& to) {
+	size_t start_pos = 0;
+	while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+		str.replace(start_pos, from.length(), to);
+		start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+	}
+	return str;
+}
+
 CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
 {
 	return this;
@@ -178,27 +187,34 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		context->Enter();
 
 		CefRefPtr<CefListValue> arguments = message->GetArgumentList();
-		int callbackID = arguments->GetInt(0);
-		CefString jsonString = arguments->GetString(1);
 
-		std::string script;
-		script += "JSON.parse('";
-		script += arguments->GetString(1).ToString();
-		script += "');";
+		if (arguments->GetSize()) {
+			int callbackID = arguments->GetInt(0);
 
-		CefRefPtr<CefV8Value> callback = callbackMap[callbackID];
-		CefV8ValueList args;
+			CefRefPtr<CefV8Value> callback = callbackMap[callbackID];
 
-		context->Eval(script, browser->GetMainFrame()->GetURL(),
-			0, retval, exception);
+			CefV8ValueList args;
 
-		args.push_back(retval);
+			if (arguments->GetSize() > 1) {
+				std::string json = arguments->GetString(1).ToString();
 
-		callback->ExecuteFunction(NULL, args);
+				json = StringReplaceAll(json, "'", "\\u0027");
+				json = StringReplaceAll(json, "\\", "\\\\");
+
+				std::string script = "JSON.parse('" + json + "');";
+
+				context->Eval(script, browser->GetMainFrame()->GetURL(),
+					0, retval, exception);
+
+				args.push_back(retval);
+			}
+
+			callback->ExecuteFunction(NULL, args);
+
+			callbackMap.erase(callbackID);
+		}
 
 		context->Exit();
-
-		callbackMap.erase(callbackID);
 	}
 	else if (message->GetName() == "CefRenderProcessHandler::BindJavaScriptProperties") {
 		CefRefPtr<CefV8Context> context =
