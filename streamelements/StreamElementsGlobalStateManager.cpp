@@ -313,10 +313,8 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 		onBoardingURL = "https://obs.streamelements.com/welcome";
 	}
 
-	GetWorkerManager()->RemoveAll();
-	GetWidgetManager()->HideNotificationBar();
-	GetWidgetManager()->RemoveAllDockWidgets();
-	GetWidgetManager()->DestroyCurrentCentralBrowserWidget();
+	StopOnBoardingUI();
+
 	GetWidgetManager()->PushCentralBrowserWidget(onBoardingURL.c_str(), nullptr);
 
 	StreamElementsConfig::GetInstance()->SetStartupFlags(StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
@@ -325,6 +323,14 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
 		StreamElementsGlobalStateManager::GetInstance()->PersistState();
 	}, nullptr);
+}
+
+void StreamElementsGlobalStateManager::StopOnBoardingUI()
+{
+	GetWorkerManager()->RemoveAll();
+	GetWidgetManager()->HideNotificationBar();
+	GetWidgetManager()->RemoveAllDockWidgets();
+	GetWidgetManager()->DestroyCurrentCentralBrowserWidget();
 }
 
 void StreamElementsGlobalStateManager::DeleteCookies()

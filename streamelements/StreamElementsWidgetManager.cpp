@@ -79,6 +79,13 @@ bool StreamElementsWidgetManager::DestroyCurrentCentralWidget()
 	return nullptr;
 }
 
+bool StreamElementsWidgetManager::HasCentralWidget()
+{
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	return !!m_centralWidgetStack.size();
+}
+
 void StreamElementsWidgetManager::OnObsExit()
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);

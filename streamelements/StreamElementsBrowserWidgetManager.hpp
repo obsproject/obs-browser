@@ -44,6 +44,9 @@ public:
 
 	bool DestroyCurrentCentralBrowserWidget();
 
+	bool HasCentralBrowserWidget() { return HasCentralWidget(); }
+
+
 	/********************/
 	/* Dockable widgets */
 	/********************/

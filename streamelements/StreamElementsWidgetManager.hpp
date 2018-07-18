@@ -55,6 +55,7 @@ public:
 
 	void PushCentralWidget(QWidget* widget);
 	bool DestroyCurrentCentralWidget();
+	bool HasCentralWidget();
 
 	/* dockable widgets */
 
