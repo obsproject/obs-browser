@@ -301,6 +301,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 					rootDictionary->GetString("url").ToString().c_str(),
 					executeJavaScriptCodeOnLoad.c_str());
 
+				StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
 				StreamElementsGlobalStateManager::GetInstance()->PersistState();
 
 				result->SetBool(true);
@@ -315,6 +316,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		{
 		}
 
+		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
 		StreamElementsGlobalStateManager::GetInstance()->PersistState();
 
 		result->SetBool(true);
@@ -382,6 +384,9 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		StreamElementsConfig::GetInstance()->SetStartupFlags(
 			StreamElementsConfig::GetInstance()->GetStartupFlags() &
 			~StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
+
+		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+		StreamElementsGlobalStateManager::GetInstance()->PersistState();
 
 		result->SetBool(true);
 	API_HANDLER_END();

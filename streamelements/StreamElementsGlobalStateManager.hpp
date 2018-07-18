@@ -25,6 +25,7 @@ public:
 	void Reset(bool deleteAllCookies = true);
 	void DeleteCookies();
 	void StartOnBoardingUI();
+	void StopOnBoardingUI();
 
 	void PersistState();
 	void RestoreState();

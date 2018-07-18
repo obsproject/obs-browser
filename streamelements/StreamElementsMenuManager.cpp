@@ -150,6 +150,28 @@ void StreamElementsMenuManager::Update()
 	});
 
 	m_menu->addSeparator();
+
+	QAction* stop_onboarding_ui = new QAction(obs_module_text("StreamElements.Action.StopOnBoardingUI"));
+	m_menu->addAction(stop_onboarding_ui);
+	stop_onboarding_ui->connect(
+		stop_onboarding_ui,
+		&QAction::triggered,
+		[this]
+	{
+		StreamElementsGlobalStateManager::GetInstance()->StopOnBoardingUI();
+
+		StreamElementsConfig::GetInstance()->SetStartupFlags(
+			StreamElementsConfig::GetInstance()->GetStartupFlags() &
+			~StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
+
+		Update();
+	});
+
+	stop_onboarding_ui->setEnabled(
+		!!(StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE)
+		&& StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->HasCentralBrowserWidget()
+	);
+
 	addURL(obs_module_text("StreamElements.Action.Uninstall"), obs_module_text("StreamElements.Action.Uninstall.URL"));
 	m_menu->addSeparator();
 	addURL(obs_module_text("StreamElements.Action.LiveSupport"), obs_module_text("StreamElements.Action.LiveSupport.URL"));
