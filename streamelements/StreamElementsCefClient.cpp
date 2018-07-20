@@ -119,8 +119,10 @@ void StreamElementsCefClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 	const CefString& failedUrl)
 {
 	if (errorCode == ERR_ABORTED) {
-		// Don't display an error for downloaded files.
-		// return;
+		// Don't display an error for downloaded files and
+		// pages which have been left while loading.
+		// (loading aborted)
+		return;
 	}
 
 	if (!frame->IsMain()) {
