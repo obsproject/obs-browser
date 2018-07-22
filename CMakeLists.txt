@@ -240,6 +240,9 @@ if (WIN32)
 		COMMAND ${CMAKE_COMMAND} -E copy
 		"${CEF_ROOT_DIR}/Release/v8_context_snapshot.bin"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+		COMMAND ${CMAKE_COMMAND} -E copy
+		"streamelements/qt.conf"
+		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${BITS}bit/"
 	)
 endif()
 
