@@ -50,6 +50,47 @@ void StreamElementsWidgetManager::PushCentralWidget(QWidget* widget)
 	QApplication::sendPostedEvents();
 
 	widget->setMinimumSize(0, 0);
+
+
+	///
+	// The following is an unpleasant hack to make CEF correctly position
+	// itself in multi DPI monitor setup while on the second monitor.
+	//
+	// It appears that when the window moves to the primary monitor, Qt
+	// repositions all child windows correctly.
+	//
+	// So, we move the window to the first screen, and then to the
+	// secondary monitor.
+	//
+	// TODO: Find a better way to do this.
+	//
+	const int PRIMARY_SCREEN = 0;
+
+	if (QApplication::desktop()->numScreens() > 1 && QApplication::desktop()->screenNumber(m_parent) != PRIMARY_SCREEN) {
+		struct local_context {
+			StreamElementsWidgetManager* self;
+			QPoint position;
+		};
+
+		local_context* context = new local_context();
+		context->self = this;
+		context->position = m_parent->pos();
+
+		// Move to 1st screen
+		m_parent->move(
+			QApplication::desktop()->availableGeometry(PRIMARY_SCREEN).left(),
+			QApplication::desktop()->availableGeometry(PRIMARY_SCREEN).top());
+
+		QApplication::sendPostedEvents();
+
+		QtPostTask([](void* data) {
+			local_context* context = (local_context*)data;
+
+			context->self->m_parent->move(context->position);
+
+			delete context;
+		}, context);
+	}
 }
 
 bool StreamElementsWidgetManager::DestroyCurrentCentralWidget()
