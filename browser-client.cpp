@@ -197,13 +197,13 @@ void BrowserClient::OnPaint(
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 void BrowserClient::OnAcceleratedPaint(
 		CefRefPtr<CefBrowser>,
-		PaintElementType type,
+		PaintElementType,
 		const RectList &,
 		void *shared_handle,
 		uint64)
 {
 	if (!bs) {
-		return false;
+		return;
 	}
 
 	if (shared_handle != last_handle) {

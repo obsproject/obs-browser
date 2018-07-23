@@ -172,10 +172,6 @@ static void BrowserManagerThread(void)
 	obs_enter_graphics();
 	tex_sharing_avail = gs_shared_texture_available();
 	obs_leave_graphics();
-
-	settings.shared_texture_enabled = tex_sharing_avail;
-	settings.shared_texture_sync_key = (uint64)-1;
-	settings.external_begin_frame_enabled = true;
 #endif
 
 	CefRefPtr<BrowserApp> app(new BrowserApp(tex_sharing_avail));
