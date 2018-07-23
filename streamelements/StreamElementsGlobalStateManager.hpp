@@ -40,6 +40,7 @@ public:
 public:
 	bool DeserializeStatusBarTemporaryMessage(CefRefPtr<CefValue> input);
 	bool DeserializePopupWindow(CefRefPtr<CefValue> input);
+	bool DeserializeModalDialog(CefRefPtr<CefValue> input, CefRefPtr<CefValue>& output);
 
 protected:
 	virtual void OnObsExit() override;

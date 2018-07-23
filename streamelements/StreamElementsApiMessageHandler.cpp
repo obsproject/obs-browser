@@ -502,4 +502,12 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 			}
 		}
 	API_HANDLER_END();
+
+	API_HANDLER_BEGIN("showModalDialog")
+		if (args->GetSize()) {
+			StreamElementsGlobalStateManager::GetInstance()->DeserializeModalDialog(
+				args->GetValue(0),
+				result);
+		}
+	API_HANDLER_END()
 }
