@@ -2,6 +2,7 @@
 #include "StreamElementsApiMessageHandler.hpp"
 #include "StreamElementsUtils.hpp"
 #include "Version.hpp"
+#include "StreamElementsBrowserDialog.hpp"
 
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
@@ -515,6 +516,51 @@ bool StreamElementsGlobalStateManager::DeserializeStatusBarTemporaryMessage(CefR
 		mainWindow()->statusBar()->showMessage(text.c_str(), timeoutMilliseconds);
 
 		return true;
+	}
+
+	return false;
+}
+
+#include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
+
+bool StreamElementsGlobalStateManager::DeserializeModalDialog(CefRefPtr<CefValue> input, CefRefPtr<CefValue>& output)
+{
+	output->SetNull();
+
+	CefRefPtr<CefDictionaryValue> d = input->GetDictionary();
+
+	if (d.get() && d->HasKey("url")) {
+		std::string url = d->GetString("url").ToString();
+		std::string executeJavaScriptOnLoad;
+
+		if (d->HasKey("executeJavaScriptOnLoad")) {
+			executeJavaScriptOnLoad = d->GetString("executeJavaScriptOnLoad");
+		}
+
+		int width = 800;
+		int height = 600;
+
+		if (d->HasKey("width")) {
+			width = d->GetInt("width");
+		}
+
+		if (d->HasKey("height")) {
+			height = d->GetInt("height");
+		}
+
+		StreamElementsBrowserDialog dialog(mainWindow(), url, executeJavaScriptOnLoad);
+
+		if (d->HasKey("title")) {
+			dialog.setWindowTitle(QString(d->GetString("title").ToString().c_str()));
+		}
+
+		dialog.setFixedSize(width, height);
+
+		if (dialog.exec() == QDialog::Accepted) {
+			output = CefParseJSON(dialog.result(), JSON_PARSER_ALLOW_TRAILING_COMMAS);
+
+			return true;
+		}
 	}
 
 	return false;

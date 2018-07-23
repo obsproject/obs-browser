@@ -21,6 +21,7 @@
 
 #include "StreamElementsAsyncTaskQueue.hpp"
 #include "StreamElementsCefClient.hpp"
+#include "StreamElementsApiMessageHandler.hpp"
 
 #include <QtWidgets>
 
@@ -35,6 +36,7 @@ private:
 	std::string m_executeJavaScriptCodeOnLoad;
 	std::string m_pendingLocationArea;
 	std::string m_pendingId;
+	StreamElementsApiMessageHandler* m_requestedApiMessageHandler;
 
 	QSize m_sizeHint;
 
@@ -44,7 +46,9 @@ public:
 		const char* const url,
 		const char* const executeJavaScriptCodeOnLoad,
 		const char* const locationArea,
-		const char* const id);
+		const char* const id,
+		StreamElementsApiMessageHandler* apiMessageHandler = nullptr);
+
 	~StreamElementsBrowserWidget();
 
 	void setSizeHint(QSize& size)

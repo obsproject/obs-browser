@@ -31,14 +31,16 @@ StreamElementsBrowserWidget::StreamElementsBrowserWidget(
 	const char* const url,
 	const char* const executeJavaScriptCodeOnLoad,
 	const char* const locationArea,
-	const char* const id):
+	const char* const id,
+	StreamElementsApiMessageHandler* apiMessageHandler):
 	QWidget(parent),
 	m_url(url),
 	m_window_handle(0),
 	m_task_queue("StreamElementsBrowserWidget task queue"),
 	m_executeJavaScriptCodeOnLoad(executeJavaScriptCodeOnLoad == nullptr ? "" : executeJavaScriptCodeOnLoad),
 	m_pendingLocationArea(locationArea == nullptr ? "" : locationArea),
-	m_pendingId(id == nullptr ? "" : id)
+	m_pendingId(id == nullptr ? "" : id),
+	m_requestedApiMessageHandler(apiMessageHandler)
 {
 	// Create native window
 	setAttribute(Qt::WA_NativeWindow);
@@ -109,10 +111,14 @@ void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 		cefBrowserSettings.web_security = STATE_ENABLED;
 		cefBrowserSettings.webgl = STATE_ENABLED;
 
+		if (m_requestedApiMessageHandler == nullptr) {
+			m_requestedApiMessageHandler = new StreamElementsApiMessageHandler();
+		}
+
 		CefRefPtr<StreamElementsCefClient> cefClient =
 			new StreamElementsCefClient(
 				m_executeJavaScriptCodeOnLoad,
-				new StreamElementsApiMessageHandler());
+				m_requestedApiMessageHandler);
 
 		cefClient->SetLocationArea(m_pendingLocationArea);
 		cefClient->SetContainerId(m_pendingId);
