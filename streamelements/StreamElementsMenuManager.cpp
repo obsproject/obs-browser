@@ -158,19 +158,8 @@ void StreamElementsMenuManager::Update()
 		&QAction::triggered,
 		[this]
 	{
-		StreamElementsGlobalStateManager::GetInstance()->StopOnBoardingUI();
-
-		StreamElementsConfig::GetInstance()->SetStartupFlags(
-			StreamElementsConfig::GetInstance()->GetStartupFlags() &
-			~StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
-
-		Update();
+		StreamElementsGlobalStateManager::GetInstance()->SwitchToOBSStudio();
 	});
-
-	stop_onboarding_ui->setEnabled(
-		!!(StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE)
-		&& StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->HasCentralBrowserWidget()
-	);
 
 	addURL(obs_module_text("StreamElements.Action.Uninstall"), obs_module_text("StreamElements.Action.Uninstall.URL"));
 	m_menu->addSeparator();

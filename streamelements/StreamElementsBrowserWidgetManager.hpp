@@ -93,6 +93,8 @@ public:
 
 	void HideNotificationBar();
 
+	bool HasNotificationBar();
+
 	virtual void SerializeNotificationBar(CefRefPtr<CefValue>& output);
 	virtual void DeserializeNotificationBar(CefRefPtr<CefValue>& input);
 
