@@ -26,6 +26,7 @@ public:
 	void DeleteCookies();
 	void StartOnBoardingUI();
 	void StopOnBoardingUI();
+	void SwitchToOBSStudio();
 
 	void PersistState();
 	void RestoreState();

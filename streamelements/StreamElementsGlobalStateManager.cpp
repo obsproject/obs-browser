@@ -10,6 +10,7 @@
 #include <util/threading.h>
 
 #include <QPushButton>
+#include <QMessageBox>
 
 /* ========================================================================= */
 
@@ -332,6 +333,51 @@ void StreamElementsGlobalStateManager::StopOnBoardingUI()
 	GetWidgetManager()->HideNotificationBar();
 	GetWidgetManager()->RemoveAllDockWidgets();
 	GetWidgetManager()->DestroyCurrentCentralBrowserWidget();
+}
+
+void StreamElementsGlobalStateManager::SwitchToOBSStudio()
+{
+	typedef std::vector<std::string> ids_t;
+
+	ids_t workers;
+	ids_t widgets;
+
+	GetWorkerManager()->GetIdentifiers(workers);
+	GetWidgetManager()->GetDockBrowserWidgetIdentifiers(widgets);
+
+	bool isEnabled = false;
+
+	isEnabled |= (!!workers.size());
+	isEnabled |= (!!widgets.size());
+	isEnabled |= GetWidgetManager()->HasNotificationBar();
+	isEnabled |= GetWidgetManager()->HasCentralBrowserWidget();
+
+	if (isEnabled) {
+		QMessageBox::StandardButton reply;
+		reply = QMessageBox::question(
+			mainWindow(),
+			obs_module_text("StreamElements.Action.StopOnBoardingUI.Confirmation.Title"),
+			obs_module_text("StreamElements.Action.StopOnBoardingUI.Confirmation.Text"),
+			QMessageBox::Ok | QMessageBox::Cancel);
+
+		if (reply == QMessageBox::Ok) {
+			StreamElementsGlobalStateManager::GetInstance()->StopOnBoardingUI();
+
+			/*
+			StreamElementsConfig::GetInstance()->SetStartupFlags(
+				StreamElementsConfig::GetInstance()->GetStartupFlags() &
+				~StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);*/
+
+			GetMenuManager()->Update();
+		}
+	}
+	else {
+		QMessageBox::question(
+			mainWindow(),
+			obs_module_text("StreamElements.Action.StopOnBoardingUI.Disabled.Title"),
+			obs_module_text("StreamElements.Action.StopOnBoardingUI.Disabled.Text"),
+			QMessageBox::Ok);
+	}
 }
 
 void StreamElementsGlobalStateManager::DeleteCookies()

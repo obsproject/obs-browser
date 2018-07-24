@@ -439,6 +439,13 @@ void StreamElementsBrowserWidgetManager::HideNotificationBar()
 	}
 }
 
+bool StreamElementsBrowserWidgetManager::HasNotificationBar()
+{
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	return !!m_notificationBarToolBar;
+}
+
 void StreamElementsBrowserWidgetManager::SerializeNotificationBar(CefRefPtr<CefValue>& output)
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
