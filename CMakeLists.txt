@@ -16,6 +16,7 @@ if(NOT CEF_FOUND)
 endif()
 
 option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin (Win32)" ON)
+option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
 
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in"
@@ -76,6 +77,36 @@ set(obs-browser_HEADERS
 	deps/wide-string.hpp
 	cef-headers.hpp
 	)
+
+# only allow browser panels on win32 for now -- other operating systems
+# need more testing
+if(WIN32 AND BROWSER_PANEL_SUPPORT_ENABLED)
+	if(DEFINED QTDIR${_lib_suffix})
+		list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
+	elseif(DEFINED QTDIR)
+		list(APPEND CMAKE_PREFIX_PATH "${QTDIR}")
+	elseif(DEFINED ENV{QTDIR${_lib_suffix}})
+		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR${_lib_suffix}}")
+	elseif(DEFINED ENV{QTDIR})
+		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR}")
+	endif()
+
+	set(CMAKE_AUTOMOC TRUE)
+	find_package(Qt5Widgets REQUIRED)
+
+	list(APPEND obs-browser_SOURCES
+		panel/browser-panel.cpp
+		panel/browser-panel-client.cpp
+		)
+	list(APPEND obs-browser_HEADERS
+		panel/browser-panel.hpp
+		panel/browser-panel-client.hpp
+		panel/browser-panel-internal.hpp
+		)
+	list(APPEND obs-browser_LIBRARIES
+		Qt5::Widgets
+		)
+endif()
 
 add_library(obs-browser MODULE
 	${obs-browser_SOURCES}
