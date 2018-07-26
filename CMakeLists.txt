@@ -15,7 +15,7 @@ if(NOT CEF_FOUND)
 	return()
 endif()
 
-option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin (Win32)" OFF)
+option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin (Win32)" ON)
 
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in"
