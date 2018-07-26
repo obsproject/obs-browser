@@ -181,6 +181,14 @@ static void BrowserManagerThread(void)
 	CefShutdown();
 }
 
+extern "C" EXPORT void obs_browser_initialize(void)
+{
+	static bool manager_initialized = false;
+	if (!os_atomic_set_bool(&manager_initialized, true)) {
+		manager_thread = thread(BrowserManagerThread);
+	}
+}
+
 void RegisterBrowserSource()
 {
 	struct obs_source_info info = {};
@@ -199,11 +207,7 @@ void RegisterBrowserSource()
 	};
 	info.create = [] (obs_data_t *settings, obs_source_t *source) -> void *
 	{
-		static bool manager_initialized = false;
-		if (!os_atomic_set_bool(&manager_initialized, true)) {
-			manager_thread = thread(BrowserManagerThread);
-		}
-
+		obs_browser_initialize();
 		return new BrowserSource(settings, source);
 	};
 	info.destroy = [] (void *data)
