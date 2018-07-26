@@ -50,10 +50,10 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 			command_line->AppendSwitch("disable-gpu");
 			command_line->AppendSwitch("disable-gpu-compositing");
 		}
-
+	} else {
+		command_line->AppendSwitch("enable-begin-frame-scheduling");
 	}
 
-	command_line->AppendSwitch("enable-begin-frame-scheduling");
 	command_line->AppendSwitch("enable-system-flash");
 
 	command_line->AppendSwitchWithValue("autoplay-policy",
