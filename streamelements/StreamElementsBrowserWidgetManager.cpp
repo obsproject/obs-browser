@@ -6,8 +6,268 @@
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
 
 #include <QUuid>
+#include <QMainWindow>
+#include <QSpacerItem>
 
 #include <algorithm>    // std::sort
+#include <functional>
+#include <regex>
+
+#include <obs-module.h>
+
+static const bool ENABLE_CUSTOM_DOCK_WIDGET_TITLE_BAR = true;
+
+class LocalTitleWidget : public QWidget
+{
+private:
+	void updateStyleSheet()
+	{
+		std::string css =
+			//GetAppStyleSheetSelectorContent("QWidget") +
+			//GetAppStyleSheetSelectorContent("QDockWidget") +
+			GetAppStyleSheetSelectorContent("QDockWidget::title") +
+			"";
+
+		if (this->styleSheet() != css.c_str()) {
+			this->setStyleSheet(css.c_str());
+		}
+	}
+
+public:
+	LocalTitleWidget(QWidget* parent) : QWidget(parent)
+	{
+		updateStyleSheet();
+	}
+
+	virtual void changeEvent(QEvent* event) override
+	{
+		if (event->type() == QEvent::StyleChange)
+		{
+			// Style has been changed.
+			updateStyleSheet();
+		}
+
+		QWidget::changeEvent(event);
+	}
+
+	/*
+	virtual void paintEvent(QPaintEvent*) override
+	{
+		QStyleOptionTitleBar opt;
+		//QStyleOption opt;
+		opt.init(this);
+		QPainter p(this);
+
+		style()->drawControl(QStyle::CE_DockWidgetTitle, &opt, &p, this);
+		//style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+	}
+	*/
+
+	static inline int perp(bool vertical, const QSize &size)
+	{
+		return vertical ? size.width() : size.height();
+	}
+
+	int titleHeight() const
+	{
+		QDockWidget *q = qobject_cast<QDockWidget*>(parentWidget());
+
+		QSize items(0, 0);
+		for (int i = 0; i < layout()->count(); ++i) {
+			QSize curr = layout()->itemAt(i)->widget()->sizeHint();
+
+			if (i == 0) {
+				items = curr;
+			}
+			else {
+				items = QSize(qMax(curr.width(), items.width()), qMax(curr.height(), items.height()));
+			}
+		}
+
+		int buttonHeight = qMax(
+			items.height(),
+			style()->pixelMetric(QStyle::PM_SmallIconSize, 0, q) +
+			q->style()->pixelMetric(QStyle::PM_DockWidgetTitleBarButtonMargin, 0, q)
+		);
+
+
+		QFontMetrics titleFontMetrics = q->fontMetrics();
+		int mw =
+			q->style()->pixelMetric(QStyle::PM_DockWidgetTitleMargin, 0, q) * 2 +
+			//q->style()->pixelMetric(QStyle::PM_DockWidgetTitleBarButtonMargin, 0, q) +
+			q->style()->pixelMetric(QStyle::PM_DockWidgetFrameWidth, 0, q) +
+			0;
+
+		return qMax(buttonHeight, titleFontMetrics.height() + mw);
+	}
+
+	virtual QSize minimumSizeHint() const override
+	{
+		return sizeHint();
+	}
+
+	virtual QSize sizeHint() const override
+	{
+		ensurePolished();
+		QStyleOptionTitleBar opt;
+		opt.init(this);
+		int marginSize = style()->pixelMetric(QStyle::PM_DockWidgetTitleMargin, &opt, this);
+		int frameSize = style()->pixelMetric(QStyle::PM_DockWidgetFrameWidth, &opt, this);
+		int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, &opt, this);
+
+		int titleSize = titleHeight();
+
+		QDockWidget *w = qobject_cast<QDockWidget*>(parentWidget());
+
+		QSize result = QSize(titleSize, titleSize);
+
+		return result;
+	}
+};
+
+class LocalTitleLabel : public QLabel
+{
+private:
+	void updateStyleSheet()
+	{
+		std::string css =
+			//GetAppStyleSheetSelectorContent("QWidget") +
+			//GetAppStyleSheetSelectorContent("QDockWidget") +
+			//GetAppStyleSheetSelectorContent("QDockWidget::title") +
+			"";
+
+		if (this->styleSheet() != css.c_str()) {
+			this->setStyleSheet(css.c_str());
+		}
+	}
+
+public:
+	LocalTitleLabel(QString label) :
+		QLabel(label)
+	{
+	}
+
+protected:
+	virtual void changeEvent(QEvent* event) override
+	{
+		if (event->type() == QEvent::StyleChange || event->type() == QEvent::ScreenChangeInternal)
+		{
+			// Style has been changed.
+			updateStyleSheet();
+		}
+
+		update();
+
+		QLabel::changeEvent(event);
+	}
+};
+
+class LocalToolButton : public QToolButton
+{
+private:
+	mutable int m_iconSize = -1;
+
+public:
+	LocalToolButton()
+	{
+		//setToolButtonStyle(Qt::ToolButtonTextOnly);
+		//setFocusPolicy(Qt::NoFocus);
+
+		//updateStyleSheet(true);
+	}
+
+	virtual void changeEvent(QEvent* event) override
+	{
+		if (event->type() == QEvent::StyleChange || event->type() == QEvent::ScreenChangeInternal)
+		{
+			// Style has been changed.
+			//updateStyleSheet();
+		}
+
+		m_iconSize = -1;
+		update();
+
+		QToolButton::changeEvent(event);
+	}
+
+	virtual void paintEvent(QPaintEvent*) override
+	{
+		QPainter p(this);
+		QStyleOptionToolButton opt;
+		opt.initFrom(this);
+		opt.state |= QStyle::State_AutoRaise;
+		if (style()->styleHint(QStyle::SH_DockWidget_ButtonsHaveFrame, 0, this))
+		{
+			if (isEnabled() && underMouse() && !isChecked() && !isDown())
+				opt.state |= QStyle::State_Raised;
+			if (isChecked())
+				opt.state |= QStyle::State_On;
+			if (isDown())
+				opt.state |= QStyle::State_Sunken;
+			style()->drawPrimitive(QStyle::PE_PanelButtonTool, &opt, &p, this);
+		}
+
+		opt.icon = icon();
+		opt.subControls = 0;
+		opt.activeSubControls = 0;
+		opt.features = QStyleOptionToolButton::None;
+		opt.arrowType = Qt::NoArrow;
+		opt.iconSize = dockButtonIconSize(&opt);
+		style()->drawComplexControl(QStyle::CC_ToolButton, &opt, &p, this);
+	}
+
+	static inline bool isWindowsStyle(const QStyle *style)
+	{
+		// Note: QStyleSheetStyle inherits QWindowsStyle
+		const QStyle *effectiveStyle = style;	
+
+		//if (style->inherits("QStyleSheetStyle"))
+		//	effectiveStyle = static_cast<const QStyleSheetStyle *>(style)->baseStyle();
+
+		return effectiveStyle->inherits("QWindowsStyle");
+	}
+
+	QSize dockButtonIconSize(QStyleOption* styleOption) const
+	{
+		if (m_iconSize < 0) {
+			m_iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, styleOption, this);
+
+			// Dock Widget title buttons on Windows where historically limited to size 10
+			// (from small icon size 16) since only a 10x10 XPM was provided.
+			// Adding larger pixmaps to the icons thus caused the icons to grow; limit
+			// this to qpiScaled(10) here.
+			if (isWindowsStyle(style())) {
+				m_iconSize = qMin((10 * logicalDpiX()) / 96, m_iconSize);
+			}
+		}
+
+		return QSize(m_iconSize, m_iconSize);
+	}
+
+	virtual QSize sizeHint() const override
+	{
+		ensurePolished();
+		int size = 2 * style()->pixelMetric(QStyle::PM_DockWidgetTitleBarButtonMargin, 0, this);
+		if (!icon().isNull()) {
+			const QSize sz = icon().actualSize(dockButtonIconSize(nullptr));
+			size += qMax(sz.width(), sz.height());
+		}
+		return QSize(size, size);
+	}
+
+	virtual void enterEvent(QEvent *event) override
+	{
+		if (isEnabled()) update();
+		QAbstractButton::enterEvent(event);
+	}
+
+	virtual void leaveEvent(QEvent *event) override
+	{
+		if (isEnabled()) update();
+		QAbstractButton::leaveEvent(event);
+	}
+
+};
 
 StreamElementsBrowserWidgetManager::StreamElementsBrowserWidgetManager(QMainWindow* parent) :
 	StreamElementsWidgetManager(parent),
@@ -180,11 +440,162 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
+	const bool enableBackForwardNavigation = false;
+
+	QMainWindow* main = new QMainWindow(nullptr);
+
+	//QAction* floatAction = new QAction("🗗");
+	//QAction* closeAction = new QAction("×");
+	//QAction* backAction = new QAction("❮");
+	//QAction* forwardAction = new QAction("❯");
+	//QAction* reloadAction = new QAction("☀");
+
+	QAction* backAction = new QAction(qApp->style()->standardIcon(QStyle::SP_ArrowLeft), "");
+	QAction* forwardAction = new QAction(qApp->style()->standardIcon(QStyle::SP_ArrowRight), "");
+	//QAction* reloadAction = new QAction(qApp->style()->standardIcon(QStyle::SP_BrowserReload), "");
+	QAction* reloadAction = new QAction(QIcon(":/images/toolbar/reload.ico"), "");
+	QAction* floatAction = new QAction(qApp->style()->standardIcon(QStyle::SP_TitleBarNormalButton), "");
+	QAction* closeAction = new QAction(qApp->style()->standardIcon(QStyle::SP_TitleBarCloseButton), "");	
+
+	QFont font;
+	font.setStyleStrategy(QFont::PreferAntialias);
+
+	backAction->setFont(font);
+	forwardAction->setFont(font);
+	reloadAction->setFont(font);
+	floatAction->setFont(font);
+	closeAction->setFont(font);
+
+	backAction->setEnabled(false);
+	forwardAction->setEnabled(false);
+
 	StreamElementsBrowserWidget* widget = new StreamElementsBrowserWidget(
 		nullptr, url, executeJavaScriptCodeOnLoad, DockWidgetAreaToString(area).c_str(), id);
 
-	if (AddDockWidget(id, title, widget, area, allowedAreas, features)) {
+	widget->connect(
+		widget,
+		&StreamElementsBrowserWidget::browserStateChanged,
+		[this, widget, backAction, forwardAction]() {
+		backAction->setEnabled(widget->BrowserHistoryCanGoBack());
+		forwardAction->setEnabled(widget->BrowserHistoryCanGoForward());
+	});
+
+	main->setCentralWidget(widget);
+
+	reloadAction->connect(
+		reloadAction,
+		&QAction::triggered,
+		[widget] {
+		widget->BrowserReload(true);
+	});
+
+	backAction->connect(
+		backAction,
+		&QAction::triggered,
+		[widget] {
+		widget->BrowserHistoryGoBack();
+	});
+
+	forwardAction->connect(
+		backAction,
+		&QAction::triggered,
+		[widget] {
+		widget->BrowserHistoryGoForward();
+	});
+
+	if (AddDockWidget(id, title, main, area, allowedAreas, features)) {
 		m_browserWidgets[id] = widget;
+
+		QDockWidget* dock = GetDockWidget(id);
+
+		if (ENABLE_CUSTOM_DOCK_WIDGET_TITLE_BAR) {
+			QWidget* titleWidget = new LocalTitleWidget(dock);
+
+			titleWidget->setLayout(new QHBoxLayout());
+			titleWidget->layout()->setMargin(2);
+
+			dock->setTitleBarWidget(titleWidget);
+
+			//QString buttonStyle = "QToolButton { border: none; padding: 4px; font-weight: bold; } QToolButton:!hover { background-color: transparent; }";
+			//QString labelStyle = "QLabel { background-color: transparent; padding: 2px; }";
+
+			auto createButton = [&](QAction* action, const char* toolTipText) {
+				auto result = new LocalToolButton();
+
+				result->setDefaultAction(action);
+
+				result->setToolTip(toolTipText);
+				action->setToolTip(toolTipText);
+
+				return result;
+			};
+
+			auto backButton = createButton(backAction, obs_module_text("StreamElements.Action.BrowserBack.Tooltip"));
+			auto forwardButton = createButton(forwardAction, obs_module_text("StreamElements.Action.BrowserForward.Tooltip"));
+			auto reloadButton = createButton(reloadAction, obs_module_text("StreamElements.Action.BrowserReload.Tooltip"));
+			auto floatButton = createButton(floatAction, obs_module_text("StreamElements.Action.DockToggleFloat.Tooltip"));
+			auto closeButton = createButton(closeAction, obs_module_text("StreamElements.Action.DockHide.Tooltip"));
+
+			floatAction->connect(
+				floatAction,
+				&QAction::triggered,
+				[dock] {
+				dock->setFloating(!dock->isFloating());
+			});
+
+			closeAction->connect(
+				closeAction,
+				&QAction::triggered,
+				[dock] {
+				dock->setVisible(false);
+			});
+
+			auto windowTitle = new LocalTitleLabel(title);
+			windowTitle->setAlignment(Qt::AlignCenter);
+			//windowTitle->setStyleSheet(labelStyle);
+			//windowTitle->setFont(font);
+
+			if (enableBackForwardNavigation) {
+				titleWidget->layout()->addWidget(backButton);
+				titleWidget->layout()->addWidget(forwardButton);
+			}
+
+			titleWidget->layout()->addWidget(reloadButton);
+			titleWidget->layout()->addWidget(windowTitle);
+			titleWidget->layout()->addWidget(floatButton);
+			titleWidget->layout()->addWidget(closeButton);
+
+			backButton->connect(
+				backButton,
+				&QToolButton::click,
+				[this, widget]
+			{
+				widget->BrowserHistoryGoBack();
+			});
+
+			forwardButton->connect(
+				forwardButton,
+				&QToolButton::click,
+				[this, widget]
+			{
+				widget->BrowserHistoryGoForward();
+			});
+
+			reloadButton->connect(
+				reloadButton,
+				&QToolButton::click,
+				[this, widget]
+			{
+				widget->BrowserReload(true);
+			});
+
+			dock->connect(
+				dock,
+				&QDockWidget::windowTitleChanged,
+				[windowTitle](const QString value) {
+				windowTitle->setText(value);
+			});
+		}
 
 		return true;
 	} else {

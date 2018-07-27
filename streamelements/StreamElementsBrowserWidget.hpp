@@ -1,5 +1,7 @@
 #pragma once
 
+#include "StreamElementsUtils.hpp"
+
 #include <QWidget>
 #include <QHideEvent>
 
@@ -66,6 +68,13 @@ public:
 	std::string GetExecuteJavaScriptCodeOnLoad();
 	std::string GetCurrentUrl();
 
+	bool BrowserHistoryCanGoBack();
+	bool BrowserHistoryCanGoForward();
+	void BrowserHistoryGoBack();
+	void BrowserHistoryGoForward();
+	void BrowserReload(bool ignoreCache);
+	void BrowserLoadInitialPage();
+
 private:
 	///
 	// Browser initialization
@@ -77,6 +86,9 @@ private:
 
 private slots:
 	void InitBrowserAsyncInternal();
+
+private:
+	std::string GetInitialPageURLInternal();
 
 private:
 	StreamElementsAsyncTaskQueue m_task_queue;
@@ -91,6 +103,8 @@ protected:
 		InitBrowserAsync();
 
 		ShowBrowser();
+
+		emit browserStateChanged();
 	}
 
 	virtual void hideEvent(QHideEvent *hideEvent) override
@@ -98,6 +112,8 @@ protected:
 		QWidget::hideEvent(hideEvent);
 
 		HideBrowser();
+
+		emit browserStateChanged();
 	}
 
 	virtual void resizeEvent(QResizeEvent* event) override
@@ -105,6 +121,8 @@ protected:
 		QWidget::resizeEvent(event);
 
 		UpdateBrowserSize();
+
+		emit browserStateChanged();
 	}
 
 	virtual void moveEvent(QMoveEvent* event) override
@@ -112,6 +130,8 @@ protected:
 		QWidget::moveEvent(event);
 
 		UpdateBrowserSize();
+
+		emit browserStateChanged();
 	}
 
 	virtual void changeEvent(QEvent* event) override
@@ -184,7 +204,38 @@ private:
 private:
 	std::mutex m_create_destroy_mutex;
 
-public:
-//	IMPLEMENT_REFCOUNTING(StreamElementsBrowserWidget)
+signals:
+	void browserStateChanged();
+
+private:
+	void emitBrowserStateChanged()
+	{
+		emit browserStateChanged();
+	}
+
+	static class StreamElementsBrowserWidget_EventHandler :
+		public StreamElementsCefClientEventHandler
+	{
+	public:
+		StreamElementsBrowserWidget_EventHandler(StreamElementsBrowserWidget* widget) : m_widget(widget)
+		{ }
+
+	public:
+		virtual void OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
+			bool isLoading,
+			bool canGoBack,
+			bool canGoForward) override
+		{
+			QtPostTask([](void* data) {
+				StreamElementsBrowserWidget* widget = (StreamElementsBrowserWidget*)data;
+
+				widget->emitBrowserStateChanged();
+			}, m_widget);
+		}
+
+	private:
+		StreamElementsBrowserWidget* m_widget;
+	};
+
 };
 

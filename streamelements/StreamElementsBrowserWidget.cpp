@@ -69,6 +69,15 @@ void StreamElementsBrowserWidget::InitBrowserAsync()
 	QMetaObject::invokeMethod(this, "InitBrowserAsyncInternal");
 }
 
+std::string StreamElementsBrowserWidget::GetInitialPageURLInternal()
+{
+	std::string htmlString = LoadResourceString(":/html/loading.html");
+	htmlString = std::regex_replace(htmlString, std::regex("\\$\\{URL\\}"), m_url);
+	std::string base64uri = "data:text/html;base64," + CefBase64Encode(htmlString.c_str(), htmlString.size()).ToString();
+
+	return base64uri;
+}
+
 void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 {
 	if (!!m_cef_browser.get()) {
@@ -118,20 +127,17 @@ void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 		CefRefPtr<StreamElementsCefClient> cefClient =
 			new StreamElementsCefClient(
 				m_executeJavaScriptCodeOnLoad,
-				m_requestedApiMessageHandler);
+				m_requestedApiMessageHandler,
+				new StreamElementsBrowserWidget_EventHandler(this));
 
 		cefClient->SetLocationArea(m_pendingLocationArea);
 		cefClient->SetContainerId(m_pendingId);
-
-		std::string htmlString = LoadResourceString(":/html/loading.html");
-		htmlString = std::regex_replace(htmlString, std::regex("\\$\\{URL\\}"), m_url);
-		std::string base64uri = "data:text/html;base64," + CefBase64Encode(htmlString.c_str(), htmlString.size()).ToString();
 
 		m_cef_browser =
 			CefBrowserHost::CreateBrowserSync(
 				windowInfo,
 				cefClient,
-				base64uri.c_str(),
+				GetInitialPageURLInternal(),
 				cefBrowserSettings,
 				nullptr);
 
@@ -195,4 +201,63 @@ std::string StreamElementsBrowserWidget::GetCurrentUrl()
 std::string StreamElementsBrowserWidget::GetExecuteJavaScriptCodeOnLoad()
 {
 	return m_executeJavaScriptCodeOnLoad;
+}
+
+bool StreamElementsBrowserWidget::BrowserHistoryCanGoBack()
+{
+	if (!m_cef_browser.get()) {
+		return false;
+	}
+
+	return m_cef_browser->CanGoBack();
+}
+
+bool StreamElementsBrowserWidget::BrowserHistoryCanGoForward()
+{
+	if (!m_cef_browser.get()) {
+		return false;
+	}
+
+	return m_cef_browser->CanGoForward();
+}
+
+void StreamElementsBrowserWidget::BrowserHistoryGoBack()
+{
+	if (!BrowserHistoryCanGoBack()) {
+		return;
+	}
+
+	m_cef_browser->GoBack();
+}
+
+void StreamElementsBrowserWidget::BrowserHistoryGoForward()
+{
+	if (!m_cef_browser.get()) {
+		return;
+	}
+
+	m_cef_browser->GoForward();
+}
+
+void StreamElementsBrowserWidget::BrowserReload(bool ignoreCache)
+{
+	if (!m_cef_browser.get()) {
+		return;
+	}
+
+	if (ignoreCache) {
+		m_cef_browser->ReloadIgnoreCache();
+	}
+	else {
+		m_cef_browser->Reload();
+	}
+}
+
+void StreamElementsBrowserWidget::BrowserLoadInitialPage()
+{
+	if (!m_cef_browser.get()) {
+		return;
+	}
+
+	m_cef_browser->GetMainFrame()->LoadURL(GetInitialPageURLInternal());
 }
