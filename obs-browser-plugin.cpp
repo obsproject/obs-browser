@@ -28,6 +28,7 @@
 #include "obs-browser-source.hpp"
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
+#include "browser-version.h"
 
 #include "json11/json11.hpp"
 #include "cef-headers.hpp"
@@ -350,6 +351,8 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 
 bool obs_module_load(void)
 {
+	blog(LOG_INFO, "[obs-browser]: Version %s",
+			OBS_BROWSER_VERSION_STRING);
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 	return true;
