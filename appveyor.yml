@@ -11,7 +11,11 @@ install:
 - cmd: >-
     set
     
+    cinst -y git
+
     cinst -y wget
+
+    cinst -y cmake
 
     cinst -y archiver
 
