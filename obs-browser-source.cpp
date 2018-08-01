@@ -80,16 +80,20 @@ bool BrowserSource::CreateBrowser()
 	return QueueCEFTask([this] ()
 	{
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		obs_enter_graphics();
-		tex_sharing_avail = gs_shared_texture_available();
-		obs_leave_graphics();
+		if (hwaccel) {
+			obs_enter_graphics();
+			tex_sharing_avail = gs_shared_texture_available();
+			obs_leave_graphics();
+		}
+#else
+		bool hwaccel = false;
 #endif
 
 		struct obs_video_info ovi;
 		obs_get_video_info(&ovi);
 
 		CefRefPtr<BrowserClient> browserClient =
-			new BrowserClient(this, tex_sharing_avail);
+			new BrowserClient(this, hwaccel && tex_sharing_avail);
 
 		CefWindowInfo windowInfo;
 #if CHROME_VERSION_BUILD < 3071
@@ -100,7 +104,7 @@ bool BrowserSource::CreateBrowser()
 		windowInfo.windowless_rendering_enabled = true;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		windowInfo.shared_texture_enabled = tex_sharing_avail;
+		windowInfo.shared_texture_enabled = hwaccel;
 		windowInfo.shared_texture_sync_key = (uint64)-1;
 		windowInfo.external_begin_frame_enabled = true;
 #endif
@@ -108,7 +112,7 @@ bool BrowserSource::CreateBrowser()
 		CefBrowserSettings cefBrowserSettings;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		cefBrowserSettings.windowless_frame_rate = 250;
+		cefBrowserSettings.windowless_frame_rate = hwaccel ? 250 : fps;
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
@@ -335,6 +339,11 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_url       = obs_data_get_string(settings,
 				is_local ? "local_file" : "url");
 
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+		bool n_hwaccel;
+		n_hwaccel = obs_data_get_bool(settings, "hwaccel");
+#endif
+
 		if (n_is_local == is_local &&
 		    n_width == width &&
 		    n_height == height &&
@@ -342,6 +351,9 @@ void BrowserSource::Update(obs_data_t *settings)
 		    n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart &&
 		    n_css == css &&
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+		    n_hwaccel == hwaccel &&
+#endif
 		    n_url == url) {
 			return;
 		}
@@ -354,6 +366,9 @@ void BrowserSource::Update(obs_data_t *settings)
 		restart               = n_restart;
 		css                   = n_css;
 		url                   = n_url;
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+		hwaccel               = n_hwaccel;
+#endif
 	}
 
 	DestroyBrowser(true);

@@ -54,6 +54,10 @@ if(MSVC)
 			"CMAKE_CXX_FLAGS_${CONFIG_TYPE}"
 			"${CMAKE_CXX_FLAGS_${CONFIG_TYPE}}")
 	endforeach()
+	list(APPEND obs-browser_LIBRARIES
+		d3d11
+		dxgi
+		)
 endif()
 
 set(obs-browser_SOURCES

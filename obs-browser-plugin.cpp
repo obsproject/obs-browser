@@ -32,6 +32,13 @@
 #include "json11/json11.hpp"
 #include "cef-headers.hpp"
 
+#ifdef _WIN32
+#include <util/windows/ComPtr.hpp>
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <d3d11.h>
+#endif
+
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
 
@@ -39,6 +46,8 @@ using namespace std;
 using namespace json11;
 
 static thread manager_thread;
+
+static int adapterCount = 0;
 
 /* ========================================================================= */
 
@@ -76,6 +85,9 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", default_css);
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_data_set_default_bool(settings, "hwaccel", adapterCount == 1);
+#endif
 }
 
 static bool is_local_file_modified(obs_properties_t *props,
@@ -129,6 +141,11 @@ static obs_properties_t *browser_source_get_properties(void *data)
 			obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
 			obs_module_text("RefreshBrowserActive"));
+
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_properties_add_bool(props, "hwaccel",
+			obs_module_text("HardwareAcceleration"));
+#endif
 
 	obs_properties_add_button(props, "refreshnocache",
 			obs_module_text("RefreshNoCache"),
@@ -348,8 +365,39 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	}
 }
 
+#ifdef _WIN32
+static inline void EnumAdapterCount()
+{
+	ComPtr<IDXGIFactory1> factory;
+	ComPtr<IDXGIAdapter1> adapter;
+	HRESULT hr;
+	UINT i = 0;
+
+	hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory);
+	if (FAILED(hr))
+		return;
+
+	while (factory->EnumAdapters1(i++, &adapter) == S_OK) {
+		DXGI_ADAPTER_DESC desc;
+
+		hr = adapter->GetDesc(&desc);
+		if (FAILED(hr))
+			continue;
+
+		/* ignore Microsoft's 'basic' renderer' */
+		if (desc.VendorId == 0x1414 && desc.DeviceId == 0x8c)
+			continue;
+
+		adapterCount++;
+	}
+}
+#endif
+
 bool obs_module_load(void)
 {
+#ifdef _WIN32
+	EnumAdapterCount();
+#endif
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 	return true;

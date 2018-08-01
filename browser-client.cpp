@@ -27,9 +27,11 @@ using namespace json11;
 BrowserClient::~BrowserClient()
 {
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	obs_enter_graphics();
-	gs_texture_destroy(texture);
-	obs_leave_graphics();
+	if (sharing_available) {
+		obs_enter_graphics();
+		gs_texture_destroy(texture);
+		obs_leave_graphics();
+	}
 #endif
 }
 

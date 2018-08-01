@@ -45,6 +45,9 @@ struct BrowserSource {
 	bool                  restart                  = false;
 	bool                  shutdown_on_invisible    = false;
 	bool                  is_local                 = false;
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	bool                  hwaccel                  = false;
+#endif
 
 	inline void DestroyTextures()
 	{
