@@ -208,3 +208,159 @@ void SerializeSystemMemoryUsage(CefRefPtr<CefValue>& output)
 	}
 #endif
 }
+
+static CefString getRegStr(HKEY parent, const WCHAR* subkey, const WCHAR* key)
+{
+	CefString result;
+
+	DWORD dataSize = 0;
+
+	if (ERROR_SUCCESS == ::RegGetValueW(parent, subkey, key, RRF_RT_ANY, NULL, NULL, &dataSize)) {
+		WCHAR* buffer = new WCHAR[dataSize];
+
+		if (ERROR_SUCCESS == ::RegGetValueW(parent, subkey, key, RRF_RT_ANY, NULL, buffer, &dataSize)) {
+			result = buffer;
+		}
+
+		delete[] buffer;
+	}
+
+	return result;
+};
+
+static DWORD getRegDWORD(HKEY parent, const WCHAR* subkey, const WCHAR* key)
+{
+	DWORD result = 0;
+	DWORD dataSize = sizeof(DWORD);
+
+	::RegGetValueW(parent, subkey, key, RRF_RT_DWORD, NULL, &result, &dataSize);
+
+	return result;
+}
+
+void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output)
+{
+	output->SetNull();
+
+#ifdef _WIN32
+	CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
+	output->SetDictionary(d);
+
+	SYSTEM_INFO info;
+
+	::GetNativeSystemInfo(&info);
+
+	switch (info.wProcessorArchitecture) {
+	case PROCESSOR_ARCHITECTURE_INTEL: d->SetString("cpuArch", "x86"); break;
+	case PROCESSOR_ARCHITECTURE_IA64: d->SetString("cpuArch", "IA64"); break;
+	case PROCESSOR_ARCHITECTURE_AMD64: d->SetString("cpuArch", "x64"); break;
+	case PROCESSOR_ARCHITECTURE_ARM: d->SetString("cpuArch", "ARM"); break;
+	case PROCESSOR_ARCHITECTURE_ARM64: d->SetString("cpuArch", "ARM64"); break;
+
+	default:
+	case PROCESSOR_ARCHITECTURE_UNKNOWN: d->SetString("cpuArch", "Unknown"); break;
+	}
+
+	d->SetInt("cpuCount", info.dwNumberOfProcessors);
+	d->SetInt("cpuLevel", info.wProcessorLevel);
+
+	/*
+	CefRefPtr<CefDictionaryValue> f = CefDictionaryValue::Create();
+
+	f->SetBool("PF_3DNOW_INSTRUCTIONS_AVAILABLE", ::IsProcessorFeaturePresent(PF_3DNOW_INSTRUCTIONS_AVAILABLE));
+	f->SetBool("PF_CHANNELS_ENABLED", ::IsProcessorFeaturePresent(PF_CHANNELS_ENABLED));
+	f->SetBool("PF_COMPARE_EXCHANGE_DOUBLE", ::IsProcessorFeaturePresent(PF_COMPARE_EXCHANGE_DOUBLE));
+	f->SetBool("PF_COMPARE_EXCHANGE128", ::IsProcessorFeaturePresent(PF_COMPARE_EXCHANGE128));
+	f->SetBool("PF_COMPARE64_EXCHANGE128", ::IsProcessorFeaturePresent(PF_COMPARE64_EXCHANGE128));
+	f->SetBool("PF_FASTFAIL_AVAILABLE", ::IsProcessorFeaturePresent(PF_FASTFAIL_AVAILABLE));
+	f->SetBool("PF_FLOATING_POINT_EMULATED", ::IsProcessorFeaturePresent(PF_FLOATING_POINT_EMULATED));
+	f->SetBool("PF_FLOATING_POINT_PRECISION_ERRATA", ::IsProcessorFeaturePresent(PF_FLOATING_POINT_PRECISION_ERRATA));
+	f->SetBool("PF_MMX_INSTRUCTIONS_AVAILABLE", ::IsProcessorFeaturePresent(PF_MMX_INSTRUCTIONS_AVAILABLE));
+	f->SetBool("PF_NX_ENABLED", ::IsProcessorFeaturePresent(PF_NX_ENABLED));
+	f->SetBool("PF_PAE_ENABLED", ::IsProcessorFeaturePresent(PF_PAE_ENABLED));
+	f->SetBool("PF_RDTSC_INSTRUCTION_AVAILABLE", ::IsProcessorFeaturePresent(PF_RDTSC_INSTRUCTION_AVAILABLE));
+	f->SetBool("PF_RDWRFSGSBASE_AVAILABLE", ::IsProcessorFeaturePresent(PF_RDWRFSGSBASE_AVAILABLE));
+	f->SetBool("PF_SECOND_LEVEL_ADDRESS_TRANSLATION", ::IsProcessorFeaturePresent(PF_SECOND_LEVEL_ADDRESS_TRANSLATION));
+	f->SetBool("PF_SSE3_INSTRUCTIONS_AVAILABLE", ::IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE));
+	f->SetBool("PF_VIRT_FIRMWARE_ENABLED", ::IsProcessorFeaturePresent(PF_VIRT_FIRMWARE_ENABLED));
+	f->SetBool("PF_XMMI_INSTRUCTIONS_AVAILABLE", ::IsProcessorFeaturePresent(PF_XMMI_INSTRUCTIONS_AVAILABLE));
+	f->SetBool("PF_XMMI64_INSTRUCTIONS_AVAILABLE", ::IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE));
+	f->SetBool("PF_XSAVE_ENABLED", ::IsProcessorFeaturePresent(PF_XSAVE_ENABLED));
+
+	CefRefPtr<CefValue> featuresValue = CefValue::Create();
+	featuresValue->SetDictionary(f);
+	d->SetValue("cpuFeatures", featuresValue);*/
+
+
+	{
+		CefRefPtr<CefListValue> cpuList = CefListValue::Create();
+
+		HKEY hRoot;
+		if (ERROR_SUCCESS == ::RegOpenKeyA(HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor", &hRoot)) {
+			WCHAR cpuKeyBuffer[2048];
+
+			for (DWORD index = 0; ERROR_SUCCESS == ::RegEnumKeyW(hRoot, index, cpuKeyBuffer, sizeof(cpuKeyBuffer)); ++index) {
+				CefRefPtr<CefDictionaryValue> p = CefDictionaryValue::Create();
+
+				p->SetString("name", getRegStr(hRoot, cpuKeyBuffer, L"ProcessorNameString"));
+				p->SetString("vendor", getRegStr(hRoot, cpuKeyBuffer, L"VendorIdentifier"));
+				p->SetInt("speedMHz", getRegDWORD(hRoot, cpuKeyBuffer, L"~MHz"));
+				p->SetString("identifier", getRegStr(hRoot, cpuKeyBuffer, L"Identifier"));
+
+				cpuList->SetDictionary(cpuList->GetSize(), p);
+			}
+
+			::RegCloseKey(hRoot);
+		}
+
+		d->SetList("cpuHardware", cpuList);
+	}
+
+	{
+		CefRefPtr<CefDictionaryValue> bios = CefDictionaryValue::Create();
+
+		HKEY hRoot;
+		if (ERROR_SUCCESS == ::RegOpenKeyW(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System", &hRoot)) {
+			HKEY hBios;
+			if (ERROR_SUCCESS == ::RegOpenKeyW(hRoot, L"BIOS", &hBios)) {
+				WCHAR subKeyBuffer[2048];
+				DWORD bufSize = sizeof(subKeyBuffer) / sizeof(subKeyBuffer[0]);
+
+				DWORD valueIndex = 0;
+				DWORD valueType = 0;
+
+				LSTATUS callStatus = ::RegEnumValueW(hBios, valueIndex, subKeyBuffer, &bufSize, NULL, &valueType, NULL, NULL);
+				while (ERROR_NO_MORE_ITEMS != callStatus) {
+					switch (valueType) {
+					case REG_DWORD_BIG_ENDIAN:
+					case REG_DWORD_LITTLE_ENDIAN:
+						bios->SetInt(subKeyBuffer, getRegDWORD(hRoot, L"BIOS", subKeyBuffer));
+						break;
+
+					case REG_QWORD:
+						bios->SetInt(subKeyBuffer, getRegDWORD(hRoot, L"BIOS", subKeyBuffer));
+						break;
+
+					case REG_SZ:
+					case REG_EXPAND_SZ:
+					case REG_MULTI_SZ:
+						bios->SetString(subKeyBuffer, getRegStr(hRoot, L"BIOS", subKeyBuffer));
+						break;
+					}
+
+					++valueIndex;
+
+					bufSize = sizeof(subKeyBuffer) / sizeof(subKeyBuffer[0]);
+					callStatus = ::RegEnumValueW(hBios, valueIndex, subKeyBuffer, &bufSize, NULL, &valueType, NULL, NULL);
+				}
+
+				::RegCloseKey(hBios);
+			}
+
+			::RegCloseKey(hRoot);
+		}
+
+		d->SetDictionary("bios", bios);
+	}
+#endif
+}
