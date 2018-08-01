@@ -11,11 +11,11 @@ install:
 - cmd: >-
     set
     
-    cinst -y git
+    @rem -- cinst -y git
 
     cinst -y wget
 
-    cinst -y cmake
+    @rem -- cinst -y cmake
 
     cinst -y archiver
 
@@ -86,16 +86,12 @@ build_script:
     powershell -File c:\local\generate_version.ps1 >c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp
 
 
-    cd /d c:\local\cef_binary_3.3282.1742.g96f907e_windows32
+    cd /d c:\local\obs-studio
 
-    mkdir build
+    mkdir build build32 build64
 
-    cd build
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 14 2015" -DUSE_SANDBOX=true -DUSE_ATL=true -DCEF_RUNTIME_LIBRARY_FLAG=/MT -DCEF_DEBUG_INFO_FLAG=/Zi ..
-
-    msbuild cef.sln /p:Configuration=Release /t:Build
-
+    echo.===================== BUILD 64 BIT - CEF - OBS-STUDIO =====================
 
     cd /d c:\local\cef_binary_3.3282.1742.g96f907e_windows64
 
@@ -108,28 +104,41 @@ build_script:
     msbuild cef.sln /p:Configuration=Release /t:Build
 
 
-    cd /d c:\local\obs-studio
-
-    mkdir build build32 build64
-
-
-    cd /d c:\local\obs-studio\build32
-
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3282.1742.g96f907e_windows32 ..
 
 
     cd /d c:\local\obs-studio\build64
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3282.1742.g96f907e_windows64 ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3282.1742.g96f907e_windows64 ..
 
+    cd /d c:\local\obs-studio\build64
+
+    msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
+
+
+
+    echo.===================== BUILD 32 BIT - CEF - OBS-STUDIO =====================
+
+    cd /d c:\local\cef_binary_3.3282.1742.g96f907e_windows32
+
+    mkdir build
+
+    cd build
+
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 14 2015" -DUSE_SANDBOX=true -DUSE_ATL=true -DCEF_RUNTIME_LIBRARY_FLAG=/MT -DCEF_DEBUG_INFO_FLAG=/Zi ..
+
+    msbuild cef.sln /p:Configuration=Release /t:Build
+
+
+    cd /d c:\local\obs-studio\build32
+
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3282.1742.g96f907e_windows32 ..
 
     cd /d c:\local\obs-studio\build32
 
     msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
 
-    cd /d c:\local\obs-studio\build64
 
-    msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
+    echo.===================== PACK ARTIFACTS =====================
 
 
     cd /d c:\local\obs-studio\build32\rundir\%build_config%
