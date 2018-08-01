@@ -527,4 +527,8 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 	API_HANDLER_BEGIN("getSystemCPUUsageTimes")
 		SerializeSystemTimes(result);
 	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getSystemMemoryUsage")
+		SerializeSystemMemoryUsage(result);
+	API_HANDLER_END()
 }

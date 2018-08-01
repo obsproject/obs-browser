@@ -102,6 +102,8 @@ std::string LoadResourceString(std::string path)
 
 void SerializeSystemTimes(CefRefPtr<CefValue>& output)
 {
+	SYNC_ACCESS();
+
 	output->SetNull();
 
 	FILETIME idleTime;
@@ -113,6 +115,23 @@ void SerializeSystemTimes(CefRefPtr<CefValue>& output)
 		CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
 		output->SetDictionary(d);
 
+		static bool hasSavedStartingValues = false;
+		static ULARGE_INTEGER savedIdleTime;
+		static ULARGE_INTEGER savedKernelTime;
+		static ULARGE_INTEGER savedUserTime;
+
+		if (!hasSavedStartingValues) {
+			savedIdleTime.HighPart = idleTime.dwHighDateTime;
+			savedIdleTime.LowPart = idleTime.dwLowDateTime;
+
+			savedKernelTime.HighPart = kernelTime.dwHighDateTime;
+			savedKernelTime.LowPart = kernelTime.dwLowDateTime;
+
+			savedUserTime.HighPart = userTime.dwHighDateTime;
+			savedUserTime.LowPart = userTime.dwLowDateTime;
+
+			hasSavedStartingValues = true;
+		}
 
 		const unsigned long SECOND_PART = 10000000L;
 		const unsigned long MS_PART = SECOND_PART / 1000L;
@@ -120,26 +139,72 @@ void SerializeSystemTimes(CefRefPtr<CefValue>& output)
 		ULARGE_INTEGER idleInt;
 		idleInt.HighPart = idleTime.dwHighDateTime;
 		idleInt.LowPart = idleTime.dwLowDateTime;
-		long idleMs = idleInt.QuadPart / MS_PART;
+		idleInt.QuadPart -= savedIdleTime.QuadPart;
 
 		ULARGE_INTEGER kernelInt;
 		kernelInt.HighPart = kernelTime.dwHighDateTime;
 		kernelInt.LowPart = kernelTime.dwLowDateTime;
-		long kernelMs = kernelInt.QuadPart / MS_PART;
+		kernelInt.QuadPart -= savedKernelTime.QuadPart;
 
 		ULARGE_INTEGER userInt;
 		userInt.HighPart = userTime.dwHighDateTime;
 		userInt.LowPart = userTime.dwLowDateTime;
+		userInt.QuadPart -= savedUserTime.QuadPart;
+
+		long idleMs = idleInt.QuadPart / MS_PART;
+		long kernelMs = kernelInt.QuadPart / MS_PART;
 		long userMs = userInt.QuadPart / MS_PART;
+
+		/*
+		int idleSec = (int)(idleMs / 1000L);
+		int kernelSec = (int)(kernelMs / 1000L);
+		int userSec = (int)(userMs / 1000L);
+		*/
 
 		double idleSec = (double)idleMs / (double)1000.0;
 		double kernelSec = (double)kernelMs / (double)1000.0;
 		double userSec = (double)userMs / (double)1000.0;
 
+		/*
+		d->SetInt("idleSeconds", idleSec);
+		d->SetInt("kernelSeconds", kernelSec);
+		d->SetInt("userSeconds", userSec);
+		d->SetInt("totalSeconds", idleSec + kernelSec + userSec);
+		*/
+
 		d->SetDouble("idleSeconds", idleSec);
 		d->SetDouble("kernelSeconds", kernelSec);
 		d->SetDouble("userSeconds", userSec);
 		d->SetDouble("totalSeconds", idleSec + kernelSec + userSec);
+		d->SetDouble("busySeconds", kernelSec + userSec);
+	}
+#endif
+}
+
+void SerializeSystemMemoryUsage(CefRefPtr<CefValue>& output)
+{
+	output->SetNull();
+
+#ifdef _WIN32
+	MEMORYSTATUSEX mem;
+
+	mem.dwLength = sizeof(mem);
+
+	if (GlobalMemoryStatusEx(&mem)) {
+		CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
+		output->SetDictionary(d);
+
+		const DWORDLONG DIV = 1048576;
+
+		d->SetString("units", "MB");
+		d->SetInt("memoryUsedPercentage", mem.dwMemoryLoad);
+		d->SetInt("totalPhysicalMemory", mem.ullTotalPhys / DIV);
+		d->SetInt("freePhysicalMemory", mem.ullAvailPhys / DIV);
+		d->SetInt("totalVirtualMemory", mem.ullTotalVirtual / DIV);
+		d->SetInt("freeVirtualMemory", mem.ullAvailVirtual / DIV);
+		d->SetInt("freeExtendedVirtualMemory", mem.ullAvailExtendedVirtual / DIV);
+		d->SetInt("totalPageFileSize", mem.ullTotalPageFile/ DIV);
+		d->SetInt("freePageFileSize", mem.ullAvailPageFile/ DIV);
 	}
 #endif
 }

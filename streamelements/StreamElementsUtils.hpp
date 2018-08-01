@@ -54,3 +54,4 @@ std::string LoadResourceString(std::string path);
 /* ========================================================= */
 
 void SerializeSystemTimes(CefRefPtr<CefValue>& output);
+void SerializeSystemMemoryUsage(CefRefPtr<CefValue>& output);
