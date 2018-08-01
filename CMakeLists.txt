@@ -102,6 +102,7 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsOutputSettingsManager.cpp
 	streamelements/StreamElementsWorkerManager.cpp
 	streamelements/StreamElementsBrowserDialog.cpp
+	streamelements/StreamElementsUtils.cpp
 	)
 set(obs-browser_HEADERS
 	obs-browser-source.hpp
