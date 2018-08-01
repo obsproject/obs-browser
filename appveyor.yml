@@ -11,11 +11,7 @@ install:
 - cmd: >-
     set
     
-    @rem -- cinst -y git
-
     cinst -y wget
-
-    @rem -- cinst -y cmake
 
     cinst -y archiver
 
