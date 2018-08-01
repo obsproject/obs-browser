@@ -413,7 +413,7 @@ bool obs_module_load(void)
 	CefEnableHighDPISupport();
 
 	os_event_init(&s_BrowserManagerThreadInitializedEvent, OS_EVENT_TYPE_AUTO);
-	obs_browser_initialize(void);
+	obs_browser_initialize();
 	os_event_wait(s_BrowserManagerThreadInitializedEvent);
 	os_event_destroy(s_BrowserManagerThreadInitializedEvent);
 	s_BrowserManagerThreadInitializedEvent = nullptr;
