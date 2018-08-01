@@ -28,6 +28,7 @@
 #include "obs-browser-source.hpp"
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
+#include "browser-version.h"
 
 #include "json11/json11.hpp"
 #include "cef-headers.hpp"
@@ -395,6 +396,9 @@ static inline void EnumAdapterCount()
 
 bool obs_module_load(void)
 {
+	blog(LOG_INFO, "[obs-browser]: Version %s",
+			OBS_BROWSER_VERSION_STRING);
+
 #ifdef _WIN32
 	EnumAdapterCount();
 #endif
