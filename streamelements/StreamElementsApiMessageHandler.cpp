@@ -523,4 +523,8 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 				result);
 		}
 	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getSystemCPUUsageTimes")
+		SerializeSystemTimes(result);
+	API_HANDLER_END()
 }

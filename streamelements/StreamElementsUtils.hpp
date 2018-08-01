@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cef-headers.hpp>
+#include <obs.h>
+#include <obs-module.h>
+
 #include <memory>
 #include <iostream>
 #include <mutex>
@@ -8,16 +12,17 @@
 #include <cstdarg>
 
 #include <functional>
+
+#include <util/threading.h>
+
+#define SYNC_ACCESS() static std::mutex __sync_access_mutex; std::lock_guard<std::mutex> __sync_access_mutex_guard(__sync_access_mutex);
+
 #include <QTimer>
 #include <QApplication>
 #include <QThread>
 #include <QFile>
 #include <QTextStream>
 #include <QString>
-
-#include <util/threading.h>
-
-#define SYNC_ACCESS() static std::mutex __sync_access_mutex; std::lock_guard<std::mutex> __sync_access_mutex_guard(__sync_access_mutex);
 
 template<typename ... Args>
 std::string FormatString(const char* format, ...)
@@ -40,100 +45,12 @@ std::string FormatString(const char* format, ...)
 	return ret;
 }
 
-inline static void QtPostTask(void(*func)(void*), void* const data)
-{
-	/*
-	if (QThread::currentThread() == qApp->thread()) {
-		func(data);
-	}
-	else {*/
-		QTimer *t = new QTimer();
-		t->moveToThread(qApp->thread());
-		t->setSingleShot(true);
-		QObject::connect(t, &QTimer::timeout, [=]() {
-			t->deleteLater();
+void QtPostTask(void(*func)(void*), void* const data);
+void QtExecSync(void(*func)(void*), void* const data);
+std::string DockWidgetAreaToString(const Qt::DockWidgetArea area);
+std::string GetCommandLineOptionValue(const std::string key);
+std::string LoadResourceString(std::string path);
 
-			func(data);
-		});
-		QMetaObject::invokeMethod(t, "start", Qt::QueuedConnection, Q_ARG(int, 0));
-	/*}*/
-}
+/* ========================================================= */
 
-inline static void QtExecSync(void(*func)(void*), void* const data)
-{
-	if (QThread::currentThread() == qApp->thread()) {
-		func(data);
-	}
-	else {
-		os_event_t* completeEvent;
-
-		os_event_init(&completeEvent, OS_EVENT_TYPE_AUTO);
-
-		QTimer *t = new QTimer();
-		t->moveToThread(qApp->thread());
-		t->setSingleShot(true);
-		QObject::connect(t, &QTimer::timeout, [=]() {
-			t->deleteLater();
-
-			func(data);
-
-			os_event_signal(completeEvent);
-		});
-		QMetaObject::invokeMethod(t, "start", Qt::QueuedConnection, Q_ARG(int, 0));
-
-		QApplication::sendPostedEvents();
-
-		os_event_wait(completeEvent);
-		os_event_destroy(completeEvent);
-	}
-}
-
-inline std::string DockWidgetAreaToString(const Qt::DockWidgetArea area)
-{
-	switch (area)
-	{
-	case Qt::LeftDockWidgetArea:
-		return "left";
-	case Qt::RightDockWidgetArea:
-		return "right";
-	case Qt::TopDockWidgetArea:
-		return "top";
-	case Qt::BottomDockWidgetArea:
-		return "bottom";
-	case Qt::NoDockWidgetArea:
-	default:
-		return "floating";
-	}
-}
-
-inline static std::string GetCommandLineOptionValue(const std::string key)
-{
-	QStringList args = QCoreApplication::instance()->arguments();
-
-	std::string search = "--" + key + "=";
-
-	for (int i = 0; i < args.size(); ++i) {
-		std::string arg = args.at(i).toStdString();
-
-		if (arg.substr(0, search.size()) == search) {
-			return arg.substr(search.size());
-		}
-	}
-
-	return std::string();
-}
-
-inline static std::string LoadResourceString(std::string path)
-{
-	std::string result = "";
-
-	QFile file(QString(path.c_str()));
-
-	if (file.open(QFile::ReadOnly | QFile::Text)) {
-		QTextStream stream(&file);
-
-		result = stream.readAll().toStdString();
-	}
-
-	return result;
-}
+void SerializeSystemTimes(CefRefPtr<CefValue>& output);
