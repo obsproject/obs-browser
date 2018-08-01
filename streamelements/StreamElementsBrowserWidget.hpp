@@ -106,6 +106,13 @@ protected:
 		UpdateBrowserSize();
 	}
 
+	virtual void moveEvent(QMoveEvent* event) override
+	{
+		QWidget::moveEvent(event);
+
+		UpdateBrowserSize();
+	}
+
 	virtual void changeEvent(QEvent* event) override
 	{
 		QWidget::changeEvent(event);
@@ -125,6 +132,11 @@ private:
 
 #ifdef WIN32
 			::SetWindowPos(hWnd, HWND_TOP, 0, 0, width(), height(), SWP_DRAWFRAME | SWP_SHOWWINDOW);
+
+			::MoveWindow(hWnd, 0, 0, width(), height(), TRUE);
+
+			// Make sure window updates on multiple monitors with different DPI
+			::SendMessage(hWnd, WM_SIZE, 0, MAKELPARAM(width(), height()));
 #endif
 		}
 	}

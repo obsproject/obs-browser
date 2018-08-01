@@ -208,8 +208,12 @@ bool StreamElementsBrowserWidgetManager::RemoveDockWidget(const char* const id)
 	if (StreamElementsWidgetManager::RemoveDockWidget(id)) {
 		if (m_browserWidgets.count(id)) {
 			m_browserWidgets.erase(id);
+
+			return true;
 		}
 	}
+
+	return false;
 }
 
 void StreamElementsBrowserWidgetManager::GetDockBrowserWidgetIdentifiers(std::vector<std::string>& result)

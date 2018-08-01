@@ -228,6 +228,8 @@ bool StreamElementsWorkerManager::SerializeOne(std::string id, CefRefPtr<CefValu
 	item->SetString("id", id);
 	item->SetString("content", m_items[id]->GetContent());
 	item->SetString("url", m_items[id]->GetUrl());
+
+	return true;
 }
 
 std::string StreamElementsWorkerManager::DeserializeOne(CefRefPtr<CefValue>& input)
