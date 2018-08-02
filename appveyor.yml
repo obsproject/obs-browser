@@ -9,11 +9,11 @@ init:
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 install:
 - cmd: >-
-    set
-    
+    set PREBUILT_CEF_VERSION=3.3239.1705.gf6d6dfc
+  
+    set PREBUILT_OBS_STUDIO_DIST_URL=https://github.com/obsproject/obs-studio/releases/download/21.1.2/OBS-Studio-21.1.2-Full.zip
+  
     cinst -y git
-
-    cinst -y wget
 
     cinst -y cmake
 
@@ -43,15 +43,9 @@ install:
     echo add_subdirectory(obs-browser) >c:\local\obs-studio\plugins\CMakeLists.txt
 
 
-    wget -O c:\local\cef32.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3282.1742.g96f907e_windows32.tar.bz2" 2>&1 >nul:
+    if exist cef64.tar.bz2 (curl -kL -o cef64.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows64.tar.bz2 -f --retry 5 -z cef64.tar.bz2) else (curl -kL -o cef64.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows64.tar.bz2 -f --retry 5 -C -) 2>&1 >nul:
 
-
-    wget -O c:\local\cef64.tar.bz2 "http://opensource.spotify.com/cefbuilds/cef_binary_3.3282.1742.g96f907e_windows64.tar.bz2" 2>&1 >nul:
-
-
-    archiver open c:\local\cef32.tar.bz2 c:\local 2>&1 >nul:
-
-    archiver open c:\local\cef64.tar.bz2 c:\local 2>&1 >nul:
+    if exist cef32.tar.bz2 (curl -kL -o cef32.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows32.tar.bz2 -f --retry 5 -z cef32.tar.bz2) else (curl -kL -o cef32.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows32.tar.bz2 -f --retry 5 -C -) 2>&1 >nul:
 
 
     if exist dependencies2017.zip (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -z dependencies2017.zip) else (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -C -) 2>&1 >nul:
@@ -59,10 +53,17 @@ install:
 
     if exist vlc.zip (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -z vlc.zip) else (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -C -) 2>&1 >nul:
 
+    if exist obs-studio-dist.zip (curl -kL -o obs-studio-dist.zip %PREBUILT_OBS_STUDIO_DIST_URL% -f --retry 5 -z obs-studio-dist.zip) else (curl -kL -o obs-studio-dist.zip %PREBUILT_OBS_STUDIO_DIST_URL% -f --retry 5 -C -) 2>&1 >nul:
 
     7z x dependencies2017.zip -odependencies2017
 
     7z x vlc.zip -ovlc
+
+    archiver open c:\local\cef32.tar.bz2 c:\local 2>&1 >nul:
+
+    archiver open c:\local\cef64.tar.bz2 c:\local 2>&1 >nul:
+
+    archiver open c:\local\obs-studio-dist.zip c:\local\obs-studio-dist 2>&1 >nul:
 
 
     set DepsPath32=c:\local\dependencies2017\win32
@@ -79,6 +80,9 @@ install:
 cache:
 - c:\local\dependencies2017.zip
 - c:\local\vlc.zip
+- c:\local\obs-studio-dist.zip
+- c:\local\cef64.zip
+- c:\local\cef32.zip
 build_script:
 - cmd: >-
     echo ("#define STREAMELEMENTS_PLUGIN_VERSION " + (Get-Date).ToUniversalTime().ToString("yyyyMMdd") + "${Env:APPVEYOR_BUILD_NUMBER}".PadLeft(6, '0')) >c:\local\generate_version.ps1
@@ -93,7 +97,7 @@ build_script:
 
     echo.===================== BUILD 64 BIT - CEF - OBS-STUDIO =====================
 
-    cd /d c:\local\cef_binary_3.3282.1742.g96f907e_windows64
+    cd /d c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64
 
     mkdir build
 
@@ -108,7 +112,7 @@ build_script:
 
     cd /d c:\local\obs-studio\build64
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3282.1742.g96f907e_windows64 ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64 ..
 
     cd /d c:\local\obs-studio\build64
 
@@ -118,7 +122,7 @@ build_script:
 
     echo.===================== BUILD 32 BIT - CEF - OBS-STUDIO =====================
 
-    cd /d c:\local\cef_binary_3.3282.1742.g96f907e_windows32
+    cd /d c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows32
 
     mkdir build
 
@@ -131,24 +135,109 @@ build_script:
 
     cd /d c:\local\obs-studio\build32
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_3.3282.1742.g96f907e_windows32 ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows32 ..
 
     cd /d c:\local\obs-studio\build32
 
     msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
 
+    echo.===================== COPY CEF 64 BIT BINARIES FROM OBS-STUDIO-DIST =====================
+
+    cd /d c:\local\obs-studio\build64\rundir\%build_config%\obs-plugins\64bit
+
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\locales\*.* .\locales
+
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\cef-bootstrap.* .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\cef.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\cef_100_percent.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\cef_200_percent.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\cef_extensions.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\devtools_resources.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\icudtl.dat .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\chrome_elf.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\libcef.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\libEGL.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\libGLESv2.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\natives_blob.bin .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\snapshot_blob.bin .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\64bit\v8_context_snapshot.bin .
+
+
+
+    cd /d c:\local\obs-studio\build64\rundir\%build_config%\bin\64bit
+
+    copy /Y /B /Z c:\local\obs-studio-dist\bin\64bit\avfilter-6.dll .
+
+    copy /Y /B /Z c:\local\obs-studio-dist\bin\64bit\libx264-148.dll .
+
+    
+    
+    echo.===================== COPY CEF 32 BIT BINARIES FROM OBS-STUDIO-DIST =====================
+
+    cd /d c:\local\obs-studio\build32\rundir\%build_config%\obs-plugins\32bit
+
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\locales\*.* .\locales
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\cef-bootstrap.* .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\cef.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\cef_100_percent.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\cef_200_percent.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\cef_extensions.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\devtools_resources.pak .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\icudtl.dat .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\chrome_elf.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\libcef.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\libEGL.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\libGLESv2.dll .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\natives_blob.bin .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\snapshot_blob.bin .
+    
+    copy /Y /B /Z c:\local\obs-studio-dist\obs-plugins\32bit\v8_context_snapshot.bin .
+
+
+    cd /d c:\local\obs-studio\build32\rundir\%build_config%\bin\32bit
+
+    copy /Y /B /Z c:\local\obs-studio-dist\bin\32bit\avfilter-6.dll .
+
+    copy /Y /B /Z c:\local\obs-studio-dist\bin\32bit\libx264-148.dll .
+
+
+
 
     echo.===================== PACK ARTIFACTS =====================
-
-
-    cd /d c:\local\obs-studio\build32\rundir\%build_config%
-
-    archiver make c:\local\source\build32.zip .
-
 
     cd /d c:\local\obs-studio\build64\rundir\%build_config%
 
     archiver make c:\local\source\build64.zip .
+
+    cd /d c:\local\obs-studio\build32\rundir\%build_config%
+
+    archiver make c:\local\source\build32.zip .
 
     copy /Y c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp c:\local\source\streamelements\Version.generated.hpp
 test: off
