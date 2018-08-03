@@ -238,7 +238,7 @@ StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo* StreamElementsBrowser
 
 	delete baseInfo;
 
-	result->m_url = m_browserWidgets[id]->GetCurrentUrl();
+	result->m_url = m_browserWidgets[id]->GetStartUrl();
 
 	result->m_executeJavaScriptOnLoad = m_browserWidgets[id]->GetExecuteJavaScriptCodeOnLoad();
 
@@ -458,7 +458,7 @@ void StreamElementsBrowserWidgetManager::SerializeNotificationBar(CefRefPtr<CefV
 		CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
 		output->SetDictionary(rootDictionary);
 
-		rootDictionary->SetString("url", m_notificationBarBrowserWidget->GetCurrentUrl());
+		rootDictionary->SetString("url", m_notificationBarBrowserWidget->GetStartUrl());
 		rootDictionary->SetString("executeJavaScriptOnLoad", m_notificationBarBrowserWidget->GetExecuteJavaScriptCodeOnLoad());
 		rootDictionary->SetInt("height", m_notificationBarToolBar->size().height());		
 	}

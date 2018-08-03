@@ -62,8 +62,9 @@ public:
 	}
 
 public:
-	std::string GetCurrentUrl();
+	std::string GetStartUrl();
 	std::string GetExecuteJavaScriptCodeOnLoad();
+	std::string GetCurrentUrl();
 
 private:
 	///

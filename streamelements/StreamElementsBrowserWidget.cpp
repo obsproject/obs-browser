@@ -160,6 +160,11 @@ void StreamElementsBrowserWidget::CefUIThreadExecute(std::function<void()> func,
 	}
 }
 
+std::string StreamElementsBrowserWidget::GetStartUrl()
+{
+	return m_url;
+}
+
 std::string StreamElementsBrowserWidget::GetCurrentUrl()
 {
 	SYNC_ACCESS();
