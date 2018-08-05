@@ -217,13 +217,27 @@ build_script:
 
     echo.===================== PACK ARTIFACTS =====================
 
+    cd /d c:\local\source
+
+    del /f /q c:\local\source\appveyor.yml    
+
+    archiver make c:\local\obs-browser-master.zip .
+
+    move /Y c:\local\obs-browser-master.zip c:\local\source\obs-browser-master.zip
+
+
+
     cd /d c:\local\obs-studio\build64\rundir\%build_config%
 
     archiver make c:\local\source\build64.zip .
 
+
+
     cd /d c:\local\obs-studio\build32\rundir\%build_config%
 
     archiver make c:\local\source\build32.zip .
+
+
 
     copy /Y c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp c:\local\source\streamelements\Version.generated.hpp
 test: off
@@ -234,6 +248,8 @@ artifacts:
   name: build64
 - path: streamelements\Version.generated.hpp
   name: version.generated.hpp
+- path: obs-browser-master.zip
+  name: obs-browser-master
 deploy:
 - provider: S3
   access_key_id: AKIAJESHQW2DGHPN57KQ
@@ -241,7 +257,7 @@ deploy:
     secure: lhOyqT4/E0Oqv8BOQR81rx/SweOIbDELTYW7iJTqRz5shmkZ8eXMCgFzcIuXyvpB
   bucket: obs-builds
   folder: obs-browser/latest/windows
-  artifact: build32,build64,version.generated.hpp
+  artifact: build32,build64,obs-browser-master,version.generated.hpp
   max_error_retry: 5
   on:
     branch: master
