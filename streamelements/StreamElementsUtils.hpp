@@ -56,3 +56,7 @@ std::string LoadResourceString(std::string path);
 void SerializeSystemTimes(CefRefPtr<CefValue>& output);
 void SerializeSystemMemoryUsage(CefRefPtr<CefValue>& output);
 void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output);
+
+/* ========================================================= */
+
+void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output);

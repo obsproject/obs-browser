@@ -364,3 +364,63 @@ void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output)
 	}
 #endif
 }
+
+/* ========================================================= */
+
+void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output)
+{
+	// Response codec collection (array)
+	CefRefPtr<CefListValue> list = CefListValue::Create();
+
+	// Response codec collection is our root object
+	output->SetList(list);
+
+	// Iterate over all input sources
+	bool continue_iteration = true;
+	for (size_t idx = 0; continue_iteration; ++idx)
+	{
+		// Filled by obs_enum_input_types() call below
+		const char* sourceId;
+
+		// Get next input source type, obs_enum_input_types() returns true as long as
+		// there is data at the specified index
+		continue_iteration = obs_enum_input_types(idx, &sourceId);
+
+		if (continue_iteration)
+		{
+			// Get source caps
+			uint32_t sourceCaps = obs_get_source_output_flags(sourceId);
+
+			// If source has video
+			if (sourceCaps & OBS_SOURCE_VIDEO == OBS_SOURCE_VIDEO)
+			{
+				// Create source response dictionary
+				CefRefPtr<CefDictionaryValue> dic = CefDictionaryValue::Create();
+
+				// Set codec dictionary properties
+				dic->SetString("id", sourceId);
+				dic->SetString("name", obs_source_get_display_name(sourceId));
+				dic->SetBool("hasVideo", sourceCaps & OBS_SOURCE_VIDEO == OBS_SOURCE_VIDEO);
+				dic->SetBool("hasAudio", sourceCaps & OBS_SOURCE_AUDIO == OBS_SOURCE_AUDIO);
+
+				// Compare sourceId to known video capture devices
+				dic->SetBool("isVideoCaptureDevice",
+					strcmp(sourceId, "dshow_input") == 0 ||
+					strcmp(sourceId, "decklink-input") == 0);
+
+				// Compare sourceId to known game capture source
+				dic->SetBool("isGameCaptureDevice",
+					strcmp(sourceId, "game_capture") == 0);
+
+				// Compare sourceId to known browser source
+				dic->SetBool("isBrowserSource",
+					strcmp(sourceId, "browser_source") == 0);
+
+				// Append dictionary to response list
+				list->SetDictionary(
+					list->GetSize(),
+					dic);
+			}
+		}
+	}
+}
