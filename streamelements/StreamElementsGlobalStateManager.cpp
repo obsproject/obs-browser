@@ -14,6 +14,30 @@
 
 /* ========================================================================= */
 
+StreamElementsGlobalStateManager::ThemeChangeListener::ThemeChangeListener() : QDockWidget()
+{
+	setVisible(false);
+}
+
+void StreamElementsGlobalStateManager::ThemeChangeListener::changeEvent(QEvent* event)
+{
+	if (event->type() == QEvent::StyleChange) {
+		std::string newTheme = GetCurrentThemeName();
+
+		if (newTheme != m_currentTheme) {
+			json11::Json json = json11::Json::object{
+				{ "name", newTheme },
+			};
+
+			StreamElementsCefClient::DispatchJSEvent("hostUIThemeChanged", json.dump());
+
+			m_currentTheme = newTheme;
+		}
+	}
+}
+
+/* ========================================================================= */
+
 static void handle_obs_frontend_event(enum obs_frontend_event event, void* data)
 {
 	std::string name;
@@ -180,6 +204,11 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			| QMainWindow::AllowTabbedDocks
 		);
 
+		context->self->m_themeChangeListener = new ThemeChangeListener();
+		context->self->mainWindow()->addDockWidget(
+			Qt::NoDockWidgetArea,
+			context->self->m_themeChangeListener);
+
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
 		context->self->m_menuManager = new StreamElementsMenuManager(context->obs_main_window);
 		context->self->m_bwTestManager = new StreamElementsBandwidthTestManager();
@@ -297,6 +326,9 @@ void StreamElementsGlobalStateManager::Shutdown()
 
 	QtExecSync([](void* data) -> void {
 		StreamElementsGlobalStateManager* self = (StreamElementsGlobalStateManager*)data;
+
+		//self->mainWindow()->removeDockWidget(self->m_themeChangeListener);
+		self->m_themeChangeListener->deleteLater();
 
 		delete self->m_outputSettingsManager;
 		delete self->m_bwTestManager;

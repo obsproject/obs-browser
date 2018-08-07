@@ -463,19 +463,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		d->SetString("id", client->GetContainerId());
 		d->SetString("area", client->GetLocationArea());
 		d->SetString("url", browser->GetMainFrame()->GetURL().ToString());
-
-		config_t* globalConfig = obs_frontend_get_global_config(); // does not increase refcount
-
-		const char *themeName = config_get_string(globalConfig, "General", "CurrentTheme");
-		if (!themeName) {
-			/* Use deprecated "Theme" value if available */
-			themeName = config_get_string(globalConfig, "General", "Theme");
-			if (!themeName) {
-				themeName = "Default";
-			}
-		}
-
-		d->SetString("theme", themeName);
+		d->SetString("theme", GetCurrentThemeName());
 	API_HANDLER_END();
 
 	API_HANDLER_BEGIN("openPopupWindow");
