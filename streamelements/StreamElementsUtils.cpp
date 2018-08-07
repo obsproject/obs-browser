@@ -1,4 +1,9 @@
 #include "StreamElementsUtils.hpp"
+#include "StreamElementsConfig.hpp"
+
+#include <obs-frontend-api.h>
+
+#include <QUrl>
 
 void QtPostTask(void(*func)(void*), void* const data)
 {
@@ -423,4 +428,34 @@ void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output)
 			}
 		}
 	}
+}
+
+std::string GetCurrentThemeName()
+{
+	std::string result;
+
+	config_t* globalConfig = obs_frontend_get_global_config(); // does not increase refcount
+
+	const char *themeName = config_get_string(globalConfig, "General", "CurrentTheme");
+	if (!themeName) {
+		/* Use deprecated "Theme" value if available */
+		themeName = config_get_string(globalConfig, "General", "Theme");
+		if (!themeName) {
+			themeName = "Default";
+		}
+
+		result = themeName;
+	}
+
+	std::string appStyle = qApp->styleSheet().toStdString();
+
+	if (appStyle.substr(0, 7) == "file://") {
+		QUrl url(appStyle.c_str());
+
+		if (url.isLocalFile()) {
+			result = url.fileName().split('.')[0].toStdString();
+		}
+	}
+
+	return result;
 }

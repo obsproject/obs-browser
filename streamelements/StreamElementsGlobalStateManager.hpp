@@ -58,4 +58,19 @@ private:
 
 private:
 	static StreamElementsGlobalStateManager* s_instance;
+
+private:
+	class ThemeChangeListener :
+		public QDockWidget
+	{
+	public:
+		ThemeChangeListener();
+
+	protected:
+		virtual void changeEvent(QEvent* event) override;
+
+		std::string m_currentTheme;
+	};
+
+	QDockWidget* m_themeChangeListener;
 };
