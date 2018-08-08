@@ -1,6 +1,8 @@
 #include "StreamElementsUtils.hpp"
 #include "StreamElementsConfig.hpp"
 
+#include <cstdint>
+
 #include <obs-frontend-api.h>
 
 #include <QUrl>
@@ -105,6 +107,13 @@ std::string LoadResourceString(std::string path)
 
 /* ========================================================= */
 
+static uint64_t FromFileTime(const FILETIME& ft) {
+	ULARGE_INTEGER uli = { 0 };
+	uli.LowPart = ft.dwLowDateTime;
+	uli.HighPart = ft.dwHighDateTime;
+	return uli.QuadPart;
+}
+
 void SerializeSystemTimes(CefRefPtr<CefValue>& output)
 {
 	SYNC_ACCESS();
@@ -121,67 +130,55 @@ void SerializeSystemTimes(CefRefPtr<CefValue>& output)
 		output->SetDictionary(d);
 
 		static bool hasSavedStartingValues = false;
-		static ULARGE_INTEGER savedIdleTime;
-		static ULARGE_INTEGER savedKernelTime;
-		static ULARGE_INTEGER savedUserTime;
+		static uint64_t savedIdleTime;
+		static uint64_t savedKernelTime;
+		static uint64_t savedUserTime;
 
 		if (!hasSavedStartingValues) {
-			savedIdleTime.HighPart = idleTime.dwHighDateTime;
-			savedIdleTime.LowPart = idleTime.dwLowDateTime;
-
-			savedKernelTime.HighPart = kernelTime.dwHighDateTime;
-			savedKernelTime.LowPart = kernelTime.dwLowDateTime;
-
-			savedUserTime.HighPart = userTime.dwHighDateTime;
-			savedUserTime.LowPart = userTime.dwLowDateTime;
+			savedIdleTime = FromFileTime(idleTime);
+			savedKernelTime = FromFileTime(kernelTime);
+			savedUserTime = FromFileTime(userTime);
 
 			hasSavedStartingValues = true;
 		}
 
-		const unsigned long SECOND_PART = 10000000L;
-		const unsigned long MS_PART = SECOND_PART / 1000L;
+		const uint64_t SECOND_PART = 10000000L;
+		const uint64_t MS_PART = SECOND_PART / 1000L;
 
-		ULARGE_INTEGER idleInt;
-		idleInt.HighPart = idleTime.dwHighDateTime;
-		idleInt.LowPart = idleTime.dwLowDateTime;
-		idleInt.QuadPart -= savedIdleTime.QuadPart;
+		uint64_t idleInt = FromFileTime(idleTime) - savedIdleTime;
+		uint64_t kernelInt = FromFileTime(kernelTime) - savedKernelTime;
+		uint64_t userInt = FromFileTime(userTime) - savedUserTime;
 
-		ULARGE_INTEGER kernelInt;
-		kernelInt.HighPart = kernelTime.dwHighDateTime;
-		kernelInt.LowPart = kernelTime.dwLowDateTime;
-		kernelInt.QuadPart -= savedKernelTime.QuadPart;
+		uint64_t idleMs = idleInt / MS_PART;
+		uint64_t kernelMs = kernelInt / MS_PART;
+		uint64_t userMs = userInt / MS_PART;
 
-		ULARGE_INTEGER userInt;
-		userInt.HighPart = userTime.dwHighDateTime;
-		userInt.LowPart = userTime.dwLowDateTime;
-		userInt.QuadPart -= savedUserTime.QuadPart;
+		uint64_t idleSec = idleMs / (uint64_t)1000;
+		uint64_t kernelSec = kernelMs / (uint64_t)1000;
+		uint64_t userSec = userMs / (uint64_t)1000;
 
-		long idleMs = idleInt.QuadPart / MS_PART;
-		long kernelMs = kernelInt.QuadPart / MS_PART;
-		long userMs = userInt.QuadPart / MS_PART;
+		uint64_t idleMod = idleMs % (uint64_t)1000;
+		uint64_t kernelMod = kernelMs % (uint64_t)1000;
+		uint64_t userMod = userMs % (uint64_t)1000;
 
-		/*
-		int idleSec = (int)(idleMs / 1000L);
-		int kernelSec = (int)(kernelMs / 1000L);
-		int userSec = (int)(userMs / 1000L);
-		*/
+		double idleRat = idleSec + ((double)idleMod / 1000.0);
+		double kernelRat = kernelSec + ((double)kernelMod / 1000.0);
+		double userRat = userSec + ((double)userMod / 1000.0);
 
-		double idleSec = (double)idleMs / (double)1000.0;
-		double kernelSec = (double)kernelMs / (double)1000.0;
-		double userSec = (double)userMs / (double)1000.0;
+		// https://msdn.microsoft.com/en-us/84f674e7-536b-4ae0-b523-6a17cb0a1c17
+		// lpKernelTime [out, optional]
+		// A pointer to a FILETIME structure that receives the amount of time that
+		// the system has spent executing in Kernel mode (including all threads in
+		// all processes, on all processors)
+		//
+		// >>> This time value also includes the amount of time the system has been idle.
+		//
 
-		/*
-		d->SetInt("idleSeconds", idleSec);
-		d->SetInt("kernelSeconds", kernelSec);
-		d->SetInt("userSeconds", userSec);
-		d->SetInt("totalSeconds", idleSec + kernelSec + userSec);
-		*/
-
-		d->SetDouble("idleSeconds", idleSec);
-		d->SetDouble("kernelSeconds", kernelSec);
-		d->SetDouble("userSeconds", userSec);
-		d->SetDouble("totalSeconds", idleSec + kernelSec + userSec);
-		d->SetDouble("busySeconds", kernelSec + userSec);
+		d->SetDouble("idleSeconds", idleRat);
+		d->SetDouble("kernelSeconds", kernelRat - idleRat);
+		d->SetDouble("userSeconds", userRat);
+		d->SetDouble("totalSeconds", kernelRat + userRat);
+		d->SetDouble("busySeconds", kernelRat + userRat - idleRat);
 	}
 #endif
 }
