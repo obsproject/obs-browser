@@ -6,6 +6,20 @@
 
 #include "StreamElementsBrowserMessageHandler.hpp"
 
+class StreamElementsCefClientEventHandler :
+	public CefBaseRefCounted
+{
+public:
+	virtual void OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
+		bool isLoading,
+		bool canGoBack,
+		bool canGoForward) { }
+
+
+public:
+	IMPLEMENT_REFCOUNTING(StreamElementsCefClientEventHandler)
+};
+
 class StreamElementsCefClient :
 	public CefClient,
 	public CefLifeSpanHandler,
@@ -18,7 +32,7 @@ private:
 	std::string m_locationArea = "unknown";
 
 public:
-	StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler);
+	StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler, CefRefPtr<StreamElementsCefClientEventHandler> eventHandler);
 	virtual ~StreamElementsCefClient();
 
 public:
@@ -68,7 +82,7 @@ public:
 	{
 		windowInfo.parent_window = (cef_window_handle_t)obs_frontend_get_main_window_handle();
 
-		client = new StreamElementsCefClient("", nullptr);
+		client = new StreamElementsCefClient("", nullptr, nullptr);
 
 		// Allow pop-ups
 		return false;
@@ -97,6 +111,19 @@ public:
 		const CefString& errorText,
 		const CefString& failedUrl) override;
 
+	///
+	// Called when the loading state has changed. This callback will be executed
+	// twice -- once when loading is initiated either programmatically or by user
+	// action, and once when loading is terminated due to completion, cancellation
+	// of failure. It will be called before any calls to OnLoadStart and after all
+	// calls to OnLoadError and/or OnLoadEnd.
+	///
+	/*--cef()--*/
+	virtual void OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
+		bool isLoading,
+		bool canGoBack,
+		bool canGoForward) override;
+
 	/* CefDisplayHandler */
 	virtual void OnTitleChange(CefRefPtr<CefBrowser> browser,
 		const CefString& title) override;
@@ -113,6 +140,7 @@ public:
 private:
 	std::string m_executeJavaScriptCodeOnLoad;
 	CefRefPtr<StreamElementsBrowserMessageHandler> m_messageHandler;
+	CefRefPtr<StreamElementsCefClientEventHandler> m_eventHandler;
 
 public:
 	static void DispatchJSEvent(std::string event, std::string eventArgsJson);

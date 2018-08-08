@@ -64,7 +64,8 @@ public:
 			CefRefPtr<StreamElementsCefClient> cefClient =
 				new StreamElementsCefClient(
 					"",
-					new StreamElementsApiMessageHandler());
+					new StreamElementsApiMessageHandler(),
+					nullptr);
 
 			cefClient->SetContainerId(id);
 			cefClient->SetLocationArea("worker");

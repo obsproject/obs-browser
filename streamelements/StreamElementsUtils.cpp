@@ -7,6 +7,11 @@
 
 #include <QUrl>
 
+#include <QFile>
+#include <QDir>
+#include <QUrl>
+#include <regex>
+
 void QtPostTask(void(*func)(void*), void* const data)
 {
 	/*
@@ -425,6 +430,49 @@ void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output)
 			}
 		}
 	}
+}
+
+std::string SerializeAppStyleSheet()
+{
+	std::string result = qApp->styleSheet().toStdString();
+
+	if (result.compare(0, 8, "file:///") == 0) {
+		QUrl url(result.c_str());
+
+		if (url.isLocalFile()) {
+			result = result.substr(8);
+
+			QFile file(result.c_str());
+
+			if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+				QTextStream in(&file);
+
+				result = in.readAll().toStdString();
+			}
+		}
+	}
+
+	return result;
+}
+
+std::string GetAppStyleSheetSelectorContent(std::string selector)
+{
+	std::string result;
+
+	std::string css = SerializeAppStyleSheet();
+
+	std::replace(css.begin(), css.end(), '\n', ' ');
+
+	css = std::regex_replace(css, std::regex("/\\*.*?\\*/"), "");
+
+	std::regex selector_regex("[^\\s]*" + selector + "[\\s]*\\{(.*?)\\}");
+	std::smatch selector_match;
+
+	if (std::regex_search(css, selector_match, selector_regex)) {
+		result = std::string(selector_match[1].first, selector_match[1].second);
+	}
+
+	return result;
 }
 
 std::string GetCurrentThemeName()
