@@ -340,7 +340,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_restart   = obs_data_get_bool(settings, "restart_when_active");
 		n_css       = obs_data_get_string(settings, "css");
 		n_url       = obs_data_get_string(settings,
-				is_local ? "local_file" : "url");
+				n_is_local ? "local_file" : "url");
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		bool n_hwaccel;
