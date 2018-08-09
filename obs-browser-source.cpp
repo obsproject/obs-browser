@@ -309,10 +309,14 @@ void BrowserSource::Refresh()
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 inline void BrowserSource::SignalBeginFrame()
 {
-	ExecuteOnBrowser([this] ()
-	{
-		cefBrowser->GetHost()->SendExternalBeginFrame();
-	}, true);
+	if (reset_frame) {
+		ExecuteOnBrowser([this] ()
+		{
+			cefBrowser->GetHost()->SendExternalBeginFrame();
+		}, true);
+
+		reset_frame = false;
+	}
 }
 #endif
 
@@ -379,6 +383,9 @@ void BrowserSource::Tick()
 {
 	if (create_browser && CreateBrowser())
 		create_browser = false;
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	reset_frame = true;
+#endif
 }
 
 void BrowserSource::Render()
