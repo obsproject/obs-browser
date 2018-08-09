@@ -390,11 +390,16 @@ void BrowserSource::Tick()
 
 void BrowserSource::Render()
 {
+	bool flip = false;
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	flip = hwaccel;
+#endif
+
 	if (texture) {
 		gs_effect_t *effect = obs_get_base_effect(
 				OBS_EFFECT_PREMULTIPLIED_ALPHA);
 		while (gs_effect_loop(effect, "Draw"))
-			obs_source_draw(texture, 0, 0, 0, 0, tex_sharing_avail);
+			obs_source_draw(texture, 0, 0, 0, 0, flip);
 	}
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
