@@ -26,10 +26,16 @@
 #include "obs-browser-source.hpp"
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
+#include "browser-version.h"
 
 #include "json11/json11.hpp"
 #include "cef-headers.hpp"
 
+#ifdef _WIN32
+#include <util/windows/ComPtr.hpp>
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <d3d11.h>
 #if defined(USE_OBS_FRONTEND_API)
 #include <obs-frontend-api.h>
 #endif
@@ -41,6 +47,8 @@ using namespace std;
 using namespace json11;
 
 static thread manager_thread;
+
+static int adapterCount = 0;
 
 /* ========================================================================= */
 
@@ -78,6 +86,9 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", default_css);
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_data_set_default_bool(settings, "hwaccel", adapterCount == 1);
+#endif
 }
 
 static bool is_local_file_modified(obs_properties_t *props,
@@ -132,6 +143,11 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_bool(props, "restart_when_active",
 			obs_module_text("RefreshBrowserActive"));
 
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_properties_add_bool(props, "hwaccel",
+			obs_module_text("HardwareAcceleration"));
+#endif
+
 	obs_properties_add_button(props, "refreshnocache",
 			obs_module_text("RefreshNoCache"),
 			[] (obs_properties_t *, obs_property_t *, void *data)
@@ -183,6 +199,14 @@ static void BrowserManagerThread(void)
 	CefShutdown();
 }
 
+extern "C" EXPORT void obs_browser_initialize(void)
+{
+	static bool manager_initialized = false;
+	if (!os_atomic_set_bool(&manager_initialized, true)) {
+		manager_thread = thread(BrowserManagerThread);
+	}
+}
+
 void RegisterBrowserSource()
 {
 	struct obs_source_info info = {};
@@ -201,11 +225,7 @@ void RegisterBrowserSource()
 	};
 	info.create = [] (obs_data_t *settings, obs_source_t *source) -> void *
 	{
-		static bool manager_initialized = false;
-		if (!os_atomic_set_bool(&manager_initialized, true)) {
-			manager_thread = thread(BrowserManagerThread);
-		}
-
+		obs_browser_initialize();
 		return new BrowserSource(settings, source);
 	};
 	info.destroy = [] (void *data)
@@ -346,10 +366,43 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	default:;
 	}
 }
+
+#ifdef _WIN32
+static inline void EnumAdapterCount()
+{
+	ComPtr<IDXGIFactory1> factory;
+	ComPtr<IDXGIAdapter1> adapter;
+	HRESULT hr;
+	UINT i = 0;
+
+	hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)&factory);
+	if (FAILED(hr))
+		return;
+
+	while (factory->EnumAdapters1(i++, &adapter) == S_OK) {
+		DXGI_ADAPTER_DESC desc;
+
+		hr = adapter->GetDesc(&desc);
+		if (FAILED(hr))
+			continue;
+
+		/* ignore Microsoft's 'basic' renderer' */
+		if (desc.VendorId == 0x1414 && desc.DeviceId == 0x8c)
+			continue;
+
+		adapterCount++;
+	}
+}
 #endif
 
 bool obs_module_load(void)
 {
+	blog(LOG_INFO, "[obs-browser]: Version %s",
+			OBS_BROWSER_VERSION_STRING);
+
+#ifdef _WIN32
+	EnumAdapterCount();
+#endif
 	RegisterBrowserSource();
 
 	#ifdef USE_OBS_FRONTEND_API
