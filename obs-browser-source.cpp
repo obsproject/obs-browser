@@ -358,13 +358,13 @@ void BrowserSource::Update(obs_data_t *settings)
 
 	DestroyBrowser(true);
 	DestroyTextures();
-	create_browser = true;
+
+	if (!shutdown_on_invisible || obs_source_showing(source))
+		CreateBrowser();
 }
 
 void BrowserSource::Tick()
 {
-	if (create_browser && CreateBrowser())
-		create_browser = false;
 }
 
 void BrowserSource::Render()
