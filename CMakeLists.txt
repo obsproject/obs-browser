@@ -40,14 +40,16 @@ if(MSVC)
 				"CMAKE_C_FLAGS_${CONFIG_TYPE}"
 				"${CMAKE_C_FLAGS_${CONFIG_TYPE}}")
 
-		string(REPLACE "/MD" "/MT"
-			"CMAKE_CXX_FLAGS_${CONFIG_TYPE}"
-			"${CMAKE_CXX_FLAGS_${CONFIG_TYPE}}")
-	endforeach()
+			string(REPLACE "/MD" "/MT"
+				"CMAKE_CXX_FLAGS_${CONFIG_TYPE}"
+				"${CMAKE_CXX_FLAGS_${CONFIG_TYPE}}")
+		endforeach()
+	endif()
+
 	list(APPEND obs-browser_LIBRARIES
 		d3d11
-		dxgi
-		)
+		dxgi)
+
 endif()
 
 set(obs-browser_SOURCES

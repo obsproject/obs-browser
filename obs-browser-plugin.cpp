@@ -36,8 +36,11 @@
 #include <dxgi.h>
 #include <dxgi1_2.h>
 #include <d3d11.h>
+
 #if defined(USE_OBS_FRONTEND_API)
 #include <obs-frontend-api.h>
+#endif
+
 #endif
 
 OBS_DECLARE_MODULE()
@@ -366,6 +369,7 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	default:;
 	}
 }
+#endif
 
 #ifdef _WIN32
 static inline void EnumAdapterCount()
