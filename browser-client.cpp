@@ -192,8 +192,7 @@ void BrowserClient::OnAcceleratedPaint(
 		CefRefPtr<CefBrowser>,
 		PaintElementType,
 		const RectList &,
-		void *shared_handle,
-		uint64)
+		void *shared_handle)
 {
 	if (!bs) {
 		return;

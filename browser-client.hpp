@@ -109,8 +109,7 @@ public:
 			CefRefPtr<CefBrowser> browser,
 			PaintElementType type,
 			const RectList &dirtyRects,
-			void *shared_handle,
-			uint64 sync_key) override;
+			void *shared_handle) override;
 #endif
 
 	/* CefLoadHandler */

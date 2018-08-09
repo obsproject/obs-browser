@@ -105,14 +105,13 @@ bool BrowserSource::CreateBrowser()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		windowInfo.shared_texture_enabled = hwaccel;
-		windowInfo.shared_texture_sync_key = (uint64)-1;
 		windowInfo.external_begin_frame_enabled = true;
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		cefBrowserSettings.windowless_frame_rate = hwaccel ? 250 : fps;
+		cefBrowserSettings.windowless_frame_rate = 0;
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
@@ -308,11 +307,11 @@ void BrowserSource::Refresh()
 }
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-void BrowserSource::SignalBeginFrame()
+inline void BrowserSource::SignalBeginFrame()
 {
 	ExecuteOnBrowser([this] ()
 	{
-		cefBrowser->GetHost()->SendExternalBeginFrame(0, -1, -1);
+		cefBrowser->GetHost()->SendExternalBeginFrame();
 	}, true);
 }
 #endif
