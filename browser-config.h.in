@@ -22,3 +22,5 @@
 #else
 #define EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED false
 #endif
+
+#cmakedefine USE_OBS_FRONTEND_API

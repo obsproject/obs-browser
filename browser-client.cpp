@@ -20,7 +20,10 @@
 #include "obs-browser-source.hpp"
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
+
+#if defined(USE_OBS_FRONTEND_API)
 #include <obs-frontend-api.h>
+#endif
 
 using namespace json11;
 
@@ -106,14 +109,20 @@ bool BrowserClient::OnProcessMessageReceived(
 			{"height", (int)obs_source_get_height(bs->source)}
 		};
 
-	} else if (name == "getStatus") {
+	}
+
+	#if defined(USE_OBS_FRONTEND_API)
+	else if (name == "getStatus") {
 		json = Json::object {
 			{"recording", obs_frontend_recording_active()},
 			{"streaming", obs_frontend_streaming_active()},
 			{"replaybuffer", obs_frontend_replay_buffer_active()}
 		};
 
-	} else {
+	}
+	#endif
+
+	else {
 		return false;
 	}
 
