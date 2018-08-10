@@ -23,17 +23,14 @@ configure_file(
 	"${CMAKE_CURRENT_BINARY_DIR}/browser-config.h")
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-include_directories("${CEF_ROOT_DIR}")
 
 # ----------------------------------------------------------------------------
 
 set(obs-browser_LIBRARIES
+	CEF::CEF
 	libobs
 	obs-frontend-api
 	)
-
-list(APPEND obs-browser_LIBRARIES
-	${CEF_LIBRARIES})
 
 if(MSVC)
 	string(REPLACE "/MD" "/MT"
@@ -139,9 +136,7 @@ add_executable(cef-bootstrap
 	${cef-bootstrap_SOURCES}
 	${cef-bootstrap_HEADERS}
 	)
-target_link_libraries(cef-bootstrap
-	${CEF_LIBRARIES}
-	)
+target_link_libraries(cef-bootstrap	CEF::CEF)
 
 if (APPLE)
 	set_target_properties(cef-bootstrap PROPERTIES
