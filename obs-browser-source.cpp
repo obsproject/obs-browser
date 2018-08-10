@@ -342,11 +342,6 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_url       = obs_data_get_string(settings,
 				n_is_local ? "local_file" : "url");
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		bool n_hwaccel;
-		n_hwaccel = obs_data_get_bool(settings, "hwaccel");
-#endif
-
 		if (n_is_local == is_local &&
 		    n_width == width &&
 		    n_height == height &&
@@ -354,9 +349,6 @@ void BrowserSource::Update(obs_data_t *settings)
 		    n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart &&
 		    n_css == css &&
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		    n_hwaccel == hwaccel &&
-#endif
 		    n_url == url) {
 			return;
 		}
@@ -369,9 +361,6 @@ void BrowserSource::Update(obs_data_t *settings)
 		restart               = n_restart;
 		css                   = n_css;
 		url                   = n_url;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		hwaccel               = n_hwaccel;
-#endif
 	}
 
 	DestroyBrowser(true);
