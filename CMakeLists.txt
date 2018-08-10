@@ -36,24 +36,12 @@ list(APPEND obs-browser_LIBRARIES
 	${CEF_LIBRARIES})
 
 if(MSVC)
-	string(REPLACE "/MD" "/MT"
-		"CMAKE_C_FLAGS"
-		"${CMAKE_C_FLAGS}")
+	option(BROWSER_USE_STATIC_CRT "Use static CRT" ON)
 
-	string(REPLACE "/MD" "/MT"
-		"CMAKE_CXX_FLAGS"
-		"${CMAKE_CXX_FLAGS}")
+	if(BROWSER_USE_STATIC_CRT)
+		add_compile_options($<IF:$<CONFIG:Debug>,/MTd,/MT>)
+	endif()
 
-	string(TOUPPER "${CMAKE_CONFIGURATION_TYPES}" UPPER_CONFIG_TYPES)
-	foreach(CONFIG_TYPE ${UPPER_CONFIG_TYPES})
-		string(REPLACE "/MD" "/MT"
-			"CMAKE_C_FLAGS_${CONFIG_TYPE}"
-			"${CMAKE_C_FLAGS_${CONFIG_TYPE}}")
-
-		string(REPLACE "/MD" "/MT"
-			"CMAKE_CXX_FLAGS_${CONFIG_TYPE}"
-			"${CMAKE_CXX_FLAGS_${CONFIG_TYPE}}")
-	endforeach()
 	list(APPEND obs-browser_LIBRARIES
 		d3d11
 		dxgi
