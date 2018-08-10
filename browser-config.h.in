@@ -1,24 +1,7 @@
 #pragma once
 
-#ifndef ON
-#define ON true
-#endif
-
-#ifndef OFF
-#define OFF false
-#endif
-
-#ifndef TRUE
-#define TRUE true
-#endif
-
-#ifndef FALSE
-#define FALSE false
-#endif
-
 #ifdef _WIN32
-#define EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED \
-	@EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED@
-#else
-#define EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED false
+#cmakedefine01 EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 #endif
+
+#cmakedefine01 BROWSER_FRONTEND_API_SUPPORT_ENABLED
