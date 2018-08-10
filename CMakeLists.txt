@@ -15,8 +15,12 @@ if(NOT CEF_FOUND)
 	return()
 endif()
 
-option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin (Win32)" ON)
-option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
+option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT "Enable shared texture support for the browser plugin (Win32)" ON)
+option(BROWSER_PANEL_SUPPORT "Enables Qt web browser panel support" ON)
+
+if (EXPERIMENTAL_SHARED_TEXTURE_SUPPORT)
+	set(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED)
+endif()
 
 if(NOT APPLE)
 	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
