@@ -16,7 +16,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-#include <obs-frontend-api.h>
 #include <util/threading.h>
 #include <util/platform.h>
 #include <util/util.hpp>
@@ -43,9 +42,8 @@
 #include <d3d11.h>
 #endif
 
-#ifdef USE_QT_LOOP
-#include <QApplication>
-#include <QThread>
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
+#include <obs-frontend-api.h>
 #endif
 
 OBS_DECLARE_MODULE()
@@ -410,6 +408,7 @@ void RegisterBrowserSource()
 
 extern void DispatchJSEvent(std::string eventName, std::string jsonString);
 
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
 static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 {
 	switch (event) {
@@ -462,6 +461,7 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	default:;
 	}
 }
+#endif
 
 #ifdef _WIN32
 static inline void EnumAdapterCount()
@@ -515,7 +515,11 @@ bool obs_module_load(void)
 	EnumAdapterCount();
 #endif
 	RegisterBrowserSource();
+
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
+#endif
+
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	obs_data_t *private_data = obs_get_private_data();
