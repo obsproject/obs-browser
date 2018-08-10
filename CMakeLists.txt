@@ -77,7 +77,7 @@ set(obs-browser_HEADERS
 
 # only allow browser panels on win32 for now -- other operating systems
 # need more testing
-if(WIN32 AND BROWSER_PANEL_SUPPORT_ENABLED)
+if(WIN32 AND BROWSER_PANEL_SUPPORT_ENABLED AND USE_OBS_FRONTEND_API)
 	if(DEFINED QTDIR${_lib_suffix})
 		list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
 	elseif(DEFINED QTDIR)
