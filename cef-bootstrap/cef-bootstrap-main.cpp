@@ -20,6 +20,13 @@
 #include "browser-app.hpp"
 
 #ifdef _WIN32
+
+// GPU hint exports for AMD/NVIDIA laptops
+#ifdef _MSC_VER
+extern "C" __declspec(dllexport) DWORD NvOptimusEnablement = 1;
+extern "C" __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+#endif
+
 int CALLBACK WinMain(HINSTANCE, HINSTANCE,
 	LPSTR, int)
 {
