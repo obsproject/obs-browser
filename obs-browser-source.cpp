@@ -365,7 +365,7 @@ void BrowserSource::Update(obs_data_t *settings)
 
 	DestroyBrowser(true);
 	DestroyTextures();
-	create_browser = true;
+	SetShowing(obs_source_showing(source));
 }
 
 void BrowserSource::Tick()
