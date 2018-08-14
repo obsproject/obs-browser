@@ -245,6 +245,7 @@ void BrowserSource::SendKeyClick(
 		if (!text.empty() && !key_up) {
 			e.type = KEYEVENT_CHAR;
 			e.windows_key_code = e.character;
+			e.native_key_code = native_vkey;
 			cefBrowser->GetHost()->SendKeyEvent(e);
 		}
 	}, true);
