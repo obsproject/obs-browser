@@ -25,7 +25,8 @@ class StreamElementsCefClient :
 	public CefLifeSpanHandler,
 	public CefContextMenuHandler,
 	public CefLoadHandler,
-	public CefDisplayHandler
+	public CefDisplayHandler,
+	public CefKeyboardHandler
 {
 private:
 	std::string m_containerId = "";
@@ -48,6 +49,7 @@ public:
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override { return this; }
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
+	virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override { return this; }
 
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
@@ -131,6 +133,11 @@ public:
 	virtual void OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
 		const std::vector<CefString>& icon_urls) override;
 
+	/* CefKeyboardHandler */
+	virtual bool OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
+		const CefKeyEvent& event, CefEventHandle os_event,
+		bool* is_keyboard_shortcut) override;
+
 public:
 	std::string GetExecuteJavaScriptCodeOnLoad()
 	{
@@ -144,6 +151,7 @@ private:
 
 public:
 	static void DispatchJSEvent(std::string event, std::string eventArgsJson);
+	static void DispatchJSEvent(CefRefPtr<CefBrowser> browser, std::string event, std::string eventArgsJson);
 
 public:
 	IMPLEMENT_REFCOUNTING(StreamElementsCefClient)

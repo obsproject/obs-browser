@@ -214,6 +214,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_bwTestManager = new StreamElementsBandwidthTestManager();
 		context->self->m_outputSettingsManager = new StreamElementsOutputSettingsManager();
 		context->self->m_workerManager = new StreamElementsWorkerManager();
+		context->self->m_hotkeyManager = new StreamElementsHotkeyManager();
 
 		{
 			// Set up "Live Support" button
@@ -334,6 +335,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 		delete self->m_bwTestManager;
 		delete self->m_widgetManager;
 		delete self->m_menuManager;
+		delete self->m_hotkeyManager;
 	}, this);
 
 	m_initialized = false;
@@ -350,6 +352,7 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 	StopOnBoardingUI();
 
 	GetWidgetManager()->PushCentralBrowserWidget(onBoardingURL.c_str(), nullptr);
+	GetHotkeyManager()->RemoveAllManagedHotkeyBindings();
 
 	StreamElementsConfig::GetInstance()->SetStartupFlags(StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
 
@@ -483,14 +486,17 @@ void StreamElementsGlobalStateManager::PersistState()
 	CefRefPtr<CefValue> dockingWidgetsState = CefValue::Create();
 	CefRefPtr<CefValue> notificationBarState = CefValue::Create();
 	CefRefPtr<CefValue> workersState = CefValue::Create();
+	CefRefPtr<CefValue> hotkeysState = CefValue::Create();
 
 	GetWidgetManager()->SerializeDockingWidgets(dockingWidgetsState);
 	GetWidgetManager()->SerializeNotificationBar(notificationBarState);
 	GetWorkerManager()->Serialize(workersState);
+	GetHotkeyManager()->SerializeHotkeyBindings(hotkeysState, true);
 
 	rootDictionary->SetValue("dockingBrowserWidgets", dockingWidgetsState);
 	rootDictionary->SetValue("notificationBar", notificationBarState);
 	rootDictionary->SetValue("workers", workersState);
+	rootDictionary->SetValue("hotkeyBindings", hotkeysState);
 
 	QByteArray geometry = mainWindow()->saveGeometry();
 	QByteArray windowState = mainWindow()->saveState();
@@ -533,6 +539,7 @@ void StreamElementsGlobalStateManager::RestoreState()
 	auto dockingWidgetsState = rootDictionary->GetValue("dockingBrowserWidgets");
 	auto notificationBarState = rootDictionary->GetValue("notificationBar");
 	auto workersState = rootDictionary->GetValue("workers");
+	auto hotkeysState = rootDictionary->GetValue("hotkeyBindings");
 
 	if (workersState.get()) {
 		blog(LOG_INFO, "obs-browser: state: restoring workers: %s", CefWriteJSON(workersState, JSON_WRITER_DEFAULT).ToString().c_str());
@@ -547,6 +554,11 @@ void StreamElementsGlobalStateManager::RestoreState()
 	if (notificationBarState.get()) {
 		blog(LOG_INFO, "obs-browser: state: restoring notification bar: %s", CefWriteJSON(notificationBarState, JSON_WRITER_DEFAULT).ToString().c_str());
 		GetWidgetManager()->DeserializeNotificationBar(notificationBarState);
+	}
+
+	if (hotkeysState.get()) {
+		blog(LOG_INFO, "obs-browser: state: restoring hotkey bindings: %s", CefWriteJSON(hotkeysState, JSON_WRITER_DEFAULT).ToString().c_str());
+		GetHotkeyManager()->DeserializeHotkeyBindings(hotkeysState);
 	}
 
 	auto geometry = rootDictionary->GetValue("geometry");

@@ -527,4 +527,36 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 	API_HANDLER_BEGIN("getAvailableInputSourceTypes")
 		SerializeAvailableInputSourceTypes(result);
 	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getAllHotkeyBindings")
+		StreamElementsGlobalStateManager::GetInstance()->GetHotkeyManager()->SerializeHotkeyBindings(result);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getAllManagedHotkeyBindings")
+		StreamElementsGlobalStateManager::GetInstance()->GetHotkeyManager()->SerializeHotkeyBindings(result, true);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("addHotkeyBinding")
+		if (args->GetSize()) {
+			obs_hotkey_id id =
+				StreamElementsGlobalStateManager::GetInstance()->GetHotkeyManager()->DeserializeSingleHotkeyBinding(
+					args->GetValue(0));
+
+			if (id != OBS_INVALID_HOTKEY_ID) {
+				result->SetInt(id);
+			}
+			else {
+				result->SetNull();
+			}
+		}
+		else result->SetNull();
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("removeHotkeyBindingById")
+		if (args->GetSize()) {
+			result->SetBool(
+				StreamElementsGlobalStateManager::GetInstance()->GetHotkeyManager()->RemoveHotkeyBindingById(
+					args->GetInt(0)));
+		}
+	API_HANDLER_END()
 }

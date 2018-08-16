@@ -1,8 +1,10 @@
 #include "StreamElementsCefClient.hpp"
 #include "StreamElementsUtils.hpp"
+#include "StreamElementsGlobalStateManager.hpp"
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
 #include <obs-frontend-api.h>
+#include <obs-hotkey.h>
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
 #include <include/cef_urlrequest.h>	// CefURLRequestClient
 #include <regex>
@@ -273,4 +275,132 @@ void StreamElementsCefClient::DispatchJSEvent(std::string event, std::string eve
 		args->SetString(1, eventArgsJson);
 		browser->SendProcessMessage(PID_RENDERER, msg);
 	}
+}
+
+void StreamElementsCefClient::DispatchJSEvent(CefRefPtr<CefBrowser> browser, std::string event, std::string eventArgsJson)
+{
+	if (!browser.get()) {
+		return;
+	}
+
+	CefRefPtr<CefProcessMessage> msg =
+		CefProcessMessage::Create("DispatchJSEvent");
+	CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+	args->SetString(0, event);
+	args->SetString(1, eventArgsJson);
+	browser->SendProcessMessage(PID_RENDERER, msg);
+}
+
+bool StreamElementsCefClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
+	const CefKeyEvent& event, CefEventHandle os_event, bool* is_keyboard_shortcut)
+{
+	if (event.type != KEYEVENT_RAWKEYDOWN && event.type != KEYEVENT_KEYUP) {
+		return false;
+	}
+
+	if (event.is_system_key) {
+		return false;
+	}
+
+	StreamElementsGlobalStateManager* global = StreamElementsGlobalStateManager::GetInstance();
+
+	if (!global) {
+		return false;
+	}
+
+	obs_key_combination_t combo = { 0 };
+
+	bool pressed = event.type == KEYEVENT_KEYDOWN || event.type == KEYEVENT_RAWKEYDOWN;
+
+#ifdef _WIN32
+	// Bit 30 - the previous key state
+	// https://docs.microsoft.com/en-us/windows/desktop/inputdev/wm-syskeydown
+	//
+	bool repeated = !!((event.native_key_code >> 30) & 1);
+
+	if (pressed && repeated) {
+		return false;
+	}
+#endif
+
+	int virtualKeyCode = event.windows_key_code;
+
+	// Translate virtual key code to OBS key code
+	combo.key = obs_key_from_virtual_key(virtualKeyCode);
+
+	struct modifier_map_t {
+		BYTE virtualKey;
+		obs_interaction_flags obs;
+	};
+
+	const SHORT FLAG_PRESSED = 0x8000;
+	const SHORT FLAG_TOGGLED = 0x0001;
+
+	// OBS hotkey thread currently supports only Ctrl, Shift, Alt modifiers.
+	//
+	// We'll align our resolution of modifiers to what OBS supports.
+	//
+	static const modifier_map_t mods_map_pressed[] = {
+		{ VK_SHIFT, INTERACT_SHIFT_KEY },
+		//{ VK_LSHIFT, INTERACT_SHIFT_KEY },
+		//{ VK_RSHIFT, INTERACT_SHIFT_KEY },
+
+		//{ VK_LCONTROL, INTERACT_CONTROL_KEY },
+		//{ VK_RCONTROL, INTERACT_CONTROL_KEY },
+		{ VK_CONTROL, INTERACT_CONTROL_KEY },
+
+		{ VK_MENU, INTERACT_ALT_KEY },
+		//{ VK_LMENU, INTERACT_ALT_KEY },
+		//{ VK_RMENU, INTERACT_ALT_KEY },
+
+		//{ VK_LBUTTON, INTERACT_MOUSE_LEFT },
+		//{ VK_RBUTTON, INTERACT_MOUSE_MIDDLE },
+		//{ VK_MBUTTON, INTERACT_MOUSE_RIGHT },
+
+		//{ VK_LWIN, INTERACT_COMMAND_KEY },
+		//{ VK_RWIN, INTERACT_COMMAND_KEY }
+	};
+
+	for (auto map_item : mods_map_pressed) {
+		if (map_item.virtualKey != 0 && map_item.virtualKey != virtualKeyCode) {
+			SHORT keyState = ::GetAsyncKeyState(map_item.virtualKey);
+
+			if (keyState != 0) {
+				combo.modifiers = combo.modifiers | map_item.obs;
+			}
+		}
+	}
+
+	/*
+	// Toggled modifiers are not currently supported by OBS hotkey thread.
+	// 
+	static const modifier_map_t mods_map_toggled[] = {
+		{ VK_CAPITAL, INTERACT_CAPS_KEY },
+		{ VK_NUMLOCK, INTERACT_NUMLOCK_KEY }
+		//{ 0, INTERACT_IS_KEY_PAD },
+		//{ 0, INTERACT_IS_LEFT },
+		//{ 0, INTERACT_IS_RIGHT }
+	};
+
+	for (auto map_item : mods_map_toggled) {
+		if (map_item.virtualKey != 0) {
+			SHORT keyState = ::GetAsyncKeyState(map_item.virtualKey);
+
+			if (!!(keyState & FLAG_TOGGLED == FLAG_TOGGLED)) {
+				combo.modifiers = combo.modifiers | map_item.obs;
+			}
+		}
+	}
+	*/
+
+	global->GetHotkeyManager()->keyCombinationTriggered(browser, combo, pressed);
+
+	// Keyboard events which occur while CEF browser is in focus
+	// are not bubbled up.
+	//
+	// Send the keystroke to the hotkey processing queue.
+	obs_hotkey_inject_event(combo, pressed);
+
+	return false;
 }

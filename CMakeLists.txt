@@ -103,6 +103,7 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsWorkerManager.cpp
 	streamelements/StreamElementsBrowserDialog.cpp
 	streamelements/StreamElementsUtils.cpp
+	streamelements/StreamElementsHotkeyManager.cpp
 	)
 set(obs-browser_HEADERS
 	obs-browser-source.hpp
@@ -134,6 +135,7 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsOutputSettingsManager.hpp
 	streamelements/StreamElementsWorkerManager.cpp
 	streamelements/StreamElementsBrowserDialog.hpp
+	streamelements/StreamElementsHotkeyManager.hpp
 	)
 
 # only allow browser panels on win32 for now -- other operating systems
