@@ -185,7 +185,8 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
 		args.push_back(retval);
 
-		callback->ExecuteFunction(NULL, args);
+		if(callback)
+			callback->ExecuteFunction(NULL, args);
 
 		context->Exit();
 
