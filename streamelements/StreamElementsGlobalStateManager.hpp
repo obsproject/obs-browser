@@ -8,6 +8,7 @@
 #include "StreamElementsOutputSettingsManager.hpp"
 #include "StreamElementsWorkerManager.hpp"
 #include "StreamElementsHotkeyManager.hpp"
+#include "StreamElementsPerformanceHistoryTracker.hpp"
 
 class StreamElementsGlobalStateManager :
 	public StreamElementsObsAppMonitor
@@ -38,12 +39,15 @@ public:
 	StreamElementsOutputSettingsManager* GetOutputSettingsManager() { return m_outputSettingsManager; }
 	StreamElementsWorkerManager* GetWorkerManager() { return m_workerManager; }
 	StreamElementsHotkeyManager* GetHotkeyManager() { return m_hotkeyManager; }
+	StreamElementsPerformanceHistoryTracker* GetPerformanceHistoryTracker() { return m_performanceHistoryTracker; }
 	QMainWindow* mainWindow() { return m_mainWindow; }
 
 public:
 	bool DeserializeStatusBarTemporaryMessage(CefRefPtr<CefValue> input);
 	bool DeserializePopupWindow(CefRefPtr<CefValue> input);
 	bool DeserializeModalDialog(CefRefPtr<CefValue> input, CefRefPtr<CefValue>& output);
+
+	void ReportIssue();
 
 protected:
 	virtual void OnObsExit() override;
@@ -58,6 +62,7 @@ private:
 	StreamElementsOutputSettingsManager* m_outputSettingsManager = nullptr;
 	StreamElementsWorkerManager* m_workerManager = nullptr;
 	StreamElementsHotkeyManager* m_hotkeyManager = nullptr;
+	StreamElementsPerformanceHistoryTracker* m_performanceHistoryTracker = nullptr;
 
 private:
 	static StreamElementsGlobalStateManager* s_instance;

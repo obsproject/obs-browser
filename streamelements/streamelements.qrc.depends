@@ -1,0 +1,18 @@
+<RCC>
+	<qresource prefix="/">
+		<file>images/logo.png</file>
+		<file>images/icon.png</file>
+		<file>images/icon.ico</file>
+		<file>images/logo_137x30.png</file>
+		<file>images/logo_100x30.png</file>
+
+		<file>images/toolbar/back.ico</file>
+		<file>images/toolbar/forward.ico</file>
+		<file>images/toolbar/home.ico</file>
+		<file>images/toolbar/reload.ico</file>
+		<file>images/toolbar/reload.png</file>
+
+		<file>html/error.html</file>
+		<file>html/loading.html</file>
+	</qresource>
+</RCC>

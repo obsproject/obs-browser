@@ -5,6 +5,8 @@
 
 #include <xstring>
 
+#include "StreamElementsUtils.hpp"
+
 class StreamElementsConfig
 {
 private:
@@ -75,6 +77,28 @@ public:
 			value.c_str());
 
 		SaveConfig();
+	}
+
+	std::string GetUrlOnBoarding()
+	{
+		std::string result = GetCommandLineOptionValue("streamelements-onboarding-url");
+
+		if (!result.size()) {
+			result = "https://obs.streamelements.com/welcome";
+		}
+
+		return result;
+	}
+
+	std::string GetUrlReportIssue()
+	{
+		std::string result = GetCommandLineOptionValue("streamelements-report-issue-url");
+
+		if (!result.size()) {
+			result = "https://obs-reports.streamelements.com/api/report-issue";
+		}
+
+		return result;
 	}
 
 private:

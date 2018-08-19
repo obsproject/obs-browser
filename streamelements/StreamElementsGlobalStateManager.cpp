@@ -3,6 +3,7 @@
 #include "StreamElementsUtils.hpp"
 #include "Version.hpp"
 #include "StreamElementsBrowserDialog.hpp"
+#include "StreamElementsReportIssueDialog.hpp"
 
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
@@ -225,6 +226,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_outputSettingsManager = new StreamElementsOutputSettingsManager();
 		context->self->m_workerManager = new StreamElementsWorkerManager();
 		context->self->m_hotkeyManager = new StreamElementsHotkeyManager();
+		context->self->m_performanceHistoryTracker = new StreamElementsPerformanceHistoryTracker();
 
 		{
 			// Set up "Live Support" button
@@ -261,11 +263,8 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			container->setLayout(layout);
 
 			char version_buf[512];
-			sprintf(version_buf, "OBS.Live version %d.%d.%d.%d powered by StreamElements",
-				(int)((STREAMELEMENTS_PLUGIN_VERSION % 1000000000000L) / 10000000000L),
-				(int)((STREAMELEMENTS_PLUGIN_VERSION % 10000000000L) / 100000000L),
-				(int)((STREAMELEMENTS_PLUGIN_VERSION % 100000000L) / 1000000L),
-				(int)(STREAMELEMENTS_PLUGIN_VERSION % 1000000L));
+			sprintf(version_buf, "OBS.Live version %s powered by StreamElements",
+				GetStreamElementsPluginVersionString());
 
 			container->layout()->addWidget(new QLabel(version_buf, container));
 
@@ -370,6 +369,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 		//self->mainWindow()->removeDockWidget(self->m_themeChangeListener);
 		self->m_themeChangeListener->deleteLater();
 
+		delete self->m_performanceHistoryTracker;
 		delete self->m_outputSettingsManager;
 		delete self->m_bwTestManager;
 		delete self->m_widgetManager;
@@ -385,7 +385,7 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI()
 	std::string onBoardingURL = GetCommandLineOptionValue("streamelements-onboarding-url");
 
 	if (!onBoardingURL.size()) {
-		onBoardingURL = "https://obs.streamelements.com/welcome";
+		onBoardingURL = StreamElementsConfig::GetInstance()->GetUrlOnBoarding();
 	}
 
 	StopOnBoardingUI();
@@ -737,4 +737,16 @@ bool StreamElementsGlobalStateManager::DeserializePopupWindow(CefRefPtr<CefValue
 	}
 
 	return false;
+}
+
+void StreamElementsGlobalStateManager::ReportIssue()
+{
+	obs_frontend_push_ui_translation(obs_module_get_string);
+
+	StreamElementsReportIssueDialog dialog(mainWindow());
+
+	obs_frontend_pop_ui_translation();
+
+	if (dialog.exec() == QDialog::Accepted) {
+	}
 }
