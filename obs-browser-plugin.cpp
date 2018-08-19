@@ -49,6 +49,7 @@ using namespace json11;
 static thread manager_thread;
 
 static int adapterCount = 0;
+static std::wstring deviceId;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 bool hwaccel = false;
@@ -383,6 +384,9 @@ static inline void EnumAdapterCount()
 		if (FAILED(hr))
 			continue;
 
+		if (i == 1)
+			deviceId = desc.Description;
+
 		/* ignore Microsoft's 'basic' renderer' */
 		if (desc.VendorId == 0x1414 && desc.DeviceId == 0x8c)
 			continue;
@@ -390,6 +394,13 @@ static inline void EnumAdapterCount()
 		adapterCount++;
 	}
 }
+#endif
+
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+static const wchar_t *blacklisted_devices[] = {
+	L"Intel(R) HD Graphics",
+	nullptr
+};
 #endif
 
 bool obs_module_load(void)
@@ -406,6 +417,28 @@ bool obs_module_load(void)
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	obs_data_t *private_data = obs_get_private_data();
 	hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
+	if (hwaccel) {
+		/* do not use hardware acceleration if a blacklisted device is
+		 * the default and on 2 or more adapters */
+		if (adapterCount >= 2) {
+			const wchar_t **device = blacklisted_devices;
+			while (*device) {
+				if (!!wstrstri(deviceId.c_str(), *device)) {
+					hwaccel = false;
+					blog(LOG_INFO, "[obs-browser]: "
+							"Blacklisted device "
+							"detected on a "
+							"computer with more "
+							"than one adapter, "
+							"disabling browser "
+							"source hardware "
+							"acceleration.");
+					break;
+				}
+				device++;
+			}
+		}
+	}
 	obs_data_release(private_data);
 #endif
 	return true;
