@@ -100,11 +100,13 @@ bool BrowserClient::OnProcessMessageReceived(
 	}
 
 	if (name == "getCurrentScene") {
+		obs_source_t *current_scene = obs_frontend_get_current_scene();
 		json = Json::object {
-			{"name", obs_source_get_name(bs->source)},
-			{"width", (int)obs_source_get_width(bs->source)},
-			{"height", (int)obs_source_get_height(bs->source)}
+			{"name", obs_source_get_name(current_scene)},
+			{"width", (int)obs_source_get_width(current_scene)},
+			{"height", (int)obs_source_get_height(current_scene)}
 		};
+		obs_source_release(current_scene);
 
 	} else if (name == "getStatus") {
 		json = Json::object {
