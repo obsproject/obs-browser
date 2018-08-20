@@ -51,6 +51,11 @@ static thread manager_thread;
 
 static int adapterCount = 0;
 #include "streamelements/StreamElementsGlobalStateManager.hpp"
+static std::wstring deviceId;
+
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+bool hwaccel = false;
+#endif
 
 /* ========================================================================= */
 
@@ -88,9 +93,6 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", default_css);
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	obs_data_set_default_bool(settings, "hwaccel", adapterCount == 1);
-#endif
 }
 
 static bool is_local_file_modified(obs_properties_t *props,
@@ -145,11 +147,6 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_bool(props, "restart_when_active",
 			obs_module_text("RefreshBrowserActive"));
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	obs_properties_add_bool(props, "hwaccel",
-			obs_module_text("HardwareAcceleration"));
-#endif
-
 	obs_properties_add_button(props, "refreshnocache",
 			obs_module_text("RefreshNoCache"),
 			[] (obs_properties_t *, obs_property_t *, void *data)
@@ -189,9 +186,11 @@ static void BrowserManagerThread(void)
 	bool tex_sharing_avail = false;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	obs_enter_graphics();
-	tex_sharing_avail = gs_shared_texture_available();
-	obs_leave_graphics();
+	if (hwaccel) {
+		obs_enter_graphics();
+		tex_sharing_avail = gs_shared_texture_available();
+		obs_leave_graphics();
+	}
 #endif
 
 	CefRefPtr<BrowserApp> app(new BrowserApp(tex_sharing_avail));
@@ -392,6 +391,9 @@ static inline void EnumAdapterCount()
 		if (FAILED(hr))
 			continue;
 
+		if (i == 1)
+			deviceId = desc.Description;
+
 		/* ignore Microsoft's 'basic' renderer' */
 		if (desc.VendorId == 0x1414 && desc.DeviceId == 0x8c)
 			continue;
@@ -399,6 +401,13 @@ static inline void EnumAdapterCount()
 		adapterCount++;
 	}
 }
+#endif
+
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+static const wchar_t *blacklisted_devices[] = {
+	L"Intel(R) HD Graphics",
+	nullptr
+};
 #endif
 
 bool obs_module_load(void)
@@ -424,6 +433,33 @@ bool obs_module_load(void)
 	// Initialize StreamElements plug-in
 	StreamElementsGlobalStateManager::GetInstance()->Initialize((QMainWindow*)obs_frontend_get_main_window());
 
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_data_t *private_data = obs_get_private_data();
+	hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
+	if (hwaccel) {
+		/* do not use hardware acceleration if a blacklisted device is
+		 * the default and on 2 or more adapters */
+		if (adapterCount >= 2) {
+			const wchar_t **device = blacklisted_devices;
+			while (*device) {
+				if (!!wstrstri(deviceId.c_str(), *device)) {
+					hwaccel = false;
+					blog(LOG_INFO, "[obs-browser]: "
+							"Blacklisted device "
+							"detected on a "
+							"computer with more "
+							"than one adapter, "
+							"disabling browser "
+							"source hardware "
+							"acceleration.");
+					break;
+				}
+				device++;
+			}
+		}
+	}
+	obs_data_release(private_data);
+#endif
 	return true;
 }
 

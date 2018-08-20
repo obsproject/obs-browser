@@ -121,14 +121,13 @@ bool BrowserSource::CreateBrowser()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		windowInfo.shared_texture_enabled = hwaccel;
-		windowInfo.shared_texture_sync_key = (uint64)-1;
 		windowInfo.external_begin_frame_enabled = true;
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		cefBrowserSettings.windowless_frame_rate = hwaccel ? 250 : fps;
+		cefBrowserSettings.windowless_frame_rate = 0;
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
@@ -271,7 +270,7 @@ void BrowserSource::SendKeyClick(
 		if (!text.empty() && !key_up) {
 			e.type = KEYEVENT_CHAR;
 			e.windows_key_code = e.character;
-			e.character = 0;
+			e.native_key_code = native_vkey;
 			cefBrowser->GetHost()->SendKeyEvent(e);
 		}
 	}, true);
@@ -335,12 +334,16 @@ void BrowserSource::Refresh()
 }
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-void BrowserSource::SignalBeginFrame()
+inline void BrowserSource::SignalBeginFrame()
 {
-	ExecuteOnBrowser([this] ()
-	{
-		cefBrowser->GetHost()->SendExternalBeginFrame(0, -1, -1);
-	}, true);
+	if (reset_frame) {
+		ExecuteOnBrowser([this] ()
+		{
+			cefBrowser->GetHost()->SendExternalBeginFrame();
+		}, true);
+
+		reset_frame = false;
+	}
 }
 #endif
 
@@ -364,12 +367,10 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_restart   = obs_data_get_bool(settings, "restart_when_active");
 		n_css       = obs_data_get_string(settings, "css");
 		n_url       = obs_data_get_string(settings,
-				is_local ? "local_file" : "url");
+				n_is_local ? "local_file" : "url");
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		bool n_hwaccel;
-		n_hwaccel = obs_data_get_bool(settings, "hwaccel");
-#endif
+		if (n_is_local)
+			n_url = "http://absolute/" + n_url;
 
 		if (n_is_local == is_local &&
 		    n_width == width &&
@@ -378,9 +379,6 @@ void BrowserSource::Update(obs_data_t *settings)
 		    n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart &&
 		    n_css == css &&
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		    n_hwaccel == hwaccel &&
-#endif
 		    n_url == url) {
 			return;
 		}
@@ -393,29 +391,35 @@ void BrowserSource::Update(obs_data_t *settings)
 		restart               = n_restart;
 		css                   = n_css;
 		url                   = n_url;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		hwaccel               = n_hwaccel;
-#endif
 	}
 
 	DestroyBrowser();
 	DestroyTextures();
-	create_browser = true;
+	if (!shutdown_on_invisible || obs_source_showing(source))
+		create_browser = true;
 }
 
 void BrowserSource::Tick()
 {
 	if (create_browser && CreateBrowser())
 		create_browser = false;
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	reset_frame = true;
+#endif
 }
 
 void BrowserSource::Render()
 {
+	bool flip = false;
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	flip = hwaccel;
+#endif
+
 	if (texture) {
 		gs_effect_t *effect = obs_get_base_effect(
 				OBS_EFFECT_PREMULTIPLIED_ALPHA);
 		while (gs_effect_loop(effect, "Draw"))
-			obs_source_draw(texture, 0, 0, 0, 0, tex_sharing_avail);
+			obs_source_draw(texture, 0, 0, 0, 0, flip);
 	}
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
