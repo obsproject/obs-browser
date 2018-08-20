@@ -342,6 +342,9 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_url       = obs_data_get_string(settings,
 				n_is_local ? "local_file" : "url");
 
+		if (n_is_local)
+			n_url = "http://absolute/" + n_url;
+
 		if (n_is_local == is_local &&
 		    n_width == width &&
 		    n_height == height &&
