@@ -109,7 +109,6 @@ bool BrowserSource::CreateBrowser()
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
-		url = is_local ? "http://absolute/" + url : url;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		cefBrowserSettings.windowless_frame_rate = 0;
