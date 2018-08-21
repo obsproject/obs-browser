@@ -6,11 +6,37 @@
 
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
+#include "cef-headers.hpp"
 
 #include <util/threading.h>
 
 #include <QPushButton>
 #include <QMessageBox>
+
+/* ========================================================================= */
+
+static std::string GetCEFVersionString()
+{
+	char buf[64];
+
+	sprintf(buf,
+		"cef.%d.%d.chrome.%d.%d.%d.%d",
+		cef_version_info(0),
+		cef_version_info(1),
+		cef_version_info(2),
+		cef_version_info(3),
+		cef_version_info(4),
+		cef_version_info(5));
+
+	return std::string(buf);
+}
+
+static std::string GetCEFStoragePath()
+{
+	std::string version = GetCEFVersionString();
+
+	return obs_module_config_path(version.c_str());
+}
 
 /* ========================================================================= */
 
@@ -274,9 +300,38 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			context->obs_main_window->statusBar()->addPermanentWidget(container);
 		}
 
+		std::string storagePath = GetCEFStoragePath();
+		int os_mkdirs_ret = os_mkdirs(storagePath.c_str());
+
+		if (MKDIR_ERROR == os_mkdirs_ret) {
+			blog(LOG_ERROR, "obs-browser: init: failed creating new cookie storage path: %s", storagePath.c_str());
+		}
+		else {
+			bool ret =
+				CefCookieManager::GetGlobalManager(nullptr)->SetStoragePath(
+					storagePath, false, nullptr);
+
+			if (!ret) {
+				blog(LOG_ERROR, "obs-browser: init: failed setting cookie storage path: %s", storagePath.c_str());
+			}
+			else {
+				blog(LOG_INFO, "obs-browser: init: cookie storage path set to: %s", storagePath.c_str());
+			}
+		}
+
 		bool isOnBoarding = false;
 
-		if (StreamElementsConfig::GetInstance()->GetStreamElementsPluginVersion() != STREAMELEMENTS_PLUGIN_VERSION) {
+		if (MKDIR_ERROR == os_mkdirs_ret) {
+			blog(LOG_WARNING, "obs-browser: init: set on-boarding mode due to error creating new cookie storage path: %s", storagePath.c_str());
+
+			isOnBoarding = true;
+		}
+		else if (MKDIR_SUCCESS == os_mkdirs_ret) {
+			blog(LOG_INFO, "obs-browser: init: set on-boarding mode due to new cookie storage path: %s", storagePath.c_str());
+
+			isOnBoarding = true;
+		}
+		else if (StreamElementsConfig::GetInstance()->GetStreamElementsPluginVersion() != STREAMELEMENTS_PLUGIN_VERSION) {
 			blog(LOG_INFO, "obs-browser: init: set on-boarding mode due to configuration version mismatch");
 
 			isOnBoarding = true;
@@ -699,4 +754,3 @@ bool StreamElementsGlobalStateManager::DeserializePopupWindow(CefRefPtr<CefValue
 
 	return false;
 }
-
