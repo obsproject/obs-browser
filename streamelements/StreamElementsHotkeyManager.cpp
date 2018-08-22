@@ -22,49 +22,49 @@ static obs_key_combination_t DeserializeKeyCombination(CefRefPtr<CefValue> input
 		}
 
 		if (!obs_key_combination_is_empty(combination)) {
-			if (d->GetBool("left")) {
+			if (d->HasKey("left") && d->GetBool("left")) {
 				combination.modifiers |= INTERACT_IS_LEFT;
 			}
 
-			if (d->GetBool("right")) {
+			if (d->HasKey("right") && d->GetBool("right")) {
 				combination.modifiers |= INTERACT_IS_RIGHT;
 			}
 
 
-			if (d->GetBool("altKey")) {
+			if (d->HasKey("altKey") && d->GetBool("altKey")) {
 				combination.modifiers |= INTERACT_ALT_KEY;
 			}
 
-			if (d->GetBool("ctrlKey")) {
+			if (d->HasKey("ctrlKey") && d->GetBool("ctrlKey")) {
 				combination.modifiers |= INTERACT_CONTROL_KEY;
 			}
 
-			if (d->GetBool("commandKey")) {
+			if (d->HasKey("commandKey") && d->GetBool("commandKey")) {
 				combination.modifiers |= INTERACT_COMMAND_KEY;
 			}
 
-			if (d->GetBool("shiftKey")) {
+			if (d->HasKey("shiftKey") && d->GetBool("shiftKey")) {
 				combination.modifiers |= INTERACT_SHIFT_KEY;
 			}
 
 
-			if (d->GetBool("capsLock")) {
+			if (d->HasKey("capsLock") && d->GetBool("capsLock")) {
 				combination.modifiers |= INTERACT_CAPS_KEY;
 			}
 
-			if (d->GetBool("numLock")) {
+			if (d->HasKey("numLock") && d->GetBool("numLock")) {
 				combination.modifiers |= INTERACT_NUMLOCK_KEY;
 			}
 
-			if (d->GetBool("mouseLeftButton")) {
+			if (d->HasKey("mouseLeftButton") && d->GetBool("mouseLeftButton")) {
 				combination.modifiers |= INTERACT_MOUSE_LEFT;
 			}
 
-			if (d->GetBool("mouseMidButton")) {
+			if (d->HasKey("mouseMidButton") && d->GetBool("mouseMidButton")) {
 				combination.modifiers |= INTERACT_MOUSE_MIDDLE;
 			}
 
-			if (d->GetBool("mouseRightButton")) {
+			if (d->HasKey("mouseRightButton") && d->GetBool("mouseRightButton")) {
 				combination.modifiers |= INTERACT_MOUSE_RIGHT;
 			}
 		}
@@ -255,17 +255,15 @@ bool StreamElementsHotkeyManager::SerializeHotkeyBindings(CefRefPtr<CefValue>& o
 			itemDict->SetInt("partnerHotkeyBindingId", item.partner_hotkey_id);
 		}
 
-		if (keys.count(item.hotkey_id)) {
-			CefRefPtr<CefListValue> bindingComboList = CefListValue::Create();
+		CefRefPtr<CefListValue> bindingComboList = CefListValue::Create();
 
-			for (auto combination : keys[item.hotkey_id]) {
-				bindingComboList->SetDictionary(
-					bindingComboList->GetSize(),
-					SerializeKeyCombination(combination));
-			}
-
-			itemDict->SetList("triggers", bindingComboList);
+		for (auto combination : keys[item.hotkey_id]) {
+			bindingComboList->SetDictionary(
+				bindingComboList->GetSize(),
+				SerializeKeyCombination(combination));
 		}
+
+		itemDict->SetList("triggers", bindingComboList);
 
 		rootList->SetDictionary(rootList->GetSize(), itemDict);
 	}
@@ -320,9 +318,21 @@ obs_hotkey_id StreamElementsHotkeyManager::DeserializeSingleHotkeyBinding(CefRef
 
 	CefRefPtr<CefDictionaryValue> root = input->GetDictionary();
 
+	if (!root->HasKey("name") || !root->HasKey("description")) {
+		return OBS_INVALID_HOTKEY_ID;
+	}
+
 	std::string name = root->GetString("name");
 	std::string description = root->GetString("description");
-	CefRefPtr<CefValue> data = root->GetValue("eventDetail");
+
+	CefRefPtr<CefValue> data = CefValue::Create();
+
+	if (root->HasKey("eventDetail")) {
+		data = root->GetValue("eventDetail");
+	}
+	else {
+		data->SetNull();
+	}
 
 	if (!name.size() || !description.size()) {
 		return false;
@@ -395,20 +405,25 @@ obs_hotkey_id StreamElementsHotkeyManager::DeserializeSingleHotkeyBinding(CefRef
 		m_registeredHotkeyDataString[id] = dataString;
 	}
 
-	CefRefPtr<CefListValue> triggersList = root->GetList("triggers");
-
 	std::vector<obs_key_combination_t> combinations;
-	for (size_t index = 0; index < triggersList->GetSize(); ++index) {
-		CefRefPtr<CefDictionaryValue> d = triggersList->GetDictionary(index);
 
-		if (!d.get()) {
-			continue;
-		}
+	if (root->HasKey("triggers") && root->GetValue("triggers")->GetType() == VTYPE_LIST) {
+		CefRefPtr<CefListValue> triggersList = root->GetList("triggers");
 
-		obs_key_combination_t combination = DeserializeKeyCombination(triggersList->GetValue(index));
+		if (triggersList.get()) {
+			for (size_t index = 0; index < triggersList->GetSize(); ++index) {
+				CefRefPtr<CefDictionaryValue> d = triggersList->GetDictionary(index);
 
-		if (!obs_key_combination_is_empty(combination)) {
-			combinations.emplace_back(combination);
+				if (!d.get()) {
+					continue;
+				}
+
+				obs_key_combination_t combination = DeserializeKeyCombination(triggersList->GetValue(index));
+
+				if (!obs_key_combination_is_empty(combination)) {
+					combinations.emplace_back(combination);
+				}
+			}
 		}
 	}
 
