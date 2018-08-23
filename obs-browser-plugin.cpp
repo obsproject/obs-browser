@@ -348,6 +348,9 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		{
 			obs_source_t *source = obs_frontend_get_current_scene();
 
+			if (!source)
+				break;
+
 			Json json = Json::object {
 				{"name", obs_source_get_name(source)},
 				{"width", (int)obs_source_get_width(source)},
