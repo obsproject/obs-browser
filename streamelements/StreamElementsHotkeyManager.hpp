@@ -34,4 +34,7 @@ private:
 	std::map<obs_hotkey_id, std::string> m_registeredHotkeyIdsToNames;
 	std::map<obs_hotkey_id, CefRefPtr<CefValue>> m_registeredHotkeySerializedValues;
 	std::map<obs_hotkey_id, std::string> m_registeredHotkeyDataString;
+
+private:
+	static void hotkey_change_handler(void*, calldata_t*);
 };

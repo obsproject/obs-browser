@@ -112,12 +112,41 @@ static CefRefPtr<CefDictionaryValue> SerializeKeyCombination(obs_key_combination
 	return comboDict;
 }
 
+void StreamElementsHotkeyManager::hotkey_change_handler(void*, calldata_t*)
+{
+	StreamElementsCefClient::DispatchJSEvent("hostHotkeyBindingsChanged", "null");
+}
+
+static const char* HOTKEY_BINDINGS_CHANGED_SIGNAL_NAMES[] = {
+	"hotkey_layout_change",
+	"hotkey_register",
+	"hotkey_unregister",
+	"hotkey_bindings_changed",
+	nullptr
+};
+
 StreamElementsHotkeyManager::StreamElementsHotkeyManager()
 {
+	for (size_t i = 0; HOTKEY_BINDINGS_CHANGED_SIGNAL_NAMES[i]; ++i) {
+		signal_handler_connect(
+			obs_get_signal_handler(),
+			HOTKEY_BINDINGS_CHANGED_SIGNAL_NAMES[i],
+			hotkey_change_handler,
+			this
+		);
+	}
 }
 
 StreamElementsHotkeyManager::~StreamElementsHotkeyManager()
 {
+	for (size_t i = 0; HOTKEY_BINDINGS_CHANGED_SIGNAL_NAMES[i]; ++i) {
+		signal_handler_disconnect(
+			obs_get_signal_handler(),
+			HOTKEY_BINDINGS_CHANGED_SIGNAL_NAMES[i],
+			hotkey_change_handler,
+			this
+		);
+	}
 }
 
 bool StreamElementsHotkeyManager::SerializeHotkeyBindings(CefRefPtr<CefValue>& output, bool onlyManagedBindings)
