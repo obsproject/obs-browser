@@ -15,25 +15,9 @@
 
 /* ========================================================================= */
 
-static std::string GetCEFVersionString()
-{
-	char buf[64];
-
-	sprintf(buf,
-		"cef.%d.%d.chrome.%d.%d.%d.%d",
-		cef_version_info(0),
-		cef_version_info(1),
-		cef_version_info(2),
-		cef_version_info(3),
-		cef_version_info(4),
-		cef_version_info(5));
-
-	return std::string(buf);
-}
-
 static std::string GetCEFStoragePath()
 {
-	std::string version = GetCEFVersionString();
+	std::string version = GetCefVersionString();
 
 	return obs_module_config_path(version.c_str());
 }

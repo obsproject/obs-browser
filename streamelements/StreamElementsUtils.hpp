@@ -66,3 +66,12 @@ void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output);
 std::string GetCurrentThemeName();
 std::string SerializeAppStyleSheet();
 std::string GetAppStyleSheetSelectorContent(std::string selector);
+
+/* ========================================================= */
+
+std::string GetCefVersionString();
+std::string GetCefPlatformApiHash();
+std::string GetCefUniversalApiHash();
+std::string GetStreamElementsPluginVersionString();
+std::string GetStreamElementsApiVersionString();
+

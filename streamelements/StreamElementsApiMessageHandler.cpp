@@ -559,4 +559,33 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 					args->GetInt(0)));
 		}
 	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getHostProperties")
+		CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
+
+		d->SetString("obsVersionString", obs_get_version_string());
+		d->SetString("cefVersionString", GetCefVersionString());
+		d->SetString("cefPlatformApiHash", GetCefPlatformApiHash());
+		d->SetString("cefUniversalApiHash", GetCefUniversalApiHash());
+		d->SetString("hostPluginVersionString", GetStreamElementsPluginVersionString());
+		d->SetString("hostApiVersionString", GetStreamElementsApiVersionString());
+
+#ifdef _WIN32
+		d->SetString("platform", "windows");
+#elif APPLE
+		d->SetString("platform", "macos");
+#elif LINUX
+		d->SetString("platform", "linux");
+#else
+		d->SetString("platform", "other");
+#endif
+
+#ifdef _WIN64
+		d->SetString("platformArch", "64bit");
+#else
+		d->SetString("platformArch", "32bit");
+#endif
+
+		result->SetDictionary(d);
+	API_HANDLER_END()
 }

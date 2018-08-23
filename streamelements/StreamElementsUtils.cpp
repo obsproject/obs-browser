@@ -1,5 +1,6 @@
 #include "StreamElementsUtils.hpp"
 #include "StreamElementsConfig.hpp"
+#include "Version.hpp"
 
 #include <cstdint>
 
@@ -503,4 +504,51 @@ std::string GetCurrentThemeName()
 	}
 
 	return result;
+}
+
+std::string GetCefVersionString()
+{
+	char buf[64];
+
+	sprintf(buf,
+		"cef.%d.%d.chrome.%d.%d.%d.%d",
+		cef_version_info(0),
+		cef_version_info(1),
+		cef_version_info(2),
+		cef_version_info(3),
+		cef_version_info(4),
+		cef_version_info(5));
+
+	return std::string(buf);
+}
+
+std::string GetCefPlatformApiHash()
+{
+	return cef_api_hash(0);
+}
+
+std::string GetCefUniversalApiHash()
+{
+	return cef_api_hash(1);
+}
+
+std::string GetStreamElementsPluginVersionString()
+{
+	char version_buf[64];
+	sprintf(version_buf, "%d.%d.%d.%d",
+		(int)((STREAMELEMENTS_PLUGIN_VERSION % 1000000000000L) / 10000000000L),
+		(int)((STREAMELEMENTS_PLUGIN_VERSION % 10000000000L) / 100000000L),
+		(int)((STREAMELEMENTS_PLUGIN_VERSION % 100000000L) / 1000000L),
+		(int)(STREAMELEMENTS_PLUGIN_VERSION % 1000000L));
+
+	return version_buf;
+}
+
+std::string GetStreamElementsApiVersionString()
+{
+	char version_buf[64];
+
+	sprintf(version_buf, "%d.%d", HOST_API_VERSION_MAJOR, HOST_API_VERSION_MINOR);
+
+	return version_buf;
 }
