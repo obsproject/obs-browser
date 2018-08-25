@@ -159,7 +159,7 @@ static void BrowserManagerThread(void)
 {
 	string path = obs_get_module_binary_path(obs_current_module());
 	path = path.substr(0, path.find_last_of('/') + 1);
-	path += "//cef-bootstrap";
+	path += "//obs-browser-page";
 #ifdef _WIN32
 	path += ".exe";
 #endif
