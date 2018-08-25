@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 #include "wide-string.hpp"
+#include <string.h>
 #include <util/platform.h>
 
 using namespace std;
