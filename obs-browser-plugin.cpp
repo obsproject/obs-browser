@@ -402,7 +402,8 @@ static inline void EnumAdapterCount()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 static const wchar_t *blacklisted_devices[] = {
-	L"Intel(R) HD Graphics",
+	L"Intel",
+	L"Microsoft",
 	nullptr
 };
 #endif
@@ -424,23 +425,19 @@ bool obs_module_load(void)
 	if (hwaccel) {
 		/* do not use hardware acceleration if a blacklisted device is
 		 * the default and on 2 or more adapters */
-		if (adapterCount >= 2) {
-			const wchar_t **device = blacklisted_devices;
-			while (*device) {
-				if (!!wstrstri(deviceId.c_str(), *device)) {
-					hwaccel = false;
-					blog(LOG_INFO, "[obs-browser]: "
-							"Blacklisted device "
-							"detected on a "
-							"computer with more "
-							"than one adapter, "
-							"disabling browser "
-							"source hardware "
-							"acceleration.");
-					break;
-				}
-				device++;
+		const wchar_t **device = blacklisted_devices;
+		while (*device) {
+			if (!!wstrstri(deviceId.c_str(), *device)) {
+				hwaccel = false;
+				blog(LOG_INFO, "[obs-browser]: "
+						"Blacklisted device "
+						"detected, "
+						"disabling browser "
+						"source hardware "
+						"acceleration.");
+				break;
 			}
+			device++;
 		}
 	}
 	obs_data_release(private_data);
