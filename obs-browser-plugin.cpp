@@ -175,9 +175,9 @@ static void BrowserManagerThread(void)
 		"/Library/Frameworks/Chromium Embedded Framework.framework";
 #endif
 
-	BPtr<char> conf_path = os_get_abs_path_ptr(
-					obs_module_config_path(""));
-	CefString(&settings.cache_path) = conf_path;
+	BPtr<char> conf_path = obs_module_config_path("");
+	BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
+	CefString(&settings.cache_path) = conf_path_abs;
 	CefString(&settings.browser_subprocess_path) = path;
 
 	bool tex_sharing_avail = false;
