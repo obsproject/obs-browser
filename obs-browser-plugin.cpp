@@ -185,7 +185,7 @@ static void BrowserManagerThread(void)
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	if (hwaccel) {
 		obs_enter_graphics();
-		tex_sharing_avail = gs_shared_texture_available();
+		hwaccel = tex_sharing_avail = gs_shared_texture_available();
 		obs_leave_graphics();
 	}
 #endif
