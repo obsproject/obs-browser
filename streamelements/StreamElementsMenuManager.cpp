@@ -162,6 +162,18 @@ void StreamElementsMenuManager::Update()
 	});
 
 	addURL(obs_module_text("StreamElements.Action.Uninstall"), obs_module_text("StreamElements.Action.Uninstall.URL"));
+
 	m_menu->addSeparator();
+
+	QAction* report_issue = new QAction(obs_module_text("StreamElements.Action.ReportIssue"));
+	m_menu->addAction(report_issue);
+	report_issue->connect(
+		report_issue,
+		&QAction::triggered,
+		[this]
+	{
+		StreamElementsGlobalStateManager::GetInstance()->ReportIssue();
+	});
+
 	addURL(obs_module_text("StreamElements.Action.LiveSupport"), obs_module_text("StreamElements.Action.LiveSupport.URL"));
 }

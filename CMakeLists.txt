@@ -14,10 +14,12 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/deps")
 find_package(CEF QUIET)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
+find_package(Libcurl REQUIRED)
 
 include_directories(SYSTEM
 	${Qt5Core_INCLUDES}
 	${Qt5Widgets_INCLUDES}
+	${LIBCURL_INCLUDE_DIRS}
 )
 
 #qt5_wrap_ui(NetworkDialog "networkdialog.ui")
@@ -46,6 +48,7 @@ set(obs-browser_LIBRARIES
 	Qt5::Core
 	Qt5::Widgets
 	w32-pthreads
+	${LIBCURL_LIBRARIES}
 	)
 
 list(APPEND obs-browser_LIBRARIES
@@ -104,6 +107,11 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsBrowserDialog.cpp
 	streamelements/StreamElementsUtils.cpp
 	streamelements/StreamElementsHotkeyManager.cpp
+	streamelements/StreamElementsReportIssueDialog.cpp
+	streamelements/StreamElementsProgressDialog.cpp
+	streamelements/StreamElementsPerformanceHistoryTracker.cpp
+	streamelements/StreamElementsNetworkDialog.cpp
+	streamelements/deps/zip/zip.c
 	)
 set(obs-browser_HEADERS
 	obs-browser-source.hpp
@@ -136,6 +144,12 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsWorkerManager.cpp
 	streamelements/StreamElementsBrowserDialog.hpp
 	streamelements/StreamElementsHotkeyManager.hpp
+	streamelements/StreamElementsReportIssueDialog.hpp
+	streamelements/StreamElementsProgressDialog.hpp
+	streamelements/StreamElementsPerformanceHistoryTracker.hpp
+	streamelements/StreamElementsNetworkDialog.hpp
+	streamelements/deps/zip/zip.h
+	streamelements/deps/zip/miniz.h
 	)
 
 # only allow browser panels on win32 for now -- other operating systems
