@@ -22,6 +22,7 @@
 #include <util/util.hpp>
 #include <util/dstr.hpp>
 #include <obs-module.h>
+#include <obs.hpp>
 #include <thread>
 #include <mutex>
 
@@ -346,7 +347,8 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED:
 		{
-			obs_source_t *source = obs_frontend_get_current_scene();
+			OBSSource source = obs_frontend_get_current_scene();
+			obs_source_release(source);
 
 			if (!source)
 				break;
@@ -360,8 +362,6 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 				{"width", (int)obs_source_get_width(source)},
 				{"height", (int)obs_source_get_height(source)}
 			};
-
-			obs_source_release(source);
 
 			DispatchJSEvent("obsSceneChanged", json.dump().c_str());
 			break;
