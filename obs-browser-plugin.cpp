@@ -351,8 +351,12 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 			if (!source)
 				break;
 
+			const char *name = obs_source_get_name(source);
+			if (!name)
+				break;
+
 			Json json = Json::object {
-				{"name", obs_source_get_name(source)},
+				{"name", name},
 				{"width", (int)obs_source_get_width(source)},
 				{"height", (int)obs_source_get_height(source)}
 			};
