@@ -20,7 +20,10 @@
 #include "obs-browser-source.hpp"
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
+
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
 #include <obs-frontend-api.h>
+#endif
 
 using namespace json11;
 
@@ -108,14 +111,18 @@ bool BrowserClient::OnProcessMessageReceived(
 		};
 		obs_source_release(current_scene);
 
-	} else if (name == "getStatus") {
+	}
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
+	else if (name == "getStatus") {
 		json = Json::object {
 			{"recording", obs_frontend_recording_active()},
 			{"streaming", obs_frontend_streaming_active()},
 			{"replaybuffer", obs_frontend_replay_buffer_active()}
 		};
 
-	} else {
+	}
+#endif
+	else {
 		return false;
 	}
 
