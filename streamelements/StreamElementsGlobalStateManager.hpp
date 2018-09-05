@@ -80,5 +80,20 @@ private:
 		std::string m_currentTheme;
 	};
 
+	class ApplicationStateListener :
+		public QObject
+	{
+	public:
+		ApplicationStateListener();
+		~ApplicationStateListener();
+
+	protected:
+		void applicationStateChanged();
+
+	private:
+		QTimer m_timer;
+	};
+
 	QDockWidget* m_themeChangeListener;
+	ApplicationStateListener* m_appStateListener;
 };

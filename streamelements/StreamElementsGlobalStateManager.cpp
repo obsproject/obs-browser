@@ -25,6 +25,53 @@ static std::string GetCEFStoragePath()
 
 /* ========================================================================= */
 
+StreamElementsGlobalStateManager::ApplicationStateListener::ApplicationStateListener() :
+	m_timer(this)
+{
+	uint32_t obsMajorVersion = obs_get_version() >> 24;
+
+	if (obsMajorVersion < 22) {
+		m_timer.setSingleShot(false);
+		m_timer.setInterval(100);
+
+		QObject::connect(&m_timer, &QTimer::timeout, [this]() {
+			applicationStateChanged();
+		});
+
+		m_timer.start();
+	}
+}
+
+StreamElementsGlobalStateManager::ApplicationStateListener::~ApplicationStateListener()
+{
+	uint32_t obsMajorVersion = obs_get_version() >> 24;
+
+	if (obsMajorVersion < 22) {
+		m_timer.stop();
+	}
+}
+
+void StreamElementsGlobalStateManager::ApplicationStateListener::applicationStateChanged()
+{
+	// This is an unpleasant hack for OBS versions before
+	// OBS 22.
+	//
+	// Older versions of OBS enabled global hotkeys only
+	// when the OBS window was not focused to prevent
+	// hotkey collision with text boxes and "natural"
+	// program hotkeys. This mechanism relies on Qt's
+	// QGuiApplication::applicationStateChanged event which
+	// does not fire under certain conditions with CEF in
+	// focus for the first time you set a hotkey.
+	//
+	// To mitigate, we re-enable background hotkeys
+	// 10 times/sec for older OBS versions.
+	//
+	obs_hotkey_enable_background_press(true);
+}
+
+/* ========================================================================= */
+
 StreamElementsGlobalStateManager::ThemeChangeListener::ThemeChangeListener() : QDockWidget()
 {
 	setVisible(false);
@@ -215,6 +262,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			| QMainWindow::AllowTabbedDocks
 		);
 
+		context->self->m_appStateListener = new ApplicationStateListener();
 		context->self->m_themeChangeListener = new ThemeChangeListener();
 		context->self->mainWindow()->addDockWidget(
 			Qt::NoDockWidgetArea,
@@ -368,6 +416,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 
 		//self->mainWindow()->removeDockWidget(self->m_themeChangeListener);
 		self->m_themeChangeListener->deleteLater();
+		self->m_appStateListener->deleteLater();
 
 		delete self->m_performanceHistoryTracker;
 		delete self->m_outputSettingsManager;
