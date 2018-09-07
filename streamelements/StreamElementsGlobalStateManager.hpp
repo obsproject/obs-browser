@@ -24,9 +24,9 @@ public:
 	void Initialize(QMainWindow* obs_main_window);
 	void Shutdown();
 
-	void Reset(bool deleteAllCookies = true);
+	void Reset(bool deleteAllCookies = true, bool forceOnboarding = false);
 	void DeleteCookies();
-	void StartOnBoardingUI();
+	void StartOnBoardingUI(bool forceOnboarding);
 	void StopOnBoardingUI();
 	void SwitchToOBSStudio();
 

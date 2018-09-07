@@ -59,10 +59,19 @@ void StreamElementsMenuManager::Update()
 			}, nullptr);
 		});
 
-
 	m_menu->addSeparator();
-	addURL(obs_module_text("StreamElements.Action.Bot"), obs_module_text("StreamElements.Action.Bot.URL"));
-	addURL(obs_module_text("StreamElements.Action.Tipping"), obs_module_text("StreamElements.Action.Tipping.URL"));
+	QAction* onboarding_action = new QAction(obs_module_text("StreamElements.Action.ForceOnboarding"));
+	m_menu->addAction(onboarding_action);
+	onboarding_action->connect(
+		onboarding_action,
+		&QAction::triggered,
+		[this]
+	{
+		QtPostTask([](void*) -> void {
+			StreamElementsGlobalStateManager::GetInstance()->Reset(false, true);
+		}, nullptr);
+	});
+
 	addURL(obs_module_text("StreamElements.Action.Overlays"), obs_module_text("StreamElements.Action.Overlays.URL"));
 	addURL(obs_module_text("StreamElements.Action.GroundControl"), obs_module_text("StreamElements.Action.GroundControl.URL"));
 	m_menu->addSeparator();

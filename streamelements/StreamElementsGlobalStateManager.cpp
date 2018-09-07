@@ -429,12 +429,33 @@ void StreamElementsGlobalStateManager::Shutdown()
 	m_initialized = false;
 }
 
-void StreamElementsGlobalStateManager::StartOnBoardingUI()
+void StreamElementsGlobalStateManager::StartOnBoardingUI(bool forceOnboarding)
 {
 	std::string onBoardingURL = GetCommandLineOptionValue("streamelements-onboarding-url");
 
 	if (!onBoardingURL.size()) {
 		onBoardingURL = StreamElementsConfig::GetInstance()->GetUrlOnBoarding();
+	}
+
+	{
+		// Manipulate on-boarding URL query string to reflect forceOnboarding state
+
+		const char* QS_ONBOARDING = "onboarding";
+
+		QUrl url(onBoardingURL.c_str());
+		QUrlQuery query(url);
+
+		if (query.hasQueryItem(QS_ONBOARDING)) {
+			query.removeQueryItem(QS_ONBOARDING);
+		}
+
+		if (forceOnboarding) {
+			query.addQueryItem(QS_ONBOARDING, "1");
+		}
+
+		url.setQuery(query.query());
+
+		onBoardingURL = url.toString().toStdString();
 	}
 
 	StopOnBoardingUI();
@@ -548,13 +569,13 @@ void StreamElementsGlobalStateManager::DeleteCookies()
 	*/
 }
 
-void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies)
+void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies, bool forceOnboarding)
 {
 	if (deleteAllCookies) {
 		DeleteCookies();
 	}
 
-	StartOnBoardingUI();
+	StartOnBoardingUI(forceOnboarding);
 }
 
 void StreamElementsGlobalStateManager::PersistState()
