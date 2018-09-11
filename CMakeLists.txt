@@ -18,6 +18,13 @@ endif()
 option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin (Win32)" ON)
 option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
 
+if(APPLE)
+	option(BROWSER_DEPLOY "Marks full deployment of browser plugin" OFF)
+	if(BROWSER_DEPLOY)
+		add_definitions(-DBROWSER_DEPLOY)
+	endif()
+endif()
+
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in"
 	"${CMAKE_CURRENT_BINARY_DIR}/browser-config.h")
@@ -189,6 +196,19 @@ if (WIN32)
 		"${CEF_ROOT_DIR}/Release/v8_context_snapshot.bin"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
 	)
+endif()
+
+if(APPLE AND NOT BROWSER_DEPLOY)
+	add_custom_command(TARGET obs-browser POST_BUILD
+		COMMAND "install_name_tool" -change
+		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
+		"${CEF_LIBRARY}/Chromium Embedded Framework"
+		"obs-browser.so")
+	add_custom_command(TARGET obs-browser-page POST_BUILD
+		COMMAND "install_name_tool" -change
+		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
+		"${CEF_LIBRARY}/Chromium Embedded Framework"
+		"obs-browser-page")
 endif()
 
 install_obs_plugin_with_data(obs-browser data)

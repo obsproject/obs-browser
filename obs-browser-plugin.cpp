@@ -30,6 +30,7 @@
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
 #include "browser-version.h"
+#include "browser-config.h"
 
 #include "json11/json11.hpp"
 #include "cef-headers.hpp"
@@ -171,9 +172,8 @@ static void BrowserManagerThread(void)
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
 
-#if defined(__APPLE__) && defined(_DEBUG)
-	CefString(&settings.framework_dir_path) =
-		"/Library/Frameworks/Chromium Embedded Framework.framework";
+#if defined(__APPLE__) && !defined(BROWSER_DEPLOY)
+	CefString(&settings.framework_dir_path) = CEF_LIBRARY;
 #endif
 
 	BPtr<char> conf_path = obs_module_config_path("");
