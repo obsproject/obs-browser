@@ -1,4 +1,5 @@
 #include "StreamElementsNetworkDialog.hpp"
+#include "StreamElementsUtils.hpp"
 #include "ui_StreamElementsNetworkDialog.h"
 
 #include <obs.h>
@@ -249,12 +250,7 @@ void StreamElementsNetworkDialog::DownloadFileAsync(const char* localFilePath, c
 
 					curl_easy_setopt(task_context->curl, CURLOPT_NOPROGRESS, 0L);
 
-					/*
-					std::string proxy = GetCommandLineOptionValue("streamelements-update-proxy");
-					if (proxy.size()) {
-						curl_easy_setopt(task_context->curl, CURLOPT_SSL_VERIFYPEER, 0L);
-						curl_easy_setopt(task_context->curl, CURLOPT_PROXY, proxy.c_str());
-					}*/
+					SetGlobalCURLOptions(task_context->curl, task_context->user_url);
 
 					CURLcode res = curl_easy_perform(task_context->curl);
 
@@ -379,12 +375,7 @@ bool StreamElementsNetworkDialog::UploadFile(const char* localFilePath, const ch
 
 			curl_easy_setopt(task_context->curl, CURLOPT_NOPROGRESS, 0L);
 
-			//curl_easy_setopt(task_context->curl, CURLOPT_SSL_VERIFYPEER, 0L);
-			std::string proxy = GetCommandLineOptionValue("streamelements-report-proxy");
-			if (proxy.size()) {
-				curl_easy_setopt(task_context->curl, CURLOPT_SSL_VERIFYPEER, 0L);
-				curl_easy_setopt(task_context->curl, CURLOPT_PROXY, proxy.c_str());
-			}
+			SetGlobalCURLOptions(task_context->curl, task_context->user_url);
 
 			char* errorBuffer = new char[CURL_ERROR_SIZE + 1];
 			curl_easy_setopt(task_context->curl, CURLOPT_ERRORBUFFER, errorBuffer);

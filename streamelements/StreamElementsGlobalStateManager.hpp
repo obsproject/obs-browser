@@ -9,6 +9,7 @@
 #include "StreamElementsWorkerManager.hpp"
 #include "StreamElementsHotkeyManager.hpp"
 #include "StreamElementsPerformanceHistoryTracker.hpp"
+#include "StreamElementsAnalyticsEventsManager.hpp"
 
 class StreamElementsGlobalStateManager :
 	public StreamElementsObsAppMonitor
@@ -40,6 +41,7 @@ public:
 	StreamElementsWorkerManager* GetWorkerManager() { return m_workerManager; }
 	StreamElementsHotkeyManager* GetHotkeyManager() { return m_hotkeyManager; }
 	StreamElementsPerformanceHistoryTracker* GetPerformanceHistoryTracker() { return m_performanceHistoryTracker; }
+	StreamElementsAnalyticsEventsManager* GetAnalyticsEventsManager() { return m_analyticsEventsManager; }
 	QMainWindow* mainWindow() { return m_mainWindow; }
 
 public:
@@ -63,6 +65,7 @@ private:
 	StreamElementsWorkerManager* m_workerManager = nullptr;
 	StreamElementsHotkeyManager* m_hotkeyManager = nullptr;
 	StreamElementsPerformanceHistoryTracker* m_performanceHistoryTracker = nullptr;
+	StreamElementsAnalyticsEventsManager* m_analyticsEventsManager = nullptr;
 
 private:
 	static StreamElementsGlobalStateManager* s_instance;
