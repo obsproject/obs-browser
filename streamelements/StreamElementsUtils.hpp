@@ -14,6 +14,7 @@
 #include <functional>
 
 #include <util/threading.h>
+#include <curl/curl.h>
 
 #define SYNC_ACCESS() static std::mutex __sync_access_mutex; std::lock_guard<std::mutex> __sync_access_mutex_guard(__sync_access_mutex);
 
@@ -75,3 +76,16 @@ std::string GetCefUniversalApiHash();
 std::string GetStreamElementsPluginVersionString();
 std::string GetStreamElementsApiVersionString();
 
+/* ========================================================= */
+
+void SetGlobalCURLOptions(CURL* curl, const char* url);
+
+typedef bool (*http_client_callback_t)(void* data, size_t datalen, void* userdata);
+
+bool HttpGet(const char* url, http_client_callback_t callback, void* userdata);
+bool HttpPost(const char* url, const char* contentType, void* buffer, size_t buffer_len, http_client_callback_t callback, void* userdata);
+
+/* ========================================================= */
+
+std::string CreateGloballyUniqueIdString();
+std::string GetComputerSystemUniqueId();

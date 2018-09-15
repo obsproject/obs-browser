@@ -3,6 +3,9 @@
 #include "Version.hpp"
 
 #include <cstdint>
+#include <codecvt>
+
+#include <curl/curl.h>
 
 #include <obs-frontend-api.h>
 
@@ -12,6 +15,36 @@
 #include <QDir>
 #include <QUrl>
 #include <regex>
+
+/* ========================================================= */
+
+// convert wstring to UTF-8 string
+static std::string wstring_to_utf8(const std::wstring& str)
+{
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+	return myconv.to_bytes(str);
+}
+
+static std::vector<std::string> tokenizeString(const std::string& str, const std::string& delimiters)
+{
+	std::vector<std::string> tokens;
+	// Skip delimiters at beginning.
+	std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+	// Find first "non-delimiter".
+	std::string::size_type pos = str.find_first_of(delimiters, lastPos);
+
+	while (std::string::npos != pos || std::string::npos != lastPos)
+	{  // Found a token, add it to the vector.
+		tokens.push_back(str.substr(lastPos, pos - lastPos));
+		// Skip delimiters.  Note the "not_of"
+		lastPos = str.find_first_not_of(delimiters, pos);
+		// Find next "non-delimiter"
+		pos = str.find_first_of(delimiters, lastPos);
+	}
+	return tokens;
+}
+
+/* ========================================================= */
 
 void QtPostTask(void(*func)(void*), void* const data)
 {
@@ -552,3 +585,339 @@ std::string GetStreamElementsApiVersionString()
 
 	return version_buf;
 }
+
+/* ========================================================= */
+
+#include <winhttp.h>
+#pragma comment(lib, "Winhttp.lib")
+void SetGlobalCURLOptions(CURL* curl, const char* url)
+{
+	std::string proxy = GetCommandLineOptionValue("streamelements-http-proxy");
+
+	if (!proxy.size()) {
+#ifdef _WIN32
+		WINHTTP_CURRENT_USER_IE_PROXY_CONFIG config;
+
+		if (WinHttpGetIEProxyConfigForCurrentUser(&config)) {
+			// http=127.0.0.1:8888;https=127.0.0.1:8888
+			if (config.lpszProxy) {
+				proxy = wstring_to_utf8(config.lpszProxy);
+
+				std::map<std::string, std::string> schemes;
+				for (auto kvstr : tokenizeString(proxy, ";")) {
+					std::vector<std::string> kv = tokenizeString(kvstr, "=");
+
+					if (kv.size() == 2) {
+						std::transform(kv[0].begin(), kv[0].end(), kv[0].begin(), tolower);
+						schemes[kv[0]] = kv[1];
+					}
+				}
+
+				std::string scheme = tokenizeString(url, ":")[0];
+				std::transform(scheme.begin(), scheme.end(), scheme.begin(), tolower);
+
+				if (schemes.count(scheme)) {
+					proxy = schemes[scheme];
+				}
+				else if (schemes.count("http")) {
+					proxy = schemes["http"];
+				}
+				else {
+					proxy = "";
+				}
+			}
+
+			if (config.lpszProxy) {
+				GlobalFree((HGLOBAL)config.lpszProxy);
+			}
+
+			if (config.lpszProxyBypass) {
+				GlobalFree((HGLOBAL)config.lpszProxyBypass);
+			}
+
+			if (config.lpszAutoConfigUrl) {
+				GlobalFree((HGLOBAL)config.lpszAutoConfigUrl);
+			}
+		}
+#endif
+	}
+
+	if (proxy.size()) {
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_PROXY, proxy.c_str());
+	}
+}
+
+struct http_callback_context
+{
+	http_client_callback_t callback;
+	void* userdata;
+};
+static size_t http_write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+	http_callback_context* context = (http_callback_context*)userdata;
+
+	bool result = true;
+	if (context->callback) {
+		result = context->callback(ptr, size * nmemb, context->userdata);
+	}
+
+	if (result) {
+		return size * nmemb;
+	}
+	else {
+		return 0;
+	}
+};
+
+bool HttpGet(const char* url, http_client_callback_t callback, void* userdata)
+{
+	bool result = false;
+
+	CURL* curl = curl_easy_init();
+
+	if (curl) {
+		curl_easy_setopt(curl, CURLOPT_URL, url);
+
+		curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 512L * 1024L);
+
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+
+		http_callback_context context;
+		context.callback = callback;
+		context.userdata = userdata;
+
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_write_callback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &context);
+
+		CURLcode res = curl_easy_perform(curl);
+
+		if (CURLE_OK == res) {
+			result = true;
+		}
+
+		curl_easy_cleanup(curl);
+	}
+
+	return result;
+}
+
+bool HttpPost(const char* url, const char* contentType, void* buffer, size_t buffer_len, http_client_callback_t callback, void* userdata)
+{
+	bool result = false;
+
+	CURL* curl = curl_easy_init();
+
+	if (curl) {
+		SetGlobalCURLOptions(curl, url);
+
+		curl_easy_setopt(curl, CURLOPT_URL, url);
+
+		curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 512L * 1024L);
+
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+		curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+
+		http_callback_context context;
+		context.callback = callback;
+		context.userdata = userdata;
+
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_write_callback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &context);
+
+		curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)buffer_len);
+		curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, buffer);
+
+		curl_slist *headers = NULL;
+		headers = curl_slist_append(headers, (std::string("Content-Type: ") + contentType).c_str());
+
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+		CURLcode res = curl_easy_perform(curl);
+
+		if (CURLE_OK == res) {
+			result = true;
+		}
+
+		curl_easy_cleanup(curl);
+	}
+
+	return result;
+}
+
+/* ========================================================= */
+
+std::string CreateGloballyUniqueIdString()
+{
+	std::string result;
+
+	const int GUID_STRING_LENGTH = 39;
+
+	GUID guid;
+	CoCreateGuid(&guid);
+
+	OLECHAR guidStr[GUID_STRING_LENGTH];
+	StringFromGUID2(guid, guidStr, GUID_STRING_LENGTH);
+
+	guidStr[GUID_STRING_LENGTH - 2] = 0;
+	result = wstring_to_utf8(guidStr + 1);
+
+	return result;
+}
+
+#include <wbemidl.h>
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "OleAut32.lib")
+#pragma comment(lib, "Advapi32.lib")
+std::string GetComputerSystemUniqueId()
+{
+	std::string result = "";
+
+	const char* REG_KEY_PATH = "SOFTWARE\\StreamElements";
+	const char* REG_VALUE_NAME = "MachineUniqueIdentifier";
+
+	HKEY hkeyRoot;
+	if (ERROR_SUCCESS == RegCreateKeyA(HKEY_LOCAL_MACHINE, REG_KEY_PATH, &hkeyRoot)) {
+		RegCloseKey(hkeyRoot);
+	}
+
+	char buf[128];
+	DWORD bufLen = 128;
+
+	if (ERROR_SUCCESS == RegGetValueA(
+		HKEY_LOCAL_MACHINE,
+		REG_KEY_PATH,
+		REG_VALUE_NAME,
+		RRF_RT_REG_SZ,
+		NULL,
+		buf,
+		&bufLen)) {
+		result = buf;
+	}
+	else {
+		// Get unique ID from WMI
+
+		HRESULT hr = CoInitialize(NULL);
+
+		// https://docs.microsoft.com/en-us/windows/desktop/wmisdk/initializing-com-for-a-wmi-application
+		if (SUCCEEDED(hr)) {
+			bool uinitializeCom = hr == S_OK;
+
+			// https://docs.microsoft.com/en-us/windows/desktop/wmisdk/setting-the-default-process-security-level-using-c-
+			CoInitializeSecurity(
+				NULL,                       // security descriptor
+				-1,                          // use this simple setting
+				NULL,                        // use this simple setting
+				NULL,                        // reserved
+				RPC_C_AUTHN_LEVEL_DEFAULT,   // authentication level  
+				RPC_C_IMP_LEVEL_IMPERSONATE, // impersonation level
+				NULL,                        // use this simple setting
+				EOAC_NONE,                   // no special capabilities
+				NULL);                          // reserved
+
+			IWbemLocator *pLocator;
+
+			// https://docs.microsoft.com/en-us/windows/desktop/wmisdk/creating-a-connection-to-a-wmi-namespace
+			hr = CoCreateInstance(
+				CLSID_WbemLocator, 0,
+				CLSCTX_INPROC_SERVER,
+				IID_IWbemLocator,
+				(LPVOID*)&pLocator);
+
+			if (SUCCEEDED(hr)) {
+				IWbemServices *pSvc = 0;
+
+				// https://docs.microsoft.com/en-us/windows/desktop/wmisdk/creating-a-connection-to-a-wmi-namespace
+				hr = pLocator->ConnectServer(
+					BSTR(L"root\\cimv2"),  //namespace
+					NULL,       // User name 
+					NULL,       // User password
+					0,         // Locale 
+					NULL,     // Security flags
+					0,         // Authority 
+					0,        // Context object 
+					&pSvc);   // IWbemServices proxy
+
+				if (SUCCEEDED(hr)) {
+					hr = CoSetProxyBlanket(pSvc,
+						RPC_C_AUTHN_WINNT,
+						RPC_C_AUTHZ_NONE,
+						NULL,
+						RPC_C_AUTHN_LEVEL_CALL,
+						RPC_C_IMP_LEVEL_IMPERSONATE,
+						NULL,
+						EOAC_NONE
+					);
+
+					if (SUCCEEDED(hr)) {
+						IEnumWbemClassObject *pEnumerator = NULL;
+
+						hr = pSvc->ExecQuery(
+							(BSTR)L"WQL",
+							(BSTR)L"select * from Win32_ComputerSystemProduct",
+							WBEM_FLAG_FORWARD_ONLY,
+							NULL,
+							&pEnumerator);
+
+						if (SUCCEEDED(hr)) {
+							IWbemClassObject *pObj = NULL;
+
+							ULONG resultCount;
+							hr = pEnumerator->Next(
+								WBEM_INFINITE,
+								1,
+								&pObj,
+								&resultCount);
+
+							if (SUCCEEDED(hr)) {
+								VARIANT value;
+
+								hr = pObj->Get(L"UUID", 0, &value, NULL, NULL);
+
+								if (SUCCEEDED(hr)) {
+									if (value.vt != VT_NULL) {
+										result = std::string("WUID/") + wstring_to_utf8(std::wstring(value.bstrVal));
+									}
+									VariantClear(&value);
+								}
+							}
+
+							pEnumerator->Release();
+						}
+					}
+
+					pSvc->Release();
+				}
+
+				pLocator->Release();
+			}
+
+			if (uinitializeCom) {
+				CoUninitialize();
+			}
+		}
+	}
+
+	if (!result.size()) {
+		// Failed retrieving UUID, generate our own
+		result = std::string("SEID/") + CreateGloballyUniqueIdString();
+	}
+
+	// Save for future use
+	RegSetKeyValueA(
+		HKEY_LOCAL_MACHINE,
+		REG_KEY_PATH,
+		REG_VALUE_NAME,
+		REG_SZ,
+		result.c_str(),
+		result.size());
+
+	return result;
+}
+

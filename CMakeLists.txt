@@ -111,6 +111,7 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsProgressDialog.cpp
 	streamelements/StreamElementsPerformanceHistoryTracker.cpp
 	streamelements/StreamElementsNetworkDialog.cpp
+	streamelements/StreamElementsAnalyticsEventsManager.cpp
 	streamelements/deps/zip/zip.c
 	)
 set(obs-browser_HEADERS
@@ -148,8 +149,11 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsProgressDialog.hpp
 	streamelements/StreamElementsPerformanceHistoryTracker.hpp
 	streamelements/StreamElementsNetworkDialog.hpp
+	streamelements/StreamElementsAnalyticsEventsManager.hpp
 	streamelements/deps/zip/zip.h
 	streamelements/deps/zip/miniz.h
+	streamelements/deps/moodycamel/concurrentqueue.h
+	streamelements/deps/moodycamel/blockingconcurrentqueue.h
 	)
 
 # only allow browser panels on win32 for now -- other operating systems

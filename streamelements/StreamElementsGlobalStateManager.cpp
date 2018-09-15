@@ -275,6 +275,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_workerManager = new StreamElementsWorkerManager();
 		context->self->m_hotkeyManager = new StreamElementsHotkeyManager();
 		context->self->m_performanceHistoryTracker = new StreamElementsPerformanceHistoryTracker();
+		context->self->m_analyticsEventsManager = new StreamElementsAnalyticsEventsManager();
 
 		{
 			// Set up "Live Support" button
@@ -333,6 +334,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 
 		std::string storagePath = GetCEFStoragePath();
 		int os_mkdirs_ret = os_mkdirs(storagePath.c_str());
+		std::string onBoardingReason = "";
 
 		if (MKDIR_ERROR == os_mkdirs_ret) {
 			blog(LOG_ERROR, "obs-browser: init: failed creating new cookie storage path: %s", storagePath.c_str());
@@ -356,21 +358,25 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			blog(LOG_WARNING, "obs-browser: init: set on-boarding mode due to error creating new cookie storage path: %s", storagePath.c_str());
 
 			isOnBoarding = true;
+			onBoardingReason = "Failed creating new cookie storage folder";
 		}
 		else if (MKDIR_SUCCESS == os_mkdirs_ret) {
 			blog(LOG_INFO, "obs-browser: init: set on-boarding mode due to new cookie storage path: %s", storagePath.c_str());
 
 			isOnBoarding = true;
+			onBoardingReason = "New cookie storage folder";
 		}
 		else if (StreamElementsConfig::GetInstance()->GetStreamElementsPluginVersion() != STREAMELEMENTS_PLUGIN_VERSION) {
 			blog(LOG_INFO, "obs-browser: init: set on-boarding mode due to configuration version mismatch");
 
 			isOnBoarding = true;
+			onBoardingReason = "State saved by other version of the plug-in";
 		}
 		else if (StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE) {
 			blog(LOG_INFO, "obs-browser: init: set on-boarding mode due to start-up flags");
 
 			isOnBoarding = true;
+			onBoardingReason = "Start-up flags indicate on-boarding mode";
 		}
 
 		if (isOnBoarding) {
@@ -388,6 +394,17 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		QApplication::sendPostedEvents();
 
 		context->self->m_menuManager->Update();
+
+		{
+			json11::Json::object eventProps = {
+				{ "isOnBoarding", isOnBoarding },
+			};
+			if (isOnBoarding) {
+				eventProps["onBoardingReason"] = onBoardingReason.c_str();
+			}
+
+			context->self->GetAnalyticsEventsManager()->trackEvent("Initialized", eventProps);
+		}
 	}, &context);
 
 	QtPostTask([](void* /*data*/) {
@@ -418,6 +435,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 		self->m_themeChangeListener->deleteLater();
 		self->m_appStateListener->deleteLater();
 
+		delete self->m_analyticsEventsManager;
 		delete self->m_performanceHistoryTracker;
 		delete self->m_outputSettingsManager;
 		delete self->m_bwTestManager;

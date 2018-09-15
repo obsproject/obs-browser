@@ -569,6 +569,8 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		d->SetString("cefUniversalApiHash", GetCefUniversalApiHash());
 		d->SetString("hostPluginVersionString", GetStreamElementsPluginVersionString());
 		d->SetString("hostApiVersionString", GetStreamElementsApiVersionString());
+		d->SetString("hostMachineUniqueId", StreamElementsGlobalStateManager::GetInstance()->GetAnalyticsEventsManager()->identity());
+		d->SetString("hostSessionUniqueId", StreamElementsGlobalStateManager::GetInstance()->GetAnalyticsEventsManager()->sessionId());
 
 #ifdef _WIN32
 		d->SetString("platform", "windows");
@@ -587,5 +589,5 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 #endif
 
 		result->SetDictionary(d);
-	API_HANDLER_END()
+		API_HANDLER_END()
 }

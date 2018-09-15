@@ -39,3 +39,45 @@ void StreamElementsConfig::SaveConfig()
 
 	config_save_safe(m_config, "tmp", "bak");
 }
+
+std::string StreamElementsConfig::GetHeapAnalyticsAppId()
+{
+	std::string result = "413792583";
+
+	const char* REG_KEY_PATH = "SOFTWARE\\StreamElements";
+	const char* REG_VALUE_NAME = "HeapAnalyticsAppId";
+
+	DWORD bufLen = 16384;
+	char* buffer = new char[bufLen];
+
+	if (ERROR_SUCCESS != RegGetValueA(
+		HKEY_LOCAL_MACHINE,
+		REG_KEY_PATH,
+		REG_VALUE_NAME,
+		RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY,
+		NULL,
+		buffer,
+		&bufLen)) {
+		if (ERROR_SUCCESS == RegGetValueA(
+			HKEY_LOCAL_MACHINE,
+			REG_KEY_PATH,
+			REG_VALUE_NAME,
+			RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY,
+			NULL,
+			buffer,
+			&bufLen)) {
+			if (buffer[0]) {
+				result = buffer;
+			}
+		}
+	}
+	else {
+		if (buffer[0]) {
+			result = buffer;
+		}
+	}
+
+	delete[] buffer;
+
+	return result;
+}

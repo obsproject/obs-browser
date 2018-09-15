@@ -101,6 +101,8 @@ public:
 		return result;
 	}
 
+	std::string GetHeapAnalyticsAppId();
+
 private:
 	config_t* m_config = nullptr;
 
