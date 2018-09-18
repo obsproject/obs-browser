@@ -108,6 +108,7 @@ bool BrowserClient::OnProcessMessageReceived(
 		return false;
 	}
 
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
 	if (name == "getCurrentScene") {
 		OBSSource current_scene = obs_frontend_get_current_scene();
 		obs_source_release(current_scene);
@@ -125,7 +126,6 @@ bool BrowserClient::OnProcessMessageReceived(
 			{"height", (int)obs_source_get_height(current_scene)}};
 
 	}
-#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
 	else if (name == "getStatus") {
 		json = Json::object {
 			{"recording", obs_frontend_recording_active()},
@@ -133,10 +133,10 @@ bool BrowserClient::OnProcessMessageReceived(
 			{"replaybuffer", obs_frontend_replay_buffer_active()}};
 
 	}
-#endif
 	else {
 		return false;
 	}
+#endif
 
 	CefRefPtr<CefProcessMessage> msg =
 		CefProcessMessage::Create("executeCallback");
