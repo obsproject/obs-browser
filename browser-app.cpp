@@ -131,16 +131,19 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
 		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
 
-		Json::object json;
+		std::string err;
+		auto payloadJson = Json::parse(args->GetString(1).ToString(), err);
+
+		Json::object wrapperJson;
 		if (args->GetSize() > 1)
-			json["detail"] = args->GetString(1).ToString();
-		std::string jsonString = Json(json).dump();
+			wrapperJson["detail"] = payloadJson;
+		std::string wrapperJsonString = Json(wrapperJson).dump();
 		std::string script;
 
 		script += "new CustomEvent('";
 		script += args->GetString(0).ToString();
 		script += "', ";
-		script += jsonString;
+		script += wrapperJsonString;
 		script += ");";
 
 		CefRefPtr<CefV8Value> returnValue;
