@@ -838,3 +838,73 @@ void StreamElementsGlobalStateManager::ReportIssue()
 	if (dialog.exec() == QDialog::Accepted) {
 	}
 }
+
+void StreamElementsGlobalStateManager::UninstallPlugin()
+{
+	bool opt_out = false;
+	bool exec_success = false;
+
+	DWORD buflen = 32768;
+	wchar_t* buffer = new wchar_t[buflen];
+
+	LSTATUS lResult = RegGetValueW(
+		HKEY_LOCAL_MACHINE,
+		L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\StreamElements OBS.Live",
+		L"UninstallString",
+		RRF_RT_REG_SZ,
+		NULL,
+		buffer,
+		&buflen);
+
+	if (lResult != ERROR_SUCCESS) {
+		lResult = RegGetValueW(
+			HKEY_LOCAL_MACHINE,
+			L"Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\StreamElements OBS.Live",
+			L"UninstallString",
+			RRF_RT_REG_SZ,
+			NULL,
+			buffer,
+			&buflen);
+	}
+
+	if (lResult == ERROR_SUCCESS) {
+		QMessageBox::StandardButton reply;
+		reply = QMessageBox::question(
+			mainWindow(),
+			obs_module_text("StreamElements.Action.Uninstall.Confirmation.Title"),
+			obs_module_text("StreamElements.Action.Uninstall.Confirmation.Text"),
+			QMessageBox::Yes | QMessageBox::No);
+
+		if (reply == QMessageBox::Yes) {
+			STARTUPINFOW startInf;
+			memset(&startInf, 0, sizeof startInf);
+			startInf.cb = sizeof(startInf);
+
+			PROCESS_INFORMATION procInf;
+			memset(&procInf, 0, sizeof procInf);
+
+			BOOL bResult = CreateProcessW(NULL, buffer, NULL, NULL, FALSE,
+				NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, NULL, NULL, &startInf, &procInf);
+
+			if (bResult) {
+				exec_success = true;
+			}
+		}
+		else {
+			opt_out = true;
+		}
+	}
+
+	delete[] buffer;
+
+	if (!opt_out) {
+		if (exec_success) {
+			// Close main window = quit OBS
+			QMetaObject::invokeMethod(mainWindow(), "close", Qt::QueuedConnection);
+		}
+		else {
+			QUrl navigate_url = QUrl(obs_module_text("StreamElements.Action.Uninstall.URL"), QUrl::TolerantMode);
+			QDesktopServices::openUrl(navigate_url);
+		}
+	}
+}

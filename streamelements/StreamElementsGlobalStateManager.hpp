@@ -50,6 +50,7 @@ public:
 	bool DeserializeModalDialog(CefRefPtr<CefValue> input, CefRefPtr<CefValue>& output);
 
 	void ReportIssue();
+	void UninstallPlugin();
 
 protected:
 	virtual void OnObsExit() override;

@@ -170,7 +170,15 @@ void StreamElementsMenuManager::Update()
 		StreamElementsGlobalStateManager::GetInstance()->SwitchToOBSStudio();
 	});
 
-	addURL(obs_module_text("StreamElements.Action.Uninstall"), obs_module_text("StreamElements.Action.Uninstall.URL"));
+	QAction* uninstall = new QAction(obs_module_text("StreamElements.Action.Uninstall"));
+	m_menu->addAction(uninstall);
+	uninstall->connect(
+		uninstall,
+		&QAction::triggered,
+		[this]
+	{
+		StreamElementsGlobalStateManager::GetInstance()->UninstallPlugin();
+	});
 
 	m_menu->addSeparator();
 
