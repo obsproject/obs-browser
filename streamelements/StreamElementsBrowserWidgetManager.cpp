@@ -1,6 +1,7 @@
 #include "StreamElementsBrowserWidgetManager.hpp"
 #include "StreamElementsUtils.hpp"
 #include "StreamElementsCefClient.hpp"
+#include "StreamElementsGlobalStateManager.hpp"
 
 #include "cef-headers.hpp"
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
@@ -548,6 +549,9 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 				&QAction::triggered,
 				[dock] {
 				dock->setVisible(false);
+
+				StreamElementsGlobalStateManager::GetInstance()->
+					GetAnalyticsEventsManager()->trackDockWidgetEvent(dock, "Hide", json11::Json::object{ { "actionSource", "Docking widget title bar" } });
 			});
 
 			auto windowTitle = new LocalTitleLabel(title);

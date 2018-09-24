@@ -9,6 +9,8 @@
 #include <thread>
 #include <string>
 
+#include <QDockWidget>
+
 class StreamElementsAnalyticsEventsManager
 {
 public:
@@ -19,6 +21,13 @@ public:
 		std::string event = std::string("OBS.Live Plugin: ") + eventName;
 
 		AddRawEvent(event.c_str(), props);
+	}
+
+	void trackDockWidgetEvent(QDockWidget* widget, const char* eventName, json11::Json::object props = json11::Json::object{})
+	{
+		std::string event = std::string("DockWidget: ") + widget->windowTitle().toStdString() + ": " + std::string(eventName);
+
+		trackEvent(event.c_str(), props);
 	}
 
 	std::string identity() { return m_identity; }

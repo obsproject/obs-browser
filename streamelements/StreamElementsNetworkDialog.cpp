@@ -140,6 +140,22 @@ int StreamElementsNetworkDialog::UploadFileAsyncXferProgressCallback(
 	local_context* task_context =
 		(local_context*)clientp;
 
+	if (!task_context->self->m_cancel_pending) {
+		if (dltotal > 0 && dlnow >= dltotal) {
+			// Defeat keep-alive
+
+			// Upload complete and data was received
+			return (int)CURLE_ABORTED_BY_CALLBACK;
+		} else {
+			return (int)CURLE_OK;
+		}
+	}
+	else {
+		task_context->self->m_cancel_pending = false;
+
+		return (int)CURLE_ABORTED_BY_CALLBACK;
+	}
+
 	time_t now = time(&now);
 
 	time_t time_delta = now - task_context->last_progress_report_time;
@@ -155,6 +171,7 @@ int StreamElementsNetworkDialog::UploadFileAsyncXferProgressCallback(
 	// Or initially when downloading large file
 	show |= task_context->large_file && !task_context->self->isVisible();
 
+
 	if (show) {
 		QMetaObject::invokeMethod(
 			task_context->self,
@@ -165,22 +182,6 @@ int StreamElementsNetworkDialog::UploadFileAsyncXferProgressCallback(
 
 		task_context->last_progress_report_time = now;
 		task_context->last_progress_report_percent = percent;
-	}
-
-	if (!task_context->self->m_cancel_pending) {
-		if (dltotal > 0 && dlnow >= dltotal) {
-			// Defeat keep-alive
-
-			// Upload complete and data was received
-			return (int)CURLE_ABORTED_BY_CALLBACK;
-		} else {
-			return (int)CURLE_OK;
-		}
-	}
-	else {
-		task_context->self->m_cancel_pending = false;
-
-		return (int)CURLE_ABORTED_BY_CALLBACK;
 	}
 }
 

@@ -121,6 +121,17 @@ void StreamElementsMenuManager::Update()
 					StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->GetDockWidget(id.c_str());
 
 				if (dock) {
+					if (isVisible) {
+						// Hide
+						StreamElementsGlobalStateManager::GetInstance()->
+							GetAnalyticsEventsManager()->trackDockWidgetEvent(dock, "Hide", json11::Json::object{ {"actionSource", "Menu"} });
+					}
+					else {
+						// Show
+						StreamElementsGlobalStateManager::GetInstance()->
+							GetAnalyticsEventsManager()->trackDockWidgetEvent(dock, "Show", json11::Json::object{ { "actionSource", "Menu" } });
+					}
+
 					dock->setVisible(!isVisible);
 
 					Update();
