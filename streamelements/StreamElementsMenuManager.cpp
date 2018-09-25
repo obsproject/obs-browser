@@ -47,19 +47,6 @@ void StreamElementsMenuManager::Update()
 			});
 	};
 
-	QAction* logout_action = new QAction(obs_module_text("StreamElements.Action.ResetState"));
-	m_menu->addAction(logout_action);
-	logout_action->connect(
-		logout_action,
-		&QAction::triggered,
-		[this]
-		{
-			QtPostTask([](void*) -> void {
-				StreamElementsGlobalStateManager::GetInstance()->Reset();
-			}, nullptr);
-		});
-
-	m_menu->addSeparator();
 	QAction* onboarding_action = new QAction(obs_module_text("StreamElements.Action.ForceOnboarding"));
 	m_menu->addAction(onboarding_action);
 	onboarding_action->connect(
@@ -204,4 +191,25 @@ void StreamElementsMenuManager::Update()
 	});
 
 	addURL(obs_module_text("StreamElements.Action.LiveSupport"), obs_module_text("StreamElements.Action.LiveSupport.URL"));
+
+	m_menu->addSeparator();
+
+	{
+		bool isLoggedIn =
+			StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN == (StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN);
+
+		QAction* logout_action = new QAction(
+			isLoggedIn ? obs_module_text("StreamElements.Action.ResetStateSignOut") :
+				     obs_module_text("StreamElements.Action.ResetStateSignIn"));
+		m_menu->addAction(logout_action);
+		logout_action->connect(
+			logout_action,
+			&QAction::triggered,
+			[this]
+		{
+			QtPostTask([](void*) -> void {
+				StreamElementsGlobalStateManager::GetInstance()->Reset();
+			}, nullptr);
+		});
+	}
 }

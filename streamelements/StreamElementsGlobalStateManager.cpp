@@ -481,6 +481,7 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI(bool forceOnboarding)
 	GetWidgetManager()->PushCentralBrowserWidget(onBoardingURL.c_str(), nullptr);
 	GetHotkeyManager()->RemoveAllManagedHotkeyBindings();
 
+	// This also clears StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN
 	StreamElementsConfig::GetInstance()->SetStartupFlags(StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
 
 	QtPostTask([](void*) -> void {

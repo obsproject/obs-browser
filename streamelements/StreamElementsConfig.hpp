@@ -14,6 +14,7 @@ private:
 
 public:
 	static const uint64_t STARTUP_FLAGS_ONBOARDING_MODE = 0x0000000000000001L;
+	static const uint64_t STARTUP_FLAGS_SIGNED_IN       = 0x0000000000000002L;
 
 private:
 	StreamElementsConfig();

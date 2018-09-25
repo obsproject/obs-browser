@@ -385,6 +385,18 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 			StreamElementsConfig::GetInstance()->GetStartupFlags() &
 			~StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
 
+		//
+		// Once on-boarding is complete, we assume our state is signed-in.
+		//
+		// This is not enough. There are edge cases where the user is signed-in
+		// but not yet has completed on-boarding.
+		//
+		// For those cases, we provide the adviseSignedIn() API call.
+		//
+		StreamElementsConfig::GetInstance()->SetStartupFlags(
+			StreamElementsConfig::GetInstance()->GetStartupFlags() |
+			StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN);
+
 		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
 		StreamElementsGlobalStateManager::GetInstance()->PersistState();
 
@@ -589,5 +601,29 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 #endif
 
 		result->SetDictionary(d);
-		API_HANDLER_END()
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("adviseSignedIn")
+		StreamElementsConfig* config = StreamElementsConfig::GetInstance();
+
+		config->SetStartupFlags(
+			config->GetStartupFlags() | StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN);
+
+		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+		StreamElementsGlobalStateManager::GetInstance()->PersistState();
+
+		result->SetBool(true);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("adviseSignedOut")
+		StreamElementsConfig* config = StreamElementsConfig::GetInstance();
+
+		config->SetStartupFlags(
+			config->GetStartupFlags() & ~StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN);
+
+		StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+		StreamElementsGlobalStateManager::GetInstance()->PersistState();
+
+		result->SetBool(true);
+	API_HANDLER_END()
 }
