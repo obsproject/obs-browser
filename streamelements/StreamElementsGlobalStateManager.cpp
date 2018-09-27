@@ -856,6 +856,8 @@ void StreamElementsGlobalStateManager::ReportIssue()
 	}
 }
 
+#include <shlwapi.h>
+#pragma comment(lib, "Shlwapi.lib")
 void StreamElementsGlobalStateManager::UninstallPlugin()
 {
 	bool opt_out = false;
@@ -900,8 +902,18 @@ void StreamElementsGlobalStateManager::UninstallPlugin()
 			PROCESS_INFORMATION procInf;
 			memset(&procInf, 0, sizeof procInf);
 
-			BOOL bResult = CreateProcessW(NULL, buffer, NULL, NULL, FALSE,
-				NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, NULL, NULL, &startInf, &procInf);
+			wchar_t* args = PathGetArgsW(buffer);
+			PathRemoveArgsW(buffer);
+
+			HINSTANCE hInst = ShellExecuteW(
+				NULL,
+				L"runas",
+				buffer,
+				args,
+				NULL,
+				SW_SHOW);
+
+			BOOL bResult = (int)hInst > 32;
 
 			if (bResult) {
 				exec_success = true;
