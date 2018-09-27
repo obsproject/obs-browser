@@ -16,6 +16,22 @@
 
 /* ========================================================================= */
 
+static QString GetLastErrorMsg() {
+	LPWSTR bufPtr = NULL;
+	DWORD err = GetLastError();
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, err, 0, (LPWSTR)&bufPtr, 0, NULL);
+	const QString result =
+		(bufPtr) ? QString::fromUtf16((const ushort*)bufPtr).trimmed() :
+		QString("Unknown Error %1").arg(err);
+	LocalFree(bufPtr);
+	return result;
+}
+
+/* ========================================================================= */
+
 static std::string GetCEFStoragePath()
 {
 	std::string version = GetCefVersionString();
@@ -890,10 +906,22 @@ void StreamElementsGlobalStateManager::UninstallPlugin()
 			if (bResult) {
 				exec_success = true;
 			}
+			else {
+				QMessageBox::information(
+					mainWindow(),
+					obs_module_text("StreamElements.Action.Uninstall.Error.Title"),
+					GetLastErrorMsg());
+			}
 		}
 		else {
 			opt_out = true;
 		}
+	}
+	else {
+		QMessageBox::information(
+			mainWindow(),
+			obs_module_text("StreamElements.Action.Uninstall.Error.Title"),
+			obs_module_text("StreamElements.Action.Uninstall.Error.Text.CommandNotFound"));
 	}
 
 	delete[] buffer;
