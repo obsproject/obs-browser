@@ -22,12 +22,19 @@ public:
 	static StreamElementsGlobalStateManager* GetInstance();
 
 public:
+	enum UiModifier
+	{
+		Default = 0,
+		OnBoarding = 1,
+		Import = 2
+	};
+
 	void Initialize(QMainWindow* obs_main_window);
 	void Shutdown();
 
-	void Reset(bool deleteAllCookies = true, bool forceOnboarding = false);
+	void Reset(bool deleteAllCookies = true, UiModifier uiModifier = Default);
 	void DeleteCookies();
-	void StartOnBoardingUI(bool forceOnboarding);
+	void StartOnBoardingUI(UiModifier uiModifier);
 	void StopOnBoardingUI();
 	void SwitchToOBSStudio();
 

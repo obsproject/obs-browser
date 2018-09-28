@@ -55,7 +55,9 @@ void StreamElementsMenuManager::Update()
 		[this]
 	{
 		QtPostTask([](void*) -> void {
-			StreamElementsGlobalStateManager::GetInstance()->Reset(false, true);
+			StreamElementsGlobalStateManager::GetInstance()->Reset(
+				false,
+				StreamElementsGlobalStateManager::OnBoarding);
 		}, nullptr);
 	});
 
@@ -131,19 +133,21 @@ void StreamElementsMenuManager::Update()
 		}
 	}
 	m_menu->addSeparator();
-	addURL(obs_module_text("StreamElements.Action.Import"), obs_module_text("StreamElements.Action.Import.URL"));
 
-	/*
-	QAction* start_onboarding_ui_action = new QAction(obs_module_text("StreamElements.Action.StartOnBoardingUI"));
-	m_menu->addAction(start_onboarding_ui_action);
-	start_onboarding_ui_action->connect(
-		start_onboarding_ui_action,
+	QAction* import_action = new QAction(obs_module_text("StreamElements.Action.Import"));
+	m_menu->addAction(import_action);
+	import_action->connect(
+		import_action,
 		&QAction::triggered,
 		[this]
 	{
-		StreamElementsGlobalStateManager::GetInstance()->StartOnBoardingUI();
+		QtPostTask([](void*) -> void {
+			StreamElementsGlobalStateManager::GetInstance()->Reset(
+				false,
+				StreamElementsGlobalStateManager::Import);
+		}, nullptr);
 	});
-	*/
+
 	m_menu->addSeparator();
 
 	QAction* check_for_updates_action = new QAction(obs_module_text("StreamElements.Action.CheckForUpdates"));

@@ -463,7 +463,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 	m_initialized = false;
 }
 
-void StreamElementsGlobalStateManager::StartOnBoardingUI(bool forceOnboarding)
+void StreamElementsGlobalStateManager::StartOnBoardingUI(UiModifier uiModifier)
 {
 	std::string onBoardingURL = GetCommandLineOptionValue("streamelements-onboarding-url");
 
@@ -475,6 +475,7 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI(bool forceOnboarding)
 		// Manipulate on-boarding URL query string to reflect forceOnboarding state
 
 		const char* QS_ONBOARDING = "onboarding";
+		const char* QS_IMPORT = "import";
 
 		QUrl url(onBoardingURL.c_str());
 		QUrlQuery query(url);
@@ -483,8 +484,20 @@ void StreamElementsGlobalStateManager::StartOnBoardingUI(bool forceOnboarding)
 			query.removeQueryItem(QS_ONBOARDING);
 		}
 
-		if (forceOnboarding) {
+		if (query.hasQueryItem(QS_IMPORT)) {
+			query.removeQueryItem(QS_IMPORT);
+		}
+
+		switch (uiModifier) {
+		case OnBoarding:
 			query.addQueryItem(QS_ONBOARDING, "1");
+			break;
+		case Import:
+			query.addQueryItem(QS_IMPORT, "1");
+			break;
+		case Default:
+		default:
+			break;
 		}
 
 		url.setQuery(query.query());
@@ -604,13 +617,13 @@ void StreamElementsGlobalStateManager::DeleteCookies()
 	*/
 }
 
-void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies, bool forceOnboarding)
+void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies, UiModifier uiModifier)
 {
 	if (deleteAllCookies) {
 		DeleteCookies();
 	}
 
-	StartOnBoardingUI(forceOnboarding);
+	StartOnBoardingUI(uiModifier);
 }
 
 void StreamElementsGlobalStateManager::PersistState()
