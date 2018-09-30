@@ -10,6 +10,7 @@
 #include "StreamElementsHotkeyManager.hpp"
 #include "StreamElementsPerformanceHistoryTracker.hpp"
 #include "StreamElementsAnalyticsEventsManager.hpp"
+#include "StreamElementsCrashHandler.hpp"
 
 class StreamElementsGlobalStateManager :
 	public StreamElementsObsAppMonitor
@@ -74,6 +75,7 @@ private:
 	StreamElementsHotkeyManager* m_hotkeyManager = nullptr;
 	StreamElementsPerformanceHistoryTracker* m_performanceHistoryTracker = nullptr;
 	StreamElementsAnalyticsEventsManager* m_analyticsEventsManager = nullptr;
+	StreamElementsCrashHandler* m_crashHandler = nullptr;
 
 private:
 	static StreamElementsGlobalStateManager* s_instance;

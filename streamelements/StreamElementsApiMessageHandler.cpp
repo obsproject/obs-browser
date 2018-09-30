@@ -626,4 +626,9 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 
 		result->SetBool(true);
 	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("crashProgram")
+		// Crash
+		*((int*)nullptr) = 12345; // exception
+	API_HANDLER_END()
 }

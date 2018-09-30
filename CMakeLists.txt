@@ -112,6 +112,7 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsPerformanceHistoryTracker.cpp
 	streamelements/StreamElementsNetworkDialog.cpp
 	streamelements/StreamElementsAnalyticsEventsManager.cpp
+	streamelements/StreamElementsCrashHandler.cpp
 	streamelements/deps/zip/zip.c
 	)
 set(obs-browser_HEADERS
@@ -150,6 +151,7 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsPerformanceHistoryTracker.hpp
 	streamelements/StreamElementsNetworkDialog.hpp
 	streamelements/StreamElementsAnalyticsEventsManager.hpp
+	streamelements/StreamElementsCrashHandler.hpp
 	streamelements/deps/zip/zip.h
 	streamelements/deps/zip/miniz.h
 	streamelements/deps/moodycamel/concurrentqueue.h

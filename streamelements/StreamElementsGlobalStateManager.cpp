@@ -258,6 +258,9 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 {
 	m_mainWindow = obs_main_window;
 
+	// Initialize on the main thread
+	m_crashHandler = new StreamElementsCrashHandler();
+
 	struct local_context {
 		StreamElementsGlobalStateManager* self;
 		QMainWindow* obs_main_window;
@@ -284,6 +287,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			Qt::NoDockWidgetArea,
 			context->self->m_themeChangeListener);
 
+		context->self->m_analyticsEventsManager = new StreamElementsAnalyticsEventsManager();
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
 		context->self->m_menuManager = new StreamElementsMenuManager(context->obs_main_window);
 		context->self->m_bwTestManager = new StreamElementsBandwidthTestManager();
@@ -291,7 +295,6 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_workerManager = new StreamElementsWorkerManager();
 		context->self->m_hotkeyManager = new StreamElementsHotkeyManager();
 		context->self->m_performanceHistoryTracker = new StreamElementsPerformanceHistoryTracker();
-		context->self->m_analyticsEventsManager = new StreamElementsAnalyticsEventsManager();
 
 		{
 			// Set up "Live Support" button
@@ -443,6 +446,9 @@ void StreamElementsGlobalStateManager::Shutdown()
 	obs_frontend_remove_event_callback(handle_obs_frontend_event, nullptr);
 
 	FlushCookiesSync();
+
+	// Shutdown on the main thread
+	delete m_crashHandler;
 
 	QtExecSync([](void* data) -> void {
 		StreamElementsGlobalStateManager* self = (StreamElementsGlobalStateManager*)data;

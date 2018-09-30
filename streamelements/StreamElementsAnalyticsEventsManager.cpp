@@ -56,7 +56,7 @@ void StreamElementsAnalyticsEventsManager::Enqueue(task_queue_item_t task)
 	m_taskQueue.enqueue(task);
 }
 
-void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, json11::Json::object propertiesJson)
+void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, json11::Json::object propertiesJson, bool synchronous)
 {
 	json11::Json::object props = propertiesJson;
 
@@ -82,7 +82,18 @@ void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, js
 
 	std::string httpRequestBody = json.dump();
 
-	Enqueue([=]() {
+	if (!synchronous) {
+		Enqueue([=]() {
+			bool result = HttpPost(
+				"https://heapanalytics.com/api/track",
+				"application/json",
+				(void*)httpRequestBody.c_str(),
+				httpRequestBody.size(),
+				nullptr,
+				nullptr);
+		});
+	}
+	else {
 		bool result = HttpPost(
 			"https://heapanalytics.com/api/track",
 			"application/json",
@@ -90,5 +101,5 @@ void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, js
 			httpRequestBody.size(),
 			nullptr,
 			nullptr);
-	});
+	}
 }
