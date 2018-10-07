@@ -561,10 +561,14 @@ void StreamElementsGlobalStateManager::SwitchToOBSStudio()
 		if (reply == QMessageBox::Ok) {
 			StreamElementsGlobalStateManager::GetInstance()->StopOnBoardingUI();
 
-			/*
+			///
+			// Also resets StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN
+			//
+			// This is to keep our state consistent and not display "Logout"
+			// when we are in fact already logged out.
+			//
 			StreamElementsConfig::GetInstance()->SetStartupFlags(
-				StreamElementsConfig::GetInstance()->GetStartupFlags() &
-				~StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);*/
+				StreamElementsConfig::STARTUP_FLAGS_ONBOARDING_MODE);
 
 			GetMenuManager()->Update();
 		}
@@ -792,6 +796,7 @@ bool StreamElementsGlobalStateManager::DeserializeModalDialog(CefRefPtr<CefValue
 
 		int width = 800;
 		int height = 600;
+		bool isIncognito = false;
 
 		if (d->HasKey("width")) {
 			width = d->GetInt("width");
@@ -801,7 +806,11 @@ bool StreamElementsGlobalStateManager::DeserializeModalDialog(CefRefPtr<CefValue
 			height = d->GetInt("height");
 		}
 
-		StreamElementsBrowserDialog dialog(mainWindow(), url, executeJavaScriptOnLoad);
+		if (d->HasKey("incognitoMode") && d->GetBool("incognitoMode")) {
+			isIncognito = true;
+		}
+
+		StreamElementsBrowserDialog dialog(mainWindow(), url, executeJavaScriptOnLoad, isIncognito);
 
 		if (d->HasKey("title")) {
 			dialog.setWindowTitle(QString(d->GetString("title").ToString().c_str()));

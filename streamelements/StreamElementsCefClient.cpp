@@ -16,7 +16,7 @@
 #include <QWidget>
 #include <QFile>
 
-static std::mutex s_browsers_mutex;
+static std::recursive_mutex s_browsers_mutex;
 static std::vector<CefRefPtr<CefBrowser>> s_browsers;
 
 static class BrowserTask : public CefTask {
@@ -244,7 +244,7 @@ void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 		browser->GetHost()->GetWindowHandle());
 
 	{
-		std::lock_guard<std::mutex> guard(s_browsers_mutex);
+		std::lock_guard<std::recursive_mutex> guard(s_browsers_mutex);
 
 		s_browsers.emplace_back(browser);
 	}
@@ -253,7 +253,7 @@ void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 
 void StreamElementsCefClient::OnBeforeClose(CefRefPtr<CefBrowser> browser)
 {
-	std::lock_guard<std::mutex> guard(s_browsers_mutex);
+	std::lock_guard<std::recursive_mutex> guard(s_browsers_mutex);
 
 	auto index = std::find(s_browsers.begin(), s_browsers.end(), browser.get());
 
@@ -264,7 +264,7 @@ void StreamElementsCefClient::OnBeforeClose(CefRefPtr<CefBrowser> browser)
 
 void StreamElementsCefClient::DispatchJSEvent(std::string event, std::string eventArgsJson)
 {
-	std::lock_guard<std::mutex> guard(s_browsers_mutex);
+	std::lock_guard<std::recursive_mutex> guard(s_browsers_mutex);
 
 	for (CefRefPtr<CefBrowser> browser : s_browsers) {
 		CefRefPtr<CefProcessMessage> msg =

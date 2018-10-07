@@ -32,7 +32,8 @@ StreamElementsBrowserWidget::StreamElementsBrowserWidget(
 	const char* const executeJavaScriptCodeOnLoad,
 	const char* const locationArea,
 	const char* const id,
-	StreamElementsApiMessageHandler* apiMessageHandler):
+	StreamElementsApiMessageHandler* apiMessageHandler,
+	bool isIncognito):
 	QWidget(parent),
 	m_url(url),
 	m_window_handle(0),
@@ -40,7 +41,8 @@ StreamElementsBrowserWidget::StreamElementsBrowserWidget(
 	m_executeJavaScriptCodeOnLoad(executeJavaScriptCodeOnLoad == nullptr ? "" : executeJavaScriptCodeOnLoad),
 	m_pendingLocationArea(locationArea == nullptr ? "" : locationArea),
 	m_pendingId(id == nullptr ? "" : id),
-	m_requestedApiMessageHandler(apiMessageHandler)
+	m_requestedApiMessageHandler(apiMessageHandler),
+	m_isIncognito(isIncognito)
 {
 	// Create native window
 	setAttribute(Qt::WA_NativeWindow);
@@ -133,13 +135,35 @@ void StreamElementsBrowserWidget::InitBrowserAsyncInternal()
 		cefClient->SetLocationArea(m_pendingLocationArea);
 		cefClient->SetContainerId(m_pendingId);
 
+		CefRefPtr<CefRequestContext> cefRequestContext = nullptr;
+
+		if (m_isIncognito) {
+			CefRequestContextSettings cefRequestContextSettings;
+
+			cefRequestContextSettings.Reset();
+
+			///
+			// CefRequestContext with empty cache path = incognito mode
+			//
+			// Docs:
+			// https://magpcss.org/ceforum/viewtopic.php?f=6&t=10508
+			// https://magpcss.org/ceforum/apidocs3/projects/(default)/CefRequestContext.html#GetCachePath()
+			// 
+			CefString(&cefRequestContextSettings.cache_path) = "";
+
+			cefRequestContext =
+				CefRequestContext::CreateContext(
+					cefRequestContextSettings,
+					nullptr);
+		}
+
 		m_cef_browser =
 			CefBrowserHost::CreateBrowserSync(
 				windowInfo,
 				cefClient,
 				GetInitialPageURLInternal(),
 				cefBrowserSettings,
-				nullptr);
+				cefRequestContext);
 
 		UpdateBrowserSize();
 	}, true);

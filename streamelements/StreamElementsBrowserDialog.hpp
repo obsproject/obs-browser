@@ -16,7 +16,7 @@ class StreamElementsBrowserDialog: public QDialog
 	friend StreamElementsDialogApiMessageHandler;
 
 public:
-	StreamElementsBrowserDialog(QWidget* parent, std::string url, std::string executeJavaScriptOnLoad);
+	StreamElementsBrowserDialog(QWidget* parent, std::string url, std::string executeJavaScriptOnLoad, bool isIncognito);
 	~StreamElementsBrowserDialog();
 
 	std::string result() { return m_result; }
@@ -30,4 +30,6 @@ private:
 
 	std::string m_url;
 	std::string m_executeJavaScriptOnLoad;
+
+	bool m_isIncognito = false;
 };

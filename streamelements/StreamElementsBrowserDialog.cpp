@@ -5,9 +5,9 @@
 
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
 
-static std::mutex s_sync_api_call_mutex;
+static std::recursive_mutex s_sync_api_call_mutex;
 
-#define API_HANDLER_BEGIN(name) RegisterIncomingApiCallHandler(name, [](StreamElementsApiMessageHandler* self, CefRefPtr<CefProcessMessage> message, CefRefPtr<CefListValue> args, CefRefPtr<CefValue>& result, CefRefPtr<CefBrowser> browser, void (*complete_callback)(void*), void* complete_context) { std::lock_guard<std::mutex> _api_sync_guard(s_sync_api_call_mutex);
+#define API_HANDLER_BEGIN(name) RegisterIncomingApiCallHandler(name, [](StreamElementsApiMessageHandler* self, CefRefPtr<CefProcessMessage> message, CefRefPtr<CefListValue> args, CefRefPtr<CefValue>& result, CefRefPtr<CefBrowser> browser, void (*complete_callback)(void*), void* complete_context) { std::lock_guard<std::recursive_mutex> _api_sync_guard(s_sync_api_call_mutex);
 #define API_HANDLER_END() complete_callback(complete_context); });
 
 class StreamElementsDialogApiMessageHandler : public StreamElementsApiMessageHandler
@@ -53,8 +53,8 @@ protected:
 	}
 };
 
-StreamElementsBrowserDialog::StreamElementsBrowserDialog(QWidget* parent, std::string url, std::string executeJavaScriptOnLoad)
-	: QDialog(parent), m_url(url), m_executeJavaScriptOnLoad(executeJavaScriptOnLoad)
+StreamElementsBrowserDialog::StreamElementsBrowserDialog(QWidget* parent, std::string url, std::string executeJavaScriptOnLoad, bool isIncognito)
+	: QDialog(parent), m_url(url), m_executeJavaScriptOnLoad(executeJavaScriptOnLoad), m_isIncognito(isIncognito)
 {
 	setLayout(new QVBoxLayout());
 
@@ -76,7 +76,8 @@ int StreamElementsBrowserDialog::exec()
 		m_executeJavaScriptOnLoad.c_str(),
 		"dialog",
 		"",
-		new StreamElementsDialogApiMessageHandler(this));
+		new StreamElementsDialogApiMessageHandler(this),
+		m_isIncognito);
 
 	layout()->addWidget(m_browser);
 

@@ -42,6 +42,8 @@ private:
 
 	QSize m_sizeHint;
 
+	bool m_isIncognito = false;
+
 public:
 	StreamElementsBrowserWidget(
 		QWidget* parent,
@@ -49,7 +51,8 @@ public:
 		const char* const executeJavaScriptCodeOnLoad,
 		const char* const locationArea,
 		const char* const id,
-		StreamElementsApiMessageHandler* apiMessageHandler = nullptr);
+		StreamElementsApiMessageHandler* apiMessageHandler = nullptr,
+		bool isIncognito = false);
 
 	~StreamElementsBrowserWidget();
 
