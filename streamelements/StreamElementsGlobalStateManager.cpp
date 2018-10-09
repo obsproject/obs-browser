@@ -332,7 +332,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 
 			char version_buf[512];
 			sprintf(version_buf, "OBS.Live version %s powered by StreamElements",
-				GetStreamElementsPluginVersionString());
+				GetStreamElementsPluginVersionString().c_str());
 
 			container->layout()->addWidget(new QLabel(version_buf, container));
 
