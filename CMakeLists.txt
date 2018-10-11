@@ -20,7 +20,7 @@ option(BROWSER_PANEL_SUPPORT "Enables Qt web browser panel support" ON)
 option(BROWSER_FRONTEND_API_SUPPORT "Enables integration with obs-frontend-api library" ON)
 
 if (EXPERIMENTAL_SHARED_TEXTURE_SUPPORT)
-	set(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED)
+	set(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED ON)
 endif()
 
 if(NOT APPLE)
