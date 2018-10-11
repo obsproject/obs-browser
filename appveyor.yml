@@ -131,7 +131,9 @@ build_script:
 
     msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
 
-    c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build64\rundir\%build_config%\obs-plugins\64bit" /f obs-browser.pdb;cef-bootstrap.pdb
+    echo.Upload 64bit PDBs to BugSplat in case this is a commit to master branch.
+
+    if "%APPVEYOR_PULL_REQUEST_HEAD_COMMIT%"=="" c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build64\rundir\%build_config%\obs-plugins\64bit" /f obs-browser.pdb;cef-bootstrap.pdb
 
     echo.===================== BUILD 32 BIT - CEF - OBS-STUDIO =====================
 
@@ -154,7 +156,9 @@ build_script:
 
     msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
 
-    c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build32\rundir\%build_config%\obs-plugins\32bit" /f obs-browser.pdb;cef-bootstrap.pdb
+    echo.Upload 32bit PDBs to BugSplat in case this is a commit to master branch.
+
+    if "%APPVEYOR_PULL_REQUEST_HEAD_COMMIT%"=="" c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build32\rundir\%build_config%\obs-plugins\32bit" /f obs-browser.pdb;cef-bootstrap.pdb
 
     echo.===================== COPY CEF 64 BIT BINARIES FROM OBS-STUDIO-DIST =====================
 
