@@ -336,7 +336,7 @@ void StreamElementsReportIssueDialog::accept()
 			delete[]lpBitmapInfoHeader;
 		};
 
-		std::string package_manifest = "version=2\n";
+		std::string package_manifest = "generator=report_issue\nversion=3\n";
 		addBufferToZip((BYTE*)package_manifest.c_str(), package_manifest.size(), L"manifest.ini");
 
 		// Add user-provided description

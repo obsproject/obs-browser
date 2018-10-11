@@ -43,6 +43,9 @@ install:
     echo add_subdirectory(obs-browser) >c:\local\obs-studio\plugins\CMakeLists.txt
 
 
+    if exist BugSplat.zip (curl -kL -o BugSplat.zip https://cdn.streamelements.com/obs/dist/third-party/bugsplat/BugSplatNative.zip -f --retry 5 -z BugSplat.zip) else (curl -kL -o BugSplat.zip https://cdn.streamelements.com/obs/dist/third-party/bugsplat/BugSplatNative.zip -f --retry 5 -C -) 2>&1 >nul:
+
+
     if exist cef64.tar.bz2 (curl -kL -o cef64.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows64.tar.bz2 -f --retry 5 -z cef64.tar.bz2) else (curl -kL -o cef64.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows64.tar.bz2 -f --retry 5 -C -) 2>&1 >nul:
 
     if exist cef32.tar.bz2 (curl -kL -o cef32.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows32.tar.bz2 -f --retry 5 -z cef32.tar.bz2) else (curl -kL -o cef32.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows32.tar.bz2 -f --retry 5 -C -) 2>&1 >nul:
@@ -58,6 +61,8 @@ install:
     7z x dependencies2017.zip -odependencies2017
 
     7z x vlc.zip -ovlc
+
+    archiver open c:\local\BugSplat.zip c:\local 2>&1 >nul:
 
     archiver open c:\local\cef32.tar.bz2 c:\local 2>&1 >nul:
 
@@ -78,6 +83,7 @@ install:
 
     set build_config=RelWithDebInfo
 cache:
+- c:\local\BugSplat.zip
 - c:\local\dependencies2017.zip
 - c:\local\vlc.zip
 - c:\local\obs-studio-dist.zip
@@ -87,8 +93,15 @@ build_script:
 - cmd: >-
     echo ("#define STREAMELEMENTS_PLUGIN_VERSION " + (Get-Date).ToUniversalTime().ToString("yyyyMMdd") + "${Env:APPVEYOR_BUILD_NUMBER}".PadLeft(6, '0')) >c:\local\generate_version.ps1
 
+    echo ("set STREAMELEMENTS_PLUGIN_VERSION=" + (Get-Date).ToUniversalTime().ToString("y.M.d") + "." + "${Env:APPVEYOR_BUILD_NUMBER}".PadLeft(1, '0')) >c:\local\generate_version_cmd.ps1
+
     powershell -File c:\local\generate_version.ps1 >c:\local\obs-studio\plugins\obs-browser\streamelements\Version.generated.hpp
 
+    powershell -File c:\local\generate_version_cmd.ps1 >c:\local\generate_version_cmd.bat
+
+    c:\local\generate_version_cmd.bat
+
+    echo %STREAMELEMENTS_PLUGIN_VERSION%
 
     cd /d c:\local\obs-studio
 
@@ -112,13 +125,13 @@ build_script:
 
     cd /d c:\local\obs-studio\build64
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64 ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64  -DBUGSPLAT_ROOT_DIR=c:\local\BugSplat ..
 
     cd /d c:\local\obs-studio\build64
 
     msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
 
-
+    c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build64\rundir\%build_config%\obs-plugins\64bit" /f obs-browser.pdb;cef-bootstrap.pdb
 
     echo.===================== BUILD 32 BIT - CEF - OBS-STUDIO =====================
 
@@ -135,11 +148,13 @@ build_script:
 
     cd /d c:\local\obs-studio\build32
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows32 ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows32 -DBUGSPLAT_ROOT_DIR=c:\local\BugSplat ..
 
     cd /d c:\local\obs-studio\build32
 
     msbuild obs-studio.sln /p:Configuration=%build_config% /t:Build
+
+    c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build32\rundir\%build_config%\obs-plugins\32bit" /f obs-browser.pdb;cef-bootstrap.pdb
 
     echo.===================== COPY CEF 64 BIT BINARIES FROM OBS-STUDIO-DIST =====================
 

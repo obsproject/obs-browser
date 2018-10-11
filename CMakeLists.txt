@@ -15,11 +15,13 @@ find_package(CEF QUIET)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Libcurl REQUIRED)
+find_package(BugSplat REQUIRED)
 
 include_directories(SYSTEM
 	${Qt5Core_INCLUDES}
 	${Qt5Widgets_INCLUDES}
 	${LIBCURL_INCLUDE_DIRS}
+	${BUGSPLAT_INCLUDE_DIR}
 )
 
 #qt5_wrap_ui(NetworkDialog "networkdialog.ui")
@@ -27,6 +29,11 @@ qt5_add_resources(obs-browser-streamelements_QRC_SOURCES "streamelements/streame
 
 if(NOT CEF_FOUND)
 	message(STATUS "CEF Not found -- obs-browser plugin disabled.")
+	return()
+endif()
+
+if (NOT BUGSPLAT_FOUND)
+	message(STATUS "BugSplat Not found -- obs-browser plugin disabled.")
 	return()
 endif()
 
@@ -49,6 +56,7 @@ set(obs-browser_LIBRARIES
 	Qt5::Widgets
 	w32-pthreads
 	${LIBCURL_LIBRARIES}
+	${BUGSPLAT_LIBRARIES}
 	)
 
 list(APPEND obs-browser_LIBRARIES
@@ -269,6 +277,15 @@ if (WIN32)
 		"${CMAKE_CURRENT_SOURCE_DIR}/streamelements/qt.conf"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${BITS}bit/"
 	)
+
+	# Copy BugSplat binary files
+	foreach( bugsplat_bin_file ${BUGSPLAT_BIN_FILES})
+		add_custom_command(TARGET obs-browser POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy
+			${bugsplat_bin_file}
+			"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${BITS}bit/"
+		)
+	endforeach( bugsplat_bin_file )
 endif()
 
 install_obs_plugin_with_data(obs-browser data)
