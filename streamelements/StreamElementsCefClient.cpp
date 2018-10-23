@@ -210,27 +210,24 @@ bool StreamElementsCefClient::OnProcessMessageReceived(
 void StreamElementsCefClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 	const CefString& title)
 {
-	struct local_context {
-		cef_window_handle_t handle;
-		CefString title;
-	};
+	if (!browser || !browser->GetHost()  || title.empty()) {
+		return;
+	}
 
-	local_context* context = new local_context();
-	
-	context->handle = browser->GetHost()->GetWindowHandle();
-	context->title = title;
+	//
+	// Do not use QWindow::fromWinId here
+	//
+	// http://doc.qt.io/qt-5/qwindow.html#fromWinId
+	// Note: The resulting QWindow should not be used to
+	//       manipulate the underlying native window (besides re-parenting),
+	//       or to observe state changes of the native window. Any support
+	//       for these kind of operations is incidental, highly platform
+	//       dependent and untested.
+	//
 
-	QtPostTask([](void* data) {
-		local_context* context = (local_context*)data;
-
-		QWindow* win = QWindow::fromWinId((WId)context->handle);
-		win->setTitle(QString(context->title.ToString().c_str()));
-
-		delete win;
-
-		delete context;
-	},
-	context);
+#ifdef _WIN32
+	SetWindowTextW(browser->GetHost()->GetWindowHandle(), title.ToWString().c_str());
+#endif
 }
 
 void StreamElementsCefClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
