@@ -146,16 +146,22 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void* data)
 	{
 		obs_source_t *source = obs_frontend_get_current_scene();
 
-		json11::Json json = json11::Json::object{
-			{ "name", obs_source_get_name(source) },
-			{ "width", (int)obs_source_get_width(source) },
-			{ "height", (int)obs_source_get_height(source) }
-		};
+		if (source) {
+			const char* sourceName = obs_source_get_name(source);
 
-		obs_source_release(source);
+			if (sourceName) {
+				json11::Json json = json11::Json::object{
+					{ "name", sourceName },
+					{ "width", (int)obs_source_get_width(source) },
+					{ "height", (int)obs_source_get_height(source) }
+				};
 
-		name = "hostActiveSceneChanged";
-		args = json.dump();
+				name = "hostActiveSceneChanged";
+				args = json.dump();
+			}
+
+			obs_source_release(source);
+		}
 		break;
 	}
 	case OBS_FRONTEND_EVENT_EXIT:
@@ -165,7 +171,9 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void* data)
 		return;
 	}
 
-	StreamElementsCefClient::DispatchJSEvent(name, args);
+	if (name.size()) {
+		StreamElementsCefClient::DispatchJSEvent(name, args);
+	}
 }
 
 /* ========================================================================= */

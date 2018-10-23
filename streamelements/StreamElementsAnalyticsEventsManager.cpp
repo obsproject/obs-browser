@@ -58,6 +58,10 @@ void StreamElementsAnalyticsEventsManager::Enqueue(task_queue_item_t task)
 
 void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, json11::Json::object propertiesJson, bool synchronous)
 {
+	if (!eventName) {
+		return;
+	}
+
 	json11::Json::object props = propertiesJson;
 
 	uint64_t now = os_gettime_ns();

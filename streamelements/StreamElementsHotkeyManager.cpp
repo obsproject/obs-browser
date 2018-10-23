@@ -244,9 +244,14 @@ bool StreamElementsHotkeyManager::SerializeHotkeyBindings(CefRefPtr<CefValue>& o
 			auto weak = static_cast<obs_weak_source_t*>(item.registerer_ptr);
 			auto strong = obs_weak_source_get_source(weak);
 			if (strong) {
-				item.registerer = obs_source_get_name(strong);
+				const char* sourceName = obs_source_get_name(strong);
+
+				if (sourceName) {
+					item.registerer = sourceName;
+				}
+
+				obs_source_release(strong);
 			}
-			obs_source_release(strong);
 		}
 		break;
 		}

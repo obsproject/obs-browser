@@ -18,12 +18,20 @@ public:
 	~StreamElementsAnalyticsEventsManager();
 
 	void trackSynchronousEvent(const char* eventName, json11::Json::object props = json11::Json::object{}) {
+		if (!eventName) {
+			return;
+		}
+
 		std::string event = std::string("OBS.Live Plugin: ") + eventName;
 
 		AddRawEvent(event.c_str(), props, true);
 	}
 
 	void trackEvent(const char* eventName, json11::Json::object props = json11::Json::object{}) {
+		if (!eventName) {
+			return;
+		}
+
 		std::string event = std::string("OBS.Live Plugin: ") + eventName;
 
 		AddRawEvent(event.c_str(), props, false);
@@ -31,6 +39,10 @@ public:
 
 	void trackDockWidgetEvent(QDockWidget* widget, const char* eventName, json11::Json::object props = json11::Json::object{})
 	{
+		if (!widget || !eventName) {
+			return;
+		}
+
 		std::string event = std::string("DockWidget: ") + widget->windowTitle().toStdString() + ": " + std::string(eventName);
 
 		trackEvent(event.c_str(), props);

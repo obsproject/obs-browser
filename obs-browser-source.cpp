@@ -445,12 +445,7 @@ void DispatchJSEvent(const char *eventName, const char *jsonString)
 	class local_context: public CefBaseRefCounted {
 	public:
 		std::string eventName;
-		char* jsonString = nullptr;
-
-		~local_context()
-		{
-			if (jsonString) delete jsonString;
-		}
+		std::string jsonString = "null";
 
 		IMPLEMENT_REFCOUNTING(local_context)
 	};
@@ -461,8 +456,12 @@ void DispatchJSEvent(const char *eventName, const char *jsonString)
 
 	context->eventName = eventName;
 
-	if (jsonString)
-		context->jsonString = strdup(jsonString);
+	if (jsonString) {
+		context->jsonString = jsonString;
+	}
+	else {
+		context->jsonString = "null";
+	}
 
 	auto func = [context](BrowserSource *bsw)
 	{

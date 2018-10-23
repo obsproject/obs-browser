@@ -284,6 +284,10 @@ void StreamElementsBrowserWidgetManager::PushCentralBrowserWidget(
 	const char* const url,
 	const char* const executeJavaScriptCodeOnLoad)
 {
+	if (!url) {
+		return;
+	}
+
 	blog(LOG_INFO, "obs-browser: central widget: loading url: %s", url);
 
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);

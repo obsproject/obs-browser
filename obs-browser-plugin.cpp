@@ -354,15 +354,21 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		{
 			obs_source_t *source = obs_frontend_get_current_scene();
 
-			Json json = Json::object {
-				{"name", obs_source_get_name(source)},
-				{"width", (int)obs_source_get_width(source)},
-				{"height", (int)obs_source_get_height(source)}
-			};
+			if (source) {
+				const char* sourceName = obs_source_get_name(source);
 
-			obs_source_release(source);
+				if (sourceName) {
+					Json json = Json::object{
+						{"name", sourceName},
+						{"width", (int)obs_source_get_width(source)},
+						{"height", (int)obs_source_get_height(source)}
+					};
 
-			DispatchJSEvent("obsSceneChanged", json.dump().c_str());
+					DispatchJSEvent("obsSceneChanged", json.dump().c_str());
+				}
+
+				obs_source_release(source);
+			}
 			break;
 		}
 	case OBS_FRONTEND_EVENT_EXIT:
