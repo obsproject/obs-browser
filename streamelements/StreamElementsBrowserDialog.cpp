@@ -38,8 +38,15 @@ protected:
 
 				CefRefPtr<CefValue> arg = args->GetValue(0);
 
-				msgHandler->dialog()->m_result =
-					CefWriteJSON(arg, JSON_WRITER_DEFAULT).ToString();
+				msgHandler->dialog()->m_result = "null";
+
+				if (arg->GetType() != VTYPE_NULL) {
+					CefString json = CefWriteJSON(arg, JSON_WRITER_DEFAULT);
+
+					if (json.size() && json.ToString().c_str()) {
+						msgHandler->dialog()->m_result = json.ToString().c_str();
+					}
+				}
 
 				QtPostTask([](void* data) {
 					StreamElementsDialogApiMessageHandler* msgHandler =
