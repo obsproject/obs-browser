@@ -22,6 +22,8 @@
 #include "cef-headers.hpp"
 #include "browser-config.h"
 
+#define USE_TEXTURE_COPY 0
+
 struct BrowserSource;
 
 class BrowserClient : public CefClient,
@@ -32,7 +34,9 @@ class BrowserClient : public CefClient,
                       public CefLoadHandler {
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if USE_TEXTURE_COPY
 	gs_texture_t *texture = nullptr;
+#endif
 	void *last_handle = INVALID_HANDLE_VALUE;
 #endif
 	bool sharing_available = false;

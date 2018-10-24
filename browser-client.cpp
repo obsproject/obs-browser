@@ -21,12 +21,13 @@
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
 #include <obs-frontend-api.h>
+#include <obs.hpp>
 
 using namespace json11;
 
 BrowserClient::~BrowserClient()
 {
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED && USE_TEXTURE_COPY
 	if (sharing_available) {
 		obs_enter_graphics();
 		gs_texture_destroy(texture);
@@ -100,10 +101,20 @@ bool BrowserClient::OnProcessMessageReceived(
 	}
 
 	if (name == "getCurrentScene") {
+		OBSSource current_scene = obs_frontend_get_current_scene();
+		obs_source_release(current_scene);
+
+		if (!current_scene)
+			return false;
+
+		const char *name = obs_source_get_name(current_scene);
+		if (!name)
+			return false;
+
 		json = Json::object {
-			{"name", obs_source_get_name(bs->source)},
-			{"width", (int)obs_source_get_width(bs->source)},
-			{"height", (int)obs_source_get_height(bs->source)}
+			{"name", name},
+			{"width", (int)obs_source_get_width(current_scene)},
+			{"height", (int)obs_source_get_height(current_scene)}
 		};
 
 	} else if (name == "getStatus") {
@@ -200,11 +211,14 @@ void BrowserClient::OnAcceleratedPaint(
 
 	if (shared_handle != last_handle) {
 		obs_enter_graphics();
+#if USE_TEXTURE_COPY
 		gs_texture_destroy(texture);
+		texture = nullptr;
+#endif
 		gs_texture_destroy(bs->texture);
 		bs->texture = nullptr;
-		texture = nullptr;
 
+#if USE_TEXTURE_COPY
 		texture = gs_texture_open_shared(
 				(uint32_t)(uintptr_t)shared_handle);
 
@@ -213,16 +227,22 @@ void BrowserClient::OnAcceleratedPaint(
 		gs_color_format format = gs_texture_get_color_format(texture);
 
 		bs->texture = gs_texture_create(cx, cy, format, 1, nullptr, 0);
+#else
+		bs->texture = gs_texture_open_shared(
+				(uint32_t)(uintptr_t)shared_handle);
+#endif
 		obs_leave_graphics();
 
 		last_handle = shared_handle;
 	}
 
+#if USE_TEXTURE_COPY
 	if (texture && bs->texture) {
 		obs_enter_graphics();
 		gs_copy_texture(bs->texture, texture);
 		obs_leave_graphics();
 	}
+#endif
 }
 #endif
 

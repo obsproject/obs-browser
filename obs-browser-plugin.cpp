@@ -23,6 +23,7 @@
 #include <util/dstr.hpp>
 #include <obs-module.h>
 #include <obs-frontend-api.h>
+#include <obs.hpp>
 #include <thread>
 #include <mutex>
 
@@ -30,6 +31,7 @@
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
 #include "browser-version.h"
+#include "browser-config.h"
 
 #include "json11/json11.hpp"
 #include "cef-headers.hpp"
@@ -163,7 +165,7 @@ static void BrowserManagerThread(void)
 {
 	string path = obs_get_module_binary_path(obs_current_module());
 	path = path.substr(0, path.find_last_of('/') + 1);
-	path += "//cef-bootstrap";
+	path += "//obs-browser-page";
 #ifdef _WIN32
 	path += ".exe";
 #endif
@@ -174,13 +176,14 @@ static void BrowserManagerThread(void)
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
 
-#if defined(__APPLE__) && defined(_DEBUG)
-	CefString(&settings.framework_dir_path) =
-		"/Library/Frameworks/Chromium Embedded Framework.framework";
+#if defined(__APPLE__) && !defined(BROWSER_DEPLOY)
+	CefString(&settings.framework_dir_path) = CEF_LIBRARY;
 #endif
 
 	BPtr<char> conf_path = obs_module_config_path("");
-	CefString(&settings.cache_path) = conf_path;
+	os_mkdir(conf_path);
+	BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
+	CefString(&settings.cache_path) = conf_path_abs;
 	CefString(&settings.browser_subprocess_path) = path;
 
 	bool tex_sharing_avail = false;
@@ -188,7 +191,7 @@ static void BrowserManagerThread(void)
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	if (hwaccel) {
 		obs_enter_graphics();
-		tex_sharing_avail = gs_shared_texture_available();
+		hwaccel = tex_sharing_avail = gs_shared_texture_available();
 		obs_leave_graphics();
 	}
 #endif
@@ -352,23 +355,23 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED:
 		{
-			obs_source_t *source = obs_frontend_get_current_scene();
+			OBSSource source = obs_frontend_get_current_scene();
+			obs_source_release(source);
 
-			if (source) {
-				const char* sourceName = obs_source_get_name(source);
+			if (!source)
+				break;
 
-				if (sourceName) {
-					Json json = Json::object{
-						{"name", sourceName},
-						{"width", (int)obs_source_get_width(source)},
-						{"height", (int)obs_source_get_height(source)}
-					};
+			const char *name = obs_source_get_name(source);
+			if (!name)
+				break;
 
-					DispatchJSEvent("obsSceneChanged", json.dump().c_str());
-				}
+			Json json = Json::object {
+				{"name", name},
+				{"width", (int)obs_source_get_width(source)},
+				{"height", (int)obs_source_get_height(source)}
+			};
 
-				obs_source_release(source);
-			}
+			DispatchJSEvent("obsSceneChanged", json.dump().c_str());
 			break;
 		}
 	case OBS_FRONTEND_EVENT_EXIT:
@@ -411,7 +414,8 @@ static inline void EnumAdapterCount()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 static const wchar_t *blacklisted_devices[] = {
-	L"Intel(R) HD Graphics",
+	L"Intel",
+	L"Microsoft",
 	nullptr
 };
 #endif
@@ -445,23 +449,19 @@ bool obs_module_load(void)
 	if (hwaccel) {
 		/* do not use hardware acceleration if a blacklisted device is
 		 * the default and on 2 or more adapters */
-		if (adapterCount >= 2) {
-			const wchar_t **device = blacklisted_devices;
-			while (*device) {
-				if (!!wstrstri(deviceId.c_str(), *device)) {
-					hwaccel = false;
-					blog(LOG_INFO, "[obs-browser]: "
-							"Blacklisted device "
-							"detected on a "
-							"computer with more "
-							"than one adapter, "
-							"disabling browser "
-							"source hardware "
-							"acceleration.");
-					break;
-				}
-				device++;
+		const wchar_t **device = blacklisted_devices;
+		while (*device) {
+			if (!!wstrstri(deviceId.c_str(), *device)) {
+				hwaccel = false;
+				blog(LOG_INFO, "[obs-browser]: "
+						"Blacklisted device "
+						"detected, "
+						"disabling browser "
+						"source hardware "
+						"acceleration.");
+				break;
 			}
+			device++;
 		}
 	}
 	obs_data_release(private_data);

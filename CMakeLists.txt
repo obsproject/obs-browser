@@ -40,6 +40,13 @@ endif()
 option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin (Win32)" ON)
 option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
 
+if(APPLE)
+	option(BROWSER_DEPLOY "Marks full deployment of browser plugin" OFF)
+	if(BROWSER_DEPLOY)
+		add_definitions(-DBROWSER_DEPLOY)
+	endif()
+endif()
+
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in"
 	"${CMAKE_CURRENT_BINARY_DIR}/browser-config.h")
@@ -208,37 +215,37 @@ target_link_libraries(obs-browser
 
 # ----------------------------------------------------------------------------
 
-set(cef-bootstrap_SOURCES
-	cef-bootstrap/cef-bootstrap-main.cpp
+set(obs-browser-page_SOURCES
+	obs-browser-page/obs-browser-page-main.cpp
 	browser-app.cpp
 	deps/json11/json11.cpp
 	)
-set(cef-bootstrap_HEADERS
-	cef-bootstrap/cef-bootstrap-main.cpp
+set(obs-browser-page_HEADERS
+	obs-browser-page/obs-browser-page-main.cpp
 	browser-app.hpp
 	deps/json11/json11.hpp
 	cef-headers.hpp
 	)
 
-add_executable(cef-bootstrap
-	${cef-bootstrap_SOURCES}
-	${cef-bootstrap_HEADERS}
+add_executable(obs-browser-page
+	${obs-browser-page_SOURCES}
+	${obs-browser-page_HEADERS}
 	)
-target_link_libraries(cef-bootstrap
+target_link_libraries(obs-browser-page
 	${CEF_LIBRARIES}
 	)
 
 if (APPLE)
-	set_target_properties(cef-bootstrap PROPERTIES
+	set_target_properties(obs-browser-page PROPERTIES
 		COMPILE_FLAGS "-mmacosx-version-min=10.8")
 endif(APPLE)
 
 if (WIN32)
-	set_target_properties(cef-bootstrap PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+	set_target_properties(obs-browser-page PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
 endif(WIN32)
 
 if (APPLE AND XCODE)
-	set_xcode_property(cef-bootstrap CLANG_CXX_LIBRARY "libc++")
+	set_xcode_property(obs-browser-page CLANG_CXX_LIBRARY "libc++")
 endif(APPLE AND XCODE)
 
 # ----------------------------------------------------------------------------
@@ -288,5 +295,18 @@ if (WIN32)
 	endforeach( bugsplat_bin_file )
 endif()
 
+if(APPLE AND NOT BROWSER_DEPLOY)
+	add_custom_command(TARGET obs-browser POST_BUILD
+		COMMAND "install_name_tool" -change
+		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
+		"${CEF_LIBRARY}/Chromium Embedded Framework"
+		"obs-browser.so")
+	add_custom_command(TARGET obs-browser-page POST_BUILD
+		COMMAND "install_name_tool" -change
+		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
+		"${CEF_LIBRARY}/Chromium Embedded Framework"
+		"obs-browser-page")
+endif()
+
 install_obs_plugin_with_data(obs-browser data)
-install_obs_plugin(cef-bootstrap)
+install_obs_plugin(obs-browser-page)
