@@ -125,27 +125,29 @@ bool BrowserSource::CreateBrowser()
 	});
 }
 
-void BrowserSource::DestroyBrowser(bool async)
+void BrowserSource::DestroyBrowser()
 {
-	ExecuteOnBrowser([this] ()
-	{
-		CefRefPtr<CefClient> client =
-				cefBrowser->GetHost()->GetClient();
-		BrowserClient *bc =
-				reinterpret_cast<BrowserClient*>(client.get());
-		if (bc) {
-			bc->bs = nullptr;
-		}
+	if (!cefBrowser.get()) {
+		return;
+	}
 
-		/*
-		 * This stops rendering
-		 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
-		 * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
-		 */
-		cefBrowser->GetHost()->WasHidden(true);
-		cefBrowser->GetHost()->CloseBrowser(true);
-		cefBrowser = nullptr;
-	}, async);
+	/*
+	* This stops rendering
+	* http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
+	* https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
+	*/
+	cefBrowser->GetHost()->WasHidden(true);
+	cefBrowser->GetHost()->CloseBrowser(true);
+
+	CefRefPtr<CefClient> client =
+		cefBrowser->GetHost()->GetClient();
+	BrowserClient *bc =
+		reinterpret_cast<BrowserClient*>(client.get());
+	if (bc) {
+		bc->bs = nullptr;
+	}
+
+	cefBrowser = nullptr;
 }
 
 void BrowserSource::SendMouseClick(
@@ -253,11 +255,10 @@ void BrowserSource::SendKeyClick(
 
 void BrowserSource::SetShowing(bool showing)
 {
-	if (!showing) {
-		ExecuteOnBrowser([this] ()
-		{
-			cefBrowser->GetHost()->WasHidden(true);
-		}, true);
+	is_showing = showing;
+
+	if (!showing && !!cefBrowser.get()) {
+		cefBrowser->GetHost()->WasHidden(true);
 	}
 
 	if (shutdown_on_invisible) {
@@ -266,23 +267,18 @@ void BrowserSource::SetShowing(bool showing)
 		} else {
 			DestroyBrowser(true);
 		}
-	} else {
-		ExecuteOnBrowser([this, showing] ()
-		{
-			CefRefPtr<CefProcessMessage> msg =
-				CefProcessMessage::Create("Visibility");
-			CefRefPtr<CefListValue> args = msg->GetArgumentList();
-			args->SetBool(0, showing);
-			cefBrowser->SendProcessMessage(PID_RENDERER, msg);
-		}, true);
+	} else if (!!cefBrowser.get()) {
+		CefRefPtr<CefProcessMessage> msg =
+			CefProcessMessage::Create("Visibility");
+		CefRefPtr<CefListValue> args =
+			msg->GetArgumentList();
+		args->SetBool(0, showing);
+		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
 	}
 
-	if (showing) {
-		ExecuteOnBrowser([this] ()
-		{
-			cefBrowser->GetHost()->WasHidden(false);
-			cefBrowser->GetHost()->Invalidate(PET_VIEW);
-		}, true);
+	if (showing && !!cefBrowser.get()) {
+		cefBrowser->GetHost()->WasHidden(false);
+		cefBrowser->GetHost()->Invalidate(PET_VIEW);
 	}
 }
 

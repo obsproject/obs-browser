@@ -66,7 +66,7 @@ struct BrowserSource {
 	/* ---------------------------- */
 
 	bool CreateBrowser();
-	void DestroyBrowser(bool async = false);
+	void DestroyBrowser();
 	void ExecuteOnBrowser(std::function<void()> func, bool async = false);
 
 	/* ---------------------------- */
