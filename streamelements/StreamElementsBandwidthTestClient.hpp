@@ -30,7 +30,7 @@ public:
 			authPassword(password != nullptr ? password : "")
 		{ }
 
-		Server(Server& other) :
+		Server(const Server& other) :
 			url(other.url),
 			streamKey(other.streamKey),
 			useAuth(other.useAuth),
@@ -50,7 +50,7 @@ public:
 		uint64_t connectTimeMilliseconds = 0L;
 
 		Result() { }
-		Result(Result& other):
+		Result(const Result& other):
 			success(other.success),
 			cancelled(other.cancelled),
 			serverUrl(other.serverUrl),
@@ -113,13 +113,14 @@ public:
 	void CancelAll();
 
 private:
-	Result TestServerBitsPerSecond(
+	void TestServerBitsPerSecond(
 		const char* serverUrl,
 		const char* streamKey,
 		const int maxBitrateBitsPerSecond,
-		const char* bindToIP = nullptr,
-		const int durationSeconds = 10,
-		const bool useAuth = false,
-		const char* const authUsername = nullptr,
-		const char* const authPassword = nullptr);
+		const char* bindToIP,
+		const int durationSeconds,
+		const bool useAuth,
+		const char* const authUsername,
+		const char* const authPassword,
+		StreamElementsBandwidthTestClient::Result* result);
 };

@@ -21,7 +21,7 @@ StreamElementsBandwidthTestClient::~StreamElementsBandwidthTestClient()
 	os_event_destroy(m_event_state_changed);
 }
 
-StreamElementsBandwidthTestClient::Result StreamElementsBandwidthTestClient::TestServerBitsPerSecond(
+void StreamElementsBandwidthTestClient::TestServerBitsPerSecond(
 	const char* serverUrl,
 	const char* streamKey,
 	const int maxBitrateBitsPerSecond,
@@ -29,12 +29,11 @@ StreamElementsBandwidthTestClient::Result StreamElementsBandwidthTestClient::Tes
 	const int durationSeconds,
 	const bool useAuth,
 	const char* const authUsername,
-	const char* const authPassword)
+	const char* const authPassword,
+	StreamElementsBandwidthTestClient::Result* result)
 {
-	StreamElementsBandwidthTestClient::Result result;
-
-	result.serverUrl = serverUrl;
-	result.streamKey = streamKey;
+	result->serverUrl = serverUrl;
+	result->streamKey = streamKey;
 
 	m_state = Running;
 	os_event_reset(m_event_state_changed);
@@ -162,36 +161,36 @@ StreamElementsBandwidthTestClient::Result StreamElementsBandwidthTestClient::Tes
 					uint64_t total_bits = total_bytes * 8L;
 					uint64_t total_time_seconds = total_time_ns / 1000000000L;
 
-					result.connectTimeMilliseconds = obs_output_get_connect_time_ms(output);
-					result.bitsPerSecond = total_bits / total_time_seconds;
+					result->connectTimeMilliseconds = obs_output_get_connect_time_ms(output);
+					result->bitsPerSecond = total_bits / total_time_seconds;
 
 					if (obs_output_get_frames_dropped(output))
 					{
 						// Frames were dropped, use 70% of available bandwidth
-						result.bitsPerSecond =
-							result.bitsPerSecond * 70L / 100L;
+						result->bitsPerSecond =
+							result->bitsPerSecond * 70L / 100L;
 					}
 					else
 					{
 						// No frames were dropped, use 100% of available bandwidth
-						result.bitsPerSecond =
-							result.bitsPerSecond * 100L / 100L;
+						result->bitsPerSecond =
+							result->bitsPerSecond * 100L / 100L;
 					}
 
 					// Ceiling
-					if (result.bitsPerSecond > maxBitrateBitsPerSecond)
-						result.bitsPerSecond = maxBitrateBitsPerSecond;
+					if (result->bitsPerSecond > maxBitrateBitsPerSecond)
+						result->bitsPerSecond = maxBitrateBitsPerSecond;
 
-					result.success = true;
+					result->success = true;
 				}
 			}
 		}
 	}
 
-	if (!result.success)
+	if (!result->success)
 	{
 		if (m_state == Cancelled) {
-			result.cancelled = true;
+			result->cancelled = true;
 
 			obs_output_force_stop(output);
 
@@ -226,8 +225,6 @@ StreamElementsBandwidthTestClient::Result StreamElementsBandwidthTestClient::Tes
 	obs_data_release(service_settings);
 	obs_data_release(vencoder_settings);
 	obs_data_release(aencoder_settings);
-
-	return result;
 }
 
 void StreamElementsBandwidthTestClient::TestServerBitsPerSecondAsync(
@@ -287,7 +284,9 @@ void StreamElementsBandwidthTestClient::TestServerBitsPerSecondAsync(
 	context->self->m_async_busy = true;
 
 	std::thread thread([=]() {
-		Result result = context->self->TestServerBitsPerSecond(
+		Result result;
+
+		context->self->TestServerBitsPerSecond(
 			context->serverUrl.c_str(),
 			context->streamKey.c_str(),
 			context->maxBitrateBitsPerSecond,
@@ -295,7 +294,8 @@ void StreamElementsBandwidthTestClient::TestServerBitsPerSecondAsync(
 			context->durationSeconds,
 			context->useAuth,
 			context->authUsername.c_str(),
-			context->authPassword.c_str());
+			context->authPassword.c_str(),
+			&result);
 
 		context->callback(&result, context->data);
 
@@ -356,17 +356,23 @@ void StreamElementsBandwidthTestClient::TestMultipleServersBitsPerSecondAsync(
 
 	std::thread worker = std::thread([=]() {
 		for (int i = 0; i < context->servers.size(); ++i) {
-			Result testResult = TestServerBitsPerSecond(
+			Result testResult;
+
+			TestServerBitsPerSecond(
 				context->servers[i].url.c_str(),
 				context->servers[i].streamKey.c_str(),
 				context->maxBitrateBitsPerSecond,
 				context->bindToIP.empty() ? nullptr : context->bindToIP.c_str(),
-				context->durationSeconds);
+				context->durationSeconds,
+				false,
+				nullptr,
+				nullptr,
+				&testResult);
 
 			if (testResult.cancelled)
 				break;
 
-			context->results.emplace_back(testResult);
+			context->results.push_back(testResult);
 
 			if (progress_callback) {
 				progress_callback(&context->results, context->data);

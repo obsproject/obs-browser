@@ -19,6 +19,7 @@
 static std::recursive_mutex s_browsers_mutex;
 static std::vector<CefRefPtr<CefBrowser>> s_browsers;
 
+/*
 static class BrowserTask : public CefTask {
 public:
 	std::function<void()> task;
@@ -33,6 +34,7 @@ static bool QueueCEFTask(std::function<void()> task)
 {
 	return CefPostTask(TID_UI, CefRefPtr<BrowserTask>(new BrowserTask(task)));
 }
+*/
 
 /* ========================================================================= */
 
@@ -43,7 +45,7 @@ static bool SetWindowIconFromBuffer(cef_window_handle_t windowHandle, void* buff
 	if (offset) {
 		size_t size = buffer_len - offset;
 
-		HICON hIcon = ::CreateIconFromResourceEx((PBYTE)buffer + offset, size, TRUE, 0x00030000, 0, 0, LR_SHARED);
+		HICON hIcon = ::CreateIconFromResourceEx((PBYTE)buffer + offset, (DWORD)size, TRUE, 0x00030000, 0, 0, LR_SHARED);
 
 		if (hIcon) {
 			::SendMessage(windowHandle, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
@@ -71,7 +73,9 @@ static bool SetWindowIconFromResource(cef_window_handle_t windowHandle, QString&
 
 static bool SetWindowDefaultIcon(cef_window_handle_t windowHandle)
 {
-	return SetWindowIconFromResource(windowHandle, QString(":/images/icon.ico"));
+	QString icon(":/images/icon.ico");
+
+	return SetWindowIconFromResource(windowHandle, icon);
 }
 
 /* ========================================================================= */
@@ -233,6 +237,8 @@ void StreamElementsCefClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 void StreamElementsCefClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
 	const std::vector<CefString>& icon_urls)
 {
+	UNREFERENCED_PARAMETER(browser);
+	UNREFERENCED_PARAMETER(icon_urls);
 }
 
 void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
@@ -243,7 +249,7 @@ void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 	{
 		std::lock_guard<std::recursive_mutex> guard(s_browsers_mutex);
 
-		s_browsers.emplace_back(browser);
+		s_browsers.push_back(browser);
 	}
 }
 
@@ -292,6 +298,9 @@ void StreamElementsCefClient::DispatchJSEvent(CefRefPtr<CefBrowser> browser, std
 bool StreamElementsCefClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 	const CefKeyEvent& event, CefEventHandle os_event, bool* is_keyboard_shortcut)
 {
+	UNREFERENCED_PARAMETER(os_event);
+	UNREFERENCED_PARAMETER(is_keyboard_shortcut);
+
 	if (event.type != KEYEVENT_RAWKEYDOWN && event.type != KEYEVENT_KEYUP) {
 		return false;
 	}
@@ -331,8 +340,8 @@ bool StreamElementsCefClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 		obs_interaction_flags obs;
 	};
 
-	const SHORT FLAG_PRESSED = 0x8000;
-	const SHORT FLAG_TOGGLED = 0x0001;
+	const USHORT FLAG_PRESSED = 0x8000;
+	const USHORT FLAG_TOGGLED = 0x0001;
 
 	// OBS hotkey thread currently supports only Ctrl, Shift, Alt modifiers.
 	//

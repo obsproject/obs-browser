@@ -414,6 +414,7 @@ void BrowserSource::Render()
 #endif
 }
 
+/*
 static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func, bool async = false)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
@@ -426,6 +427,7 @@ static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func, bool async
 		bs = bs->next;
 	}
 }
+*/
 
 void DispatchJSEvent(const char *eventName, const char *jsonString)
 {

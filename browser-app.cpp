@@ -149,8 +149,10 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
 		
 		Json::object json;
-		if (args->GetSize() > 1)
-			json["detail"] = Json::parse(args->GetString(1).ToString(), std::string());
+		if (args->GetSize() > 1) {
+			std::string err;
+			json["detail"] = Json::parse(args->GetString(1).ToString(), err);
+		}
 		std::string jsonString = Json(json).dump();
 
 		jsonString = StringReplaceAll(jsonString, "'", "\\u0027");

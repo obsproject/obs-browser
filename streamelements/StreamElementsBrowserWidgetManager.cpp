@@ -112,13 +112,13 @@ public:
 		ensurePolished();
 		QStyleOptionTitleBar opt;
 		opt.init(this);
-		int marginSize = style()->pixelMetric(QStyle::PM_DockWidgetTitleMargin, &opt, this);
-		int frameSize = style()->pixelMetric(QStyle::PM_DockWidgetFrameWidth, &opt, this);
-		int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, &opt, this);
+		//int marginSize = style()->pixelMetric(QStyle::PM_DockWidgetTitleMargin, &opt, this);
+		//int frameSize = style()->pixelMetric(QStyle::PM_DockWidgetFrameWidth, &opt, this);
+		//int iconSize = style()->pixelMetric(QStyle::PM_SmallIconSize, &opt, this);
 
 		int titleSize = titleHeight();
 
-		QDockWidget *w = qobject_cast<QDockWidget*>(parentWidget());
+		//QDockWidget *w = qobject_cast<QDockWidget*>(parentWidget());
 
 		QSize result = QSize(titleSize, titleSize);
 
@@ -759,7 +759,7 @@ void StreamElementsBrowserWidgetManager::DeserializeDockingWidgets(CefRefPtr<Cef
 				}
 			}
 
-			docksMap[area][start].emplace_back(id.ToString());
+			docksMap[area][start].push_back(id.ToString());
 			secondaryStartMap[id.ToString()] = secondary;
 		}
 	}
@@ -770,7 +770,7 @@ void StreamElementsBrowserWidgetManager::DeserializeDockingWidgets(CefRefPtr<Cef
 		std::string area = areaPair->first;
 
 		for (start_to_ids_map_t::iterator startPair = areaPair->second.begin(); startPair != areaPair->second.end(); ++startPair) {
-			int start = startPair->first;
+			//int start = startPair->first;
 			id_arr_t dockIds = startPair->second;
 
 			// 3. Sort dock IDs by secondary start coord

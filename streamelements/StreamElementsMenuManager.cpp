@@ -76,7 +76,7 @@ void StreamElementsMenuManager::Update()
 				id.c_str());
 
 			if (info) {
-				widgets.emplace_back(info);
+				widgets.push_back(info);
 			}
 		}
 

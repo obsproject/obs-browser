@@ -32,7 +32,7 @@ public:
 	void Deserialize(CefRefPtr<CefValue>& input);
 
 	bool SerializeOne(std::string id, CefRefPtr<CefValue>& output);
-	std::string DeserializeOne(CefRefPtr<CefValue>& input);
+	std::string DeserializeOne(CefRefPtr<CefValue> input);
 
 protected:
 	virtual void OnObsExit();

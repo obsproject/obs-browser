@@ -433,7 +433,7 @@ void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output)
 			uint32_t sourceCaps = obs_get_source_output_flags(sourceId);
 
 			// If source has video
-			if (sourceCaps & OBS_SOURCE_VIDEO == OBS_SOURCE_VIDEO)
+			if ((sourceCaps & OBS_SOURCE_VIDEO) == OBS_SOURCE_VIDEO)
 			{
 				// Create source response dictionary
 				CefRefPtr<CefDictionaryValue> dic = CefDictionaryValue::Create();
@@ -441,8 +441,8 @@ void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output)
 				// Set codec dictionary properties
 				dic->SetString("id", sourceId);
 				dic->SetString("name", obs_source_get_display_name(sourceId));
-				dic->SetBool("hasVideo", sourceCaps & OBS_SOURCE_VIDEO == OBS_SOURCE_VIDEO);
-				dic->SetBool("hasAudio", sourceCaps & OBS_SOURCE_AUDIO == OBS_SOURCE_AUDIO);
+				dic->SetBool("hasVideo", (sourceCaps & OBS_SOURCE_VIDEO) == OBS_SOURCE_VIDEO);
+				dic->SetBool("hasAudio", (sourceCaps & OBS_SOURCE_AUDIO) == OBS_SOURCE_AUDIO);
 
 				// Compare sourceId to known video capture devices
 				dic->SetBool("isVideoCaptureDevice",
@@ -916,7 +916,7 @@ std::string GetComputerSystemUniqueId()
 		REG_VALUE_NAME,
 		REG_SZ,
 		result.c_str(),
-		result.size());
+		(DWORD)result.size());
 
 	return result;
 }

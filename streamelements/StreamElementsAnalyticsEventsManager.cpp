@@ -7,13 +7,6 @@
 #include <string>
 #include <codecvt>
 
-// convert wstring to UTF-8 string
-static std::string wstring_to_utf8(const std::wstring& str)
-{
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-	return myconv.to_bytes(str);
-}
-
 StreamElementsAnalyticsEventsManager::StreamElementsAnalyticsEventsManager(size_t numWorkers)
 {
 	uint64_t now = os_gettime_ns();
@@ -26,7 +19,7 @@ StreamElementsAnalyticsEventsManager::StreamElementsAnalyticsEventsManager(size_
 	m_taskConsumersKeepRunning = true;
 
 	for (size_t i = 0; i < numWorkers; ++i) {
-		m_taskConsumers.emplace_back(std::thread([this]() {
+		m_taskConsumers.push_back(std::thread([this]() {
 			task_queue_item_t task;
 
 			while (m_taskConsumersKeepRunning || m_taskQueue.size_approx()) {
@@ -88,7 +81,7 @@ void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, js
 
 	if (!synchronous) {
 		Enqueue([=]() {
-			bool result = HttpPost(
+			HttpPost(
 				"https://heapanalytics.com/api/track",
 				"application/json",
 				(void*)httpRequestBody.c_str(),
@@ -98,7 +91,7 @@ void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, js
 		});
 	}
 	else {
-		bool result = HttpPost(
+		HttpPost(
 			"https://heapanalytics.com/api/track",
 			"application/json",
 			(void*)httpRequestBody.c_str(),

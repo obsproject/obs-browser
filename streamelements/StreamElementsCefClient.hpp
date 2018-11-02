@@ -13,7 +13,12 @@ public:
 	virtual void OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
 		bool isLoading,
 		bool canGoBack,
-		bool canGoForward) { }
+		bool canGoForward) {
+		UNREFERENCED_PARAMETER(browser);
+		UNREFERENCED_PARAMETER(isLoading);
+		UNREFERENCED_PARAMETER(canGoBack);
+		UNREFERENCED_PARAMETER(canGoForward);
+	}
 
 
 public:

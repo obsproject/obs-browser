@@ -8,7 +8,8 @@
 #include <QApplication>
 
 StreamElementsWidgetManager::StreamElementsWidgetManager(QMainWindow* parent) :
-	m_parent(parent)
+	m_parent(parent),
+	m_nativeCentralWidget(nullptr)
 {
 	assert(parent);
 }
@@ -40,9 +41,7 @@ void StreamElementsWidgetManager::PushCentralWidget(QWidget* widget)
 
 	widget->setMinimumSize(prevSize);
 
-	QWidget* prevWidget = m_parent->takeCentralWidget();
-
-	m_centralWidgetStack.push(prevWidget);
+	m_nativeCentralWidget = m_parent->takeCentralWidget();
 
 	m_parent->setCentralWidget(widget);
 
@@ -56,15 +55,15 @@ bool StreamElementsWidgetManager::DestroyCurrentCentralWidget()
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
-	if (m_centralWidgetStack.size()) {
+	if (!!m_nativeCentralWidget) {
 		SaveDockWidgetsGeometry();
 
 		QApplication::sendPostedEvents();
 		QSize currSize = mainWindow()->centralWidget()->size();
 
-		m_parent->setCentralWidget(m_centralWidgetStack.top());
+		m_parent->setCentralWidget(m_nativeCentralWidget);
 
-		m_centralWidgetStack.pop();
+		m_nativeCentralWidget = nullptr;
 
 		mainWindow()->centralWidget()->setMinimumSize(currSize);
 
@@ -83,7 +82,7 @@ bool StreamElementsWidgetManager::HasCentralWidget()
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
-	return !!m_centralWidgetStack.size();
+	return !!m_nativeCentralWidget;
 }
 
 void StreamElementsWidgetManager::OnObsExit()
@@ -188,7 +187,7 @@ void StreamElementsWidgetManager::GetDockWidgetIdentifiers(std::vector<std::stri
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	for (auto imap : m_dockWidgets) {
-		result.emplace_back(imap.first);
+		result.push_back(imap.first);
 	}
 }
 

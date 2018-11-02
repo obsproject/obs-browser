@@ -114,6 +114,8 @@ void StreamElementsGlobalStateManager::ThemeChangeListener::changeEvent(QEvent* 
 
 static void handle_obs_frontend_event(enum obs_frontend_event event, void* data)
 {
+	UNUSED_PARAMETER(data);
+
 	std::string name;
 	std::string args = "null";
 
@@ -178,7 +180,7 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void* data)
 
 /* ========================================================================= */
 
-static class BrowserTask : public CefTask {
+class BrowserTask : public CefTask {
 public:
 	std::function<void()> task;
 
@@ -593,8 +595,7 @@ void StreamElementsGlobalStateManager::SwitchToOBSStudio()
 void StreamElementsGlobalStateManager::DeleteCookies()
 {
 	class CookieVisitor :
-		public CefCookieVisitor,
-		public CefBaseRefCounted
+		public CefCookieVisitor
 	{
 	public:
 		CookieVisitor() { }
@@ -602,6 +603,9 @@ void StreamElementsGlobalStateManager::DeleteCookies()
 
 		virtual bool Visit(const CefCookie& cookie, int count, int total, bool& deleteCookie) override
 		{
+			UNUSED_PARAMETER(count);
+			UNUSED_PARAMETER(total);
+
 			deleteCookie = true;
 
 			CefString domain(&cookie.domain);
@@ -740,7 +744,7 @@ void StreamElementsGlobalStateManager::RestoreState()
 	auto windowState = rootDictionary->GetValue("windowState");
 
 	if (geometry.get() && geometry->GetType() == VTYPE_STRING) {
-		blog(LOG_INFO, "obs-browser: state: restoring geometry: %s", geometry->GetString());
+		blog(LOG_INFO, "obs-browser: state: restoring geometry: %s", geometry->GetString().ToString().c_str());
 
 		mainWindow()->restoreGeometry(
 			QByteArray::fromStdString(base64_decode(geometry->GetString().ToString())));
@@ -752,7 +756,7 @@ void StreamElementsGlobalStateManager::RestoreState()
 	}
 
 	if (windowState.get() && windowState->GetType() == VTYPE_STRING) {
-		blog(LOG_INFO, "obs-browser: state: restoring windowState: %s", windowState->GetString());
+		blog(LOG_INFO, "obs-browser: state: restoring windowState: %s", windowState->GetString().ToString().c_str());
 
 		mainWindow()->restoreState(
 			QByteArray::fromStdString(base64_decode(windowState->GetString().ToString())));
@@ -949,7 +953,7 @@ void StreamElementsGlobalStateManager::UninstallPlugin()
 				NULL,
 				SW_SHOW);
 
-			BOOL bResult = (int)hInst > 32;
+			BOOL bResult = hInst > (HINSTANCE)32;
 
 			if (bResult) {
 				exec_success = true;

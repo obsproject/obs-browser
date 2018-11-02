@@ -74,7 +74,7 @@ StreamElementsPerformanceHistoryTracker::StreamElementsPerformanceHistoryTracker
 				item.busySeconds = kernelRat + userRat - idleRat;
 
 				std::lock_guard<std::recursive_mutex> guard(m_mutex);
-				m_cpu_usage.emplace_back(item);
+				m_cpu_usage.push_back(item);
 
 				while (m_cpu_usage.size() > BUF_SIZE) {
 					m_cpu_usage.erase(m_cpu_usage.begin());
@@ -89,7 +89,7 @@ StreamElementsPerformanceHistoryTracker::StreamElementsPerformanceHistoryTracker
 			if (GlobalMemoryStatusEx(&mem)) {
 				std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
-				m_memory_usage.emplace_back(mem);
+				m_memory_usage.push_back(mem);
 
 				while (m_memory_usage.size() > BUF_SIZE) {
 					m_memory_usage.erase(m_memory_usage.begin());

@@ -7,7 +7,7 @@
 #include <mutex>
 #include <regex>
 
-static class BrowserTask : public CefTask {
+class BrowserTask : public CefTask {
 public:
 	std::function<void()> task;
 

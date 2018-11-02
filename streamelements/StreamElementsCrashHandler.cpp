@@ -63,6 +63,8 @@ static void null_crash_handler(const char *format, va_list args,
 {
 	exit(-1);
 
+	UNUSED_PARAMETER(format);
+	UNUSED_PARAMETER(args);
 	UNUSED_PARAMETER(param);
 }
 
@@ -88,6 +90,8 @@ static std::string GenerateTimeDateFilename(const char *extension, bool noSpace 
 
 static void delete_oldest_file(bool has_prefix, const char *location)
 {
+	UNUSED_PARAMETER(has_prefix);
+
 	std::string      logDir(os_get_config_path_ptr(location));
 	std::string      oldestLog;
 	time_t	         oldest_ts = (time_t)-1;
@@ -425,10 +429,10 @@ static inline void AddObsConfigurationFiles()
 
 		DWORD nColorTableSize = 0;
 		if (nBitCount != 24) {
-			nColorTableSize = (1 << nBitCount) * sizeof(RGBQUAD);
+			nColorTableSize = (1ULL << nBitCount) * sizeof(RGBQUAD);
 		}
 		else {
-			nColorTableSize = 0;
+			nColorTableSize = 0L;
 		}
 
 		zip_entry_write(zip, &bmfh, sizeof(BITMAPFILEHEADER));
@@ -436,7 +440,7 @@ static inline void AddObsConfigurationFiles()
 
 		if (nBitCount < 16)
 		{
-			int nBytesWritten = 0;
+			//int nBytesWritten = 0;
 			RGBQUAD *rgbTable = new RGBQUAD[nColorTableEntries * sizeof(RGBQUAD)];
 			//fill RGBQUAD table and write it in file
 			for (int i = 0; i < nColorTableEntries; ++i)
@@ -457,6 +461,8 @@ static inline void AddObsConfigurationFiles()
 		::DeleteObject(hBMP);
 		::DeleteObject(hBitmap);
 		delete[]lpBitmapInfoHeader;
+
+		return true;
 	};
 
 	std::string package_manifest = "generator=crash_handler\nversion=3\n";
@@ -477,8 +483,8 @@ static inline void AddObsConfigurationFiles()
 	};
 
 	// Collect all files
-	for (auto& i : std::tr2::sys::recursive_directory_iterator(programDataPathBuf)) {
-		if (!std::tr2::sys::is_directory(i.path())) {
+	for (auto& i : std::experimental::filesystem::recursive_directory_iterator(programDataPathBuf)) {
+		if (!std::experimental::filesystem::is_directory(i.path())) {
 			std::wstring local_path = i.path().c_str();
 			std::wstring zip_path = local_path.substr(obsDataPath.size() + 1);
 
@@ -567,11 +573,11 @@ static inline void AddObsConfigurationFiles()
 		{
 			std::vector<std::string> lines;
 
-			lines.emplace_back("totalSeconds,busySeconds,idleSeconds");
+			lines.push_back("totalSeconds,busySeconds,idleSeconds");
 			for (auto item : cpuUsageHistory) {
 				sprintf(lineBuf, "%1.2Lf,%1.2Lf,%1.2Lf", item.totalSeconds, item.busySeconds, item.idleSeconds);
 
-				lines.emplace_back(lineBuf);
+				lines.push_back(lineBuf);
 			}
 
 			addLinesBufferToZip(lines, L"system\\usage_history_cpu.csv");
@@ -580,7 +586,7 @@ static inline void AddObsConfigurationFiles()
 		{
 			std::vector<std::string> lines;
 
-			lines.emplace_back("totalSeconds,memoryUsedPercentage");
+			lines.push_back("totalSeconds,memoryUsedPercentage");
 
 			size_t index = 0;
 			for (auto item : memoryUsageHistory) {
@@ -599,7 +605,7 @@ static inline void AddObsConfigurationFiles()
 					);
 				}
 
-				lines.emplace_back(lineBuf);
+				lines.push_back(lineBuf);
 
 				++index;
 			}
@@ -617,11 +623,14 @@ static inline void AddObsConfigurationFiles()
 
 static bool BugSplatExceptionCallback(UINT nCode, LPVOID lpVal1, LPVOID lpVal2)
 {
+	UNUSED_PARAMETER(lpVal1);
+	UNUSED_PARAMETER(lpVal2);
+
 	switch (nCode)
 	{
 	case MDSCB_EXCEPTIONCODE:
-		EXCEPTION_RECORD *p = (EXCEPTION_RECORD *)lpVal1;
-		DWORD code = p ? p->ExceptionCode : 0;
+		//EXCEPTION_RECORD *p = (EXCEPTION_RECORD *)lpVal1;
+		//DWORD code = p ? p->ExceptionCode : 0;
 
 		std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
 		s_mdSender->setDefaultUserDescription(myconv.from_bytes(s_crashDumpFromObs).c_str());

@@ -7,7 +7,7 @@
 
 #include <QCloseEvent>
 
-inline static std::string GetCommandLineOptionValue(const std::string key)
+inline std::string GetCommandLineOptionValue(const std::string key)
 {
 	QStringList args = QCoreApplication::instance()->arguments();
 
@@ -88,6 +88,9 @@ int StreamElementsNetworkDialog::DownloadFileAsyncXferProgressCallback(
 	curl_off_t ultotal,
 	curl_off_t ulnow)
 {
+	UNUSED_PARAMETER(ultotal);
+	UNUSED_PARAMETER(ulnow);
+
 	// Async progress tracking
 	local_context* task_context =
 		(local_context*)clientp;
@@ -136,6 +139,9 @@ int StreamElementsNetworkDialog::UploadFileAsyncXferProgressCallback(
 	curl_off_t ultotal,
 	curl_off_t ulnow)
 {
+	UNUSED_PARAMETER(ultotal);
+	UNUSED_PARAMETER(ulnow);
+
 	// Async progress tracking
 	local_context* task_context =
 		(local_context*)clientp;
@@ -156,6 +162,7 @@ int StreamElementsNetworkDialog::UploadFileAsyncXferProgressCallback(
 		return (int)CURLE_ABORTED_BY_CALLBACK;
 	}
 
+	/*
 	time_t now = time(&now);
 
 	time_t time_delta = now - task_context->last_progress_report_time;
@@ -164,7 +171,7 @@ int StreamElementsNetworkDialog::UploadFileAsyncXferProgressCallback(
 	if (ultotal > 0L) {
 		percent = (long)(ulnow * 100L / ultotal);
 	}
-	size_t percent_delta = percent - task_context->last_progress_report_percent;
+	//size_t percent_delta = percent - task_context->last_progress_report_percent;
 
 	// Show progress once per second
 	bool show = time_delta >= 1 && ultotal > 32768L;
@@ -182,7 +189,7 @@ int StreamElementsNetworkDialog::UploadFileAsyncXferProgressCallback(
 
 		task_context->last_progress_report_time = now;
 		task_context->last_progress_report_percent = percent;
-	}
+	}*/
 }
 
 void StreamElementsNetworkDialog::DownloadFileAsync(const char* localFilePath, const char* url, bool large_file, void(*callback)(bool, void*), void* param, const char* message)

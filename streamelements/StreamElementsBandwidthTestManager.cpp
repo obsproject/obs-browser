@@ -65,7 +65,7 @@ bool StreamElementsBandwidthTestManager::BeginBandwidthTest(CefRefPtr<CefValue> 
 						}
 					}
 
-					m_last_test_servers.emplace_back(item);
+					m_last_test_servers.push_back(item);
 				}
 			}
 

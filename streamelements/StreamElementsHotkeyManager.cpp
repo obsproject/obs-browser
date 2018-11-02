@@ -163,7 +163,7 @@ bool StreamElementsHotkeyManager::SerializeHotkeyBindings(CefRefPtr<CefValue>& o
 	{
 		auto &keys = *static_cast<keys_t*>(data);
 
-		keys[obs_hotkey_binding_get_hotkey_id(binding)].emplace_back(
+		keys[obs_hotkey_binding_get_hotkey_id(binding)].push_back(
 			obs_hotkey_binding_get_key_combination(binding));
 
 		return true;
@@ -256,7 +256,7 @@ bool StreamElementsHotkeyManager::SerializeHotkeyBindings(CefRefPtr<CefValue>& o
 		break;
 		}
 
-		d.emplace_back(item);
+		d.push_back(item);
 
 		return true;
 	}, &data);
@@ -270,7 +270,7 @@ bool StreamElementsHotkeyManager::SerializeHotkeyBindings(CefRefPtr<CefValue>& o
 
 		CefRefPtr<CefDictionaryValue> itemDict = CefDictionaryValue::Create();
 
-		itemDict->SetInt("id", item.hotkey_id);
+		itemDict->SetInt("id", (int)item.hotkey_id);
 		itemDict->SetString("name", item.name);
 		itemDict->SetString("description", item.description);
 
@@ -286,7 +286,7 @@ bool StreamElementsHotkeyManager::SerializeHotkeyBindings(CefRefPtr<CefValue>& o
 		}
 
 		if (item.partner_hotkey_id != OBS_INVALID_HOTKEY_ID) {
-			itemDict->SetInt("partnerHotkeyBindingId", item.partner_hotkey_id);
+			itemDict->SetInt("partnerHotkeyBindingId", (int)item.partner_hotkey_id);
 		}
 
 		CefRefPtr<CefListValue> bindingComboList = CefListValue::Create();
@@ -328,6 +328,8 @@ bool StreamElementsHotkeyManager::DeserializeHotkeyBindings(CefRefPtr<CefValue> 
 
 void StreamElementsHotkeyManager::hotkeyTriggered(obs_hotkey_id id, obs_hotkey_t *hotkey, bool pressed)
 {
+	UNUSED_PARAMETER(hotkey);
+
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	if (m_registeredHotkeyDataString.count(id)) {
@@ -455,7 +457,7 @@ obs_hotkey_id StreamElementsHotkeyManager::DeserializeSingleHotkeyBinding(CefRef
 				obs_key_combination_t combination = DeserializeKeyCombination(triggersList->GetValue(index));
 
 				if (!obs_key_combination_is_empty(combination)) {
-					combinations.emplace_back(combination);
+					combinations.push_back(combination);
 				}
 			}
 		}

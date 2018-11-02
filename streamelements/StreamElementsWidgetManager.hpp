@@ -86,8 +86,7 @@ protected:
 
 private:
 	QMainWindow* m_parent;
-
-	std::stack<QWidget*> m_centralWidgetStack;
+	QWidget* m_nativeCentralWidget;
 
 	std::map<std::string, QDockWidget*> m_dockWidgets;
 	std::map<std::string, Qt::DockWidgetArea> m_dockWidgetAreas;

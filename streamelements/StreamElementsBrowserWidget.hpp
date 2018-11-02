@@ -216,7 +216,7 @@ private:
 		emit browserStateChanged();
 	}
 
-	static class StreamElementsBrowserWidget_EventHandler :
+	class StreamElementsBrowserWidget_EventHandler :
 		public StreamElementsCefClientEventHandler
 	{
 	public:
@@ -229,6 +229,11 @@ private:
 			bool canGoBack,
 			bool canGoForward) override
 		{
+			UNREFERENCED_PARAMETER(browser);
+			UNREFERENCED_PARAMETER(isLoading);
+			UNREFERENCED_PARAMETER(canGoBack);
+			UNREFERENCED_PARAMETER(canGoForward);
+
 			QtPostTask([](void* data) {
 				StreamElementsBrowserWidget* widget = (StreamElementsBrowserWidget*)data;
 

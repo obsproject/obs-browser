@@ -302,7 +302,7 @@ void StreamElementsReportIssueDialog::accept()
 
 			DWORD nColorTableSize = 0;
 			if (nBitCount != 24) {
-				nColorTableSize = (1 << nBitCount) * sizeof(RGBQUAD);
+				nColorTableSize = (1ULL << nBitCount) * sizeof(RGBQUAD);
 			}
 			else {
 				nColorTableSize = 0;
@@ -313,7 +313,7 @@ void StreamElementsReportIssueDialog::accept()
 
 			if (nBitCount < 16)
 			{
-				int nBytesWritten = 0;
+				//int nBytesWritten = 0;
 				RGBQUAD *rgbTable = new RGBQUAD[nColorTableEntries * sizeof(RGBQUAD)];
 				//fill RGBQUAD table and write it in file
 				for (int i = 0; i < nColorTableEntries; ++i)
@@ -334,6 +334,8 @@ void StreamElementsReportIssueDialog::accept()
 			::DeleteObject(hBMP);
 			::DeleteObject(hBitmap);
 			delete[]lpBitmapInfoHeader;
+
+			return true;
 		};
 
 		std::string package_manifest = "generator=report_issue\nversion=3\n";
@@ -357,8 +359,8 @@ void StreamElementsReportIssueDialog::accept()
 			};
 
 			// Collect all files
-			for (auto& i : std::tr2::sys::recursive_directory_iterator(programDataPathBuf)) {
-				if (!std::tr2::sys::is_directory(i.path())) {
+			for (auto& i : std::experimental::filesystem::recursive_directory_iterator(programDataPathBuf)) {
+				if (!std::experimental::filesystem::is_directory(i.path())) {
 					std::wstring local_path = i.path().c_str();
 					std::wstring zip_path = local_path.substr(obsDataPath.size() + 1);
 
@@ -406,7 +408,7 @@ void StreamElementsReportIssueDialog::accept()
 
 			addFileToZip(item.first, item.second);
 
-			dialog.setProgress(0, total, count);
+			dialog.setProgress(0, (int)total, (int)count);
 		}
 
 		if (dialog.cancelled()) {
@@ -506,11 +508,11 @@ void StreamElementsReportIssueDialog::accept()
 			{
 				std::vector<std::string> lines;
 
-				lines.emplace_back("totalSeconds,busySeconds,idleSeconds");
+				lines.push_back("totalSeconds,busySeconds,idleSeconds");
 				for (auto item : cpuUsageHistory) {
 					sprintf(lineBuf, "%1.2Lf,%1.2Lf,%1.2Lf", item.totalSeconds, item.busySeconds, item.idleSeconds);
 
-					lines.emplace_back(lineBuf);
+					lines.push_back(lineBuf);
 				}
 
 				addLinesBufferToZip(lines, L"system\\usage_history_cpu.csv");
@@ -519,7 +521,7 @@ void StreamElementsReportIssueDialog::accept()
 			{
 				std::vector<std::string> lines;
 
-				lines.emplace_back("totalSeconds,memoryUsedPercentage");
+				lines.push_back("totalSeconds,memoryUsedPercentage");
 
 				size_t index = 0;
 				for (auto item : memoryUsageHistory) {
@@ -538,7 +540,7 @@ void StreamElementsReportIssueDialog::accept()
 						);
 					}
 
-					lines.emplace_back(lineBuf);
+					lines.push_back(lineBuf);
 
 					++index;
 				}

@@ -6,7 +6,7 @@
 
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
 
-static class BrowserTask : public CefTask {
+class BrowserTask : public CefTask {
 public:
 	std::function<void()> task;
 
@@ -170,7 +170,7 @@ void StreamElementsWorkerManager::GetIdentifiers(std::vector<std::string>& resul
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 
 	for (auto it = m_items.begin(); it != m_items.end(); ++it) {
-		result.emplace_back(it->first);
+		result.push_back(it->first);
 	}
 }
 
@@ -233,7 +233,7 @@ bool StreamElementsWorkerManager::SerializeOne(std::string id, CefRefPtr<CefValu
 	return true;
 }
 
-std::string StreamElementsWorkerManager::DeserializeOne(CefRefPtr<CefValue>& input)
+std::string StreamElementsWorkerManager::DeserializeOne(CefRefPtr<CefValue> input)
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
 

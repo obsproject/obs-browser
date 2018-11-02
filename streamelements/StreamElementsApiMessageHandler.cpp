@@ -555,7 +555,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 					args->GetValue(0));
 
 			if (id != OBS_INVALID_HOTKEY_ID) {
-				result->SetInt(id);
+				result->SetInt((int)id);
 			}
 			else {
 				result->SetNull();
@@ -630,5 +630,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 	API_HANDLER_BEGIN("crashProgram")
 		// Crash
 		*((int*)nullptr) = 12345; // exception
+
+		UNUSED_PARAMETER(result);
 	API_HANDLER_END()
 }
