@@ -34,14 +34,14 @@ static BrowserSource *first_browser = nullptr;
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
 {
-	/* defer update */
-	obs_source_update(source, nullptr);
-
 	lock_guard<mutex> lock(browser_list_mutex);
 	p_prev_next = &first_browser;
 	next = first_browser;
 	if (first_browser) first_browser->p_prev_next = &next;
 	first_browser = this;
+
+	/* defer update */
+	obs_source_update(source, nullptr);
 }
 
 BrowserSource::~BrowserSource()

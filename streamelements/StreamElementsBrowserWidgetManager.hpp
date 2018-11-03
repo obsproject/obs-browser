@@ -15,11 +15,11 @@ public:
 		{
 		}
 
-		DockBrowserWidgetInfo(DockWidgetInfo& other): DockWidgetInfo(other)
+		DockBrowserWidgetInfo(const DockWidgetInfo& other): DockWidgetInfo(other)
 		{
 		}
 
-		DockBrowserWidgetInfo(DockBrowserWidgetInfo& other) : DockWidgetInfo(other)
+		DockBrowserWidgetInfo(const DockBrowserWidgetInfo& other) : DockWidgetInfo(other)
 		{
 			m_url = other.m_url;
 			m_executeJavaScriptOnLoad = other.m_executeJavaScriptOnLoad;

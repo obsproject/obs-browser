@@ -28,7 +28,7 @@ public:
 		DockWidgetInfo()
 		{ }
 
-		DockWidgetInfo(DockWidgetInfo& other)
+		DockWidgetInfo(const DockWidgetInfo& other)
 		{
 			m_id = other.m_id;
 			m_title = other.m_title;
@@ -102,5 +102,5 @@ protected:
 
 
 protected:
-	virtual void OnObsExit();
+	virtual void OnObsExit() override;
 };

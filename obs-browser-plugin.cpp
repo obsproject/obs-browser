@@ -234,6 +234,10 @@ void RegisterBrowserSource()
 	};
 	info.create = [] (obs_data_t *settings, obs_source_t *source) -> void *
 	{
+		if (source == nullptr) {
+			return nullptr;
+		}
+
 		obs_browser_initialize();
 		return new BrowserSource(settings, source);
 	};
@@ -424,7 +428,7 @@ bool obs_module_load(void)
 {
 	blog(LOG_INFO, "[obs-browser]: Version %s",
 			OBS_BROWSER_VERSION_STRING);
-
+	
 #ifdef _WIN32
 	EnumAdapterCount();
 #endif
