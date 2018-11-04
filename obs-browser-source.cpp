@@ -56,7 +56,7 @@ BrowserSource::~BrowserSource()
 
 void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
 {
-	if (!cefBrowser) {
+	if (!cefBrowser.get()) {
 		return;
 	}
 
@@ -64,7 +64,7 @@ void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
 		os_event_t *finishedEvent;
 		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
 		bool success = QueueCEFTask([&] () {
-			if (!!cefBrowser)
+			if (!!cefBrowser.get())
 				func();
 			os_event_signal(finishedEvent);
 		});
@@ -73,7 +73,7 @@ void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
 		os_event_destroy(finishedEvent);
 	} else {
 		QueueCEFTask([this, func] () {
-			if (!!cefBrowser)
+			if (!!cefBrowser.get())
 				func();
 		});
 	}
@@ -139,7 +139,9 @@ bool BrowserSource::CreateBrowser()
 				cefBrowserSettings,
 				nullptr);
 
-		cefBrowser->GetHost()->WasHidden(!obs_source_showing(source));
+		if (!!cefBrowser.get()) {
+			cefBrowser->GetHost()->WasHidden(!obs_source_showing(source));
+		}
 	});
 }
 
