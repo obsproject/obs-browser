@@ -164,9 +164,13 @@ static void BrowserManagerThread(void)
 	path += "//obs-browser-page";
 #ifdef _WIN32
 	path += ".exe";
+	CefMainArgs args;
+#else
+	/* On non-windows platforms, ie macOS, we'll want to pass thru flags to CEF */
+	struct obs_cmdline_args cmdline_args = obs_get_cmdline_args();
+	CefMainArgs args(cmdline_args.argc, cmdline_args.argv);
 #endif
 
-	CefMainArgs args;
 	CefSettings settings;
 	settings.log_severity = LOGSEVERITY_VERBOSE;
 	settings.windowless_rendering_enabled = true;
