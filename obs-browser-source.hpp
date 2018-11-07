@@ -45,6 +45,7 @@ struct BrowserSource {
 	gs_texture_t          *texture                 = nullptr;
 	int                   width                    = 0;
 	int                   height                   = 0;
+	bool                  fps_custom               = false;
 	int                   fps                      = 0;
 	bool                  restart                  = false;
 	bool                  shutdown_on_invisible    = false;

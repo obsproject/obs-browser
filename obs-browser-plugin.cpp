@@ -90,6 +90,11 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "width", 800);
 	obs_data_set_default_int(settings, "height", 600);
 	obs_data_set_default_int(settings, "fps", 30);
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_data_set_default_bool(settings, "fps_custom", false);
+#else
+	obs_data_set_bool(settings, "fps_custom", true);
+#endif
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", default_css);
@@ -103,6 +108,16 @@ static bool is_local_file_modified(obs_properties_t *props,
 	obs_property_t *local_file = obs_properties_get(props, "local_file");
 	obs_property_set_visible(url, !enabled);
 	obs_property_set_visible(local_file, enabled);
+
+	return true;
+}
+
+static bool is_fps_custom(obs_properties_t *props,
+		obs_property_t *, obs_data_t *settings)
+{
+	bool enabled = obs_data_get_bool(settings, "fps_custom");
+	obs_property_t *fps = obs_properties_get(props, "fps");
+	obs_property_set_visible(fps, enabled);
 
 	return true;
 }
@@ -138,6 +153,15 @@ static obs_properties_t *browser_source_get_properties(void *data)
 			obs_module_text("Width"), 1, 4096, 1);
 	obs_properties_add_int(props, "height",
 			obs_module_text("Height"), 1, 4096, 1);
+
+	obs_property_t *fps_set = obs_properties_add_bool(props, "fps_custom",
+			obs_module_text("CustomFrameRate"));
+	obs_property_set_modified_callback(fps_set, is_fps_custom);
+
+#if !EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_property_set_enabled(fps_set, false);
+#endif
+
 	obs_properties_add_int(props, "fps",
 			obs_module_text("FPS"), 1, 60, 1);
 	obs_properties_add_text(props, "css",
