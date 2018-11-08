@@ -371,6 +371,79 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 	}
 	API_HANDLER_END();
 
+	API_HANDLER_BEGIN("toggleDockingWidgetFloatingById")
+		if (args->GetSize() && args->GetType(0) == VTYPE_STRING) {
+			result->SetBool(
+				StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->ToggleWidgetFloatingStateById(
+					args->GetString(0).ToString().c_str()));
+
+			if (result->GetBool()) {
+				StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+				StreamElementsGlobalStateManager::GetInstance()->PersistState();
+			}
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("setDockingWidgetDimensionsById")
+		if (args->GetSize() >= 2 &&
+		    args->GetType(0) == VTYPE_STRING &&
+		    args->GetType(1) == VTYPE_DICTIONARY) {
+			int width = -1;
+			int height = -1;
+
+			CefRefPtr<CefDictionaryValue> d = args->GetDictionary(1);
+
+			if (d->HasKey("width") && d->GetType("width") == VTYPE_INT) {
+				width = d->GetInt("width");
+			}
+
+			if (d->HasKey("height") && d->GetType("height") == VTYPE_INT) {
+				height = d->GetInt("height");
+			}
+
+			result->SetBool(
+				StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->SetWidgetDimensionsById(
+					args->GetString(0).ToString().c_str(),
+					width,
+					height));
+
+			if (result->GetBool()) {
+				StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+				StreamElementsGlobalStateManager::GetInstance()->PersistState();
+			}
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("setDockingWidgetPositionById")
+		if (args->GetSize() >= 2 &&
+			args->GetType(0) == VTYPE_STRING &&
+			args->GetType(1) == VTYPE_DICTIONARY) {
+			int left = -1;
+			int top = -1;
+
+			CefRefPtr<CefDictionaryValue> d = args->GetDictionary(1);
+
+			if (d->HasKey("left") && d->GetType("left") == VTYPE_INT) {
+				left = d->GetInt("left");
+			}
+
+			if (d->HasKey("top") && d->GetType("top") == VTYPE_INT) {
+				top = d->GetInt("top");
+			}
+
+			result->SetBool(
+				StreamElementsGlobalStateManager::GetInstance()->GetWidgetManager()->SetWidgetPositionById(
+					args->GetString(0).ToString().c_str(),
+					left,
+					top));
+
+			if (result->GetBool()) {
+				StreamElementsGlobalStateManager::GetInstance()->GetMenuManager()->Update();
+				StreamElementsGlobalStateManager::GetInstance()->PersistState();
+			}
+		}
+	API_HANDLER_END()
+
 	API_HANDLER_BEGIN("beginOnBoarding");
 		StreamElementsGlobalStateManager::GetInstance()->Reset();
 

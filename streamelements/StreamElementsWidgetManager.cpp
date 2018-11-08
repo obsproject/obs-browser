@@ -160,6 +160,91 @@ bool StreamElementsWidgetManager::AddDockWidget(
 	return true;
 }
 
+bool StreamElementsWidgetManager::ToggleWidgetFloatingStateById(const char* const id)
+{
+	assert(id);
+
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	if (!m_dockWidgets.count(id)) {
+		return false;
+	}
+
+	QDockWidget* dock = m_dockWidgets[id];
+
+	dock->setFloating(!dock->isFloating());
+}
+
+bool StreamElementsWidgetManager::SetWidgetDimensionsById(const char* const id, const int width, const int height)
+{
+	assert(id);
+
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	if (!m_dockWidgets.count(id)) {
+		return false;
+	}
+
+	QDockWidget* dock = m_dockWidgets[id];
+
+	if (!dock->isFloating() || !dock->window()) {
+		return false;
+	}
+
+	QApplication::sendPostedEvents();
+
+	QSize prevMin = dock->window()->minimumSize();
+	QSize prevMax = dock->window()->maximumSize();
+
+	if (width >= 0) {
+		dock->window()->setMinimumWidth(width);
+		dock->window()->setMaximumWidth(width);
+	}
+
+	if (height >= 0) {
+		dock->window()->setMinimumHeight(height);
+		dock->window()->setMaximumHeight(height);
+	}
+
+	QApplication::sendPostedEvents();
+
+	dock->window()->setMinimumSize(prevMin);
+	dock->window()->setMaximumSize(prevMax);
+
+	return true;
+}
+
+bool StreamElementsWidgetManager::SetWidgetPositionById(const char* const id, const int left, const int top)
+{
+	assert(id);
+
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	if (!m_dockWidgets.count(id)) {
+		return false;
+	}
+
+	QDockWidget* dock = m_dockWidgets[id];
+
+	if (!dock->isFloating() || !dock->window()) {
+		return false;
+	}
+
+	QPoint pos = dock->window()->pos();
+
+	if (left >= 0) {
+		pos.setX(left);
+	}
+
+	if (top >= 0) {
+		pos.setY(top);
+	}
+
+	dock->window()->move(pos);
+
+	return true;
+}
+
 bool StreamElementsWidgetManager::RemoveDockWidget(const char* const id)
 {
 	assert(id);

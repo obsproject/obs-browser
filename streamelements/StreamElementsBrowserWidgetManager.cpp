@@ -611,6 +611,27 @@ bool StreamElementsBrowserWidgetManager::AddDockBrowserWidget(
 	}
 }
 
+bool StreamElementsBrowserWidgetManager::ToggleWidgetFloatingStateById(const char* const id)
+{
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	return StreamElementsWidgetManager::ToggleWidgetFloatingStateById(id);
+}
+
+bool StreamElementsBrowserWidgetManager::SetWidgetDimensionsById(const char* const id, const int width, const int height)
+{
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	return StreamElementsWidgetManager::SetWidgetDimensionsById(id, width, height);
+}
+
+bool StreamElementsBrowserWidgetManager::SetWidgetPositionById(const char* const id, const int left, const int top)
+{
+	std::lock_guard<std::recursive_mutex> guard(m_mutex);
+
+	return StreamElementsWidgetManager::SetWidgetPositionById(id, left, top);
+}
+
 void StreamElementsBrowserWidgetManager::RemoveAllDockWidgets()
 {
 	std::lock_guard<std::recursive_mutex> guard(m_mutex);
