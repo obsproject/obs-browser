@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "streamelements/StreamElementsBrowserSourceApiMessageHandler.hpp"
+
 #include <graphics/graphics.h>
 #include "cef-headers.hpp"
 #include "browser-config.h"
@@ -45,6 +47,7 @@ public:
 	BrowserSource *bs = nullptr;
 	CefRect popupRect;
 	CefRect originalPopupRect;
+	StreamElementsBrowserSourceApiMessageHandler streamelementsMessageHandler;
 
 	inline BrowserClient(BrowserSource *bs_, bool sharing_avail)
 		: bs(bs_)
@@ -89,6 +92,19 @@ public:
 			CefRefPtr<CefClient> &client,
 			CefBrowserSettings &settings,
 			bool *no_javascript_access) override;
+
+	/* CefLifeSpanHandler */
+	virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
+
+	///
+	// Called just before a browser is destroyed. Release all references to the
+	// browser object and do not attempt to execute any methods on the browser
+	// object after this callback returns. This callback will be the last
+	// notification that references |browser|. See DoClose() documentation for
+	// additional usage information.
+	///
+	/*--cef()--*/
+	virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
 
 	/* CefContextMenuHandler */
 	virtual void OnBeforeContextMenu(

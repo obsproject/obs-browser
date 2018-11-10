@@ -16,6 +16,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
+#include "streamelements/StreamElementsMessageBus.hpp"
 #include "browser-client.hpp"
 #include "obs-browser-source.hpp"
 #include "base64/base64.hpp"
@@ -90,7 +91,7 @@ void BrowserClient::OnBeforeContextMenu(
 
 bool BrowserClient::OnProcessMessageReceived(
 	CefRefPtr<CefBrowser> browser,
-	CefProcessId,
+	CefProcessId source_process,
 	CefRefPtr<CefProcessMessage> message)
 {
 	const std::string &name = message->GetName();
@@ -127,7 +128,8 @@ bool BrowserClient::OnProcessMessageReceived(
 		};
 
 	} else {
-		return false;
+		return streamelementsMessageHandler.OnProcessMessageReceived(
+					browser, source_process, message);
 	}
 
 	CefRefPtr<CefProcessMessage> msg =
@@ -202,6 +204,19 @@ void BrowserClient::OnPaint(
 				width * 4, false);
 		obs_leave_graphics();
 	}
+}
+
+void BrowserClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
+{
+	StreamElementsMessageBus::GetInstance()->AddBrowserListener(
+				browser,
+				StreamElementsMessageBus::DEST_BROWSER_SOURCE);
+}
+
+void BrowserClient::OnBeforeClose(CefRefPtr<CefBrowser> browser)
+{
+	StreamElementsMessageBus::GetInstance()->RemoveBrowserListener(
+				browser);
 }
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED

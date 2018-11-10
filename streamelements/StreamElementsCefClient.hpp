@@ -5,6 +5,7 @@
 #include "cef-headers.hpp"
 
 #include "StreamElementsBrowserMessageHandler.hpp"
+#include "StreamElementsMessageBus.hpp"
 
 class StreamElementsCefClientEventHandler :
 	public CefBaseRefCounted
@@ -38,7 +39,12 @@ private:
 	std::string m_locationArea = "unknown";
 
 public:
-	StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler, CefRefPtr<StreamElementsCefClientEventHandler> eventHandler);
+	StreamElementsCefClient(
+		std::string executeJavaScriptCodeOnLoad,
+		CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler,
+		CefRefPtr<StreamElementsCefClientEventHandler> eventHandler,
+		StreamElementsMessageBus::message_destination_filter_flags_t msgDestType);
+
 	virtual ~StreamElementsCefClient();
 
 public:
@@ -89,7 +95,7 @@ public:
 	{
 		windowInfo.parent_window = (cef_window_handle_t)obs_frontend_get_main_window_handle();
 
-		client = new StreamElementsCefClient("", nullptr, nullptr);
+		client = new StreamElementsCefClient("", nullptr, nullptr, StreamElementsMessageBus::DEST_UI);
 
 		// Allow pop-ups
 		return false;
@@ -153,6 +159,7 @@ private:
 	std::string m_executeJavaScriptCodeOnLoad;
 	CefRefPtr<StreamElementsBrowserMessageHandler> m_messageHandler;
 	CefRefPtr<StreamElementsCefClientEventHandler> m_eventHandler;
+	StreamElementsMessageBus::message_destination_filter_flags_t m_msgDestType;
 
 public:
 	static void DispatchJSEvent(std::string event, std::string eventArgsJson);

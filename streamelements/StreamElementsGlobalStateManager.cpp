@@ -869,7 +869,8 @@ bool StreamElementsGlobalStateManager::DeserializePopupWindow(CefRefPtr<CefValue
 				new StreamElementsCefClient(
 					executeJavaScriptOnLoad,
 					enableHostApi ? new StreamElementsApiMessageHandler() : nullptr,
-					nullptr);
+					nullptr,
+					StreamElementsMessageBus::DEST_UI);
 
 			CefRefPtr<CefBrowser> browser =
 				CefBrowserHost::CreateBrowserSync(

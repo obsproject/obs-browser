@@ -65,7 +65,8 @@ public:
 				new StreamElementsCefClient(
 					"",
 					new StreamElementsApiMessageHandler(),
-					nullptr);
+					nullptr,
+					StreamElementsMessageBus::DEST_WORKER);
 
 			cefClient->SetContainerId(id);
 			cefClient->SetLocationArea("worker");

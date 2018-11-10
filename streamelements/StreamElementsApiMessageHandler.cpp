@@ -9,6 +9,7 @@
 #include "StreamElementsGlobalStateManager.hpp"
 #include "StreamElementsUtils.hpp"
 #include "StreamElementsCefClient.hpp"
+#include "StreamElementsMessageBus.hpp"
 
 #include <QDesktopServices>
 #include <QUrl>
@@ -698,6 +699,18 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		StreamElementsGlobalStateManager::GetInstance()->PersistState();
 
 		result->SetBool(true);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("broadcastMessage")
+		if (args->GetSize()) {
+			StreamElementsMessageBus::GetInstance()->BroadcastMessageToBrowsers(
+				StreamElementsMessageBus::DEST_ALL,
+				StreamElementsMessageBus::SOURCE_WEB,
+				browser->GetMainFrame()->GetURL().ToString(),
+				args->GetValue(0));
+
+			result->SetBool(true);
+		}
 	API_HANDLER_END()
 
 	API_HANDLER_BEGIN("crashProgram")

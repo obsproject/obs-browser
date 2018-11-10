@@ -2,7 +2,7 @@ version: '{build}'
 branches:
   only:
   - master
-image: Previous Visual Studio 2017
+image: Visual Studio 2017
 configuration: RelWithDebInfo
 clone_folder: c:\local\source
 init:
@@ -16,8 +16,6 @@ install:
     cinst -y git
 
     cinst -y cmake
-
-    cinst -y archiver
 
     cinst -y curl
 
@@ -62,13 +60,14 @@ install:
 
     7z x vlc.zip -ovlc
 
-    archiver open c:\local\BugSplat.zip c:\local 2>&1 >nul:
 
-    archiver open c:\local\cef32.tar.bz2 c:\local 2>&1 >nul:
+    7z x c:\local\BugSplat.zip
 
-    archiver open c:\local\cef64.tar.bz2 c:\local 2>&1 >nul:
+    7z x -so c:\local\cef32.tar.bz2 | 7z x -si -ttar
 
-    archiver open c:\local\obs-studio-dist.zip c:\local\obs-studio-dist 2>&1 >nul:
+    7z x -so c:\local\cef64.tar.bz2 | 7z x -si -ttar
+
+    7z x c:\local\obs-studio-dist.zip -oobs-studio-dist
 
 
     set DepsPath32=c:\local\dependencies2017\win32
@@ -240,7 +239,7 @@ build_script:
 
     del /f /q c:\local\source\appveyor.yml    
 
-    archiver make c:\local\obs-browser-master.zip .
+    7z a c:\local\obs-browser-master.zip .
 
     move /Y c:\local\obs-browser-master.zip c:\local\source\obs-browser-master.zip
 
@@ -248,13 +247,13 @@ build_script:
 
     cd /d c:\local\obs-studio\build64\rundir\%build_config%
 
-    archiver make c:\local\source\build64.zip .
+    7z a c:\local\source\build64.zip .
 
 
 
     cd /d c:\local\obs-studio\build32\rundir\%build_config%
 
-    archiver make c:\local\source\build32.zip .
+    7z a c:\local\source\build32.zip .
 
 
 

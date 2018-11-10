@@ -1,6 +1,7 @@
 #include "StreamElementsCefClient.hpp"
 #include "StreamElementsUtils.hpp"
 #include "StreamElementsGlobalStateManager.hpp"
+#include "StreamElementsMessageBus.hpp"
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
 #include <obs-frontend-api.h>
@@ -91,10 +92,15 @@ using namespace json11;
 
 /* ========================================================================= */
 
-StreamElementsCefClient::StreamElementsCefClient(std::string executeJavaScriptCodeOnLoad, CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler, CefRefPtr<StreamElementsCefClientEventHandler> eventHandler) :
+StreamElementsCefClient::StreamElementsCefClient(
+	std::string executeJavaScriptCodeOnLoad,
+	CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler,
+	CefRefPtr<StreamElementsCefClientEventHandler> eventHandler,
+	StreamElementsMessageBus::message_destination_filter_flags_t msgDestType) :
 	m_executeJavaScriptCodeOnLoad(executeJavaScriptCodeOnLoad),
 	m_messageHandler(messageHandler),
-	m_eventHandler(eventHandler)
+	m_eventHandler(eventHandler),
+	m_msgDestType(msgDestType)
 {
 }
 
@@ -250,6 +256,9 @@ void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 		std::lock_guard<std::recursive_mutex> guard(s_browsers_mutex);
 
 		s_browsers.push_back(browser);
+
+		StreamElementsMessageBus::GetInstance()->AddBrowserListener(
+				browser, m_msgDestType);
 	}
 }
 
@@ -257,6 +266,8 @@ void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 void StreamElementsCefClient::OnBeforeClose(CefRefPtr<CefBrowser> browser)
 {
 	std::lock_guard<std::recursive_mutex> guard(s_browsers_mutex);
+
+	StreamElementsMessageBus::GetInstance()->RemoveBrowserListener(browser);
 
 	auto index = std::find(s_browsers.begin(), s_browsers.end(), browser.get());
 
