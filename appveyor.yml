@@ -107,6 +107,10 @@ build_script:
     mkdir build build32 build64
 
 
+    echo.===================== PATCH =====================
+
+    copy /y c:\local\obs-studio\plugins\obs-browser\streamelements\patch\qt\qalgorithms.h %QTDIR32%\include\qtcore\qalgorithms.h
+
     echo.===================== BUILD 64 BIT - CEF - OBS-STUDIO =====================
 
     cd /d c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64
