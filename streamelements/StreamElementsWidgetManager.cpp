@@ -173,6 +173,8 @@ bool StreamElementsWidgetManager::ToggleWidgetFloatingStateById(const char* cons
 	QDockWidget* dock = m_dockWidgets[id];
 
 	dock->setFloating(!dock->isFloating());
+
+	return true;
 }
 
 bool StreamElementsWidgetManager::SetWidgetDimensionsById(const char* const id, const int width, const int height)
