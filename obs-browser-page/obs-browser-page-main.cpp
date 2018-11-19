@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 {
 	CefMainArgs mainArgs(argc, argv);
 #endif
+	CefEnableHighDPISupport();
 	CefRefPtr<BrowserApp> mainApp(new BrowserApp());
 	return CefExecuteProcess(mainArgs, mainApp.get(), NULL);
 }

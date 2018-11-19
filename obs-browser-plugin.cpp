@@ -446,6 +446,8 @@ bool obs_module_load(void)
 	blog(LOG_INFO, "[obs-browser]: Version %s",
 			OBS_BROWSER_VERSION_STRING);
 
+	CefEnableHighDPISupport();
+
 #ifdef _WIN32
 	EnumAdapterCount();
 #endif
