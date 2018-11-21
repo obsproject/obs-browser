@@ -25,8 +25,8 @@ void QCefBrowserClient::OnTitleChange(
 		CefRefPtr<CefBrowser>,
 		const CefString &title)
 {
-	std::string str_title = title;
 	if (widget) {
+		std::string str_title = title;
 		QString qt_title = QString::fromUtf8(str_title.c_str());
 		QMetaObject::invokeMethod(widget, "titleChanged",
 				Q_ARG(QString, qt_title));
