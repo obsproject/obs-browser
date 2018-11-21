@@ -5,6 +5,7 @@
 
 class QCefBrowserClient : public CefClient,
                           public CefDisplayHandler,
+                          public CefRequestHandler,
                           public CefLifeSpanHandler,
                           public CefLoadHandler {
 
@@ -17,6 +18,7 @@ public:
 	/* CefClient */
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override;
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
+	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
 
 	/* CefDisplayHandler */
@@ -24,13 +26,21 @@ public:
 			CefRefPtr<CefBrowser> browser,
 			const CefString &title) override;
 
+	/* CefRequestHandler */
+	virtual bool OnBeforeBrowse(
+			CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			CefRefPtr<CefRequest> request,
+			bool user_gesture,
+			bool is_redirect) override;
+
 	/* CefLifeSpanHandler */
 	virtual bool OnBeforePopup(
 			CefRefPtr<CefBrowser> browser,
 			CefRefPtr<CefFrame> frame,
 			const CefString &target_url,
 			const CefString &target_frame_name,
-			WindowOpenDisposition target_disposition,
+			CefLifeSpanHandler::WindowOpenDisposition target_disposition,
 			bool user_gesture,
 			const CefPopupFeatures &popupFeatures,
 			CefWindowInfo &windowInfo,

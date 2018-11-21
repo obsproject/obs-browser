@@ -14,6 +14,11 @@ CefRefPtr<CefDisplayHandler> QCefBrowserClient::GetDisplayHandler()
 	return this;
 }
 
+CefRefPtr<CefRequestHandler> QCefBrowserClient::GetRequestHandler()
+{
+	return this;
+}
+
 CefRefPtr<CefLifeSpanHandler> QCefBrowserClient::GetLifeSpanHandler()
 {
 	return this;
@@ -33,13 +38,30 @@ void QCefBrowserClient::OnTitleChange(
 	}
 }
 
+/* CefRequestHandler */
+bool QCefBrowserClient::OnBeforeBrowse(
+		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefFrame>,
+		CefRefPtr<CefRequest> request,
+		bool,
+		bool)
+{
+	if (widget) {
+		std::string str_url = request->GetURL();
+		QString qt_url = QString::fromUtf8(str_url.c_str());
+		QMetaObject::invokeMethod(widget, "urlChanged",
+				Q_ARG(QString, qt_url));
+	}
+	return false;
+}
+
 /* CefLifeSpanHandler */
 bool QCefBrowserClient::OnBeforePopup(
 		CefRefPtr<CefBrowser>,
 		CefRefPtr<CefFrame>,
 		const CefString &target_url,
 		const CefString &,
-		WindowOpenDisposition,
+		CefLifeSpanHandler::WindowOpenDisposition,
 		bool,
 		const CefPopupFeatures &,
 		CefWindowInfo &,

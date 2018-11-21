@@ -19,6 +19,7 @@ public:
 
 signals:
 	void titleChanged(const QString &title);
+	void urlChanged(const QString &url);
 };
 
 /* ------------------------------------------------------------------------- */
