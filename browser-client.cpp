@@ -96,7 +96,9 @@ bool BrowserClient::OnProcessMessageReceived(
 	const std::string &name = message->GetName();
 	Json json;
 
-	if (!bs) {
+	BrowserSource* source = bs;
+
+	if (!source) {
 		return false;
 	}
 
@@ -144,11 +146,13 @@ bool BrowserClient::GetViewRect(
 		CefRefPtr<CefBrowser>,
 		CefRect &rect)
 {
-	if (!bs) {
+	BrowserSource* source = bs;
+
+	if (!source) {
 		return false;
 	}
 
-	rect.Set(0, 0, bs->width, bs->height);
+	rect.Set(0, 0, source->width, source->height);
 	return true;
 }
 
@@ -170,28 +174,30 @@ void BrowserClient::OnPaint(
 	}
 #endif
 
-	if (!bs) {
+	BrowserSource* source = bs;
+
+	if (!source) {
 		return;
 	}
 
-	if (bs->width != width || bs->height != height) {
+	if (source->width != width || source->height != height) {
 		obs_enter_graphics();
-		bs->DestroyTextures();
+		source->DestroyTextures();
 		obs_leave_graphics();
 	}
 
-	if (!bs->texture && width && height) {
+	if (!source->texture && width && height) {
 		obs_enter_graphics();
-		bs->texture = gs_texture_create(
+		source->texture = gs_texture_create(
 				width, height, GS_BGRA, 1,
 				(const uint8_t **)&buffer,
 				GS_DYNAMIC);
-		bs->width = width;
-		bs->height = height;
+		source->width = width;
+		source->height = height;
 		obs_leave_graphics();
 	} else {
 		obs_enter_graphics();
-		gs_texture_set_image(bs->texture,
+		gs_texture_set_image(source->texture,
 				(const uint8_t *)buffer,
 				width * 4, false);
 		obs_leave_graphics();
@@ -205,7 +211,9 @@ void BrowserClient::OnAcceleratedPaint(
 		const RectList &,
 		void *shared_handle)
 {
-	if (!bs) {
+	BrowserSource* source = bs;
+
+	if (!source) {
 		return;
 	}
 
@@ -215,8 +223,8 @@ void BrowserClient::OnAcceleratedPaint(
 		gs_texture_destroy(texture);
 		texture = nullptr;
 #endif
-		gs_texture_destroy(bs->texture);
-		bs->texture = nullptr;
+		gs_texture_destroy(source->texture);
+		source->texture = nullptr;
 
 #if USE_TEXTURE_COPY
 		texture = gs_texture_open_shared(
@@ -226,9 +234,9 @@ void BrowserClient::OnAcceleratedPaint(
 		uint32_t cy = gs_texture_get_height(texture);
 		gs_color_format format = gs_texture_get_color_format(texture);
 
-		bs->texture = gs_texture_create(cx, cy, format, 1, nullptr, 0);
+		source->texture = gs_texture_create(cx, cy, format, 1, nullptr, 0);
 #else
-		bs->texture = gs_texture_open_shared(
+		source->texture = gs_texture_open_shared(
 				(uint32_t)(uintptr_t)shared_handle);
 #endif
 		obs_leave_graphics();
@@ -237,9 +245,9 @@ void BrowserClient::OnAcceleratedPaint(
 	}
 
 #if USE_TEXTURE_COPY
-	if (texture && bs->texture) {
+	if (texture && source->texture) {
 		obs_enter_graphics();
-		gs_copy_texture(bs->texture, texture);
+		gs_copy_texture(source->texture, texture);
 		obs_leave_graphics();
 	}
 #endif
@@ -251,12 +259,14 @@ void BrowserClient::OnLoadEnd(
 		CefRefPtr<CefFrame> frame,
 		int)
 {
-	if (!bs) {
+	BrowserSource* source = bs;
+
+	if (!source) {
 		return;
 	}
 
 	if (frame->IsMain()) {
-		std::string base64EncodedCSS = base64_encode(bs->css);
+		std::string base64EncodedCSS = base64_encode(source->css);
 
 		std::string href;
 		href += "data:text/css;charset=utf-8;base64,";

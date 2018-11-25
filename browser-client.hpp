@@ -42,7 +42,7 @@ class BrowserClient : public CefClient,
 	bool sharing_available = false;
 
 public:
-	BrowserSource *bs;
+	BrowserSource *bs = nullptr;
 	CefRect popupRect;
 	CefRect originalPopupRect;
 
