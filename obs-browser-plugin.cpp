@@ -49,6 +49,7 @@ using namespace std;
 using namespace json11;
 
 static thread manager_thread;
+os_event_t *cef_started_event = nullptr;
 
 static int adapterCount = 0;
 static std::wstring deviceId;
@@ -225,6 +226,7 @@ static void BrowserManagerThread(void)
 	CefInitialize(args, settings, app, nullptr);
 	CefRegisterSchemeHandlerFactory("http", "absolute",
 			new BrowserSchemeHandlerFactory());
+	os_event_signal(cef_started_event);
 	CefRunMessageLoop();
 	CefShutdown();
 }
@@ -446,6 +448,8 @@ bool obs_module_load(void)
 	blog(LOG_INFO, "[obs-browser]: Version %s",
 			OBS_BROWSER_VERSION_STRING);
 
+	os_event_init(&cef_started_event, OS_EVENT_TYPE_MANUAL);
+
 	CefEnableHighDPISupport();
 
 #ifdef _WIN32
@@ -488,4 +492,6 @@ void obs_module_unload(void)
 
 		manager_thread.join();
 	}
+
+	os_event_destroy(cef_started_event);
 }
