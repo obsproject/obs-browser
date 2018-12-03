@@ -2,7 +2,18 @@
 
 #include <util/platform.h>
 #include <QWidget>
+
+#include <functional>
 #include <string>
+
+struct QCefCookieManager {
+	virtual ~QCefCookieManager() {}
+
+	virtual bool SetStoragePath(
+			const std::string &storage_path,
+			bool persist_session_cookies = false)=0;
+	virtual bool FlushStore()=0;
+};
 
 /* ------------------------------------------------------------------------- */
 
@@ -24,18 +35,38 @@ signals:
 
 /* ------------------------------------------------------------------------- */
 
-typedef QCefWidget *(*CREATE_BROWSER_WIDGET_PROC)(QWidget *parent,
-		const std::string &url);
+struct QCef {
+	virtual ~QCef() {}
 
-static inline CREATE_BROWSER_WIDGET_PROC obs_browser_init_panel(void)
+	virtual bool init_browser(void)=0;
+	virtual bool initialized(void)=0;
+	virtual bool wait_for_browser_init(void)=0;
+
+	virtual QCefWidget *create_widget(
+			QWidget *parent,
+			const std::string &url,
+			QCefCookieManager *cookie_manager = nullptr)=0;
+
+	virtual QCefCookieManager *create_cookie_manager(
+			const std::string &storage_path,
+			bool persist_session_cookies = false)=0;
+
+	virtual std::string get_cookie_path(const std::string &storage_path)=0;
+};
+
+static inline QCef *obs_browser_init_panel(void)
 {
-	CREATE_BROWSER_WIDGET_PROC proc = nullptr;
 	void *lib = os_dlopen("obs-browser");
+	QCef *(*create_qcef)(void) = nullptr;
+
 	if (!lib) {
 		return nullptr;
 	}
 
-	proc = (CREATE_BROWSER_WIDGET_PROC)os_dlsym(lib,
-			"obs_browser_create_widget");
-	return proc;
+	create_qcef = (decltype(create_qcef))
+		os_dlsym(lib, "obs_browser_create_qcef");
+	if (!create_qcef)
+		return nullptr;
+
+	return create_qcef();
 }
