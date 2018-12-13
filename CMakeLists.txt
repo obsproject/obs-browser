@@ -140,6 +140,7 @@ endif()
 
 set(obs-browser-page_SOURCES
 	obs-browser-page/obs-browser-page-main.cpp
+	obs-browser-page/obs-browser-page.exe.manifest
 	browser-app.cpp
 	deps/json11/json11.cpp
 	)
