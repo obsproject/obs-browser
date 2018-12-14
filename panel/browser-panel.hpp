@@ -9,6 +9,9 @@
 struct QCefCookieManager {
 	virtual ~QCefCookieManager() {}
 
+	virtual bool DeleteCookies(
+			const std::string &url,
+			const std::string &name)=0;
 	virtual bool SetStoragePath(
 			const std::string &storage_path,
 			bool persist_session_cookies = false)=0;

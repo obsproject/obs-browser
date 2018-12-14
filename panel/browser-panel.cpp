@@ -44,6 +44,16 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		rch = new QCefRequestContextHandler(cm);
 	}
 
+	virtual bool DeleteCookies(
+			const std::string &url,
+			const std::string &name) override
+	{
+		return cm->DeleteCookies(
+				url,
+				name,
+				nullptr);
+	}
+
 	virtual bool SetStoragePath(
 			const std::string &storage_path,
 			bool persist_session_cookies) override
