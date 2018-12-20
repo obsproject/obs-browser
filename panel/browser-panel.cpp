@@ -133,6 +133,11 @@ void QCefWidgetInternal::Init()
 	bool success = QueueCEFTask([this, size, id] ()
 	{
 		CefWindowInfo windowInfo;
+
+		/* Make sure Init isn't called more than once. */
+		if (cefBrowser)
+			return;
+
 #ifdef _WIN32
 		RECT rect = {0, 0, size.width(), size.height()};
 		windowInfo.SetAsChild((HWND)id, rect);
