@@ -3,6 +3,8 @@
 #include "cef-headers.hpp"
 #include "browser-panel-internal.hpp"
 
+#include <string>
+
 class QCefBrowserClient : public CefClient,
                           public CefDisplayHandler,
                           public CefRequestHandler,
@@ -10,8 +12,10 @@ class QCefBrowserClient : public CefClient,
                           public CefLoadHandler {
 
 public:
-	inline QCefBrowserClient(QCefWidgetInternal *widget_)
-		: widget(widget_)
+	inline QCefBrowserClient(QCefWidgetInternal *widget_,
+			const std::string &script_)
+		: widget(widget_),
+		  script(script_)
 	{
 	}
 
@@ -48,7 +52,14 @@ public:
 			CefBrowserSettings &settings,
 			bool *no_javascript_access) override;
 
+	/* CefLoadHandler */
+	virtual void OnLoadEnd(
+			CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			int httpStatusCode) override;
+
 	QCefWidgetInternal *widget = nullptr;
+	std::string script;
 
 	IMPLEMENT_REFCOUNTING(QCefBrowserClient);
 };

@@ -75,3 +75,12 @@ bool QCefBrowserClient::OnBeforePopup(
 	QDesktopServices::openUrl(url);
 	return true;
 }
+
+void QCefBrowserClient::OnLoadEnd(
+		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefFrame> frame,
+		int)
+{
+	if (frame->IsMain() && !script.empty())
+		frame->ExecuteJavaScript(script, CefString(), 0);
+}

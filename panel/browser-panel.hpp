@@ -30,6 +30,7 @@ protected:
 
 public:
 	virtual void setURL(const std::string &url)=0;
+	virtual void setStartupScript(const std::string &script)=0;
 
 signals:
 	void titleChanged(const QString &title);

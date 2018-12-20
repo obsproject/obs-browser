@@ -139,7 +139,7 @@ void QCefWidgetInternal::Init()
 #endif
 
 		CefRefPtr<QCefBrowserClient> browserClient =
-			new QCefBrowserClient(this);
+			new QCefBrowserClient(this, script);
 
 		CefRefPtr<CefRequestContext> rc;
 		if (rch)
@@ -200,6 +200,11 @@ void QCefWidgetInternal::setURL(const std::string &url)
 	if (cefBrowser) {
 		cefBrowser->GetMainFrame()->LoadURL(url);
 	}
+}
+
+void QCefWidgetInternal::setStartupScript(const std::string &script_)
+{
+	script = script_;
 }
 
 /* ------------------------------------------------------------------------- */
