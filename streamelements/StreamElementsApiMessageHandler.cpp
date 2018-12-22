@@ -702,14 +702,40 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 	API_HANDLER_END()
 
 	API_HANDLER_BEGIN("broadcastMessage")
-		if (args->GetSize()) {
-			StreamElementsMessageBus::GetInstance()->BroadcastMessageToBrowsers(
-				StreamElementsMessageBus::DEST_ALL,
+		if (args->GetSize() && args->GetType(0) == VTYPE_DICTIONARY) {
+			CefRefPtr<CefValue> message = args->GetValue(0);
+
+			StreamElementsMessageBus::GetInstance()->NotifyAllMessageListeners(
+				StreamElementsMessageBus::DEST_ALL_LOCAL,
 				StreamElementsMessageBus::SOURCE_WEB,
 				browser->GetMainFrame()->GetURL().ToString(),
-				args->GetValue(0));
+				message);
 
 			result->SetBool(true);
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("broadcastEvent")
+		if (args->GetSize() && args->GetType(0) == VTYPE_DICTIONARY) {
+			CefRefPtr<CefDictionaryValue> d = args->GetDictionary(0);
+
+			if (d->HasKey("name") && d->GetType("name") == VTYPE_STRING) {
+				StreamElementsMessageBus::GetInstance()->NotifyAllLocalEventListeners(
+					StreamElementsMessageBus::DEST_ALL_LOCAL & ~StreamElementsMessageBus::DEST_BROWSER_SOURCE,
+					StreamElementsMessageBus::SOURCE_WEB,
+					browser->GetMainFrame()->GetURL().ToString(),
+					"hostEventReceived",
+					args->GetValue(0));
+
+				StreamElementsMessageBus::GetInstance()->NotifyAllExternalEventListeners(
+					StreamElementsMessageBus::DEST_ALL_EXTERNAL,
+					StreamElementsMessageBus::SOURCE_WEB,
+					browser->GetMainFrame()->GetURL().ToString(),
+					d->GetString("name"),
+					d->GetValue("data"));
+
+				result->SetBool(true);
+			}
 		}
 	API_HANDLER_END()
 

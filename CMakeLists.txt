@@ -130,7 +130,10 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsCrashHandler.cpp
 	streamelements/StreamElementsMessageBus.cpp
 	streamelements/StreamElementsBrowserSourceApiMessageHandler.cpp
+	streamelements/StreamElementsControllerServer.cpp
 	streamelements/deps/zip/zip.c
+	streamelements/deps/server/NamedPipesServer.cpp
+	streamelements/deps/server/NamedPipesServerClientHandler.cpp
 	)
 set(obs-browser_HEADERS
 	obs-browser-source.hpp
@@ -171,10 +174,13 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsCrashHandler.hpp
 	streamelements/StreamElementsMessageBus.hpp
 	streamelements/StreamElementsBrowserSourceApiMessageHandler.hpp
+	streamelements/StreamElementsControllerServer.hpp
 	streamelements/deps/zip/zip.h
 	streamelements/deps/zip/miniz.h
 	streamelements/deps/moodycamel/concurrentqueue.h
 	streamelements/deps/moodycamel/blockingconcurrentqueue.h
+	streamelements/deps/server/NamedPipesServer.hpp
+	streamelements/deps/server/NamedPipesServerClientHandler.hpp
 	)
 
 # only allow browser panels on win32 for now -- other operating systems

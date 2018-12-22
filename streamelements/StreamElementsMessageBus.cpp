@@ -1,15 +1,25 @@
 #include "StreamElementsMessageBus.hpp"
+#include "StreamElementsConfig.hpp"
+#include "StreamElementsGlobalStateManager.hpp"
 
 StreamElementsMessageBus* StreamElementsMessageBus::s_instance = nullptr;
 
 const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_ALL = 0xFFFFFFFFUL;
-const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_UI = 1;
-const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_WORKER = 2;
-const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_BROWSER_SOURCE = 4;
 
+const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_ALL_LOCAL = 0x0000FFFFUL;
+const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_UI = 0x00000001UL;
+const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_WORKER = 0x00000002UL;
+const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_BROWSER_SOURCE = 0x00000004UL;
+
+const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_ALL_EXTERNAL = 0xFFFF0000UL;
+const StreamElementsMessageBus::message_destination_filter_flags_t StreamElementsMessageBus::DEST_EXTERNAL_CONTROLLER = 0x00010000UL;
+
+const char* const StreamElementsMessageBus::SOURCE_APPLICATION = "application";
 const char* const StreamElementsMessageBus::SOURCE_WEB = "web";
+const char* const StreamElementsMessageBus::SOURCE_EXTERNAL = "external";
 
-StreamElementsMessageBus::StreamElementsMessageBus()
+StreamElementsMessageBus::StreamElementsMessageBus() :
+	m_external_controller_server(this)
 {
 
 }
@@ -42,7 +52,7 @@ void StreamElementsMessageBus::RemoveBrowserListener(CefRefPtr<CefBrowser> brows
 	m_browser_list.erase(browser);
 }
 
-void StreamElementsMessageBus::NotifyAllBrowserListeners(
+void StreamElementsMessageBus::NotifyAllLocalEventListeners(
 	message_destination_filter_flags_t types,
 	std::string source,
 	std::string sourceAddress,
@@ -61,7 +71,7 @@ void StreamElementsMessageBus::NotifyAllBrowserListeners(
 	rootDict->SetString("scope", "broadcast");
 	rootDict->SetString("source", source);
 	rootDict->SetString("sourceAddress", sourceAddress);
-	rootDict->SetValue("message", payload);
+	rootDict->SetValue("message", payload->Copy());
 
 	root->SetDictionary(rootDict);
 
@@ -81,4 +91,82 @@ void StreamElementsMessageBus::NotifyAllBrowserListeners(
 			browser->SendProcessMessage(PID_RENDERER, msg);
 		}
 	}
+}
+
+void StreamElementsMessageBus::NotifyAllExternalEventListeners(
+	message_destination_filter_flags_t types,
+	std::string source,
+	std::string sourceAddress,
+	std::string event,
+	CefRefPtr<CefValue> payload)
+{
+	if (DEST_EXTERNAL_CONTROLLER & types) {
+		m_external_controller_server.SendEventAllClients(
+			source,
+			sourceAddress,
+			event,
+			payload);
+	}
+}
+
+bool StreamElementsMessageBus::HandleSystemCommands(
+	message_destination_filter_flags_t types,
+	std::string source,
+	std::string sourceAddress,
+	CefRefPtr<CefValue> payload)
+{
+	if (source != SOURCE_EXTERNAL || payload->GetType() != VTYPE_DICTIONARY) {
+		return false;
+	}
+
+	CefRefPtr<CefDictionaryValue> root = payload->GetDictionary();
+
+	if (!root->HasKey("payload") || root->GetType("payload") != VTYPE_DICTIONARY) {
+		return false;
+	}
+
+	CefRefPtr<CefDictionaryValue> payloadDict = root->GetDictionary("payload");
+
+	if (!payloadDict->HasKey("class") ||
+		!payloadDict->HasKey("command") ||
+		payloadDict->GetType("command") != VTYPE_DICTIONARY ||
+		payloadDict->GetString("class") != "command") {
+		return false;
+	}
+
+	CefRefPtr<CefDictionaryValue> commandDict = payloadDict->GetDictionary("command");
+
+	if (!commandDict->HasKey("name") || commandDict->GetType("name") != VTYPE_STRING) {
+		return false;
+	}
+
+	std::string commandId = commandDict->GetString("name");
+
+	if (commandId == "SYS$QUERY:STATE") {
+		PublishSystemState();
+
+		return true;
+	}
+
+	return false;
+}
+
+void StreamElementsMessageBus::PublishSystemState()
+{
+	CefRefPtr<CefValue> root = CefValue::Create();
+	CefRefPtr<CefDictionaryValue> payload = CefDictionaryValue::Create();
+
+	bool isLoggedIn =
+		StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN == (StreamElementsConfig::GetInstance()->GetStartupFlags() & StreamElementsConfig::STARTUP_FLAGS_SIGNED_IN);
+
+	payload->SetBool("isSignedIn", isLoggedIn);
+
+	root->SetDictionary(payload);
+
+	NotifyAllExternalEventListeners(
+		DEST_ALL_EXTERNAL,
+		SOURCE_APPLICATION,
+		"OBS",
+		"SYS$REPORT:STATE",
+		root);
 }

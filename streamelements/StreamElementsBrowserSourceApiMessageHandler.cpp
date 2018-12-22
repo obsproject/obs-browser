@@ -22,8 +22,8 @@ void StreamElementsBrowserSourceApiMessageHandler::RegisterIncomingApiCallHandle
 {
 	API_HANDLER_BEGIN("broadcastMessage")
 		if (args->GetSize()) {
-			StreamElementsMessageBus::GetInstance()->BroadcastMessageToBrowsers(
-				StreamElementsMessageBus::DEST_ALL,
+			StreamElementsMessageBus::GetInstance()->NotifyAllMessageListeners(
+				StreamElementsMessageBus::DEST_ALL_LOCAL,
 				StreamElementsMessageBus::SOURCE_WEB,
 				browser->GetMainFrame()->GetURL().ToString(),
 				args->GetValue(0));
