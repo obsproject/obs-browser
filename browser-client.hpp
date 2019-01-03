@@ -128,6 +128,7 @@ public:
 #endif
 #if CHROME_VERSION_BUILD >= 3683
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
+<<<<<<< HEAD
 					 int audio_stream_id,
 					 const float **data, int frames,
 					 int64_t pts) override;
@@ -141,6 +142,23 @@ public:
 					  int sample_rate,
 					  int frames_per_buffer) override;
 
+=======
+			int audio_stream_id,
+			const float **data,
+			int frames,
+			int64_t pts) override;
+
+	virtual void OnAudioStreamStopped(CefRefPtr<CefBrowser> browser,
+			int audio_stream_id);
+
+	virtual void OnAudioStreamStarted(CefRefPtr<CefBrowser> browser,
+			int audio_stream_id,
+			int channels,
+			ChannelLayout channel_layout,
+			int sample_rate,
+			int frames_per_buffer) override;
+
+>>>>>>> Add audio capture for browser source
 #endif
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,

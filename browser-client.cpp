@@ -251,6 +251,18 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
 #endif
 }
 #endif
+#if CHROME_VERSION_BUILD >= 3683
+void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser,
+		int audio_stream_id_, int channels_,
+		ChannelLayout channel_layout_, int sample_rate_,
+		int frames_per_buffer_)
+{
+	channels = channels_;
+	channel_layout = channel_layout_;
+	sample_rate = sample_rate_;
+	frames_per_buffer = frames_per_buffer_;
+	audio_stream_id = audio_stream_id_;
+}
 
 #if CHROME_VERSION_BUILD >= 3683
 static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
