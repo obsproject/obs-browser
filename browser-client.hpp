@@ -98,7 +98,11 @@ public:
 			CefRefPtr<CefMenuModel> model) override;
 
 	/* CefRenderHandler */
+#if CHROME_VERSION_BUILD >= 3578
+	virtual void GetViewRect(
+#else
 	virtual bool GetViewRect(
+#endif
 			CefRefPtr<CefBrowser> browser,
 			CefRect &rect) override;
 	virtual void OnPaint(

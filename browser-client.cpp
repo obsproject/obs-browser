@@ -139,17 +139,20 @@ bool BrowserClient::OnProcessMessageReceived(
 
 	return true;
 }
-
+#if CHROME_VERSION_BUILD >= 3578
+void BrowserClient::GetViewRect(
+#else
 bool BrowserClient::GetViewRect(
+#endif
 		CefRefPtr<CefBrowser>,
 		CefRect &rect)
 {
 	if (!bs) {
-		return false;
+		return;
 	}
 
 	rect.Set(0, 0, bs->width, bs->height);
-	return true;
+	return;
 }
 
 void BrowserClient::OnPaint(
