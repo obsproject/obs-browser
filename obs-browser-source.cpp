@@ -126,6 +126,7 @@ bool BrowserSource::CreateBrowser()
 				url,
 				cefBrowserSettings,
 				nullptr);
+		cefBrowser->GetHost()->SetAudioMuted(true);
 	});
 }
 

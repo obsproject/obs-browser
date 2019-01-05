@@ -243,6 +243,7 @@ void RegisterBrowserSource()
 	info.id                     = "browser_source";
 	info.type                   = OBS_SOURCE_TYPE_INPUT;
 	info.output_flags           = OBS_SOURCE_VIDEO |
+				      OBS_SOURCE_AUDIO |
 	                              OBS_SOURCE_CUSTOM_DRAW |
 	                              OBS_SOURCE_INTERACTION |
 	                              OBS_SOURCE_DO_NOT_DUPLICATE;
