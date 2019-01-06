@@ -739,6 +739,22 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		}
 	API_HANDLER_END()
 
+	API_HANDLER_BEGIN("addCurrentSceneItemBrowserSource")
+		result->SetNull();
+
+		if (args->GetSize()) {
+			StreamElementsGlobalStateManager::GetInstance()
+				->GetObsSceneManager()
+				->DeserializeObsBrowserSource(args->GetValue(0), result);
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getAllCurrentSceneItems")
+		StreamElementsGlobalStateManager::GetInstance()
+			->GetObsSceneManager()
+			->SerializeObsCurrentSceneItems(result);
+	API_HANDLER_END()
+
 	API_HANDLER_BEGIN("crashProgram")
 		// Crash
 		*((int*)nullptr) = 12345; // exception

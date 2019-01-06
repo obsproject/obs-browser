@@ -11,6 +11,7 @@
 #include "StreamElementsPerformanceHistoryTracker.hpp"
 #include "StreamElementsAnalyticsEventsManager.hpp"
 #include "StreamElementsCrashHandler.hpp"
+#include "StreamElementsObsSceneManager.hpp"
 
 class StreamElementsGlobalStateManager :
 	public StreamElementsObsAppMonitor
@@ -43,6 +44,7 @@ public:
 	void RestoreState();
 
 	StreamElementsBrowserWidgetManager* GetWidgetManager() { return m_widgetManager; }
+	StreamElementsObsSceneManager* GetObsSceneManager() { return m_obsSceneManager; }
 	StreamElementsMenuManager* GetMenuManager() { return m_menuManager; }
 	StreamElementsBandwidthTestManager* GetBandwidthTestManager() { return m_bwTestManager; }
 	StreamElementsOutputSettingsManager* GetOutputSettingsManager() { return m_outputSettingsManager; }
@@ -68,6 +70,7 @@ private:
 	bool m_initialized = false;
 	QMainWindow* m_mainWindow = nullptr;
 	StreamElementsBrowserWidgetManager* m_widgetManager = nullptr;
+	StreamElementsObsSceneManager* m_obsSceneManager = nullptr;
 	StreamElementsMenuManager* m_menuManager = nullptr;
 	StreamElementsBandwidthTestManager* m_bwTestManager = nullptr;
 	StreamElementsOutputSettingsManager* m_outputSettingsManager = nullptr;

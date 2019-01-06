@@ -131,6 +131,7 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsMessageBus.cpp
 	streamelements/StreamElementsBrowserSourceApiMessageHandler.cpp
 	streamelements/StreamElementsControllerServer.cpp
+	streamelements/StreamElementsObsSceneManager.cpp
 	streamelements/deps/zip/zip.c
 	streamelements/deps/server/NamedPipesServer.cpp
 	streamelements/deps/server/NamedPipesServerClientHandler.cpp
@@ -175,6 +176,7 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsMessageBus.hpp
 	streamelements/StreamElementsBrowserSourceApiMessageHandler.hpp
 	streamelements/StreamElementsControllerServer.hpp
+	streamelements/StreamElementsObsSceneManager.hpp
 	streamelements/deps/zip/zip.h
 	streamelements/deps/zip/miniz.h
 	streamelements/deps/moodycamel/concurrentqueue.h

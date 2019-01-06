@@ -316,13 +316,13 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 
 		context->self->m_analyticsEventsManager = new StreamElementsAnalyticsEventsManager();
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
+		context->self->m_obsSceneManager = new StreamElementsObsSceneManager(context->obs_main_window);
 		context->self->m_menuManager = new StreamElementsMenuManager(context->obs_main_window);
 		context->self->m_bwTestManager = new StreamElementsBandwidthTestManager();
 		context->self->m_outputSettingsManager = new StreamElementsOutputSettingsManager();
 		context->self->m_workerManager = new StreamElementsWorkerManager();
 		context->self->m_hotkeyManager = new StreamElementsHotkeyManager();
 		context->self->m_performanceHistoryTracker = new StreamElementsPerformanceHistoryTracker();
-
 		{
 			// Set up "Live Support" button
 			/*QPushButton* liveSupport = new QPushButton(
@@ -491,6 +491,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 		delete self->m_widgetManager;
 		delete self->m_menuManager;
 		delete self->m_hotkeyManager;
+		delete self->m_obsSceneManager;
 	}, this);
 
 	m_initialized = false;
