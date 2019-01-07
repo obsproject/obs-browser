@@ -197,7 +197,7 @@ static void BrowserManagerThread(void)
 #endif
 
 	CefSettings settings;
-	settings.log_severity = LOGSEVERITY_VERBOSE;
+	settings.log_severity = LOGSEVERITY_DISABLE;
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
 
