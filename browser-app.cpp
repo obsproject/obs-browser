@@ -53,6 +53,8 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 	}
 
 	command_line->AppendSwitch("enable-system-flash");
+	
+	command_line->AppendSwitch("use-fake-ui-for-media-stream");
 
 	command_line->AppendSwitchWithValue("autoplay-policy",
 			"no-user-gesture-required");
