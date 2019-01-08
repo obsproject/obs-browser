@@ -67,6 +67,10 @@ StreamElementsBrowserWidget::~StreamElementsBrowserWidget()
 
 void StreamElementsBrowserWidget::InitBrowserAsync()
 {
+	if (!!m_cef_browser.get()) {
+		return;
+	}
+
 	// Make sure InitBrowserAsyncInternal() runs in Qt UI thread
 	QMetaObject::invokeMethod(this, "InitBrowserAsyncInternal");
 }

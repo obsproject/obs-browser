@@ -98,12 +98,24 @@ private:
 	cef_window_handle_t m_window_handle;
 	CefRefPtr<CefBrowser> m_cef_browser;
 
+private:
+	bool m_isWidgetInitialized = false;
+
 protected:
+	virtual bool event(QEvent* event) override
+	{
+		if (!m_isWidgetInitialized) {
+			InitBrowserAsync();
+
+			m_isWidgetInitialized = true;
+		}
+
+		return QWidget::event(event);
+	}
+
 	virtual void showEvent(QShowEvent* showEvent) override
 	{
 		QWidget::showEvent(showEvent);
-
-		InitBrowserAsync();
 
 		ShowBrowser();
 
