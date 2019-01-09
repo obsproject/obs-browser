@@ -148,11 +148,19 @@ bool BrowserClient::GetViewRect(
 		CefRect &rect)
 {
 	if (!bs) {
+#if CHROME_VERSION_BUILD >= 3578
 		return;
+#else
+		return false;
+#endif
 	}
 
 	rect.Set(0, 0, bs->width, bs->height);
+#if CHROME_VERSION_BUILD >= 3578
 	return;
+#else
+	return true;
+#endif
 }
 
 void BrowserClient::OnPaint(
