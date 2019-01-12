@@ -57,7 +57,6 @@ bool BrowserSchemeHandler::ProcessRequest(
 	fileName = path;
 
 	if (!inputStream.is_open()) {
-		callback->Cancel();
 		return false;
 	}
 
