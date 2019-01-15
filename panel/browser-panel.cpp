@@ -14,6 +14,9 @@ extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
 extern os_event_t *cef_started_event;
 
+std::mutex                     popup_callbacks_mutex;
+std::vector<PopupCallbackInfo> popup_callbacks;
+
 /* ------------------------------------------------------------------------- */
 
 CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
@@ -228,6 +231,11 @@ struct QCefInternal : QCef {
 			const std::string &storage_path,
 			bool persist_session_cookies) override;
 
+	virtual void add_popup_url_callback(
+			const std::string &url,
+			QObject *obj,
+			const char *method) override;	
+
 	virtual std::string get_cookie_path(
 			const std::string &storage_path) override;
 };
@@ -277,6 +285,15 @@ QCefCookieManager *QCefInternal::create_cookie_manager(
 		blog(LOG_ERROR, "Failed to create cookie manager: %s", error);
 		return nullptr;
 	}
+}
+
+void QCefInternal::add_popup_url_callback(
+		const std::string &url,
+		QObject *obj,
+		const char *method)
+{
+	std::lock_guard<std::mutex> lock(popup_callbacks_mutex);
+	popup_callbacks.push_back(PopupCallbackInfo{url, obj, method});
 }
 
 std::string QCefInternal::get_cookie_path(

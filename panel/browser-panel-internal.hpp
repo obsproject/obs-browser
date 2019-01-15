@@ -1,8 +1,21 @@
 #pragma once
 
 #include <QTimer>
+#include <QPointer>
 #include "browser-panel.hpp"
 #include "cef-headers.hpp"
+
+#include <vector>
+#include <mutex>
+
+struct PopupCallbackInfo {
+	std::string       url;
+	QPointer<QObject> obj;
+	const char        *method;
+};
+
+extern std::mutex                     popup_callbacks_mutex;
+extern std::vector<PopupCallbackInfo> popup_callbacks;
 
 /* ------------------------------------------------------------------------- */
 

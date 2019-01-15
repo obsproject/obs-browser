@@ -55,6 +55,11 @@ struct QCef {
 			const std::string &storage_path,
 			bool persist_session_cookies = false)=0;
 
+	virtual void add_popup_url_callback(
+			const std::string &url,
+			QObject *obj,
+			const char *method)=0;
+
 	virtual std::string get_cookie_path(const std::string &storage_path)=0;
 };
 

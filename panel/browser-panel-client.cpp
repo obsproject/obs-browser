@@ -1,5 +1,7 @@
 #include "browser-panel-client.hpp"
 
+#include <util/dstr.h>
+
 #include <QUrl>
 #include <QDesktopServices>
 
@@ -69,8 +71,26 @@ bool QCefBrowserClient::OnBeforePopup(
 		CefBrowserSettings &,
 		bool *)
 {
-	/* Open popup URLs in user's actual browser */
 	std::string str_url = target_url;
+
+	std::lock_guard<std::mutex> lock(popup_callbacks_mutex);
+	for (size_t i = popup_callbacks.size(); i > 0; i--) {
+		PopupCallbackInfo &info = popup_callbacks[i - 1];
+
+		if (!info.obj) {
+			popup_callbacks.erase(popup_callbacks.begin() + (i - 1));
+			continue;
+		}
+
+		if (astrcmpi(info.url.c_str(), str_url.c_str()) == 0) {
+			QMetaObject::invokeMethod(info.obj, info.method,
+					Qt::QueuedConnection,
+					Q_ARG(QString, QString(str_url.c_str())));
+			return true;
+		}
+	}
+
+	/* Open popup URLs in user's actual browser */
 	QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 	return true;
