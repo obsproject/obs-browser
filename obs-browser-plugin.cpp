@@ -439,6 +439,7 @@ static inline void EnumAdapterCount()
 static const wchar_t *blacklisted_devices[] = {
 	L"Intel",
 	L"Microsoft",
+	L"Radeon HD 8850M",
 	nullptr
 };
 #endif
