@@ -755,6 +755,49 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 			->SerializeObsCurrentSceneItems(result);
 	API_HANDLER_END()
 
+	API_HANDLER_BEGIN("getHostReleaseGroupProperties")
+		std::string quality = ReadProductEnvironmentConfigurationString("Quality");
+		std::string manifestUrl = ReadProductEnvironmentConfigurationString("ManifestUrl");
+
+		if (quality.size() && manifestUrl.size()) {
+			CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
+
+			d->SetString("quality", quality.c_str());
+			d->SetString("manifestUrl", manifestUrl.c_str());
+
+			result->SetDictionary(d);
+		}
+		else {
+			result->SetNull();
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("setHostReleaseGroupProperties")
+		if (args->GetSize() && args->GetType(0) == VTYPE_DICTIONARY) {
+			CefRefPtr<CefDictionaryValue> d = args->GetDictionary(0);
+
+			if (d->HasKey("quality") && d->GetType("quality") == VTYPE_STRING &&
+			    d->HasKey("manifestUrl") && d->GetType("manifestUrl") == VTYPE_STRING) {
+				std::string quality = d->GetString("quality");
+				std::string manifestUrl = d->GetString("manifestUrl");
+
+				WriteProductEnvironmentConfigurationString(
+					"Quality", quality.c_str());
+
+				WriteProductEnvironmentConfigurationString(
+					"ManifestUrl", manifestUrl.c_str());
+			}
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("queryHostReleaseGroupUpdateAvailability")
+		signal_handler_signal(
+			obs_get_signal_handler(),
+			"streamelements_request_check_for_updates", nullptr);
+
+		result->SetBool(true);
+	API_HANDLER_END()
+
 	API_HANDLER_BEGIN("crashProgram")
 		// Crash
 		*((int*)nullptr) = 12345; // exception

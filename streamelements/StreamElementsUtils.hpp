@@ -89,3 +89,8 @@ bool HttpPost(const char* url, const char* contentType, void* buffer, size_t buf
 
 std::string CreateGloballyUniqueIdString();
 std::string GetComputerSystemUniqueId();
+
+/* ========================================================= */
+
+std::string ReadProductEnvironmentConfigurationString(const char* key);
+bool WriteProductEnvironmentConfigurationString(const char* key, const char* value);

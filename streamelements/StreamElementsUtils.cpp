@@ -18,6 +18,10 @@
 
 /* ========================================================= */
 
+static const char* ENV_PRODUCT_NAME = "OBS.Live";
+
+/* ========================================================= */
+
 // convert wstring to UTF-8 string
 static std::string wstring_to_utf8(const std::wstring& str)
 {
@@ -921,3 +925,90 @@ std::string GetComputerSystemUniqueId()
 	return result;
 }
 
+static std::string GetEnvironmentConfigRegKeyPath(const char* regValueName, const char* productName)
+{
+#ifdef _WIN64
+	std::string REG_KEY_PATH = "SOFTWARE\\WOW6432Node\\StreamElements";
+#else
+	std::string REG_KEY_PATH = "SOFTWARE\\StreamElements";
+#endif
+
+	if (productName && productName[0]) {
+		REG_KEY_PATH += "\\";
+		REG_KEY_PATH += productName;
+	}
+
+	return REG_KEY_PATH;
+}
+
+static std::string ReadEnvironmentConfigString(const char* regValueName, const char* productName)
+{
+	std::string result = "";
+
+	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(regValueName, productName);
+
+	DWORD bufLen = 16384;
+	char* buffer = new char[bufLen];
+
+	LSTATUS lResult = RegGetValueA(
+		HKEY_LOCAL_MACHINE,
+		REG_KEY_PATH.c_str(),
+		regValueName,
+		RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY,
+		NULL,
+		buffer,
+		&bufLen);
+
+	if (lResult != ERROR_SUCCESS) {
+		lResult = RegGetValueA(
+			HKEY_LOCAL_MACHINE,
+			REG_KEY_PATH.c_str(),
+			regValueName,
+			RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY,
+			NULL,
+			buffer,
+			&bufLen);
+	}
+
+	if (ERROR_SUCCESS == lResult) {
+		result = buffer;
+	}
+
+	delete[] buffer;
+
+	return result;
+}
+
+static bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName)
+{
+	bool result = false;
+
+	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(regValueName, productName);
+
+	LSTATUS lResult = RegSetKeyValueA(
+		HKEY_LOCAL_MACHINE,
+		REG_KEY_PATH.c_str(),
+		regValueName,
+		REG_SZ,
+		regValue,
+		strlen(regValue));
+
+	if (lResult != ERROR_SUCCESS) {
+		result = false;
+	}
+	else {
+		result = true;
+	}
+
+	return result;
+}
+
+std::string ReadProductEnvironmentConfigurationString(const char* key)
+{
+	return ReadEnvironmentConfigString(key, ENV_PRODUCT_NAME);
+}
+
+bool WriteProductEnvironmentConfigurationString(const char* key, const char* value)
+{
+	return WriteEnvironmentConfigString(key, value, ENV_PRODUCT_NAME);
+}
