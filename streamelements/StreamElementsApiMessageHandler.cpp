@@ -793,7 +793,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 	API_HANDLER_BEGIN("queryHostReleaseGroupUpdateAvailability")
 		signal_handler_signal(
 			obs_get_signal_handler(),
-			"streamelements_request_check_for_updates", nullptr);
+			"streamelements_request_check_for_updates_silent", nullptr);
 
 		result->SetBool(true);
 	API_HANDLER_END()
