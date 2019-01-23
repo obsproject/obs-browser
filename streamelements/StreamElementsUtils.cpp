@@ -29,6 +29,11 @@ static std::string wstring_to_utf8(const std::wstring& str)
 	return myconv.to_bytes(str);
 }
 
+std::string clean_guid_string(std::string input)
+{
+	return std::regex_replace(input, std::regex("-"), "");
+}
+
 static std::vector<std::string> tokenizeString(const std::string& str, const std::string& delimiters)
 {
 	std::vector<std::string> tokens;
@@ -757,6 +762,85 @@ bool HttpPost(const char* url, const char* contentType, void* buffer, size_t buf
 
 /* ========================================================= */
 
+static std::string GetEnvironmentConfigRegKeyPath(const char* productName)
+{
+#ifdef _WIN64
+	std::string REG_KEY_PATH = "SOFTWARE\\WOW6432Node\\StreamElements";
+#else
+	std::string REG_KEY_PATH = "SOFTWARE\\StreamElements";
+#endif
+
+	if (productName && productName[0]) {
+		REG_KEY_PATH += "\\";
+		REG_KEY_PATH += productName;
+	}
+
+	return REG_KEY_PATH;
+}
+
+static std::string ReadEnvironmentConfigString(const char* regValueName, const char* productName)
+{
+	std::string result = "";
+
+	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(productName);
+
+	DWORD bufLen = 16384;
+	char* buffer = new char[bufLen];
+
+	LSTATUS lResult = RegGetValueA(
+		HKEY_LOCAL_MACHINE,
+		REG_KEY_PATH.c_str(),
+		regValueName,
+		RRF_RT_REG_SZ,
+		NULL,
+		buffer,
+		&bufLen);
+
+	if (ERROR_SUCCESS == lResult) {
+		result = buffer;
+	}
+
+	delete[] buffer;
+
+	return result;
+}
+
+static bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName)
+{
+	bool result = false;
+
+	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(productName);
+
+	LSTATUS lResult = RegSetKeyValueA(
+		HKEY_LOCAL_MACHINE,
+		REG_KEY_PATH.c_str(),
+		regValueName,
+		REG_SZ,
+		regValue,
+		strlen(regValue));
+
+	if (lResult != ERROR_SUCCESS) {
+		result = false;
+	}
+	else {
+		result = true;
+	}
+
+	return result;
+}
+
+std::string ReadProductEnvironmentConfigurationString(const char* key)
+{
+	return ReadEnvironmentConfigString(key, ENV_PRODUCT_NAME);
+}
+
+bool WriteProductEnvironmentConfigurationString(const char* key, const char* value)
+{
+	return WriteEnvironmentConfigString(key, value, ENV_PRODUCT_NAME);
+}
+
+/* ========================================================= */
+
 std::string CreateGloballyUniqueIdString()
 {
 	std::string result;
@@ -775,36 +859,53 @@ std::string CreateGloballyUniqueIdString()
 	return result;
 }
 
+#include <bcrypt.h>
+#pragma comment(lib, "bcrypt.lib")
+static std::string CreateCryptoSecureRandomNumberString()
+{
+	std::string result = "0";
+
+	BCRYPT_ALG_HANDLE hAlgo;
+
+	if (0 == BCryptOpenAlgorithmProvider(&hAlgo, BCRYPT_RNG_ALGORITHM, NULL, 0)) {
+		uint64_t buffer;
+
+		if (0 == BCryptGenRandom(hAlgo, (PUCHAR)&buffer, sizeof(buffer), 0)) {
+			char buf[sizeof(buffer) * 2 + 1];
+			sprintf_s(buf, sizeof(buf), "%llX", buffer);
+
+			result = buf;
+
+			std::cout << buffer << std::endl;
+		}
+
+		BCryptCloseAlgorithmProvider(hAlgo, 0);
+	}
+
+	return result;
+}
+
 #include <wbemidl.h>
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "OleAut32.lib")
 #pragma comment(lib, "Advapi32.lib")
 std::string GetComputerSystemUniqueId()
 {
-	std::string result = "";
-
-	const char* REG_KEY_PATH = "SOFTWARE\\StreamElements";
 	const char* REG_VALUE_NAME = "MachineUniqueIdentifier";
 
-	HKEY hkeyRoot;
-	if (ERROR_SUCCESS == RegCreateKeyA(HKEY_LOCAL_MACHINE, REG_KEY_PATH, &hkeyRoot)) {
-		RegCloseKey(hkeyRoot);
+	std::string result = ReadEnvironmentConfigString(REG_VALUE_NAME, nullptr);
+
+	if (result.size()) {
+		// Discard invalid values
+		if (result == "WUID/03000200-0400-0500-0006-000700080009" || // Known duplicate
+		    result == "WUID/00000000-0000-0000-0000-000000000000" || // Null value
+		    result == "WUID/FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF" || // Invalid value
+		    result == "WUID/00412F4E-0000-0000-0000-0000FFFFFFFF") { // Set by russian MS Office crack
+			result = "";
+		}
 	}
 
-	char buf[128];
-	DWORD bufLen = 128;
-
-	if (ERROR_SUCCESS == RegGetValueA(
-		HKEY_LOCAL_MACHINE,
-		REG_KEY_PATH,
-		REG_VALUE_NAME,
-		RRF_RT_REG_SZ,
-		NULL,
-		buf,
-		&bufLen)) {
-		result = buf;
-	}
-	else {
+	if (!result.size()) {
 		// Get unique ID from WMI
 
 		HRESULT hr = CoInitialize(NULL);
@@ -886,7 +987,11 @@ std::string GetComputerSystemUniqueId()
 
 								if (SUCCEEDED(hr)) {
 									if (value.vt != VT_NULL) {
-										result = std::string("WUID/") + wstring_to_utf8(std::wstring(value.bstrVal));
+										result = std::string("SWID/") + clean_guid_string(wstring_to_utf8(std::wstring(value.bstrVal)));
+										result += "-";
+										result += clean_guid_string(CreateGloballyUniqueIdString());
+										result += "-";
+										result += CreateCryptoSecureRandomNumberString();
 									}
 									VariantClear(&value);
 								}
@@ -910,105 +1015,15 @@ std::string GetComputerSystemUniqueId()
 
 	if (!result.size()) {
 		// Failed retrieving UUID, generate our own
-		result = std::string("SEID/") + CreateGloballyUniqueIdString();
+		result = std::string("SEID/") + clean_guid_string(CreateGloballyUniqueIdString());
+		result += "-";
+		result += CreateCryptoSecureRandomNumberString();
 	}
+
+	result = result;
 
 	// Save for future use
-	RegSetKeyValueA(
-		HKEY_LOCAL_MACHINE,
-		REG_KEY_PATH,
-		REG_VALUE_NAME,
-		REG_SZ,
-		result.c_str(),
-		(DWORD)result.size());
+	WriteEnvironmentConfigString(REG_VALUE_NAME, result.c_str(), nullptr);
 
 	return result;
-}
-
-static std::string GetEnvironmentConfigRegKeyPath(const char* regValueName, const char* productName)
-{
-#ifdef _WIN64
-	std::string REG_KEY_PATH = "SOFTWARE\\WOW6432Node\\StreamElements";
-#else
-	std::string REG_KEY_PATH = "SOFTWARE\\StreamElements";
-#endif
-
-	if (productName && productName[0]) {
-		REG_KEY_PATH += "\\";
-		REG_KEY_PATH += productName;
-	}
-
-	return REG_KEY_PATH;
-}
-
-static std::string ReadEnvironmentConfigString(const char* regValueName, const char* productName)
-{
-	std::string result = "";
-
-	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(regValueName, productName);
-
-	DWORD bufLen = 16384;
-	char* buffer = new char[bufLen];
-
-	LSTATUS lResult = RegGetValueA(
-		HKEY_LOCAL_MACHINE,
-		REG_KEY_PATH.c_str(),
-		regValueName,
-		RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY,
-		NULL,
-		buffer,
-		&bufLen);
-
-	if (lResult != ERROR_SUCCESS) {
-		lResult = RegGetValueA(
-			HKEY_LOCAL_MACHINE,
-			REG_KEY_PATH.c_str(),
-			regValueName,
-			RRF_RT_REG_SZ | RRF_SUBKEY_WOW6432KEY,
-			NULL,
-			buffer,
-			&bufLen);
-	}
-
-	if (ERROR_SUCCESS == lResult) {
-		result = buffer;
-	}
-
-	delete[] buffer;
-
-	return result;
-}
-
-static bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName)
-{
-	bool result = false;
-
-	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(regValueName, productName);
-
-	LSTATUS lResult = RegSetKeyValueA(
-		HKEY_LOCAL_MACHINE,
-		REG_KEY_PATH.c_str(),
-		regValueName,
-		REG_SZ,
-		regValue,
-		strlen(regValue));
-
-	if (lResult != ERROR_SUCCESS) {
-		result = false;
-	}
-	else {
-		result = true;
-	}
-
-	return result;
-}
-
-std::string ReadProductEnvironmentConfigurationString(const char* key)
-{
-	return ReadEnvironmentConfigString(key, ENV_PRODUCT_NAME);
-}
-
-bool WriteProductEnvironmentConfigurationString(const char* key, const char* value)
-{
-	return WriteEnvironmentConfigString(key, value, ENV_PRODUCT_NAME);
 }
