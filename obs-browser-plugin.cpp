@@ -205,9 +205,21 @@ static void BrowserManagerThread(void)
 	CefString(&settings.framework_dir_path) = CEF_LIBRARY;
 #endif
 
+	std::string obs_locale = obs_get_locale();
+	std::string accepted_languages;
+	if (obs_locale != "en-US") {
+		accepted_languages = obs_locale;
+		accepted_languages += ",";
+		accepted_languages += "en-US,en";
+	} else {
+		accepted_languages = "en-US,en";
+	}
+
 	BPtr<char> conf_path = obs_module_config_path("");
 	os_mkdir(conf_path);
 	BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
+	CefString(&settings.locale) = obs_get_locale();
+	CefString(&settings.accept_language_list) = accepted_languages;
 	CefString(&settings.cache_path) = conf_path_abs;
 	CefString(&settings.browser_subprocess_path) = path;
 
