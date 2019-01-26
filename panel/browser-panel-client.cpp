@@ -33,14 +33,20 @@ CefRefPtr<CefLifeSpanHandler> QCefBrowserClient::GetLifeSpanHandler()
 
 /* CefDisplayHandler */
 void QCefBrowserClient::OnTitleChange(
-		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefBrowser> browser,
 		const CefString &title)
 {
-	if (widget) {
+	if (widget && widget->cefBrowser->IsSame(browser)) {
 		std::string str_title = title;
 		QString qt_title = QString::fromUtf8(str_title.c_str());
 		QMetaObject::invokeMethod(widget, "titleChanged",
 				Q_ARG(QString, qt_title));
+	} else { /* handle popup title */
+#ifdef _WIN32
+		std::wstring str_title = title;
+		HWND hwnd = browser->GetHost()->GetWindowHandle();
+		SetWindowTextW(hwnd, str_title.c_str());
+#endif
 	}
 }
 
