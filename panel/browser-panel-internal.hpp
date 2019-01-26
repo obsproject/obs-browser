@@ -8,14 +8,20 @@
 #include <vector>
 #include <mutex>
 
-struct PopupCallbackInfo {
+struct PopupWhitelistInfo {
 	std::string       url;
 	QPointer<QObject> obj;
-	const char        *method;
+
+	inline PopupWhitelistInfo(
+			const std::string &url_,
+			QObject *obj_)
+		: url    (url_),
+		  obj    (obj_)
+	{}
 };
 
-extern std::mutex                     popup_callbacks_mutex;
-extern std::vector<PopupCallbackInfo> popup_callbacks;
+extern std::mutex                      popup_whitelist_mutex;
+extern std::vector<PopupWhitelistInfo> popup_whitelist;
 
 /* ------------------------------------------------------------------------- */
 

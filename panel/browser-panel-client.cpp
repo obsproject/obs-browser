@@ -5,6 +5,10 @@
 #include <QUrl>
 #include <QDesktopServices>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 /* CefClient */
 CefRefPtr<CefLoadHandler> QCefBrowserClient::GetLoadHandler()
 {
@@ -66,27 +70,28 @@ bool QCefBrowserClient::OnBeforePopup(
 		CefLifeSpanHandler::WindowOpenDisposition,
 		bool,
 		const CefPopupFeatures &,
-		CefWindowInfo &,
+		CefWindowInfo &windowInfo,
 		CefRefPtr<CefClient> &,
 		CefBrowserSettings &,
 		bool *)
 {
 	std::string str_url = target_url;
 
-	std::lock_guard<std::mutex> lock(popup_callbacks_mutex);
-	for (size_t i = popup_callbacks.size(); i > 0; i--) {
-		PopupCallbackInfo &info = popup_callbacks[i - 1];
+	std::lock_guard<std::mutex> lock(popup_whitelist_mutex);
+	for (size_t i = popup_whitelist.size(); i > 0; i--) {
+		PopupWhitelistInfo &info = popup_whitelist[i - 1];
 
 		if (!info.obj) {
-			popup_callbacks.erase(popup_callbacks.begin() + (i - 1));
+			popup_whitelist.erase(popup_whitelist.begin() + (i - 1));
 			continue;
 		}
 
 		if (astrcmpi(info.url.c_str(), str_url.c_str()) == 0) {
-			QMetaObject::invokeMethod(info.obj, info.method,
-					Qt::QueuedConnection,
-					Q_ARG(QString, QString(str_url.c_str())));
-			return true;
+#ifdef _WIN32
+			HWND hwnd = (HWND)widget->effectiveWinId();
+			windowInfo.parent_window = hwnd;
+#endif
+			return false;
 		}
 	}
 
