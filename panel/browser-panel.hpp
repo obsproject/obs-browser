@@ -16,6 +16,13 @@ struct QCefCookieManager {
 			const std::string &storage_path,
 			bool persist_session_cookies = false)=0;
 	virtual bool FlushStore()=0;
+
+	typedef std::function<void(bool)> cookie_exists_cb;
+
+	virtual void CheckForCookie(
+			const std::string &site,
+			const std::string &cookie,
+			cookie_exists_cb callback)=0;
 };
 
 /* ------------------------------------------------------------------------- */

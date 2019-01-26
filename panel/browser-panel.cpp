@@ -24,6 +24,44 @@ CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
 	return cm;
 }
 
+class CookieCheck : public CefCookieVisitor {
+public:
+	QCefCookieManager::cookie_exists_cb callback;
+	std::string target;
+	bool cookie_found = false;
+
+	inline CookieCheck(
+			QCefCookieManager::cookie_exists_cb callback_,
+			const std::string target_)
+		: callback (callback_),
+		  target   (target_)
+	{
+	}
+
+	virtual ~CookieCheck()
+	{
+		callback(cookie_found);
+	}
+
+	virtual bool Visit(
+			const CefCookie &cookie,
+			int,
+			int,
+			bool &) override
+	{
+		CefString cef_name = cookie.name.str;
+		std::string name = cef_name;
+
+		if (name == target) {
+			cookie_found = true;
+			return false;
+		}
+		return true;
+	}
+
+	IMPLEMENT_REFCOUNTING(CookieCheck);
+};
+
 struct QCefCookieManagerInternal : QCefCookieManager {
 	CefRefPtr<CefCookieManager> cm;
 	CefRefPtr<CefRequestContextHandler> rch;
@@ -75,6 +113,15 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 	virtual bool FlushStore() override
 	{
 		return cm->FlushStore(nullptr);
+	}
+
+	virtual void CheckForCookie(
+			const std::string &site,
+			const std::string &cookie,
+			cookie_exists_cb callback) override
+	{
+		CefRefPtr<CookieCheck> c = new CookieCheck(callback, cookie);
+		cm->VisitUrlCookies(site, false, c);
 	}
 };
 
