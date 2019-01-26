@@ -47,13 +47,13 @@ public:
 	QCefWidgetInternal(
 			QWidget *parent,
 			const std::string &url,
-			CefRefPtr<CefRequestContextHandler> rch);
+			CefRefPtr<CefRequestContext> rc);
 	~QCefWidgetInternal();
 
 	CefRefPtr<CefBrowser> cefBrowser;
 	std::string url;
 	std::string script;
-	CefRefPtr<CefRequestContextHandler> rch;
+	CefRefPtr<CefRequestContext> rc;
 	QTimer timer;
 
 	virtual void resizeEvent(QResizeEvent *event) override;

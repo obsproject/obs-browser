@@ -27,6 +27,7 @@ CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
 struct QCefCookieManagerInternal : QCefCookieManager {
 	CefRefPtr<CefCookieManager> cm;
 	CefRefPtr<CefRequestContextHandler> rch;
+	CefRefPtr<CefRequestContext> rc;
 
 	QCefCookieManagerInternal(
 			const std::string &storage_path,
@@ -45,6 +46,10 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 			throw "Failed to create cookie manager";
 
 		rch = new QCefRequestContextHandler(cm);
+
+		rc = CefRequestContext::CreateContext(
+				CefRequestContext::GetGlobalContext(),
+				rch);
 	}
 
 	virtual bool DeleteCookies(
@@ -95,10 +100,10 @@ static void ExecuteOnBrowser(std::function<void()> func, bool async = false)
 QCefWidgetInternal::QCefWidgetInternal(
 		QWidget *parent,
 		const std::string &url_,
-		CefRefPtr<CefRequestContextHandler> rch_)
+		CefRefPtr<CefRequestContext> rc_)
 	: QCefWidget (parent),
 	  url        (url_),
-	  rch        (rch_)
+	  rc         (rc_)
 {
 	setAttribute(Qt::WA_PaintOnScreen);
 	setAttribute(Qt::WA_StaticContents);
@@ -148,12 +153,6 @@ void QCefWidgetInternal::Init()
 
 		CefRefPtr<QCefBrowserClient> browserClient =
 			new QCefBrowserClient(this, script);
-
-		CefRefPtr<CefRequestContext> rc;
-		if (rch)
-			rc = CefRequestContext::CreateContext(
-					CefRequestContext::GetGlobalContext(),
-					rch);
 
 		CefBrowserSettings cefBrowserSettings;
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
@@ -269,7 +268,7 @@ QCefWidget *QCefInternal::create_widget(
 	return new QCefWidgetInternal(
 			parent,
 			url,
-			cmi ? cmi->rch : nullptr);
+			cmi ? cmi->rc : nullptr);
 }
 
 QCefCookieManager *QCefInternal::create_cookie_manager(
