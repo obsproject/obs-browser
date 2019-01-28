@@ -105,9 +105,15 @@ protected:
 	virtual bool event(QEvent* event) override
 	{
 		if (!m_isWidgetInitialized) {
+			AdviseHostWidgetHiddenChange(!isVisible());
+
 			InitBrowserAsync();
 
 			m_isWidgetInitialized = true;
+		}
+
+		if (event->type() == QEvent::Polish) {
+			AdviseHostWidgetHiddenChange(!isVisible());
 		}
 
 		return QWidget::event(event);
@@ -117,7 +123,23 @@ protected:
 	{
 		QWidget::showEvent(showEvent);
 
-		ShowBrowser();
+		if (isVisible()) {
+			// http://doc.qt.io/qt-5/qwidget.html#visible-prop
+			//
+			// A widget that happens to be obscured by other windows
+			// on the screen is considered to be visible. The same
+			// applies to iconified windows and windows that exist on
+			// another virtual desktop (on platforms that support this
+			// concept). A widget receives spontaneous show and hide
+			// events when its mapping status is changed by the window
+			// system, e.g. a spontaneous hide event when the user
+			// minimizes the window, and a spontaneous show event when
+			// the window is restored again.
+			//
+			ShowBrowser();
+		}
+
+		AdviseHostWidgetHiddenChange(!isVisible());
 
 		emit browserStateChanged();
 	}
@@ -126,7 +148,23 @@ protected:
 	{
 		QWidget::hideEvent(hideEvent);
 
-		HideBrowser();
+		if (!isVisible()) {
+			// http://doc.qt.io/qt-5/qwidget.html#visible-prop
+			//
+			// A widget that happens to be obscured by other windows
+			// on the screen is considered to be visible. The same
+			// applies to iconified windows and windows that exist on
+			// another virtual desktop (on platforms that support this
+			// concept). A widget receives spontaneous show and hide
+			// events when its mapping status is changed by the window
+			// system, e.g. a spontaneous hide event when the user
+			// minimizes the window, and a spontaneous show event when
+			// the window is restored again.
+			//
+			HideBrowser();
+		}
+
+		AdviseHostWidgetHiddenChange(!isVisible());
 
 		emit browserStateChanged();
 	}
@@ -174,6 +212,68 @@ private:
 			// Make sure window updates on multiple monitors with different DPI
 			::SendMessage(hWnd, WM_SIZE, 0, MAKELPARAM(width(), height()));
 #endif
+		}
+	}
+
+private:
+	bool m_advisedHostWidgetHiddenChange = false;
+	bool m_prevAdvisedHostWidgetHiddenState = false;
+
+protected:
+	void AdviseHostWidgetHiddenChange(bool isHidden)
+	{
+		if (m_requestedApiMessageHandler) {
+			m_requestedApiMessageHandler->setInitialHiddenState(!isVisible());
+		}
+
+		if (m_advisedHostWidgetHiddenChange) {
+			if (m_prevAdvisedHostWidgetHiddenState == isHidden) {
+				return;
+			}
+		}
+
+		m_advisedHostWidgetHiddenChange = true;
+		m_prevAdvisedHostWidgetHiddenState = isHidden;
+
+		if (!m_cef_browser.get()) {
+			return;
+		}
+
+		// Change window.host.hostHidden
+		{
+			// Context created, request creation of window.host object
+			// with API methods
+			CefRefPtr<CefValue> root = CefValue::Create();
+
+			CefRefPtr<CefDictionaryValue> rootDictionary = CefDictionaryValue::Create();
+			root->SetDictionary(rootDictionary);
+
+			rootDictionary->SetBool("hostContainerHidden", isHidden);
+
+			// Convert data to JSON
+			CefString jsonString =
+				CefWriteJSON(root, JSON_WRITER_DEFAULT);
+
+			// Send request to renderer process
+			CefRefPtr<CefProcessMessage> msg =
+				CefProcessMessage::Create("CefRenderProcessHandler::BindJavaScriptProperties");
+
+			msg->GetArgumentList()->SetString(0, "host");
+			msg->GetArgumentList()->SetString(1, jsonString);
+
+			m_cef_browser->SendProcessMessage(PID_RENDERER, msg);
+		}
+
+		// Dispatch hostVisibilityChanged event
+		{
+			CefRefPtr<CefProcessMessage> msg =
+				CefProcessMessage::Create("DispatchJSEvent");
+			CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+			args->SetString(0, "hostContainerVisibilityChanged");
+			args->SetString(1, "null");
+
+			m_cef_browser->SendProcessMessage(PID_RENDERER, msg);
 		}
 	}
 

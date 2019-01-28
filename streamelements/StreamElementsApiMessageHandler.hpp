@@ -15,6 +15,8 @@ public:
 		CefProcessId source_process,
 		CefRefPtr<CefProcessMessage> message) override;
 
+	void setInitialHiddenState(bool isHidden) { m_initialHiddenState = isHidden; }
+
 protected:
 	virtual void RegisterIncomingApiCallHandlers();
 
@@ -24,6 +26,7 @@ protected:
 
 private:
 	std::map<std::string, incoming_call_handler_t> m_apiCallHandlers;
+	bool m_initialHiddenState = false;
 
 	void RegisterIncomingApiCallHandlersInternal(CefRefPtr<CefBrowser> browser);
 	void RegisterApiPropsInternal(CefRefPtr<CefBrowser> browser);

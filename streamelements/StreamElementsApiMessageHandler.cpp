@@ -174,6 +174,7 @@ void StreamElementsApiMessageHandler::RegisterApiPropsInternal(CefRefPtr<CefBrow
 	root->SetDictionary(rootDictionary);
 
 	rootDictionary->SetBool("hostReady", true);
+	rootDictionary->SetBool("hostContainerHidden", m_initialHiddenState);
 	rootDictionary->SetInt("apiMajorVersion", HOST_API_VERSION_MAJOR);
 	rootDictionary->SetInt("apiMinorVersion", HOST_API_VERSION_MINOR);
 
