@@ -104,8 +104,10 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 			const std::string &storage_path,
 			bool persist_session_cookies) override
 	{
+		BPtr<char> path = obs_module_config_path(storage_path.c_str());
+
 		return cm->SetStoragePath(
-				storage_path,
+				path.Get(),
 				persist_session_cookies,
 				nullptr);
 	}
