@@ -38,6 +38,13 @@ public:
 			bool user_gesture,
 			bool is_redirect) override;
 
+	virtual bool OnOpenURLFromTab(
+			CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			const CefString& target_url,
+			CefRequestHandler::WindowOpenDisposition target_disposition,
+			bool user_gesture) override;
+
 	/* CefLifeSpanHandler */
 	virtual bool OnBeforePopup(
 			CefRefPtr<CefBrowser> browser,

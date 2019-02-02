@@ -67,6 +67,21 @@ bool QCefBrowserClient::OnBeforeBrowse(
 	return false;
 }
 
+bool QCefBrowserClient::OnOpenURLFromTab(
+		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefFrame>,
+		const CefString &target_url,
+		CefRequestHandler::WindowOpenDisposition,
+		bool)
+{
+	std::string str_url = target_url;
+
+	/* Open tab popup URLs in user's actual browser */
+	QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
+	QDesktopServices::openUrl(url);
+	return true;
+}
+
 /* CefLifeSpanHandler */
 bool QCefBrowserClient::OnBeforePopup(
 		CefRefPtr<CefBrowser>,
