@@ -66,7 +66,7 @@ struct QCef {
 			const std::string &url,
 			QObject *obj)=0;
 
-	virtual std::string get_cookie_path(const std::string &storage_path)=0;
+	virtual char *get_cookie_path(const std::string &storage_path)=0;
 };
 
 static inline QCef *obs_browser_init_panel(void)

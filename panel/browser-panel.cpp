@@ -283,7 +283,7 @@ struct QCefInternal : QCef {
 			const std::string &url,
 			QObject *obj) override;	
 
-	virtual std::string get_cookie_path(
+	virtual char *get_cookie_path(
 			const std::string &storage_path) override;
 };
 
@@ -342,12 +342,10 @@ void QCefInternal::add_popup_whitelist_url(
 	popup_whitelist.emplace_back(url, obj);
 }
 
-std::string QCefInternal::get_cookie_path(
+char *QCefInternal::get_cookie_path(
 		const std::string &storage_path)
 {
-	BPtr<char> path = obs_module_config_path(storage_path.c_str());
-	std::string string_path = path;
-	return string_path;
+	return obs_module_config_path(storage_path.c_str());
 }
 
 extern "C" EXPORT QCef *obs_browser_create_qcef(void)
