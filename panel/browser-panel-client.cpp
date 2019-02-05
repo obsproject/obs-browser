@@ -146,10 +146,6 @@ bool QCefBrowserClient::OnPreKeyEvent(
 	if (event.type != KEYEVENT_RAWKEYDOWN)
 		return false;
 
-	if (event.windows_key_code == VK_F5) {
-		browser->ReloadIgnoreCache();
-		return true;
-	}
 	if (event.windows_key_code == 'R' &&
 	    (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
 		browser->ReloadIgnoreCache();
