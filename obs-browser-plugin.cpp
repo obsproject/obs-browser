@@ -440,6 +440,7 @@ static const wchar_t *blacklisted_devices[] = {
 	L"Intel",
 	L"Microsoft",
 	L"Radeon HD 8850M",
+	L"Radeon HD 7660",
 	nullptr
 };
 #endif
