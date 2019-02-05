@@ -30,6 +30,11 @@ CefRefPtr<CefLifeSpanHandler> QCefBrowserClient::GetLifeSpanHandler()
 	return this;
 }
 
+CefRefPtr<CefKeyboardHandler> QCefBrowserClient::GetKeyboardHandler()
+{
+	return this;
+}
+
 
 /* CefDisplayHandler */
 void QCefBrowserClient::OnTitleChange(
@@ -129,4 +134,27 @@ void QCefBrowserClient::OnLoadEnd(
 {
 	if (frame->IsMain() && !script.empty())
 		frame->ExecuteJavaScript(script, CefString(), 0);
+}
+
+bool QCefBrowserClient::OnPreKeyEvent(
+		CefRefPtr<CefBrowser> browser,
+		const CefKeyEvent &event,
+		CefEventHandle,
+		bool *)
+{
+#ifdef _WIN32
+	if (event.type != KEYEVENT_RAWKEYDOWN)
+		return false;
+
+	if (event.windows_key_code == VK_F5) {
+		browser->ReloadIgnoreCache();
+		return true;
+	}
+	if (event.windows_key_code == 'R' &&
+	    (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
+		browser->ReloadIgnoreCache();
+		return true;
+	}
+#endif
+	return false;
 }
