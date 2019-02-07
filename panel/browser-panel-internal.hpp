@@ -13,6 +13,7 @@ public:
 
 	CefRefPtr<CefBrowser> cefBrowser;
 	std::string url;
+	std::string script;
 	QTimer timer;
 
 	virtual void resizeEvent(QResizeEvent *event) override;
@@ -20,6 +21,7 @@ public:
 	virtual QPaintEngine *paintEngine() const override;
 
 	virtual void setURL(const std::string &url) override;
+	virtual void setStartupScript(const std::string &script) override;
 
 public slots:
 	void Init();

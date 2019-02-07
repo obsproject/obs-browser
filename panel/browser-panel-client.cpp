@@ -100,6 +100,15 @@ bool QCefBrowserClient::OnBeforePopup(
 	return true;
 }
 
+void QCefBrowserClient::OnLoadEnd(
+		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefFrame> frame,
+		int)
+{
+	if (frame->IsMain() && !script.empty())
+		frame->ExecuteJavaScript(script, CefString(), 0);
+}
+
 bool QCefBrowserClient::OnPreKeyEvent(
 		CefRefPtr<CefBrowser> browser,
 		const CefKeyEvent &event,
