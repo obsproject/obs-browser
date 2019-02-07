@@ -7,7 +7,8 @@ class QCefBrowserClient : public CefClient,
                           public CefDisplayHandler,
                           public CefRequestHandler,
                           public CefLifeSpanHandler,
-                          public CefLoadHandler {
+                          public CefLoadHandler,
+                          public CefKeyboardHandler {
 
 public:
 	inline QCefBrowserClient(QCefWidgetInternal *widget_)
@@ -20,6 +21,7 @@ public:
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
+	virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override;
 
 	/* CefDisplayHandler */
 	virtual void OnTitleChange(
@@ -47,6 +49,13 @@ public:
 			CefRefPtr<CefClient> &client,
 			CefBrowserSettings &settings,
 			bool *no_javascript_access) override;
+
+	/* CefKeyboardHandler */
+	virtual bool OnPreKeyEvent(
+			CefRefPtr<CefBrowser> browser,
+			const CefKeyEvent &event,
+			CefEventHandle os_event,
+			bool *is_keyboard_shortcut) override;
 
 	QCefWidgetInternal *widget = nullptr;
 

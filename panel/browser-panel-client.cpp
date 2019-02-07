@@ -3,6 +3,10 @@
 #include <QUrl>
 #include <QDesktopServices>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 /* CefClient */
 CefRefPtr<CefLoadHandler> QCefBrowserClient::GetLoadHandler()
 {
@@ -20,6 +24,11 @@ CefRefPtr<CefRequestHandler> QCefBrowserClient::GetRequestHandler()
 }
 
 CefRefPtr<CefLifeSpanHandler> QCefBrowserClient::GetLifeSpanHandler()
+{
+	return this;
+}
+
+CefRefPtr<CefKeyboardHandler> QCefBrowserClient::GetKeyboardHandler()
 {
 	return this;
 }
@@ -74,4 +83,23 @@ bool QCefBrowserClient::OnBeforePopup(
 	QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 	return true;
+}
+
+bool QCefBrowserClient::OnPreKeyEvent(
+		CefRefPtr<CefBrowser> browser,
+		const CefKeyEvent &event,
+		CefEventHandle,
+		bool *)
+{
+#ifdef _WIN32
+	if (event.type != KEYEVENT_RAWKEYDOWN)
+		return false;
+
+	if (event.windows_key_code == 'R' &&
+	    (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
+		browser->ReloadIgnoreCache();
+		return true;
+	}
+#endif
+	return false;
 }
