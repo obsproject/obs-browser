@@ -13,6 +13,9 @@ extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
 extern os_event_t *cef_started_event;
 
+std::mutex                      popup_whitelist_mutex;
+std::vector<PopupWhitelistInfo> popup_whitelist;
+
 /* ------------------------------------------------------------------------- */
 
 CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
@@ -277,6 +280,10 @@ struct QCefInternal : QCef {
 
 	virtual BPtr<char> get_cookie_path(
 			const std::string &storage_path) override;
+
+	virtual void add_popup_whitelist_url(
+			const std::string &url,
+			QObject *obj) override;
 };
 
 bool QCefInternal::init_browser(void)
@@ -330,6 +337,14 @@ BPtr<char> QCefInternal::get_cookie_path(
 		const std::string &storage_path)
 {
 	return obs_module_config_path(storage_path.c_str());
+}
+
+void QCefInternal::add_popup_whitelist_url(
+		const std::string &url,
+		QObject *obj)
+{
+	std::lock_guard<std::mutex> lock(popup_whitelist_mutex);
+	popup_whitelist.emplace_back(url, obj);
 }
 
 extern "C" EXPORT QCef *obs_browser_create_qcef(void)

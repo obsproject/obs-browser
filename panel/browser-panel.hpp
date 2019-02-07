@@ -64,6 +64,10 @@ struct QCef {
 			bool persist_session_cookies = false)=0;
 
 	virtual BPtr<char> get_cookie_path(const std::string &storage_path)=0;
+
+	virtual void add_popup_whitelist_url(
+			const std::string &url,
+			QObject *obj)=0;
 };
 
 static inline QCef *obs_browser_init_panel(void)

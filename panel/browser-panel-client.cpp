@@ -1,4 +1,5 @@
 #include "browser-panel-client.hpp"
+#include <util/dstr.h>
 
 #include <QUrl>
 #include <QDesktopServices>
@@ -36,14 +37,20 @@ CefRefPtr<CefKeyboardHandler> QCefBrowserClient::GetKeyboardHandler()
 
 /* CefDisplayHandler */
 void QCefBrowserClient::OnTitleChange(
-		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefBrowser> browser,
 		const CefString &title)
 {
-	if (widget) {
+	if (widget && widget->cefBrowser->IsSame(browser)) {
 		std::string str_title = title;
 		QString qt_title = QString::fromUtf8(str_title.c_str());
 		QMetaObject::invokeMethod(widget, "titleChanged",
 				Q_ARG(QString, qt_title));
+	} else { /* handle popup title */
+#ifdef _WIN32
+		std::wstring str_title = title;
+		HWND hwnd = browser->GetHost()->GetWindowHandle();
+		SetWindowTextW(hwnd, str_title.c_str());
+#endif
 	}
 }
 
@@ -88,13 +95,32 @@ bool QCefBrowserClient::OnBeforePopup(
 		CefLifeSpanHandler::WindowOpenDisposition,
 		bool,
 		const CefPopupFeatures &,
-		CefWindowInfo &,
+		CefWindowInfo &windowInfo,
 		CefRefPtr<CefClient> &,
 		CefBrowserSettings &,
 		bool *)
 {
-	/* Open popup URLs in user's actual browser */
 	std::string str_url = target_url;
+
+	std::lock_guard<std::mutex> lock(popup_whitelist_mutex);
+	for (size_t i = popup_whitelist.size(); i > 0; i--) {
+		PopupWhitelistInfo &info = popup_whitelist[i - 1];
+
+		if (!info.obj) {
+			popup_whitelist.erase(popup_whitelist.begin() + (i - 1));
+			continue;
+		}
+
+		if (astrcmpi(info.url.c_str(), str_url.c_str()) == 0) {
+#ifdef _WIN32
+			HWND hwnd = (HWND)widget->effectiveWinId();
+			windowInfo.parent_window = hwnd;
+#endif
+			return false;
+		}
+	}
+
+	/* Open popup URLs in user's actual browser */
 	QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 	return true;
