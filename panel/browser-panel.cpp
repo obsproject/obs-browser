@@ -10,6 +10,9 @@
 
 extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
+extern os_event_t *cef_started_event;
+
+/* ------------------------------------------------------------------------- */
 
 static void ExecuteOnBrowser(std::function<void()> func, bool async = false)
 {
@@ -143,8 +146,45 @@ void QCefWidgetInternal::setStartupScript(const std::string &script_)
 
 /* ------------------------------------------------------------------------- */
 
-extern "C" EXPORT QCefWidget *obs_browser_create_widget(QWidget *parent,
+struct QCefInternal : QCef {
+	virtual bool init_browser(void) override;
+	virtual bool initialized(void) override;
+	virtual bool wait_for_browser_init(void) override;
+
+	virtual QCefWidget *create_widget(
+			QWidget *parent,
+			const std::string &url) override;
+};
+
+bool QCefInternal::init_browser(void)
+{
+	if (os_event_try(cef_started_event) == 0)
+		return true;
+
+	obs_browser_initialize();
+	return false;
+}
+
+bool QCefInternal::initialized(void)
+{
+	return os_event_try(cef_started_event) == 0;
+}
+
+bool QCefInternal::wait_for_browser_init(void)
+{
+	return os_event_wait(cef_started_event) == 0;
+}
+
+QCefWidget *QCefInternal::create_widget(
+		QWidget *parent,
 		const std::string &url)
 {
-	return new QCefWidgetInternal(parent, url);
+	return new QCefWidgetInternal(
+			parent,
+			url);
+}
+
+extern "C" EXPORT QCef *obs_browser_create_qcef(void)
+{
+	return new QCefInternal();
 }
