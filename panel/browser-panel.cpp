@@ -4,6 +4,7 @@
 
 #include <QWindow>
 
+#include <obs-module.h>
 #include <util/threading.h>
 #include <util/base.h>
 #include <thread>
@@ -11,6 +12,116 @@
 extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
 extern os_event_t *cef_started_event;
+
+/* ------------------------------------------------------------------------- */
+
+CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
+{
+	return cm;
+}
+
+class CookieCheck : public CefCookieVisitor {
+public:
+	QCefCookieManager::cookie_exists_cb callback;
+	std::string target;
+	bool cookie_found = false;
+
+	inline CookieCheck(
+			QCefCookieManager::cookie_exists_cb callback_,
+			const std::string target_)
+		: callback (callback_),
+		  target   (target_)
+	{
+	}
+
+	virtual ~CookieCheck()
+	{
+		callback(cookie_found);
+	}
+
+	virtual bool Visit(
+			const CefCookie &cookie,
+			int,
+			int,
+			bool &) override
+	{
+		CefString cef_name = cookie.name.str;
+		std::string name = cef_name;
+
+		if (name == target) {
+			cookie_found = true;
+			return false;
+		}
+		return true;
+	}
+
+	IMPLEMENT_REFCOUNTING(CookieCheck);
+};
+
+struct QCefCookieManagerInternal : QCefCookieManager {
+	CefRefPtr<CefCookieManager> cm;
+	CefRefPtr<CefRequestContextHandler> rch;
+	CefRefPtr<CefRequestContext> rc;
+
+	QCefCookieManagerInternal(
+			const std::string &storage_path,
+			bool persist_session_cookies)
+	{
+		if (os_event_try(cef_started_event) != 0)
+			throw "Browser thread not initialized";
+
+		BPtr<char> path = obs_module_config_path(storage_path.c_str());
+
+		cm = CefCookieManager::CreateManager(
+				path.Get(),
+				persist_session_cookies,
+				nullptr);
+		if (!cm)
+			throw "Failed to create cookie manager";
+
+		rch = new QCefRequestContextHandler(cm);
+
+		rc = CefRequestContext::CreateContext(
+				CefRequestContext::GetGlobalContext(),
+				rch);
+	}
+
+	virtual bool DeleteCookies(
+			const std::string &url,
+			const std::string &name) override
+	{
+		return cm->DeleteCookies(
+				url,
+				name,
+				nullptr);
+	}
+
+	virtual bool SetStoragePath(
+			const std::string &storage_path,
+			bool persist_session_cookies) override
+	{
+		BPtr<char> path = obs_module_config_path(storage_path.c_str());
+
+		return cm->SetStoragePath(
+				path.Get(),
+				persist_session_cookies,
+				nullptr);
+	}
+
+	virtual bool FlushStore() override
+	{
+		return cm->FlushStore(nullptr);
+	}
+
+	virtual void CheckForCookie(
+			const std::string &site,
+			const std::string &cookie,
+			cookie_exists_cb callback) override
+	{
+		CefRefPtr<CookieCheck> c = new CookieCheck(callback, cookie);
+		cm->VisitUrlCookies(site, false, c);
+	}
+};
 
 /* ------------------------------------------------------------------------- */
 
@@ -31,9 +142,13 @@ static void ExecuteOnBrowser(std::function<void()> func, bool async = false)
 	}
 }
 
-QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_)
+QCefWidgetInternal::QCefWidgetInternal(
+		QWidget *parent,
+		const std::string &url_,
+		CefRefPtr<CefRequestContext> rqc_)
 	: QCefWidget (parent),
-	  url        (url_)
+	  url        (url_),
+	  rqc        (rqc_)
 {
 	setAttribute(Qt::WA_PaintOnScreen);
 	setAttribute(Qt::WA_StaticContents);
@@ -90,7 +205,7 @@ void QCefWidgetInternal::Init()
 				browserClient,
 				url,
 				cefBrowserSettings,
-				nullptr);
+				rqc);
 	});
 
 	if (success)
@@ -153,7 +268,15 @@ struct QCefInternal : QCef {
 
 	virtual QCefWidget *create_widget(
 			QWidget *parent,
-			const std::string &url) override;
+			const std::string &url,
+			QCefCookieManager *cookie_manager) override;
+
+	virtual QCefCookieManager *create_cookie_manager(
+			const std::string &storage_path,
+			bool persist_session_cookies) override;
+
+	virtual BPtr<char> get_cookie_path(
+			const std::string &storage_path) override;
 };
 
 bool QCefInternal::init_browser(void)
@@ -177,11 +300,36 @@ bool QCefInternal::wait_for_browser_init(void)
 
 QCefWidget *QCefInternal::create_widget(
 		QWidget *parent,
-		const std::string &url)
+		const std::string &url,
+		QCefCookieManager *cm)
 {
+	QCefCookieManagerInternal *cmi =
+		reinterpret_cast<QCefCookieManagerInternal*>(cm);
+
 	return new QCefWidgetInternal(
 			parent,
-			url);
+			url,
+			cmi ? cmi->rc : nullptr);
+}
+
+QCefCookieManager *QCefInternal::create_cookie_manager(
+		const std::string &storage_path,
+		bool persist_session_cookies)
+{
+	try {
+		return new QCefCookieManagerInternal(
+				storage_path,
+				persist_session_cookies);
+	} catch (const char *error) {
+		blog(LOG_ERROR, "Failed to create cookie manager: %s", error);
+		return nullptr;
+	}
+}
+
+BPtr<char> QCefInternal::get_cookie_path(
+		const std::string &storage_path)
+{
+	return obs_module_config_path(storage_path.c_str());
 }
 
 extern "C" EXPORT QCef *obs_browser_create_qcef(void)
