@@ -799,6 +799,33 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		result->SetBool(true);
 	API_HANDLER_END()
 
+	API_HANDLER_BEGIN("setContainerForeignPopupWindowsProperties");
+		if (args->GetSize()) {
+			CefRefPtr<StreamElementsCefClient> client =
+				static_cast<StreamElementsCefClient*>(
+					browser->GetHost()->GetClient().get());
+
+			if (!!client.get()) {
+				result->SetBool(
+					client->DeserializeForeignPopupWindowsSettings(
+						args->GetValue(0)));
+			}
+		}
+	API_HANDLER_END();
+
+	API_HANDLER_BEGIN("getContainerForeignPopupWindowsProperties");
+		CefRefPtr<StreamElementsCefClient> client =
+			static_cast<StreamElementsCefClient*>(
+				browser->GetHost()->GetClient().get());
+
+		if (!!client.get()) {
+			client->SerializeForeignPopupWindowsSettings(result);
+		}
+		else {
+			result->SetNull();
+		}
+	API_HANDLER_END();
+
 	API_HANDLER_BEGIN("crashProgram")
 		// Crash
 		*((int*)nullptr) = 12345; // exception

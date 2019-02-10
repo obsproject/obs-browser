@@ -5,6 +5,7 @@
 #include "cef-headers.hpp"
 
 #include "StreamElementsBrowserMessageHandler.hpp"
+#include "StreamElementsApiMessageHandler.hpp"
 #include "StreamElementsMessageBus.hpp"
 
 class StreamElementsCefClientEventHandler :
@@ -55,6 +56,43 @@ public:
 	std::string GetLocationArea() { return m_locationArea; }
 	void SetLocationArea(std::string area) { m_locationArea = area; }
 
+	void SerializeForeignPopupWindowsSettings(CefRefPtr<CefValue>& output)
+	{
+		CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
+
+		d->SetBool("volatileSettings", !m_foreignPopup_inheritSettings);
+		d->SetBool("enableHostApi", m_foreignPopup_enableHostApi);
+		d->SetString("executeJavaScriptOnLoad", m_foreignPopup_executeJavaScriptCodeOnLoad);
+
+		output->SetDictionary(d);
+	}
+
+	bool DeserializeForeignPopupWindowsSettings(CefRefPtr<CefValue>& input)
+	{
+		if (input->GetType() != VTYPE_DICTIONARY) {
+			return false;
+		}
+
+		CefRefPtr<CefDictionaryValue> d = input->GetDictionary();
+
+		if (d->HasKey("executeJavaScriptOnLoad") && d->GetType("executeJavaScriptOnLoad") == VTYPE_STRING) {
+			m_foreignPopup_executeJavaScriptCodeOnLoad =
+				d->GetString("executeJavaScriptOnLoad").ToString();
+		}
+
+		if (d->HasKey("enableHostApi") && d->GetType("enableHostApi") == VTYPE_BOOL) {
+			m_foreignPopup_enableHostApi =
+				d->GetBool("enableHostApi");
+		}
+
+		if (d->HasKey("volatileSettings") && d->GetType("volatileSettings") == VTYPE_BOOL) {
+			m_foreignPopup_inheritSettings =
+				!d->GetBool("volatileSettings");
+		}
+
+		return true;
+	}
+
 	/* CefClient */
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override { return this; }
@@ -95,7 +133,24 @@ public:
 	{
 		windowInfo.parent_window = (cef_window_handle_t)obs_frontend_get_main_window_handle();
 
-		client = new StreamElementsCefClient("", nullptr, nullptr, StreamElementsMessageBus::DEST_UI);
+		StreamElementsCefClient* clientObj = new StreamElementsCefClient(
+			m_foreignPopup_executeJavaScriptCodeOnLoad,
+			m_foreignPopup_enableHostApi ? new StreamElementsApiMessageHandler() : nullptr,
+			nullptr,
+			StreamElementsMessageBus::DEST_UI);
+
+		if (m_foreignPopup_inheritSettings) {
+			clientObj->m_foreignPopup_inheritSettings =
+				m_foreignPopup_inheritSettings;
+
+			clientObj->m_foreignPopup_executeJavaScriptCodeOnLoad =
+				m_foreignPopup_executeJavaScriptCodeOnLoad;
+
+			clientObj->m_foreignPopup_enableHostApi =
+				m_foreignPopup_enableHostApi;
+		}
+
+		client = clientObj;
 
 		// Allow pop-ups
 		return false;
@@ -156,6 +211,10 @@ public:
 	}
 
 private:
+	std::string m_foreignPopup_executeJavaScriptCodeOnLoad = "";
+	bool m_foreignPopup_enableHostApi = false;
+	bool m_foreignPopup_inheritSettings = false;
+
 	std::string m_executeJavaScriptCodeOnLoad;
 	CefRefPtr<StreamElementsBrowserMessageHandler> m_messageHandler;
 	CefRefPtr<StreamElementsCefClientEventHandler> m_eventHandler;
