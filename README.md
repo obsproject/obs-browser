@@ -119,30 +119,27 @@ Build in Xcode (⌘+B)
 ### Building CEF
 #### Getting
 *  Download CEF Windows 64bit from [http://opensource.spotify.com/cefbuilds/index.html](http://opensource.spotify.com/cefbuilds/index.html)
-  *  Use CEF branch 2987 or newer
+  *  Use CEF branch 3440 or newer (3579 if you want shared texture support)
 *  Extract and cd into the folder
 
-#### Setting Up Project
+#### Setting Up the Project
 * Run cmake-gui
   * In "where is the source code", enter in the repo directory (example: C:/Users/User/Desktop/cef_binary_3.2743.1445.gdad7c0a_windows64).
   * In "where to build the binaries", enter the repo directory path with the 'build' subdirectory (example: C:/Users/User/Desktop/cef_binary_3.2743.1445.gdad7c0a_windows64/build).
 * Press 'Configure' and select the generator that fits to your installed VS Version:
-Visual Studio 12 2013 Win64 or Visual Studio 14 2015 Win64
+Visual Studio 12 2013 Win64, Visual Studio 14 2015 Win64 or Visual Studio 15 2017 Win64
 * Press 'Generate' to generate Visual Studio project files in the 'build' subdirectory.
 * Open cef.sln from the 'build' subdirectory
 
 #### Building
-Build in Visual Studio
-
-TODO: tell user to move stuff, or update FindCEF.cmake
+* Build atleast libcef_dll_wrapper (as Release), the rest is optional and are just clients to test with
 
 ### Building OBS and obs-browser
 #### Follow the OBS build instructions
 [https://github.com/jp9000/obs-studio/wiki/Install-Instructions#windows](https://github.com/jp9000/obs-studio/wiki/Install-Instructions#windows)
 
 #### Setting Up Project
-* Add add_subdirectory(obs-browser) to ./plugins/CMakeLists.txt
-* Set the CEF_ROOT_DIR path in cmake-gui for obs-studio (example: C:/Users/User/Desktop/cef_binary_3.2743.1445.gdad7c0a_windows64)
+* Enable BUILD_BROWSER and set the CEF_ROOT_DIR path in cmake-gui for obs-studio (example: C:/Users/User/Desktop/cef_binary_3.2743.1445.gdad7c0a_windows64)
 * * Press 'Generate' to generate Visual Studio project files in the 'build' subdirectory.
 * Open obs-studio.sln from the 'build' subdirectory
 

@@ -121,13 +121,17 @@ bool BrowserSource::CreateBrowser()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		windowInfo.shared_texture_enabled = hwaccel;
-		windowInfo.external_begin_frame_enabled = true;
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-		cefBrowserSettings.windowless_frame_rate = 0;
+		if (!fps_custom) {
+			windowInfo.external_begin_frame_enabled = true;
+			cefBrowserSettings.windowless_frame_rate = 0;
+		} else {
+			cefBrowserSettings.windowless_frame_rate = fps;
+		}
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
@@ -342,6 +346,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		bool n_is_local;
 		int n_width;
 		int n_height;
+		bool n_fps_custom;
 		int n_fps;
 		bool n_shutdown;
 		bool n_restart;
@@ -351,6 +356,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_is_local  = obs_data_get_bool(settings, "is_local_file");
 		n_width     = (int)obs_data_get_int(settings, "width");
 		n_height    = (int)obs_data_get_int(settings, "height");
+		n_fps_custom  = obs_data_get_bool(settings, "fps_custom");
 		n_fps       = (int)obs_data_get_int(settings, "fps");
 		n_shutdown  = obs_data_get_bool(settings, "shutdown");
 		n_restart   = obs_data_get_bool(settings, "restart_when_active");
@@ -364,6 +370,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		if (n_is_local == is_local &&
 		    n_width == width &&
 		    n_height == height &&
+		    n_fps_custom == fps_custom &&
 		    n_fps == fps &&
 		    n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart &&
@@ -376,6 +383,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		width                 = n_width;
 		height                = n_height;
 		fps                   = n_fps;
+		fps_custom            = n_fps_custom;
 		shutdown_on_invisible = n_shutdown;
 		restart               = n_restart;
 		css                   = n_css;
@@ -393,7 +401,8 @@ void BrowserSource::Tick()
 	if (create_browser && CreateBrowser())
 		create_browser = false;
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	reset_frame = true;
+	if (!fps_custom)
+		reset_frame = true;
 #endif
 }
 
@@ -420,7 +429,7 @@ void BrowserSource::Render()
 static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func, bool async = false)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
-
+	
 	BrowserSource *bs = first_browser;
 	while (bs) {
 		BrowserSource *bsw =
