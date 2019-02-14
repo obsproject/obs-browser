@@ -20,9 +20,18 @@
 #include "browser-version.h"
 #include <json11/json11.hpp>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace json11;
 
 CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
+{
+	return this;
+}
+
+CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
 {
 	return this;
 }
@@ -35,6 +44,17 @@ void BrowserApp::OnRegisterCustomSchemes(
 			false);
 #else
 	registrar->AddCustomScheme("http", true, false, false, false, true);
+#endif
+}
+
+void BrowserApp::OnBeforeChildProcessLaunch(
+		CefRefPtr<CefCommandLine> command_line)
+{
+#ifdef _WIN32
+	std::string pid = std::to_string(GetCurrentProcessId());
+	command_line->AppendSwitchWithValue("parent_pid", pid);
+#else
+	UNUSED_PARAMETER(command_line);
 #endif
 }
 
