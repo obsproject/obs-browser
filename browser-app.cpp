@@ -54,7 +54,7 @@ void BrowserApp::OnBeforeChildProcessLaunch(
 	std::string pid = std::to_string(GetCurrentProcessId());
 	command_line->AppendSwitchWithValue("parent_pid", pid);
 #else
-	UNUSED_PARAMETER(command_line);
+	(void)command_line;
 #endif
 }
 
