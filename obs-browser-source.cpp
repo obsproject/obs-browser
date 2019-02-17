@@ -20,6 +20,7 @@
 #include "browser-client.hpp"
 #include "browser-scheme.hpp"
 #include "wide-string.hpp"
+#include "json11/json11.hpp"
 #include <util/threading.h>
 #include <QApplication>
 #include <util/dstr.h>
@@ -33,6 +34,7 @@
 #endif
 
 using namespace std;
+using namespace json11;
 
 extern bool QueueCEFTask(std::function<void()> task);
 
@@ -59,6 +61,9 @@ static void SendBrowserVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
 	args->SetBool(0, isVisible);
 	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 }
+
+void DispatchJSEvent(std::string eventName, std::string jsonString,
+		     BrowserSource *browser = nullptr);
 
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
@@ -333,6 +338,19 @@ void BrowserSource::SetShowing(bool showing)
 			DestroyBrowser(true);
 		}
 	} else {
+		ExecuteOnBrowser(
+			[=](CefRefPtr<CefBrowser> cefBrowser) {
+				CefRefPtr<CefProcessMessage> msg =
+					CefProcessMessage::Create("Visibility");
+				CefRefPtr<CefListValue> args =
+					msg->GetArgumentList();
+				args->SetBool(0, showing);
+				SendBrowserProcessMessage(cefBrowser,
+							  PID_RENDERER, msg);
+			},
+			true);
+		Json json = Json::object{{"visible", showing}};
+		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (showing && !fps_custom) {
 			reset_frame = false;
@@ -355,6 +373,8 @@ void BrowserSource::SetActive(bool active)
 						  msg);
 		},
 		true);
+	Json json = Json::object{{"active", active}};
+	DispatchJSEvent("obsSourceActiveChanged", json.dump(), this);
 }
 
 void BrowserSource::Refresh()
@@ -495,6 +515,16 @@ void BrowserSource::Render()
 #endif
 }
 
+static void ExecuteOnBrowser(BrowserFunc func, BrowserSource *bs)
+{
+	lock_guard<mutex> lock(browser_list_mutex);
+
+	if (bs) {
+		BrowserSource *bsw = reinterpret_cast<BrowserSource *>(bs);
+		bsw->ExecuteOnBrowser(func, true);
+	}
+}
+
 static void ExecuteOnAllBrowsers(BrowserFunc func)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
@@ -507,9 +537,10 @@ static void ExecuteOnAllBrowsers(BrowserFunc func)
 	}
 }
 
-void DispatchJSEvent(std::string eventName, std::string jsonString)
+void DispatchJSEvent(std::string eventName, std::string jsonString,
+		     BrowserSource *browser)
 {
-	ExecuteOnAllBrowsers([=](CefRefPtr<CefBrowser> cefBrowser) {
+	const auto jsEvent = [=](CefRefPtr<CefBrowser> cefBrowser) {
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("DispatchJSEvent");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
@@ -517,5 +548,10 @@ void DispatchJSEvent(std::string eventName, std::string jsonString)
 		args->SetString(0, eventName);
 		args->SetString(1, jsonString);
 		SendBrowserProcessMessage(cefBrowser, PID_RENDERER, msg);
-	});
+	};
+
+	if (!browser)
+		ExecuteOnAllBrowsers(jsEvent);
+	else
+		ExecuteOnBrowser(jsEvent, browser);
 }
