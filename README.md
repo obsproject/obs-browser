@@ -44,6 +44,8 @@ window.addEventListener('obsSceneChanged', function(evt) {
 });
 ```
 #### Other events that are available
+* obsSourceVisibleChanged
+* obsSourceActiveChanged
 * obsStreamingStarting
 * obsStreamingStarted
 * obsStreamingStopping

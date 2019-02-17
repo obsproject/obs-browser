@@ -388,7 +388,8 @@ void RegisterBrowserSource()
 
 /* ========================================================================= */
 
-extern void DispatchJSEvent(std::string eventName, std::string jsonString);
+extern void DispatchJSEvent(std::string eventName, std::string jsonString,
+			    BrowserSource *browser = nullptr);
 
 static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 {
