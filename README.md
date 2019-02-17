@@ -52,6 +52,10 @@ window.addEventListener('obsSceneChanged', function(evt) {
 * obsRecordingStarted
 * obsRecordingStopping
 * obsRecordingStopped
+* obsReplaybufferStarting
+* obsReplaybufferStarted
+* obsReplaybufferStopping
+* obsReplaybufferStopped
 
 ### Get the current scene
 ```
