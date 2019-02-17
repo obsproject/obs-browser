@@ -130,6 +130,11 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("getStatus", getStatus,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
+	CefRefPtr<CefV8Value> saveReplayBuffer =
+		CefV8Value::CreateFunction("saveReplayBuffer", this);
+	obsStudioObj->SetValue("saveReplayBuffer", saveReplayBuffer,
+			       V8_PROPERTY_ATTRIBUTE_NONE);
+
 #if !ENABLE_WASHIDDEN
 	int id = browser->GetIdentifier();
 	if (browserVis.find(id) != browserVis.end()) {
@@ -352,7 +357,7 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
-	if (name == "getCurrentScene" || name == "getStatus") {
+	if (name == "getCurrentScene" || name == "getStatus" || name == "saveReplayBuffer") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];

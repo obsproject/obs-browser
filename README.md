@@ -77,6 +77,13 @@ data is a Javascript object containing the following properties:
 * replaybuffer (true/false)
 ```
 
+### Save OBS Replay Buffer
+```
+window.obsstudio.saveReplayBuffer();
+
+// does not accept any parameters and does not return anything
+```
+
 ## Building on OSX
 
 ### Building CEF
