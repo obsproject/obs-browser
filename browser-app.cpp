@@ -238,29 +238,14 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
-	if (name == "getCurrentScene") {
+	if (name == "getCurrentScene" || name == "getStatus") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
 		}
 
 		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("getCurrentScene");
-		CefRefPtr<CefListValue> args = msg->GetArgumentList();
-		args->SetInt(0, callbackId);
-
-		CefRefPtr<CefBrowser> browser =
-			CefV8Context::GetCurrentContext()->GetBrowser();
-		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
-
-	} else if (name == "getStatus") {
-		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
-			callbackId++;
-			callbackMap[callbackId] = arguments[0];
-		}
-
-		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("getStatus");
+			CefProcessMessage::Create(name);
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetInt(0, callbackId);
 
