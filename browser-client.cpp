@@ -128,6 +128,8 @@ bool BrowserClient::OnProcessMessageReceived(
 			{"streaming", obs_frontend_streaming_active()},
 			{"replaybuffer", obs_frontend_replay_buffer_active()}};
 
+	} else if (name == "saveReplayBuffer") {
+		obs_frontend_replay_buffer_save();
 	} else {
 		return false;
 	}

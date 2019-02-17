@@ -110,6 +110,11 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 		CefV8Value::CreateFunction("getStatus", this);
 	obsStudioObj->SetValue("getStatus", getStatus,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
+
+	CefRefPtr<CefV8Value> saveReplayBuffer =
+		CefV8Value::CreateFunction("saveReplayBuffer", this);
+	obsStudioObj->SetValue("saveReplayBuffer", saveReplayBuffer,
+			       V8_PROPERTY_ATTRIBUTE_NONE);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -253,14 +258,14 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			CefV8Context::GetCurrentContext()->GetBrowser();
 		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 
-	} else if (name == "getStatus") {
+	} else if (name == "getStatus" || name == "saveReplayBuffer") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
 		}
 
 		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("getStatus");
+			CefProcessMessage::Create(name);
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetInt(0, callbackId);
 
