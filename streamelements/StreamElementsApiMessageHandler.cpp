@@ -547,8 +547,24 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
 		result->SetDictionary(d);
 
-		d->SetString("id", client->GetContainerId());
-		d->SetString("area", client->GetLocationArea());
+		std::string dockingArea = "none";
+		std::string id = client->GetContainerId();
+
+		if (id.size()) {
+			StreamElementsBrowserWidgetManager::DockBrowserWidgetInfo* info =
+				StreamElementsGlobalStateManager::GetInstance()
+					->GetWidgetManager()
+					->GetDockBrowserWidgetInfo(id.c_str());
+
+			if (info) {
+				dockingArea = info->m_dockingArea;
+
+				delete info;
+			}
+		}
+
+		d->SetString("id", id.c_str());
+		d->SetString("dockingArea", dockingArea.c_str());
 		d->SetString("url", browser->GetMainFrame()->GetURL().ToString());
 		d->SetString("theme", GetCurrentThemeName());
 	API_HANDLER_END();
