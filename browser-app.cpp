@@ -21,6 +21,10 @@
 #include <json11/json11.hpp>
 #include <include/cef_parser.h>		// CefParseJSON, CefWriteJSON
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace json11;
 
 static std::string StringReplaceAll(std::string str, const std::string& from, const std::string& to) {
@@ -37,6 +41,11 @@ CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
 	return this;
 }
 
+CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
+{
+	return this;
+}
+
 void BrowserApp::OnRegisterCustomSchemes(
 		CefRawPtr<CefSchemeRegistrar> registrar)
 {
@@ -45,6 +54,17 @@ void BrowserApp::OnRegisterCustomSchemes(
 			false);
 #else
 	registrar->AddCustomScheme("http", true, false, false, false, true);
+#endif
+}
+
+void BrowserApp::OnBeforeChildProcessLaunch(
+		CefRefPtr<CefCommandLine> command_line)
+{
+#ifdef _WIN32
+	std::string pid = std::to_string(GetCurrentProcessId());
+	command_line->AppendSwitchWithValue("parent_pid", pid);
+#else
+	(void)command_line;
 #endif
 }
 
