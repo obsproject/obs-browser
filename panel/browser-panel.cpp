@@ -15,6 +15,7 @@ extern os_event_t *cef_started_event;
 
 std::mutex                      popup_whitelist_mutex;
 std::vector<PopupWhitelistInfo> popup_whitelist;
+std::vector<PopupWhitelistInfo> forced_popups;
 
 /* ------------------------------------------------------------------------- */
 
@@ -284,6 +285,9 @@ struct QCefInternal : QCef {
 	virtual void add_popup_whitelist_url(
 			const std::string &url,
 			QObject *obj) override;
+	virtual void add_force_popup_url(
+			const std::string &url,
+			QObject *obj) override;
 };
 
 bool QCefInternal::init_browser(void)
@@ -345,6 +349,14 @@ void QCefInternal::add_popup_whitelist_url(
 {
 	std::lock_guard<std::mutex> lock(popup_whitelist_mutex);
 	popup_whitelist.emplace_back(url, obj);
+}
+
+void QCefInternal::add_force_popup_url(
+		const std::string &url,
+		QObject *obj)
+{
+	std::lock_guard<std::mutex> lock(popup_whitelist_mutex);
+	forced_popups.emplace_back(url, obj);
 }
 
 extern "C" EXPORT QCef *obs_browser_create_qcef(void)

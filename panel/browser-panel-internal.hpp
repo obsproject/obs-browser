@@ -22,6 +22,7 @@ struct PopupWhitelistInfo {
 
 extern std::mutex                      popup_whitelist_mutex;
 extern std::vector<PopupWhitelistInfo> popup_whitelist;
+extern std::vector<PopupWhitelistInfo> forced_popups;
 
 /* ------------------------------------------------------------------------- */
 

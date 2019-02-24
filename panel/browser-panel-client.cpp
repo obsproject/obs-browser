@@ -56,14 +56,33 @@ void QCefBrowserClient::OnTitleChange(
 
 /* CefRequestHandler */
 bool QCefBrowserClient::OnBeforeBrowse(
-		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefBrowser> browser,
 		CefRefPtr<CefFrame>,
 		CefRefPtr<CefRequest> request,
 		bool,
 		bool)
 {
+	std::string str_url = request->GetURL();
+
+	std::lock_guard<std::mutex> lock(popup_whitelist_mutex);
+	for (size_t i = forced_popups.size(); i > 0; i--) {
+		PopupWhitelistInfo &info = forced_popups[i - 1];
+
+		if (!info.obj) {
+			forced_popups.erase(forced_popups.begin() + (i - 1));
+			continue;
+		}
+
+		if (astrcmpi(info.url.c_str(), str_url.c_str()) == 0) {
+			/* Open tab popup URLs in user's actual browser */
+			QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
+			QDesktopServices::openUrl(url);
+			browser->GoBack();
+			return true;
+		}
+	}
+
 	if (widget) {
-		std::string str_url = request->GetURL();
 		QString qt_url = QString::fromUtf8(str_url.c_str());
 		QMetaObject::invokeMethod(widget, "urlChanged",
 				Q_ARG(QString, qt_url));
