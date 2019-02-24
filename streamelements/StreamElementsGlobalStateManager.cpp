@@ -657,8 +657,25 @@ void StreamElementsGlobalStateManager::DeleteCookies()
 	*/
 }
 
+extern void DispatchJSEvent(const char *eventName, const char *jsonString);
+
+static void DispatchJSEventAllBrowsers(const char *eventName, const char *jsonString)
+{
+	StreamElementsCefClient::DispatchJSEvent(eventName, jsonString);
+	DispatchJSEvent(eventName, jsonString);
+}
+
 void StreamElementsGlobalStateManager::Reset(bool deleteAllCookies, UiModifier uiModifier)
 {
+	DispatchJSEventAllBrowsers("hostStateReset", "null");
+
+	// Allow short time for event to reach all renderers
+	//
+	// This is an unpleasant hack which allows widgets a
+	// vague opportunity to clean up before they get
+	// destroyed.
+	os_sleep_ms(100);
+
 	if (deleteAllCookies) {
 		DeleteCookies();
 	}
