@@ -68,6 +68,9 @@ struct QCef {
 	virtual void add_popup_whitelist_url(
 			const std::string &url,
 			QObject *obj)=0;
+	virtual void add_force_popup_url(
+			const std::string &url,
+			QObject *obj)=0;
 };
 
 static inline QCef *obs_browser_init_panel(void)

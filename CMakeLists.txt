@@ -333,5 +333,18 @@ if(APPLE AND NOT BROWSER_DEPLOY)
 		"obs-browser-page")
 endif()
 
+if(APPLE AND NOT BROWSER_DEPLOY)
+	add_custom_command(TARGET obs-browser POST_BUILD
+		COMMAND "install_name_tool" -change
+		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
+		"${CEF_LIBRARY}/Chromium Embedded Framework"
+		"obs-browser.so")
+	add_custom_command(TARGET obs-browser-page POST_BUILD
+		COMMAND "install_name_tool" -change
+		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
+		"${CEF_LIBRARY}/Chromium Embedded Framework"
+		"obs-browser-page")
+endif()
+
 install_obs_plugin_with_data(obs-browser data)
 install_obs_plugin(obs-browser-page)
