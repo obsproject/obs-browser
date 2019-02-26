@@ -210,6 +210,9 @@ void QCefWidgetInternal::Init()
 				url,
 				cefBrowserSettings,
 				rqc);
+#ifdef _WIN32
+		Resize();
+#endif
 	});
 
 	if (success)
@@ -219,7 +222,11 @@ void QCefWidgetInternal::Init()
 void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 {
 	QWidget::resizeEvent(event);
+	Resize();
+}
 
+void QCefWidgetInternal::Resize()
+{
 	QSize size = this->size() * devicePixelRatio();
 
 	QueueCEFTask([this, size] ()
@@ -230,6 +237,8 @@ void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 		HWND hwnd = cefBrowser->GetHost()->GetWindowHandle();
 		SetWindowPos(hwnd, nullptr, 0, 0, size.width(), size.height(),
 				SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+		SendMessage(hwnd, WM_SIZE, 0,
+				MAKELPARAM(size.width(), size.height()));
 #endif
 	});
 }
