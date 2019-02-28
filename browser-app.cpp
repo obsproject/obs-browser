@@ -29,6 +29,10 @@
 #include <windows.h>
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace json11;
 
 static std::string StringReplaceAll(std::string str, const std::string& from, const std::string& to) {
