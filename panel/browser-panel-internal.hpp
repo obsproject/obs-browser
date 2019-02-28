@@ -64,6 +64,8 @@ public:
 	virtual void setURL(const std::string &url) override;
 	virtual void setStartupScript(const std::string &script) override;
 
+	void Resize();
+
 public slots:
 	void Init();
 };
