@@ -21,6 +21,9 @@
 
 #define MENU_ITEM_DEVTOOLS MENU_ID_CUSTOM_FIRST
 #define MENU_ITEM_MUTE MENU_ID_CUSTOM_FIRST + 1
+#define MENU_ITEM_ZOOM_IN MENU_ID_CUSTOM_FIRST + 2
+#define MENU_ITEM_ZOOM_RESET MENU_ID_CUSTOM_FIRST + 3
+#define MENU_ITEM_ZOOM_OUT MENU_ID_CUSTOM_FIRST + 4
 
 /* CefClient */
 CefRefPtr<CefLoadHandler> QCefBrowserClient::GetLoadHandler()
@@ -252,6 +255,12 @@ void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 	if (model->IsVisible(MENU_ID_VIEW_SOURCE)) {
 		model->Remove(MENU_ID_VIEW_SOURCE);
 	}
+	model->AddItem(MENU_ITEM_ZOOM_IN, obs_module_text("Zoom.In"));
+	if (browser->GetHost()->GetZoomLevel() != 0) {
+		model->AddItem(MENU_ITEM_ZOOM_RESET,
+			       obs_module_text("Zoom.Reset"));
+	}
+	model->AddItem(MENU_ITEM_ZOOM_OUT, obs_module_text("Zoom.Out"));
 	model->AddSeparator();
 	model->InsertItemAt(model->GetCount(), MENU_ITEM_DEVTOOLS,
 			    obs_module_text("Inspect"));
@@ -351,6 +360,15 @@ bool QCefBrowserClient::OnContextMenuCommand(
 		return true;
 	case MENU_ITEM_MUTE:
 		host->SetAudioMuted(!host->IsAudioMuted());
+		return true;
+	case MENU_ITEM_ZOOM_IN:
+		widget->zoomPage(1);
+		return true;
+	case MENU_ITEM_ZOOM_RESET:
+		widget->zoomPage(0);
+		return true;
+	case MENU_ITEM_ZOOM_OUT:
+		widget->zoomPage(-1);
 		return true;
 	}
 	return false;
@@ -469,6 +487,21 @@ bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 #endif
 		browser->ReloadIgnoreCache();
 		return true;
+	} else if ((event.windows_key_code == 189 ||
+		    event.windows_key_code == 109) &&
+		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
+		// Zoom out
+		return widget->zoomPage(-1);
+	} else if ((event.windows_key_code == 187 ||
+		    event.windows_key_code == 107) &&
+		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
+		// Zoom in
+		return widget->zoomPage(1);
+	} else if ((event.windows_key_code == 48 ||
+		    event.windows_key_code == 96) &&
+		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
+		// Reset zoom
+		return widget->zoomPage(0);
 	}
 	return false;
 }
