@@ -46,6 +46,7 @@ public:
 	virtual void allowAllPopups(bool allow) = 0;
 	virtual void closeBrowser() = 0;
 	virtual void reloadPage() = 0;
+	virtual bool zoomPage(int direction) = 0;
 
 signals:
 	void titleChanged(const QString &title);
