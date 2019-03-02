@@ -202,15 +202,27 @@ private:
 	void UpdateBrowserSize()
 	{
 		if (!!m_cef_browser.get()) {
-			cef_window_handle_t hWnd = m_cef_browser->GetHost()->GetWindowHandle();
+			QSize size = this->size() * devicePixelRatio();
 
 #ifdef WIN32
+			// Make sure window updates on multiple monitors with different DPI
+
+			cef_window_handle_t hWnd = m_cef_browser->GetHost()->GetWindowHandle();
+
+			::SetWindowPos(hWnd, nullptr, 0, 0, size.width(), size.height(),
+				SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+
+			::SendMessage(hWnd, WM_SIZE, 0,
+				MAKELPARAM(size.width(), size.height()));
+
+			/*
 			::SetWindowPos(hWnd, HWND_TOP, 0, 0, width(), height(), SWP_DRAWFRAME | SWP_SHOWWINDOW);
 
 			::MoveWindow(hWnd, 0, 0, width(), height(), TRUE);
 
 			// Make sure window updates on multiple monitors with different DPI
 			::SendMessage(hWnd, WM_SIZE, 0, MAKELPARAM(width(), height()));
+			*/
 #endif
 		}
 	}

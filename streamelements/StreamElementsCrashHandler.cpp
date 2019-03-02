@@ -48,6 +48,8 @@
 #include <iostream>
 #include <filesystem>
 #include <stdio.h>
+#include <fcntl.h>
+#include <io.h>
 
 /* ================================================================= */
 
@@ -313,24 +315,39 @@ static inline void AddObsConfigurationFiles()
 
 	auto addFileToZip = [&](std::wstring localPath, std::wstring zipPath)
 	{
-		FILE* stream;
-		if (0 == _wfopen_s(&stream, localPath.c_str(), L"rb")) {
+		int fd = _wsopen(
+			localPath.c_str(),
+			_O_RDONLY | _O_BINARY,
+			_SH_DENYNO,
+			0 /*_S_IREAD | _S_IWRITE*/);
+
+		if (-1 != fd) {
 			size_t BUF_LEN = 32768;
 
 			BYTE* buf = new BYTE[BUF_LEN];
 
 			zip_entry_open(zip, myconv.to_bytes(zipPath).c_str());
 
-			size_t read = fread(buf, 1, BUF_LEN, stream);
-			while (read > 0 && 0 == zip_entry_write(zip, buf, read)) {
-				read = fread(buf, 1, BUF_LEN, stream);
+			int read = _read(fd, buf, BUF_LEN);
+			while (read > 0) {
+				if (0 != zip_entry_write(zip, buf, read)) {
+					break;
+				}
+
+				read = _read(fd, buf, BUF_LEN);
 			}
 
 			zip_entry_close(zip);
 
 			delete[] buf;
 
-			fclose(stream);
+			_close(fd);
+		}
+		else {
+			// Failed opening file for reading
+			//
+			// This is a crash handler: you can't really do anything
+			// here to mitigate.
 		}
 	};
 

@@ -110,11 +110,28 @@ StreamElementsCefClient::~StreamElementsCefClient()
 
 /* ========================================================================= */
 
+void StreamElementsCefClient::OnLoadStart(CefRefPtr<CefBrowser> browser,
+	CefRefPtr<CefFrame> frame,
+	TransitionType transition_type)
+{
+	char buf[16];
+
+	blog(LOG_INFO, "obs-browser: start loading %s frame url '%s' (transition_type: %s)",
+		frame->IsMain() ? "main" : "child",
+		frame->GetURL().ToString().c_str(),
+		ltoa((long)transition_type, buf, 16));
+}
+
 void StreamElementsCefClient::OnLoadEnd(
 	CefRefPtr<CefBrowser> /*browser*/,
 	CefRefPtr<CefFrame> frame,
-	int /*httpStatusCode*/)
+	int httpStatusCode)
 {
+	blog(LOG_INFO, "obs-browser: completed loading %s frame url '%s' (HTTP status code: %d)",
+		frame->IsMain() ? "main" : "child",
+		frame->GetURL().ToString().c_str(),
+		httpStatusCode);
+
 	if (m_executeJavaScriptCodeOnLoad.empty() || !frame->IsMain()) {
 		return;
 	}
@@ -131,6 +148,12 @@ void StreamElementsCefClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 	const CefString& errorText,
 	const CefString& failedUrl)
 {
+	blog(LOG_WARNING, "obs-browser: error loading %s frame url '%s': %s (%d)",
+		frame->IsMain() ? "main" : "child",
+		failedUrl.ToString().c_str(),
+		errorText.size() ? errorText.ToString().c_str() : "Unknown error code",
+		(int)errorCode);
+
 	if (errorCode == ERR_ABORTED) {
 		// Don't display an error for downloaded files and
 		// pages which have been left while loading.
