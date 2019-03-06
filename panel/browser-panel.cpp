@@ -13,6 +13,8 @@ extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
 extern os_event_t *cef_started_event;
 
+void register_cookie_manager(CefRefPtr<CefCookieManager> cm);
+
 std::mutex                      popup_whitelist_mutex;
 std::vector<PopupWhitelistInfo> popup_whitelist;
 std::vector<PopupWhitelistInfo> forced_popups;
@@ -82,6 +84,8 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 				nullptr);
 		if (!cm)
 			throw "Failed to create cookie manager";
+
+		register_cookie_manager(cm);
 
 		rch = new QCefRequestContextHandler(cm);
 
@@ -178,6 +182,9 @@ QCefWidgetInternal::~QCefWidgetInternal()
 					client.get());
 
 		bc->widget = nullptr;
+
+		cefBrowser->GetHost()->CloseBrowser(true);
+
 		cefBrowser = nullptr;
 	});
 }
