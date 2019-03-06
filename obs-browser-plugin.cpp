@@ -86,10 +86,13 @@ overflow: hidden; \
 
 static void browser_source_get_defaults(obs_data_t *settings)
 {
+	obs_video_info ovi;
+	obs_get_video_info(&ovi);
+
 	obs_data_set_default_string(settings, "url",
 			"https://obsproject.com/browser-source");
-	obs_data_set_default_int(settings, "width", 800);
-	obs_data_set_default_int(settings, "height", 600);
+	obs_data_set_default_int(settings, "width", ovi.base_width);
+	obs_data_set_default_int(settings, "height", ovi.base_height);
 	obs_data_set_default_int(settings, "fps", 30);
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	obs_data_set_default_bool(settings, "fps_custom", false);
