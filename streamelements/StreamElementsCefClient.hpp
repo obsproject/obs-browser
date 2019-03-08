@@ -8,6 +8,9 @@
 #include "StreamElementsApiMessageHandler.hpp"
 #include "StreamElementsMessageBus.hpp"
 
+#include <QUrl>
+#include <QDesktopServices>
+
 class StreamElementsCefClientEventHandler :
 	public CefBaseRefCounted
 {
@@ -33,7 +36,8 @@ class StreamElementsCefClient :
 	public CefContextMenuHandler,
 	public CefLoadHandler,
 	public CefDisplayHandler,
-	public CefKeyboardHandler
+	public CefKeyboardHandler,
+	public CefRequestHandler
 {
 private:
 	std::string m_containerId = "";
@@ -99,11 +103,30 @@ public:
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
 	virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override { return this; }
+	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override { return this; }
 
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
 		CefProcessId source_process,
 		CefRefPtr<CefProcessMessage> message) override;
+
+	/* CefRequestHandler */
+
+	/*
+	virtual bool OnOpenURLFromTab(
+		CefRefPtr<CefBrowser>,
+		CefRefPtr<CefFrame>,
+		const CefString &target_url,
+		CefRequestHandler::WindowOpenDisposition,
+		bool) override
+	{
+		std::string str_url = target_url;
+
+		// Open tab popup URLs in user's actual browser
+		QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
+		QDesktopServices::openUrl(url);
+		return true;
+	}*/
 
 	/* CefLifeSpanHandler */
 	virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
@@ -121,9 +144,9 @@ public:
 	virtual bool OnBeforePopup(
 		CefRefPtr<CefBrowser> /*browser*/,
 		CefRefPtr<CefFrame> /*frame*/,
-		const CefString& /*target_url*/,
-		const CefString& /*target_frame_name*/,
-		WindowOpenDisposition /*target_disposition*/,
+		const CefString& target_url,
+		const CefString& target_frame_name,
+		CefLifeSpanHandler::WindowOpenDisposition target_disposition,
 		bool /*user_gesture*/,
 		const CefPopupFeatures& /*popupFeatures*/,
 		CefWindowInfo& windowInfo,
@@ -131,6 +154,54 @@ public:
 		CefBrowserSettings& /*settings*/,
 		bool* /*no_javascript_access*/) override
 	{
+		if (!target_url.size() || target_url.ToString() == "about:blank") {
+			blog(
+				LOG_INFO,
+				"obs-browser: StreamElementsCefClient::OnBeforePopup: ignore due to target_url: target_url '%s', target_frame_name '%s', target_disposition %d",
+				target_url.ToString().c_str(),
+				target_frame_name.ToString().c_str(),
+				(int)target_disposition);
+
+			return true;
+		}
+
+		switch (target_disposition) {
+			case WOD_NEW_FOREGROUND_TAB:
+			case WOD_NEW_BACKGROUND_TAB:
+				blog(
+					LOG_INFO,
+					"obs-browser: StreamElementsCefClient::OnBeforePopup: open in desktop browser: target_url '%s', target_frame_name '%s', target_disposition %d",
+					target_url.ToString().c_str(),
+					target_frame_name.ToString().c_str(),
+					(int)target_disposition);
+
+				// Open tab popup URLs in user's actual browser
+				QDesktopServices::openUrl(
+					QUrl(target_url.ToString().c_str(),
+						QUrl::TolerantMode));
+				return true;
+
+			case WOD_SAVE_TO_DISK:
+			case WOD_OFF_THE_RECORD:
+			case WOD_IGNORE_ACTION:
+				blog(
+					LOG_INFO,
+					"obs-browser: StreamElementsCefClient::OnBeforePopup: ignore due to target_disposition: target_url '%s', target_frame_name '%s', target_disposition %d",
+					target_url.ToString().c_str(),
+					target_frame_name.ToString().c_str(),
+					(int)target_disposition);
+
+				return true;
+			break;
+		}
+
+		blog(
+			LOG_INFO,
+			"obs-browser: StreamElementsCefClient::OnBeforePopup: allow pop-up: target_url '%s', target_frame_name '%s', target_disposition %d",
+			target_url.ToString().c_str(),
+			target_frame_name.ToString().c_str(),
+			(int)target_disposition);
+
 		windowInfo.parent_window = (cef_window_handle_t)obs_frontend_get_main_window_handle();
 
 		StreamElementsCefClient* clientObj = new StreamElementsCefClient(
