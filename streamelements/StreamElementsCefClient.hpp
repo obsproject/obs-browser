@@ -37,7 +37,8 @@ class StreamElementsCefClient :
 	public CefLoadHandler,
 	public CefDisplayHandler,
 	public CefKeyboardHandler,
-	public CefRequestHandler
+	public CefRequestHandler,
+	public CefDragHandler
 {
 private:
 	std::string m_containerId = "";
@@ -104,11 +105,27 @@ public:
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
 	virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override { return this; }
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override { return this; }
+	virtual CefRefPtr<CefDragHandler> GetDragHandler() override { return this; }
 
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
 		CefProcessId source_process,
 		CefRefPtr<CefProcessMessage> message) override;
+
+	/* CefDragHandler */
+
+	virtual bool OnDragEnter(
+		CefRefPtr<CefBrowser> browser,
+		CefRefPtr<CefDragData> dragData,
+		CefDragHandler::DragOperationsMask mask) override
+	{
+		blog(
+			LOG_INFO,
+			"obs-browser: StreamElementsCefClient::OnDragEnter: rejected drag operation (mask: 0x%08x)",
+			(int)mask);
+
+		return true;
+	}
 
 	/* CefRequestHandler */
 
