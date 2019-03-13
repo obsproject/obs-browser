@@ -25,7 +25,8 @@ const char* MSG_BIND_JAVASCRIPT_PROPS = "CefRenderProcessHandler::BindJavaScript
 bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 	CefRefPtr<CefBrowser> browser,
 	CefProcessId /*source_process*/,
-	CefRefPtr<CefProcessMessage> message)
+	CefRefPtr<CefProcessMessage> message,
+	const long cefClientId)
 {
 	const std::string &name = message->GetName();
 
@@ -70,6 +71,7 @@ bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 				CefRefPtr<CefValue> result;
 				void (*complete)(void*);
 				int cef_app_callback_id;
+				long cefClientId;
 			};
 
 			local_context* context = new local_context();
@@ -81,10 +83,15 @@ bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 			context->callArgs = callArgs;
 			context->result = result;
 			context->cef_app_callback_id = message->GetArgumentList()->GetInt(message->GetArgumentList()->GetSize() - 1);
+			context->cefClientId = cefClientId;
 			context->complete = [] (void* data) {
 				local_context* context = (local_context*)data;
 
-				blog(LOG_INFO, "obs-browser: API: completed call to '%s', callback id %d", context->id.c_str(), context->cef_app_callback_id);
+				blog(LOG_INFO,
+					"obs-browser[%lu]: API: completed call to '%s', callback id %d",
+					context->cefClientId,
+					context->id.c_str(),
+					context->cef_app_callback_id);
 
 				if (context->cef_app_callback_id != -1) {
 					// Invoke result callback
@@ -102,14 +109,23 @@ bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 			{
 				CefRefPtr<CefValue> callArgsValue = CefValue::Create();
 				callArgsValue->SetList(context->callArgs);
-				blog(LOG_INFO, "obs-browser: API: posting call to '%s', callback id %d, args: %s", context->id.c_str(), context->cef_app_callback_id, CefWriteJSON(callArgsValue, JSON_WRITER_DEFAULT).ToString().c_str());
+				blog(LOG_INFO,
+					"obs-browser[%lu]: API: posting call to '%s', callback id %d, args: %s",
+					context->cefClientId,
+					context->id.c_str(),
+					context->cef_app_callback_id,
+					CefWriteJSON(callArgsValue, JSON_WRITER_DEFAULT).ToString().c_str());
 			}
 
 			QtPostTask([](void* data)
 			{
 				local_context* context = (local_context*)data;
 
-				blog(LOG_INFO, "obs-browser: API: performing call to '%s', callback id %d", context->id.c_str(), context->cef_app_callback_id);
+				blog(LOG_INFO,
+					"obs-browser[%lu]: API: performing call to '%s', callback id %d",
+					context->cefClientId,
+					context->id.c_str(),
+					context->cef_app_callback_id);
 
 				context->self->m_apiCallHandlers[context->id](
 					context->self,

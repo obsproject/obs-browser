@@ -92,6 +92,8 @@ using namespace json11;
 
 /* ========================================================================= */
 
+static long s_cefClientId = 0;
+
 StreamElementsCefClient::StreamElementsCefClient(
 	std::string executeJavaScriptCodeOnLoad,
 	CefRefPtr<StreamElementsBrowserMessageHandler> messageHandler,
@@ -100,12 +102,15 @@ StreamElementsCefClient::StreamElementsCefClient(
 	m_executeJavaScriptCodeOnLoad(executeJavaScriptCodeOnLoad),
 	m_messageHandler(messageHandler),
 	m_eventHandler(eventHandler),
-	m_msgDestType(msgDestType)
+	m_msgDestType(msgDestType),
+	m_cefClientId(os_atomic_inc_long(&s_cefClientId))
 {
+	blog(LOG_INFO, "obs-browser[%lu]: StreamElementsCefClient: initialized", m_cefClientId);
 }
 
 StreamElementsCefClient::~StreamElementsCefClient()
 {
+	blog(LOG_INFO, "obs-browser[%lu]: StreamElementsCefClient: destroyed", m_cefClientId);
 }
 
 /* ========================================================================= */
@@ -116,7 +121,8 @@ void StreamElementsCefClient::OnLoadStart(CefRefPtr<CefBrowser> browser,
 {
 	char buf[16];
 
-	blog(LOG_INFO, "obs-browser: start loading %s frame url '%s' (transition_type: %s)",
+	blog(LOG_INFO, "obs-browser[%lu]: start loading %s frame url '%s' (transition_type: %s)",
+		m_cefClientId,
 		frame->IsMain() ? "main" : "child",
 		frame->GetURL().ToString().c_str(),
 		ltoa((long)transition_type, buf, 16));
@@ -127,7 +133,8 @@ void StreamElementsCefClient::OnLoadEnd(
 	CefRefPtr<CefFrame> frame,
 	int httpStatusCode)
 {
-	blog(LOG_INFO, "obs-browser: completed loading %s frame url '%s' (HTTP status code: %d)",
+	blog(LOG_INFO, "obs-browser[%lu]: completed loading %s frame url '%s' (HTTP status code: %d)",
+		m_cefClientId,
 		frame->IsMain() ? "main" : "child",
 		frame->GetURL().ToString().c_str(),
 		httpStatusCode);
@@ -148,7 +155,8 @@ void StreamElementsCefClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 	const CefString& errorText,
 	const CefString& failedUrl)
 {
-	blog(LOG_WARNING, "obs-browser: error loading %s frame url '%s': %s (%d)",
+	blog(LOG_WARNING, "obs-browser[%lu]: error loading %s frame url '%s': %s (%d)",
+		m_cefClientId,
 		frame->IsMain() ? "main" : "child",
 		failedUrl.ToString().c_str(),
 		errorText.size() ? errorText.ToString().c_str() : "Unknown error code",
@@ -220,7 +228,7 @@ bool StreamElementsCefClient::OnProcessMessageReceived(
 		};
 
 	}
-	else if (m_messageHandler.get() && m_messageHandler->OnProcessMessageReceived(browser, source_process, message)) {
+	else if (m_messageHandler.get() && m_messageHandler->OnProcessMessageReceived(browser, source_process, message, m_cefClientId)) {
 		return true;
 	}
 	else {
@@ -268,6 +276,23 @@ void StreamElementsCefClient::OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
 {
 	UNREFERENCED_PARAMETER(browser);
 	UNREFERENCED_PARAMETER(icon_urls);
+}
+
+bool StreamElementsCefClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
+#if CHROME_VERSION_BUILD >= 3282
+	cef_log_severity_t level,
+#endif
+	const CefString &message,
+	const CefString &source,
+	int line)
+{
+	blog(LOG_INFO, "obs-browser[%lu]: CONSOLE: %s (source: %s:%d)",
+		m_cefClientId,
+		message.ToString().c_str(),
+		source.ToString().c_str(),
+		line);
+
+	return false;
 }
 
 void StreamElementsCefClient::OnAfterCreated(CefRefPtr<CefBrowser> browser)

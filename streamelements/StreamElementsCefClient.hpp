@@ -121,7 +121,8 @@ public:
 	{
 		blog(
 			LOG_INFO,
-			"obs-browser: StreamElementsCefClient::OnDragEnter: rejected drag operation (mask: 0x%08x)",
+			"obs-browser[%lu]: StreamElementsCefClient::OnDragEnter: rejected drag operation (mask: 0x%08x)",
+			m_cefClientId,
 			(int)mask);
 
 		return true;
@@ -174,7 +175,8 @@ public:
 		if (!target_url.size() || target_url.ToString() == "about:blank") {
 			blog(
 				LOG_INFO,
-				"obs-browser: StreamElementsCefClient::OnBeforePopup: ignore due to target_url: target_url '%s', target_frame_name '%s', target_disposition %d",
+				"obs-browser[%lu]: StreamElementsCefClient::OnBeforePopup: ignore due to target_url: target_url '%s', target_frame_name '%s', target_disposition %d",
+				m_cefClientId,
 				target_url.ToString().c_str(),
 				target_frame_name.ToString().c_str(),
 				(int)target_disposition);
@@ -187,7 +189,8 @@ public:
 			case WOD_NEW_BACKGROUND_TAB:
 				blog(
 					LOG_INFO,
-					"obs-browser: StreamElementsCefClient::OnBeforePopup: open in desktop browser: target_url '%s', target_frame_name '%s', target_disposition %d",
+					"obs-browser[%lu]: StreamElementsCefClient::OnBeforePopup: open in desktop browser: target_url '%s', target_frame_name '%s', target_disposition %d",
+					m_cefClientId,
 					target_url.ToString().c_str(),
 					target_frame_name.ToString().c_str(),
 					(int)target_disposition);
@@ -203,7 +206,8 @@ public:
 			case WOD_IGNORE_ACTION:
 				blog(
 					LOG_INFO,
-					"obs-browser: StreamElementsCefClient::OnBeforePopup: ignore due to target_disposition: target_url '%s', target_frame_name '%s', target_disposition %d",
+					"obs-browser[%lu]: StreamElementsCefClient::OnBeforePopup: ignore due to target_disposition: target_url '%s', target_frame_name '%s', target_disposition %d",
+					m_cefClientId,
 					target_url.ToString().c_str(),
 					target_frame_name.ToString().c_str(),
 					(int)target_disposition);
@@ -214,7 +218,8 @@ public:
 
 		blog(
 			LOG_INFO,
-			"obs-browser: StreamElementsCefClient::OnBeforePopup: allow pop-up: target_url '%s', target_frame_name '%s', target_disposition %d",
+			"obs-browser[%lu]: StreamElementsCefClient::OnBeforePopup: allow pop-up: target_url '%s', target_frame_name '%s', target_disposition %d",
+			m_cefClientId,
 			target_url.ToString().c_str(),
 			target_frame_name.ToString().c_str(),
 			(int)target_disposition);
@@ -304,6 +309,14 @@ public:
 	virtual void OnFaviconURLChange(CefRefPtr<CefBrowser> browser,
 		const std::vector<CefString>& icon_urls) override;
 
+	virtual bool OnConsoleMessage(CefRefPtr<CefBrowser> browser,
+#if CHROME_VERSION_BUILD >= 3282
+		cef_log_severity_t level,
+#endif
+		const CefString &message,
+		const CefString &source,
+		int line) override;
+
 	/* CefKeyboardHandler */
 	virtual bool OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 		const CefKeyEvent& event, CefEventHandle os_event,
@@ -316,6 +329,8 @@ public:
 	}
 
 private:
+	long m_cefClientId = 0;
+
 	std::string m_foreignPopup_executeJavaScriptCodeOnLoad = "";
 	bool m_foreignPopup_enableHostApi = false;
 	bool m_foreignPopup_inheritSettings = false;

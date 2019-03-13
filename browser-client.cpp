@@ -129,7 +129,7 @@ bool BrowserClient::OnProcessMessageReceived(
 
 	} else {
 		return streamelementsMessageHandler.OnProcessMessageReceived(
-					browser, source_process, message);
+					browser, source_process, message, 0);
 	}
 
 	CefRefPtr<CefProcessMessage> msg =

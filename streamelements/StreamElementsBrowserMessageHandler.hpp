@@ -9,5 +9,6 @@ public:
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
 		CefProcessId source_process,
-		CefRefPtr<CefProcessMessage> message) = 0;
+		CefRefPtr<CefProcessMessage> message,
+		const long cefClientId) = 0;
 };

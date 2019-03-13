@@ -13,7 +13,8 @@ public:
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
 		CefProcessId source_process,
-		CefRefPtr<CefProcessMessage> message) override;
+		CefRefPtr<CefProcessMessage> message,
+		const long cefClientId) override;
 
 	void setInitialHiddenState(bool isHidden) { m_initialHiddenState = isHidden; }
 
