@@ -10,6 +10,7 @@
 #include <string>
 #include <cstdio>
 #include <cstdarg>
+#include <vector>
 
 #include <functional>
 
@@ -92,5 +93,17 @@ std::string GetComputerSystemUniqueId();
 
 /* ========================================================= */
 
+struct streamelements_env_update_request {
+public:
+	std::string product;
+	std::string key;
+	std::string value;
+};
+
+typedef std::vector<streamelements_env_update_request> streamelements_env_update_requests;
+
 std::string ReadProductEnvironmentConfigurationString(const char* key);
 bool WriteProductEnvironmentConfigurationString(const char* key, const char* value);
+bool WriteProductEnvironmentConfigurationStrings(streamelements_env_update_requests requests);
+bool WriteEnvironmentConfigStrings(streamelements_env_update_requests requests);
+bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName);

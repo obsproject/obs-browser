@@ -805,7 +805,7 @@ static std::string ReadEnvironmentConfigString(const char* regValueName, const c
 	return result;
 }
 
-static bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName)
+bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName)
 {
 	bool result = false;
 
@@ -820,13 +820,87 @@ static bool WriteEnvironmentConfigString(const char* regValueName, const char* r
 		strlen(regValue));
 
 	if (lResult != ERROR_SUCCESS) {
-		result = false;
+		result = WriteEnvironmentConfigStrings({
+			{ productName ? productName : "", regValueName, regValue }
+		});
 	}
 	else {
 		result = true;
 	}
 
 	return result;
+}
+
+#include <shlwapi.h>
+#pragma comment(lib, "Shlwapi.lib")
+static std::wstring GetCurrentDllFolderPathW()
+{
+	std::wstring result = L"";
+
+	WCHAR path[MAX_PATH];
+	HMODULE hModule;
+
+	if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+		(LPWSTR)&GetCurrentDllFolderPathW, &hModule))
+	{
+		GetModuleFileNameW(hModule, path, sizeof(path));
+		PathRemoveFileSpecW(path);
+
+		result = std::wstring(path);
+
+		if (!result.empty() &&
+			result[result.size() - 1] != '\\')
+			result += L"\\";
+	}
+
+	return result;
+}
+
+bool WriteEnvironmentConfigStrings(streamelements_env_update_requests requests)
+{
+	std::vector<std::string> args;
+
+	for (auto req : requests) {
+		if (req.product.size()) {
+			args.push_back(req.product + "/" + req.key + "=" + req.value);
+		}
+		else {
+			args.push_back(req.key + "=" + req.value);
+		}
+	}
+
+	STARTUPINFOW startInf;
+	memset(&startInf, 0, sizeof startInf);
+	startInf.cb = sizeof(startInf);
+
+	PROCESS_INFORMATION procInf;
+	memset(&procInf, 0, sizeof procInf);
+
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+
+	std::wstring wArgs;
+	for (auto arg : args) {
+		wArgs += L"\"" + myconv.from_bytes(arg) + L"\" ";
+	}
+	if (!wArgs.empty()) {
+		// Remove trailing space
+		wArgs = wArgs.substr(0, wArgs.size() - 1);
+	}
+
+	std::wstring wExePath = GetCurrentDllFolderPathW() + L"obs-streamelements-set-machine-config.exe";
+
+	HINSTANCE hInst = ShellExecuteW(
+		NULL,
+		L"runas",
+		wExePath.c_str(),
+		wArgs.c_str(),
+		NULL,
+		SW_SHOW);
+
+	BOOL bResult = hInst > (HINSTANCE)32;
+
+	return bResult;
 }
 
 std::string ReadProductEnvironmentConfigurationString(const char* key)
@@ -837,6 +911,15 @@ std::string ReadProductEnvironmentConfigurationString(const char* key)
 bool WriteProductEnvironmentConfigurationString(const char* key, const char* value)
 {
 	return WriteEnvironmentConfigString(key, value, ENV_PRODUCT_NAME);
+}
+
+bool WriteProductEnvironmentConfigurationStrings(streamelements_env_update_requests requests)
+{
+	for (int i = 0; i < requests.size(); ++i) {
+		requests[i].product = ENV_PRODUCT_NAME;
+	}
+
+	return WriteEnvironmentConfigStrings(requests);
 }
 
 /* ========================================================= */
@@ -894,6 +977,7 @@ std::string GetComputerSystemUniqueId()
 	const char* REG_VALUE_NAME = "MachineUniqueIdentifier";
 
 	std::string result = ReadEnvironmentConfigString(REG_VALUE_NAME, nullptr);
+	std::string prevResult = result;
 
 	if (result.size()) {
 		// Discard invalid values
@@ -1020,10 +1104,10 @@ std::string GetComputerSystemUniqueId()
 		result += CreateCryptoSecureRandomNumberString();
 	}
 
-	result = result;
-
-	// Save for future use
-	WriteEnvironmentConfigString(REG_VALUE_NAME, result.c_str(), nullptr);
+	if (result.size() && result != prevResult) {
+		// Save for future use
+		WriteEnvironmentConfigString(REG_VALUE_NAME, result.c_str(), nullptr);
+	}
 
 	return result;
 }

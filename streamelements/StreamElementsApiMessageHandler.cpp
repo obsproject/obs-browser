@@ -814,11 +814,12 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 				std::string quality = d->GetString("quality");
 				std::string manifestUrl = d->GetString("manifestUrl");
 
-				WriteProductEnvironmentConfigurationString(
-					"Quality", quality.c_str());
+				bool writeResult = WriteProductEnvironmentConfigurationStrings({
+						{ "", "Quality", quality },
+						{ "", "ManifestUrl", manifestUrl }
+					});
 
-				WriteProductEnvironmentConfigurationString(
-					"ManifestUrl", manifestUrl.c_str());
+				result->SetBool(writeResult);
 			}
 		}
 	API_HANDLER_END()
