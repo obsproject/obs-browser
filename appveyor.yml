@@ -28,6 +28,10 @@ install:
 
     cd /d c:\local\obs-studio
 
+    git fetch origin 23.0.2
+
+    git checkout 23.0.2
+
     git submodule update --init --recursive
 
     rd /s /q c:\local\obs-studio\plugins\obs-browser
