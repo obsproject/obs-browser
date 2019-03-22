@@ -409,7 +409,7 @@ void BrowserSource::Render()
 #endif
 }
 
-static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func)
+static void ExecuteOnAllBrowsers(function<void(CefRefPtr<CefBrowser>)> func)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
 	
@@ -417,14 +417,16 @@ static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func)
 	while (bs) {
 		BrowserSource *bsw =
 			reinterpret_cast<BrowserSource *>(bs);
-		bsw->ExecuteOnBrowser([&] () {func(bsw);});
+		CefRefPtr<CefBrowser> cefBrowser = bsw->cefBrowser;
+		if (cefBrowser)
+			bsw->ExecuteOnBrowser([=] () {func(cefBrowser);}, true);
 		bs = bs->next;
 	}
 }
 
-void DispatchJSEvent(const char *eventName, const char *jsonString)
+void DispatchJSEvent(std::string eventName, std::string jsonString)
 {
-	ExecuteOnAllBrowsers([&] (BrowserSource *bsw)
+	ExecuteOnAllBrowsers([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("DispatchJSEvent");
@@ -432,6 +434,6 @@ void DispatchJSEvent(const char *eventName, const char *jsonString)
 
 		args->SetString(0, eventName);
 		args->SetString(1, jsonString);
-		bsw->cefBrowser->SendProcessMessage(PID_RENDERER, msg);
+		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
 	});
 }
