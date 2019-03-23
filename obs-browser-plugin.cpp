@@ -253,6 +253,10 @@ extern "C" EXPORT void obs_browser_initialize(void)
 
 void RegisterBrowserSource()
 {
+#if !defined(_WIN32) && !defined(__APPLE__) && CHROME_VERSION_BUILD < 3683
+	return;
+#endif
+
 	struct obs_source_info info = {};
 	info.id                     = "browser_source";
 	info.type                   = OBS_SOURCE_TYPE_INPUT;

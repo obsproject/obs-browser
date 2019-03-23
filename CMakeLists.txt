@@ -198,6 +198,20 @@ if (WIN32)
 	)
 endif()
 
+if (UNIX AND NOT APPLE)
+	install(DIRECTORY "${CEF_ROOT_DIR}/Resources/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
+	install(DIRECTORY "${CEF_ROOT_DIR}/Release/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
+
+	add_custom_command(TARGET obs-browser POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+		"${CEF_ROOT_DIR}/Resources"
+		"$<TARGET_FILE_DIR:obs-browser>"
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+		"${CEF_ROOT_DIR}/Release"
+		"$<TARGET_FILE_DIR:obs-browser>"
+	)
+endif()
+
 if(APPLE AND NOT BROWSER_DEPLOY)
 	add_custom_command(TARGET obs-browser POST_BUILD
 		COMMAND "install_name_tool" -change
