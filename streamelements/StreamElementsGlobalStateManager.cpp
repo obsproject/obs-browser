@@ -657,7 +657,7 @@ void StreamElementsGlobalStateManager::DeleteCookies()
 	*/
 }
 
-extern void DispatchJSEvent(const char *eventName, const char *jsonString);
+extern void DispatchJSEvent(std::string eventName, std::string jsonString);
 
 static void DispatchJSEventAllBrowsers(const char *eventName, const char *jsonString)
 {

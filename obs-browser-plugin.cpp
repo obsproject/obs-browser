@@ -436,34 +436,34 @@ void RegisterBrowserSource()
 
 /* ========================================================================= */
 
-extern void DispatchJSEvent(const char *eventName, const char *jsonString);
+extern void DispatchJSEvent(std::string eventName, std::string jsonString);
 
 static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 {
 	switch (event) {
 	case OBS_FRONTEND_EVENT_STREAMING_STARTING:
-		DispatchJSEvent("obsStreamingStarting", nullptr);
+		DispatchJSEvent("obsStreamingStarting", "");
 		break;
 	case OBS_FRONTEND_EVENT_STREAMING_STARTED:
-		DispatchJSEvent("obsStreamingStarted", nullptr);
+		DispatchJSEvent("obsStreamingStarted", "");
 		break;
 	case OBS_FRONTEND_EVENT_STREAMING_STOPPING:
-		DispatchJSEvent("obsStreamingStopping", nullptr);
+		DispatchJSEvent("obsStreamingStopping", "");
 		break;
 	case OBS_FRONTEND_EVENT_STREAMING_STOPPED:
-		DispatchJSEvent("obsStreamingStopped", nullptr);
+		DispatchJSEvent("obsStreamingStopped", "");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STARTING:
-		DispatchJSEvent("obsRecordingStarting", nullptr);
+		DispatchJSEvent("obsRecordingStarting", "");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
-		DispatchJSEvent("obsRecordingStarted", nullptr);
+		DispatchJSEvent("obsRecordingStarted", "");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPING:
-		DispatchJSEvent("obsRecordingStopping", nullptr);
+		DispatchJSEvent("obsRecordingStopping", "");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
-		DispatchJSEvent("obsRecordingStopped", nullptr);
+		DispatchJSEvent("obsRecordingStopped", "");
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED:
 		{
@@ -483,11 +483,11 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 				{"height", (int)obs_source_get_height(source)}
 			};
 
-			DispatchJSEvent("obsSceneChanged", json.dump().c_str());
+			DispatchJSEvent("obsSceneChanged", json.dump());
 			break;
 		}
 	case OBS_FRONTEND_EVENT_EXIT:
-		DispatchJSEvent("obsExit", nullptr);
+		DispatchJSEvent("obsExit", "");
 		break;
 	default:;
 	}

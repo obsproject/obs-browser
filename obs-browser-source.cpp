@@ -425,8 +425,7 @@ void BrowserSource::Render()
 #endif
 }
 
-/*
-static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func, bool async = false)
+static void ExecuteOnAllBrowsers(function<void(CefRefPtr<CefBrowser>)> func)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
 	
@@ -434,59 +433,23 @@ static void ExecuteOnAllBrowsers(function<void(BrowserSource*)> func, bool async
 	while (bs) {
 		BrowserSource *bsw =
 			reinterpret_cast<BrowserSource *>(bs);
-		bsw->ExecuteOnBrowser([=] () {func(bsw);}, async);
+		CefRefPtr<CefBrowser> cefBrowser = bsw->cefBrowser;
+		if (cefBrowser)
+			bsw->ExecuteOnBrowser([=] () {func(cefBrowser);}, true);
 		bs = bs->next;
 	}
 }
-*/
 
-void DispatchJSEvent(const char *eventName, const char *jsonString)
+void DispatchJSEvent(std::string eventName, std::string jsonString)
 {
-	class local_context: public CefBaseRefCounted {
-	public:
-		std::string eventName;
-		std::string jsonString = "null";
-
-		IMPLEMENT_REFCOUNTING(local_context)
-	};
-
-	CefRefPtr<local_context> context = new local_context();
-
-	context->AddRef();
-
-	context->eventName = eventName;
-
-	if (jsonString) {
-		context->jsonString = jsonString;
-	}
-	else {
-		context->jsonString = "null";
-	}
-
-	auto func = [context](BrowserSource *bsw)
+	ExecuteOnAllBrowsers([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("DispatchJSEvent");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
-		args->SetString(0, context->eventName);
-		args->SetString(1, context->jsonString);
-		bsw->cefBrowser->SendProcessMessage(PID_RENDERER, msg);
-
-		context->Release();
-	};
-
-	// Execute on all browsers
-	lock_guard<mutex> lock(browser_list_mutex);
-
-	BrowserSource *bs = first_browser;
-	while (bs) {
-		BrowserSource *bsw =
-			reinterpret_cast<BrowserSource *>(bs);
-		context->AddRef();
-		bsw->ExecuteOnBrowser([=]() {func(bsw); }, true);
-		bs = bs->next;
-	}
-
-	context->Release();
+		args->SetString(0, eventName);
+		args->SetString(1, jsonString);
+		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
+	});
 }
