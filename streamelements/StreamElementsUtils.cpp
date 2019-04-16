@@ -16,6 +16,8 @@
 #include <QUrl>
 #include <regex>
 
+#include "deps/picosha2/picosha2.h"
+
 /* ========================================================= */
 
 static const char* ENV_PRODUCT_NAME = "OBS.Live";
@@ -1110,4 +1112,116 @@ std::string GetComputerSystemUniqueId()
 	}
 
 	return result;
+}
+
+bool ParseQueryString(std::string input, std::map<std::string, std::string>& result)
+{
+	std::string s = input;
+
+	while (s.size()) {
+		std::string left;
+
+		size_t offset = s.find('&');
+		if (offset != std::string::npos) {
+			left = s.substr(0, offset);
+			s = s.substr(offset + 1);
+		}
+		else {
+			left = s;
+			s = "";
+		}
+
+		std::string right = "";
+		offset = left.find('=');
+
+		if (offset != std::string::npos) {
+			right = left.substr(offset + 1);
+			left = left.substr(0, offset);
+		}
+
+		result[left] = right;
+	}
+
+	return true;
+}
+
+std::string CreateSHA256Digest(std::string& input)
+{
+	std::vector<unsigned char> hash(picosha2::k_digest_size);
+	picosha2::hash256(input.begin(), input.end(), hash.begin(), hash.end());
+
+	return picosha2::bytes_to_hex_string(hash.begin(), hash.end());
+}
+
+static std::mutex s_session_message_signature_mutex;
+static std::string s_session_message_signature_random = "";
+
+std::string CreateSessionMessageSignature(std::string& message)
+{
+	if (!s_session_message_signature_random.size()) {
+		std::lock_guard<std::mutex> guard(s_session_message_signature_mutex);
+		if (!s_session_message_signature_random.size()) {
+			s_session_message_signature_random = CreateCryptoSecureRandomNumberString();
+		}
+	}
+
+	std::string digest_input = message + s_session_message_signature_random;
+
+	return CreateSHA256Digest(digest_input);
+}
+
+bool VerifySessionMessageSignature(std::string& message, std::string& signature)
+{
+	std::string digest_input = message + s_session_message_signature_random;
+
+	std::string digest = CreateSHA256Digest(digest_input);
+
+	return digest == signature;
+}
+
+std::string CreateSessionSignedAbsolutePathURL(std::string path)
+{
+	CefURLParts parts;
+
+	CefString(&parts.scheme) = "https";
+	CefString(&parts.host) = "absolute";
+	CefString(&parts.path) = std::string("/") + path;
+
+	CefString url;
+	CefCreateURL(parts, url);
+	CefParseURL(url, parts);
+
+	std::string message = CefString(&parts.path).ToString().erase(0, 1);
+
+	return url.ToString() + std::string("?digest=") +
+		CreateSessionMessageSignature(message);
+}
+
+bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path)
+{
+	CefURLParts parts;
+
+	if (!CefParseURL(CefString(url), parts)) {
+		return false;
+	}
+	else {
+		path = CefString(&parts.path);
+
+		path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_SPACES);
+		path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
+
+		path = path.erase(0, 1);
+
+		std::map<std::string, std::string> queryArgs;
+		ParseQueryString(CefString(&parts.query), queryArgs);
+
+		if (!queryArgs.count("digest")) {
+			return false;
+		}
+		else {
+			std::string signature = queryArgs["digest"];
+
+			return VerifySessionMessageSignature(path, signature);
+		}
+	}
 }

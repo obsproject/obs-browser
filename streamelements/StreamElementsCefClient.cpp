@@ -2,6 +2,7 @@
 #include "StreamElementsUtils.hpp"
 #include "StreamElementsGlobalStateManager.hpp"
 #include "StreamElementsMessageBus.hpp"
+#include "StreamElementsFileSystemMapper.hpp"
 #include "base64/base64.hpp"
 #include "json11/json11.hpp"
 #include <obs-frontend-api.h>
@@ -19,23 +20,6 @@
 
 static std::recursive_mutex s_browsers_mutex;
 static std::vector<CefRefPtr<CefBrowser>> s_browsers;
-
-/*
-static class BrowserTask : public CefTask {
-public:
-	std::function<void()> task;
-
-	inline BrowserTask(std::function<void()> task_) : task(task_) {}
-	virtual void Execute() override { task(); }
-
-	IMPLEMENT_REFCOUNTING(BrowserTask);
-};
-
-static bool QueueCEFTask(std::function<void()> task)
-{
-	return CefPostTask(TID_UI, CefRefPtr<BrowserTask>(new BrowserTask(task)));
-}
-*/
 
 /* ========================================================================= */
 
@@ -468,4 +452,42 @@ bool StreamElementsCefClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 	obs_hotkey_inject_event(combo, pressed);
 
 	return false;
+}
+
+class BrowserSchemeHandler : public CefResourceHandler {
+	std::string fileName;
+	std::ifstream inputStream;
+	bool isComplete = false;
+	int64 length = 0;
+	int64 remaining = 0;
+
+public:
+	virtual bool ProcessRequest(
+			CefRefPtr<CefRequest> request,
+			CefRefPtr<CefCallback> callback) override;
+	virtual void GetResponseHeaders(
+			CefRefPtr<CefResponse> response,
+			int64 &response_length,
+			CefString &redirectUrl) override;
+	virtual bool ReadResponse(
+			void *data_out,
+			int bytes_to_read,
+			int &bytes_read,
+			CefRefPtr<CefCallback> callback) override;
+	virtual void Cancel() override;
+
+	IMPLEMENT_REFCOUNTING(BrowserSchemeHandler);
+};
+
+CefRefPtr<CefResourceHandler> StreamElementsCefClient::GetResourceHandler(
+	CefRefPtr<CefBrowser> browser,
+	CefRefPtr<CefFrame> frame,
+	CefRefPtr<CefRequest> request)
+{
+	///
+	// Intercept requests to //absolute/ and locally mapped hosts
+	//
+	return StreamElementsGlobalStateManager::GetInstance()
+		->GetLocalWebFilesServer()
+		->GetCefResourceHandler(browser, frame, request);
 }

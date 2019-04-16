@@ -132,6 +132,8 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsBrowserSourceApiMessageHandler.cpp
 	streamelements/StreamElementsControllerServer.cpp
 	streamelements/StreamElementsObsSceneManager.cpp
+	streamelements/StreamElementsLocalWebFilesServer.cpp
+	streamelements/StreamElementsExternalSceneDataProviderSlobsClient.cpp
 	streamelements/deps/zip/zip.c
 	streamelements/deps/server/NamedPipesServer.cpp
 	streamelements/deps/server/NamedPipesServerClientHandler.cpp
@@ -177,6 +179,11 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsBrowserSourceApiMessageHandler.hpp
 	streamelements/StreamElementsControllerServer.hpp
 	streamelements/StreamElementsObsSceneManager.hpp
+	streamelements/StreamElementsFileSystemMapper.hpp
+	streamelements/StreamElementsLocalWebFilesServer.hpp
+	streamelements/StreamElementsExternalSceneDataProviderManager.hpp
+	streamelements/StreamElementsExternalSceneDataProviderSlobsClient.hpp
+	streamelements/StreamElementsExternalSceneDataProvider.hpp
 	streamelements/deps/zip/zip.h
 	streamelements/deps/zip/miniz.h
 	streamelements/deps/moodycamel/concurrentqueue.h

@@ -314,6 +314,9 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 			Qt::NoDockWidgetArea,
 			context->self->m_themeChangeListener);
 
+		char* webRootPath = obs_module_file("localwebroot");
+		context->self->m_localWebFilesServer = new StreamElementsLocalWebFilesServer(webRootPath ? webRootPath : "");
+		bfree(webRootPath);
 		context->self->m_analyticsEventsManager = new StreamElementsAnalyticsEventsManager();
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
 		context->self->m_obsSceneManager = new StreamElementsObsSceneManager(context->obs_main_window);
@@ -323,6 +326,8 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_workerManager = new StreamElementsWorkerManager();
 		context->self->m_hotkeyManager = new StreamElementsHotkeyManager();
 		context->self->m_performanceHistoryTracker = new StreamElementsPerformanceHistoryTracker();
+		context->self->m_externalSceneDataProviderManager = new StreamElementsExternalSceneDataProviderManager();
+
 		{
 			// Set up "Live Support" button
 			/*QPushButton* liveSupport = new QPushButton(
@@ -492,6 +497,8 @@ void StreamElementsGlobalStateManager::Shutdown()
 		delete self->m_menuManager;
 		delete self->m_hotkeyManager;
 		delete self->m_obsSceneManager;
+		delete self->m_localWebFilesServer;
+		delete self->m_externalSceneDataProviderManager;
 	}, this);
 
 	m_initialized = false;

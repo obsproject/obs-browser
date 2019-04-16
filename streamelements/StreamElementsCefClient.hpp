@@ -130,6 +130,11 @@ public:
 
 	/* CefRequestHandler */
 
+	virtual CefRefPtr<CefResourceHandler> GetResourceHandler(
+		CefRefPtr<CefBrowser> browser,
+		CefRefPtr<CefFrame> frame,
+		CefRefPtr<CefRequest> request) override;
+
 	/*
 	virtual bool OnOpenURLFromTab(
 		CefRefPtr<CefBrowser>,

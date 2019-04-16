@@ -859,6 +859,28 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		}
 	API_HANDLER_END();
 
+	API_HANDLER_BEGIN("getExternalSceneDataProviders")
+		StreamElementsGlobalStateManager::GetInstance()->
+			GetExternalSceneDataProviderManager()->
+			SerializeProviders(result);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getExternalSceneDataSceneCollections")
+		if (args->GetSize()) {
+			StreamElementsGlobalStateManager::GetInstance()->
+				GetExternalSceneDataProviderManager()->
+				SerializeProviderSceneColletions(args->GetValue(0), result);
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("getExternalSceneDataSceneCollectionContent")
+		if (args->GetSize()) {
+			StreamElementsGlobalStateManager::GetInstance()->
+				GetExternalSceneDataProviderManager()->
+				SerializeProviderSceneColletion(args->GetValue(0), result);
+		}
+	API_HANDLER_END()
+
 	API_HANDLER_BEGIN("crashProgram")
 		// Crash
 		*((int*)nullptr) = 12345; // exception

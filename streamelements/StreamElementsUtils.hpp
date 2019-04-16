@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <vector>
+#include <map>
 
 #include <functional>
 
@@ -107,3 +108,12 @@ bool WriteProductEnvironmentConfigurationString(const char* key, const char* val
 bool WriteProductEnvironmentConfigurationStrings(streamelements_env_update_requests requests);
 bool WriteEnvironmentConfigStrings(streamelements_env_update_requests requests);
 bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName);
+
+/* ========================================================= */
+
+bool ParseQueryString(std::string input, std::map<std::string, std::string>& result);
+std::string CreateSHA256Digest(std::string& input);
+std::string CreateSessionMessageSignature(std::string& message);
+bool VerifySessionMessageSignature(std::string& message, std::string& signature);
+std::string CreateSessionSignedAbsolutePathURL(std::string path);
+bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path);
