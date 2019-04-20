@@ -24,12 +24,12 @@ public:
 protected:
 	struct scene_collection_t {
 		std::string collectionId;
-		std::string name;
+		std::wstring name;
 	};
 
 	struct scene_collection_file_content_t {
-		std::string path;
-		std::string content;
+		std::wstring path;
+		std::wstring content;
 	};
 
 	struct scene_collection_content_t : public scene_collection_t {

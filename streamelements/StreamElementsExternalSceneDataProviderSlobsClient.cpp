@@ -12,9 +12,11 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollections(
 	char* manifestContent =
 		os_quick_read_utf8_file((m_basePath + "/manifest.json").c_str());
 
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+
 	CefRefPtr<CefValue> manifestValue =
 		CefParseJSON(
-			manifestContent ? manifestContent : "{}",
+			manifestContent ? myconv.from_bytes(manifestContent) : L"{}",
 			JSON_PARSER_ALLOW_TRAILING_COMMAS);
 
 	if (manifestContent) {
@@ -68,7 +70,7 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollections(
 			item.collectionId = collection->GetString("id");
 
 			if (!collection->HasKey("name") || collection->GetType("name") != VTYPE_STRING) {
-				item.name = item.collectionId;
+				item.name = myconv.from_bytes(item.collectionId);
 			}
 			else {
 				item.name = collection->GetString("name");
@@ -157,14 +159,16 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollection(
 	result.collectionId = collection->collectionId;
 	result.name = collection->name;
 
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+
 	char* manifest_content =
 		os_quick_read_utf8_file((m_basePath + "/manifest.json").c_str());
 
 	if (manifest_content) {
 		scene_collection_file_content_t meta_manifest;
 
-		meta_manifest.path = m_basePath + "/manifest.json";
-		meta_manifest.content = manifest_content;
+		meta_manifest.path = myconv.from_bytes(m_basePath + "/manifest.json");
+		meta_manifest.content = myconv.from_bytes(manifest_content);
 		result.metadataFiles.push_back(meta_manifest);
 
 		bfree(manifest_content);
@@ -183,17 +187,15 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollection(
 	if (scene_collection_content) {
 		scene_collection_file_content_t meta_scene_collection;
 
-		meta_scene_collection.path = m_basePath + "/" + result.collectionId + ".json";
-		meta_scene_collection.content = scene_collection_content;
+		meta_scene_collection.path = myconv.from_bytes(m_basePath + "/" + result.collectionId + ".json");
+		meta_scene_collection.content = myconv.from_bytes(scene_collection_content);
 		result.metadataFiles.push_back(meta_scene_collection);
 
 		bfree(scene_collection_content);
 
-		std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-
 		CefRefPtr<CefValue> root =
 			CefParseJSON(
-				myconv.from_bytes(meta_scene_collection.content).c_str(),
+				meta_scene_collection.content.c_str(),
 				JSON_PARSER_ALLOW_TRAILING_COMMAS);
 
 		if (root->GetType() != VTYPE_NULL && root->GetType() != VTYPE_INVALID) {
