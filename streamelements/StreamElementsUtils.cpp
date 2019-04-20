@@ -1179,19 +1179,24 @@ bool VerifySessionMessageSignature(std::string& message, std::string& signature)
 	return digest == signature;
 }
 
-std::string CreateSessionSignedAbsolutePathURL(std::string path)
+std::string CreateSessionSignedAbsolutePathURL(std::wstring path)
 {
-	CefURLParts parts;
+ 	CefURLParts parts;
 
 	CefString(&parts.scheme) = "https";
 	CefString(&parts.host) = "absolute";
-	CefString(&parts.path) = std::string("/") + path;
+	CefString(&parts.path) = std::wstring(L"/") + path;
 
 	CefString url;
 	CefCreateURL(parts, url);
 	CefParseURL(url, parts);
 
-	std::string message = CefString(&parts.path).ToString().erase(0, 1);
+	std::string message = CefString(&parts.path).ToString();
+
+	message = CefURIDecode(message, true, cef_uri_unescape_rule_t::UU_SPACES);
+	message = CefURIDecode(message, true, cef_uri_unescape_rule_t::UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
+
+	message = message.erase(0, 1);
 
 	return url.ToString() + std::string("?digest=") +
 		CreateSessionMessageSignature(message);
@@ -1205,7 +1210,7 @@ bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path)
 		return false;
 	}
 	else {
-		path = CefString(&parts.path);
+		path = CefString(&parts.path).ToString();
 
 		path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_SPACES);
 		path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);

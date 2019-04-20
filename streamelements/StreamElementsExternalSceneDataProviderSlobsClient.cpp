@@ -86,14 +86,11 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollections(
 	return success;
 }
 
-static void dumpPaths(CefRefPtr<CefValue> parent, std::vector<std::string>& paths)
+static void dumpPaths(CefRefPtr<CefValue> parent, std::vector<std::wstring>& paths)
 {
 	if (parent->GetType() == VTYPE_STRING) {
-		std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-
-		std::string candidate =
-			myconv.to_bytes(
-				parent->GetString().ToWString());
+		std::wstring candidate =
+			parent->GetString().ToWString();
 
 		if (std::experimental::filesystem::is_regular_file(candidate)) {
 			paths.push_back(candidate);
@@ -192,15 +189,17 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollection(
 
 		bfree(scene_collection_content);
 
+		std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+
 		CefRefPtr<CefValue> root =
 			CefParseJSON(
-				meta_scene_collection.content.c_str(),
+				myconv.from_bytes(meta_scene_collection.content).c_str(),
 				JSON_PARSER_ALLOW_TRAILING_COMMAS);
 
 		if (root->GetType() != VTYPE_NULL && root->GetType() != VTYPE_INVALID) {
 			success = true;
 
-			std::vector<std::string> paths;
+			std::vector<std::wstring> paths;
 
 			dumpPaths(root, paths);
 

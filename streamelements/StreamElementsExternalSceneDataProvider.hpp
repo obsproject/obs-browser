@@ -34,7 +34,7 @@ protected:
 
 	struct scene_collection_content_t : public scene_collection_t {
 		std::vector<scene_collection_file_content_t> metadataFiles;
-		std::vector<std::string> referencedFiles;
+		std::vector<std::wstring> referencedFiles;
 	};
 
 	virtual bool GetSceneCollections(
@@ -100,14 +100,25 @@ public:
 			d->SetList("metadataFiles", list);
 		}
 
-		{
+		{ 
 			CefRefPtr<CefListValue> list = CefListValue::Create();
 
+			std::map<std::wstring, std::string> uniqueReferencedFiles;
+
 			for (auto file : collection.referencedFiles) {
+				if (uniqueReferencedFiles.count(file)) {
+					continue;
+				}
+
+				uniqueReferencedFiles[file] =
+					CreateSessionSignedAbsolutePathURL(file);
+			}
+
+			for (auto kv : uniqueReferencedFiles) {
 				CefRefPtr<CefDictionaryValue> item = CefDictionaryValue::Create();
 
-				item->SetString("path", file.c_str());
-				item->SetString("url", CreateSessionSignedAbsolutePathURL(file));
+				item->SetString("path", kv.first.c_str());
+				item->SetString("url", kv.second.c_str());
 
 				list->SetDictionary(list->GetSize(), item);
 			}

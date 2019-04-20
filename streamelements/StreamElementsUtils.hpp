@@ -115,5 +115,5 @@ bool ParseQueryString(std::string input, std::map<std::string, std::string>& res
 std::string CreateSHA256Digest(std::string& input);
 std::string CreateSessionMessageSignature(std::string& message);
 bool VerifySessionMessageSignature(std::string& message, std::string& signature);
-std::string CreateSessionSignedAbsolutePathURL(std::string path);
+std::string CreateSessionSignedAbsolutePathURL(std::wstring path);
 bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path);
