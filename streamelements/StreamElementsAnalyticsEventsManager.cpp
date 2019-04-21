@@ -81,9 +81,15 @@ void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, js
 
 	if (!synchronous) {
 		Enqueue([=]() {
+			http_client_request_headers_t headers;
+
+			headers.emplace(
+				std::make_pair<std::string, std::string>(
+					"Content-Type", "application/json"));
+
 			HttpPost(
 				"https://heapanalytics.com/api/track",
-				"application/json",
+				headers,
 				(void*)httpRequestBody.c_str(),
 				httpRequestBody.size(),
 				nullptr,
@@ -91,9 +97,15 @@ void StreamElementsAnalyticsEventsManager::AddRawEvent(const char* eventName, js
 		});
 	}
 	else {
+		http_client_request_headers_t headers;
+
+		headers.emplace(
+			std::make_pair<std::string, std::string>(
+				"Content-Type", "application/json"));
+
 		HttpPost(
 			"https://heapanalytics.com/api/track",
-			"application/json",
+			headers,
 			(void*)httpRequestBody.c_str(),
 			httpRequestBody.size(),
 			nullptr,

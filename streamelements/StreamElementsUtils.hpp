@@ -82,10 +82,36 @@ std::string GetStreamElementsApiVersionString();
 
 void SetGlobalCURLOptions(CURL* curl, const char* url);
 
-typedef bool (*http_client_callback_t)(void* data, size_t datalen, void* userdata);
+typedef std::function<bool(void* data, size_t datalen, void* userdata, char* error_msg, int http_code)> http_client_callback_t;
+typedef std::function<void(char* data, void* userdata, char* error_msg, int http_code)> http_client_string_callback_t;
+typedef std::multimap<std::string, std::string> http_client_request_headers_t;
 
-bool HttpGet(const char* url, http_client_callback_t callback, void* userdata);
-bool HttpPost(const char* url, const char* contentType, void* buffer, size_t buffer_len, http_client_callback_t callback, void* userdata);
+bool HttpGet(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	http_client_callback_t callback,
+	void* userdata);
+
+bool HttpPost(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	void* buffer,
+	size_t buffer_len,
+	http_client_callback_t callback,
+	void* userdata);
+
+bool HttpGetString(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	http_client_string_callback_t callback,
+	void* userdata);
+
+bool HttpPostString(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	const char* postData,
+	http_client_string_callback_t callback,
+	void* userdata);
 
 /* ========================================================= */
 

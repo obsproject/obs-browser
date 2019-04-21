@@ -14,6 +14,7 @@
 #include "StreamElementsObsSceneManager.hpp"
 #include "StreamElementsLocalWebFilesServer.hpp"
 #include "StreamElementsExternalSceneDataProviderManager.hpp"
+#include "StreamElementsHttpClient.hpp"
 
 class StreamElementsGlobalStateManager :
 	public StreamElementsObsAppMonitor
@@ -55,7 +56,8 @@ public:
 	StreamElementsPerformanceHistoryTracker* GetPerformanceHistoryTracker() { return m_performanceHistoryTracker; }
 	StreamElementsAnalyticsEventsManager* GetAnalyticsEventsManager() { return m_analyticsEventsManager; }
 	StreamElementsLocalWebFilesServer* GetLocalWebFilesServer() { return m_localWebFilesServer; }
-	StreamElementsExternalSceneDataProviderManager* GetExternalSceneDataProviderManager() { return m_externalSceneDataProviderManager;  }
+	StreamElementsExternalSceneDataProviderManager* GetExternalSceneDataProviderManager() { return m_externalSceneDataProviderManager; }
+	StreamElementsHttpClient* GetHttpClient() { return m_httpClient; }
 	QMainWindow* mainWindow() { return m_mainWindow; }
 
 public:
@@ -85,6 +87,7 @@ private:
 	StreamElementsCrashHandler* m_crashHandler = nullptr;
 	StreamElementsLocalWebFilesServer* m_localWebFilesServer = nullptr;
 	StreamElementsExternalSceneDataProviderManager* m_externalSceneDataProviderManager = nullptr;
+	StreamElementsHttpClient* m_httpClient = nullptr;
 
 private:
 	static StreamElementsGlobalStateManager* s_instance;

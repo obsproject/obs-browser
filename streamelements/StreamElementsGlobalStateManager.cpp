@@ -317,6 +317,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		char* webRootPath = obs_module_file("localwebroot");
 		context->self->m_localWebFilesServer = new StreamElementsLocalWebFilesServer(webRootPath ? webRootPath : "");
 		bfree(webRootPath);
+		context->self->m_httpClient = new StreamElementsHttpClient();
 		context->self->m_analyticsEventsManager = new StreamElementsAnalyticsEventsManager();
 		context->self->m_widgetManager = new StreamElementsBrowserWidgetManager(context->obs_main_window);
 		context->self->m_obsSceneManager = new StreamElementsObsSceneManager(context->obs_main_window);
@@ -499,6 +500,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 		delete self->m_obsSceneManager;
 		delete self->m_localWebFilesServer;
 		delete self->m_externalSceneDataProviderManager;
+		delete self->m_httpClient;
 	}, this);
 
 	m_initialized = false;

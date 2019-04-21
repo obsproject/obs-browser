@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <codecvt>
+#include <vector>
 
 #include <curl/curl.h>
 
@@ -670,7 +671,7 @@ static size_t http_write_callback(char *ptr, size_t size, size_t nmemb, void *us
 
 	bool result = true;
 	if (context->callback) {
-		result = context->callback(ptr, size * nmemb, context->userdata);
+		result = context->callback(ptr, size * nmemb, context->userdata, nullptr, 0);
 	}
 
 	if (result) {
@@ -681,13 +682,19 @@ static size_t http_write_callback(char *ptr, size_t size, size_t nmemb, void *us
 	}
 };
 
-bool HttpGet(const char* url, http_client_callback_t callback, void* userdata)
+bool HttpGet(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	http_client_callback_t callback,
+	void* userdata)
 {
 	bool result = false;
 
 	CURL* curl = curl_easy_init();
 
 	if (curl) {
+		SetGlobalCURLOptions(curl, url);
+
 		curl_easy_setopt(curl, CURLOPT_URL, url);
 
 		curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 512L * 1024L);
@@ -704,11 +711,37 @@ bool HttpGet(const char* url, http_client_callback_t callback, void* userdata)
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_write_callback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &context);
 
+		curl_slist *headers = NULL;
+		for (auto h : request_headers) {
+			headers = curl_slist_append(headers, (h.first + ": " + h.second).c_str());
+		}
+
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+		char* errorbuf = new char[CURL_ERROR_SIZE];
+		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuf);
+
 		CURLcode res = curl_easy_perform(curl);
+
+		curl_slist_free_all(headers);
 
 		if (CURLE_OK == res) {
 			result = true;
 		}
+
+		long http_code = 0;
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
+		if (callback) {
+			if (!result) {
+				callback(nullptr, 0, 0, errorbuf, (int)http_code);
+			}
+			else {
+				callback(nullptr, 0, 0, nullptr, (int)http_code);
+			}
+		}
+
+		delete[] errorbuf;
 
 		curl_easy_cleanup(curl);
 	}
@@ -716,7 +749,13 @@ bool HttpGet(const char* url, http_client_callback_t callback, void* userdata)
 	return result;
 }
 
-bool HttpPost(const char* url, const char* contentType, void* buffer, size_t buffer_len, http_client_callback_t callback, void* userdata)
+bool HttpPost(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	void* buffer,
+	size_t buffer_len,
+	http_client_callback_t callback,
+	void* userdata)
 {
 	bool result = false;
 
@@ -746,20 +785,138 @@ bool HttpPost(const char* url, const char* contentType, void* buffer, size_t buf
 		curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, buffer);
 
 		curl_slist *headers = NULL;
-		headers = curl_slist_append(headers, (std::string("Content-Type: ") + contentType).c_str());
+		for (auto h : request_headers) {
+			headers = curl_slist_append(headers, (h.first + ": " + h.second).c_str());
+		}
 
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
+		char* errorbuf = new char[CURL_ERROR_SIZE];
+		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuf);
+
 		CURLcode res = curl_easy_perform(curl);
+
+		curl_slist_free_all(headers);
 
 		if (CURLE_OK == res) {
 			result = true;
 		}
 
+		long http_code = 0;
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
+		if (callback) {
+			if (!result) {
+				callback(nullptr, 0, 0, errorbuf, (int)http_code);
+			}
+			else {
+				callback(nullptr, 0, 0, nullptr, (int)http_code);
+			}
+		}
+
+		delete[] errorbuf;
+
 		curl_easy_cleanup(curl);
 	}
 
 	return result;
+}
+
+static const size_t MAX_HTTP_STRING_RESPONSE_LENGTH = 1024 * 1024 * 100;
+
+bool HttpGetString(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	http_client_string_callback_t callback,
+	void* userdata)
+{
+	std::vector<char> buffer;
+	std::string error = "";
+	int http_status_code = 0;
+
+	auto cb = [&](void* data, size_t datalen, void* userdata, char* error_msg, int http_code) -> bool
+	{
+		if (http_code != 0) {
+			http_status_code = http_code;
+		}
+
+		if (error_msg) {
+			error = error_msg;
+
+			return false;
+		}
+
+		char* in = (char*)data;
+
+		std::copy(in, in + datalen, std::back_inserter(buffer));
+
+		return buffer.size() < MAX_HTTP_STRING_RESPONSE_LENGTH;
+	};
+
+	bool success = HttpGet(
+		url,
+		request_headers,
+		cb,
+		nullptr);
+
+	buffer.push_back(0);
+
+	callback(
+		(char*)&buffer[0],
+		userdata,
+		error.size() ? (char*)error.c_str() : nullptr,
+		http_status_code);
+
+	return success;
+}
+
+bool HttpPostString(
+	const char* url,
+	http_client_request_headers_t request_headers,
+	const char* postData,
+	http_client_string_callback_t callback,
+	void* userdata)
+{
+	std::vector<char> buffer;
+	std::string error = "";
+	int http_status_code = 0;
+
+	auto cb = [&](void* data, size_t datalen, void* userdata, char* error_msg, int http_code) -> bool
+	{
+		if (http_code != 0) {
+			http_status_code = http_code;
+		}
+
+		if (error_msg) {
+			error = error_msg;
+
+			return false;
+		}
+
+		char* in = (char*)data;
+
+		std::copy(in, in + datalen, std::back_inserter(buffer));
+
+		return buffer.size() < MAX_HTTP_STRING_RESPONSE_LENGTH;
+	};
+
+	bool success = HttpPost(
+		url,
+		request_headers,
+		(void*)postData,
+		strlen(postData),
+		cb,
+		nullptr);
+
+	buffer.push_back(0);
+
+	callback(
+		(char*)&buffer[0],
+		userdata,
+		error.size() ? (char*)error.c_str() : nullptr,
+		http_status_code);
+
+	return success;
 }
 
 /* ========================================================= */

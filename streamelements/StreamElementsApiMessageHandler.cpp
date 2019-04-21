@@ -14,6 +14,8 @@
 #include <QDesktopServices>
 #include <QUrl>
 
+#include <codecvt>
+
 /* Incoming messages from renderer process */
 const char* MSG_ON_CONTEXT_CREATED = "CefRenderProcessHandler::OnContextCreated";
 const char* MSG_INCOMING_API_CALL = "StreamElementsApiMessageHandler::OnIncomingApiCall";
@@ -878,6 +880,14 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 			StreamElementsGlobalStateManager::GetInstance()->
 				GetExternalSceneDataProviderManager()->
 				SerializeProviderSceneColletion(args->GetValue(0), result);
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("httpRequestText")
+		if (args->GetSize()) {
+			StreamElementsGlobalStateManager::GetInstance()->
+				GetHttpClient()->
+				DeserializeHttpRequestText(args->GetValue(0), result);
 		}
 	API_HANDLER_END()
 
