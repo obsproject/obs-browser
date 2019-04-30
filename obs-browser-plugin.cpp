@@ -94,7 +94,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	obs_data_set_default_bool(settings, "fps_custom", false);
 #else
-	obs_data_set_bool(settings, "fps_custom", true);
+	obs_data_set_default_bool(settings, "fps_custom", true);
 #endif
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
