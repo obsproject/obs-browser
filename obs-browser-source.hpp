@@ -22,6 +22,7 @@
 
 #include "cef-headers.hpp"
 #include "browser-config.h"
+#include "browser-app.hpp"
 
 #include <functional>
 #include <string>
@@ -68,7 +69,7 @@ struct BrowserSource {
 
 	bool CreateBrowser();
 	void DestroyBrowser(bool async = false);
-	void ExecuteOnBrowser(std::function<void()> func, bool async = false);
+	void ExecuteOnBrowser(BrowserFunc func, bool async = false);
 
 	/* ---------------------------- */
 

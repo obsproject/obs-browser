@@ -19,7 +19,10 @@
 #pragma once
 
 #include <map>
+#include <functional>
 #include "cef-headers.hpp"
+
+typedef std::function<void(CefRefPtr<CefBrowser>)> BrowserFunc;
 
 class BrowserApp : public CefApp,
                    public CefRenderProcessHandler,

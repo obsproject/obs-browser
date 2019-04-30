@@ -54,24 +54,26 @@ BrowserSource::~BrowserSource()
 	*p_prev_next = next;
 }
 
-void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
+void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 {
 	if (!async) {
 		os_event_t *finishedEvent;
 		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
 		bool success = QueueCEFTask([&] () {
 			if (!!cefBrowser)
-				func();
+				func(cefBrowser);
 			os_event_signal(finishedEvent);
 		});
 		if (success)
 			os_event_wait(finishedEvent);
 		os_event_destroy(finishedEvent);
 	} else {
-		QueueCEFTask([this, func] () {
-			if (!!cefBrowser)
-				func();
-		});
+		CefRefPtr<CefBrowser> browser = cefBrowser;
+		if (!!browser) {
+			QueueCEFTask([=] () {
+				func(browser);
+			});
+		}
 	}
 }
 
@@ -131,7 +133,7 @@ bool BrowserSource::CreateBrowser()
 
 void BrowserSource::DestroyBrowser(bool async)
 {
-	ExecuteOnBrowser([this] ()
+	ExecuteOnBrowser([] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefRefPtr<CefClient> client =
 				cefBrowser->GetHost()->GetClient();
@@ -162,7 +164,7 @@ void BrowserSource::SendMouseClick(
 	int32_t  x         = event->x;
 	int32_t  y         = event->y;
 
-	ExecuteOnBrowser([this, modifiers, x, y, type, mouse_up, click_count] ()
+	ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefMouseEvent e;
 		e.modifiers = modifiers;
@@ -183,7 +185,7 @@ void BrowserSource::SendMouseMove(
 	int32_t  x         = event->x;
 	int32_t  y         = event->y;
 
-	ExecuteOnBrowser([this, modifiers, x, y, mouse_leave] ()
+	ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefMouseEvent e;
 		e.modifiers = modifiers;
@@ -202,7 +204,7 @@ void BrowserSource::SendMouseWheel(
 	int32_t  x         = event->x;
 	int32_t  y         = event->y;
 
-	ExecuteOnBrowser([this, modifiers, x, y, x_delta, y_delta] ()
+	ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefMouseEvent e;
 		e.modifiers = modifiers;
@@ -214,7 +216,7 @@ void BrowserSource::SendMouseWheel(
 
 void BrowserSource::SendFocus(bool focus)
 {
-	ExecuteOnBrowser([this, focus] ()
+	ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		cefBrowser->GetHost()->SendFocusEvent(focus);
 	}, true);
@@ -228,7 +230,7 @@ void BrowserSource::SendKeyClick(
 	std::string text        = event->text;
 	uint32_t    native_vkey = event->native_vkey;
 
-	ExecuteOnBrowser([this, modifiers, text, native_vkey, key_up] ()
+	ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefKeyEvent e;
 		e.windows_key_code = native_vkey;
@@ -258,7 +260,7 @@ void BrowserSource::SendKeyClick(
 void BrowserSource::SetShowing(bool showing)
 {
 	if (!showing) {
-		ExecuteOnBrowser([this] ()
+		ExecuteOnBrowser([] (CefRefPtr<CefBrowser> cefBrowser)
 		{
 			cefBrowser->GetHost()->WasHidden(true);
 		}, true);
@@ -271,7 +273,7 @@ void BrowserSource::SetShowing(bool showing)
 			DestroyBrowser(true);
 		}
 	} else {
-		ExecuteOnBrowser([this, showing] ()
+		ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser)
 		{
 			CefRefPtr<CefProcessMessage> msg =
 				CefProcessMessage::Create("Visibility");
@@ -282,7 +284,7 @@ void BrowserSource::SetShowing(bool showing)
 	}
 
 	if (showing) {
-		ExecuteOnBrowser([this] ()
+		ExecuteOnBrowser([] (CefRefPtr<CefBrowser> cefBrowser)
 		{
 			cefBrowser->GetHost()->WasHidden(false);
 			cefBrowser->GetHost()->Invalidate(PET_VIEW);
@@ -292,7 +294,7 @@ void BrowserSource::SetShowing(bool showing)
 
 void BrowserSource::SetActive(bool active)
 {
-	ExecuteOnBrowser([this, active] ()
+	ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("Active");
@@ -304,7 +306,7 @@ void BrowserSource::SetActive(bool active)
 
 void BrowserSource::Refresh()
 {
-	ExecuteOnBrowser([this] ()
+	ExecuteOnBrowser([] (CefRefPtr<CefBrowser> cefBrowser)
 	{
 		cefBrowser->ReloadIgnoreCache();
 	}, true);
@@ -314,7 +316,7 @@ void BrowserSource::Refresh()
 inline void BrowserSource::SignalBeginFrame()
 {
 	if (reset_frame) {
-		ExecuteOnBrowser([this] ()
+		ExecuteOnBrowser([] (CefRefPtr<CefBrowser> cefBrowser)
 		{
 			cefBrowser->GetHost()->SendExternalBeginFrame();
 		}, true);
@@ -406,10 +408,12 @@ void BrowserSource::Render()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	SignalBeginFrame();
+#elif USE_QT_LOOP
+	ProcessCef();
 #endif
 }
 
-static void ExecuteOnAllBrowsers(function<void(CefRefPtr<CefBrowser>)> func)
+static void ExecuteOnAllBrowsers(BrowserFunc func)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
 	
@@ -417,9 +421,7 @@ static void ExecuteOnAllBrowsers(function<void(CefRefPtr<CefBrowser>)> func)
 	while (bs) {
 		BrowserSource *bsw =
 			reinterpret_cast<BrowserSource *>(bs);
-		CefRefPtr<CefBrowser> cefBrowser = bsw->cefBrowser;
-		if (cefBrowser)
-			bsw->ExecuteOnBrowser([=] () {func(cefBrowser);}, true);
+		bsw->ExecuteOnBrowser(func, true);
 		bs = bs->next;
 	}
 }
