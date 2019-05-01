@@ -1,8 +1,15 @@
 #include "browser-panel-internal.hpp"
 #include "browser-panel-client.hpp"
 #include "cef-headers.hpp"
+#include "browser-app.hpp"
 
 #include <QWindow>
+
+#ifdef USE_QT_LOOP
+#include <QApplication>
+#include <QEventLoop>
+#include <QThread>
+#endif
 
 #include <obs-module.h>
 #include <util/threading.h>
@@ -129,23 +136,6 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 
 /* ------------------------------------------------------------------------- */
 
-static void ExecuteOnBrowser(std::function<void()> func, bool async = false)
-{
-	if (!async) {
-		os_event_t *finishedEvent;
-		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
-		bool success = QueueCEFTask([&] () {
-			func();
-			os_event_signal(finishedEvent);
-		});
-		if (success)
-			os_event_wait(finishedEvent);
-		os_event_destroy(finishedEvent);
-	} else {
-		QueueCEFTask(func);
-	}
-}
-
 QCefWidgetInternal::QCefWidgetInternal(
 		QWidget *parent,
 		const std::string &url_,
@@ -166,20 +156,29 @@ QCefWidgetInternal::QCefWidgetInternal(
 
 QCefWidgetInternal::~QCefWidgetInternal()
 {
-	ExecuteOnBrowser([this] ()
-	{
-		if (!cefBrowser) {
-			return;
-		}
-		CefRefPtr<CefClient> client =
-				cefBrowser->GetHost()->GetClient();
-		QCefBrowserClient *bc =
-				reinterpret_cast<QCefBrowserClient*>(
-					client.get());
+	CefRefPtr<CefBrowser> browser = cefBrowser;
+	if (!!browser) {
+		auto destroyBrowser = [] (CefRefPtr<CefBrowser> cefBrowser)
+		{
+			if (!cefBrowser) {
+				return;
+			}
+			CefRefPtr<CefClient> client =
+					cefBrowser->GetHost()->GetClient();
+			QCefBrowserClient *bc =
+					reinterpret_cast<QCefBrowserClient*>(
+						client.get());
 
-		bc->widget = nullptr;
+			bc->widget = nullptr;
+		};
+
+#ifdef USE_QT_LOOP
+		QueueBrowserTask(cefBrowser, destroyBrowser);
+#else
+		QueueCEFTask([=] () {destroyBrowser(browser);});
+#endif
 		cefBrowser = nullptr;
-	});
+	}
 }
 
 void QCefWidgetInternal::Init()
@@ -198,6 +197,9 @@ void QCefWidgetInternal::Init()
 #ifdef _WIN32
 		RECT rc = {0, 0, size.width(), size.height()};
 		windowInfo.SetAsChild((HWND)id, rc);
+#elif __APPLE__
+		windowInfo.SetAsChild((CefWindowHandle)id, 0, 0,
+				size.width(),size.height());
 #endif
 
 		CefRefPtr<QCefBrowserClient> browserClient =
@@ -227,20 +229,20 @@ void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 
 void QCefWidgetInternal::Resize()
 {
+#ifdef _WIN32
 	QSize size = this->size() * devicePixelRatio();
 
 	QueueCEFTask([this, size] ()
 	{
 		if (!cefBrowser)
 			return;
-#ifdef _WIN32
 		HWND hwnd = cefBrowser->GetHost()->GetWindowHandle();
 		SetWindowPos(hwnd, nullptr, 0, 0, size.width(), size.height(),
 				SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 		SendMessage(hwnd, WM_SIZE, 0,
 				MAKELPARAM(size.width(), size.height()));
-#endif
 	});
+#endif
 }
 
 void QCefWidgetInternal::showEvent(QShowEvent *event)

@@ -24,6 +24,12 @@
 #include <thread>
 #include <mutex>
 
+#ifdef USE_QT_LOOP
+#include <QApplication>
+#include <QEventLoop>
+#include <QThread>
+#endif
+
 using namespace std;
 
 extern bool QueueCEFTask(std::function<void()> task);
@@ -57,6 +63,13 @@ BrowserSource::~BrowserSource()
 void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 {
 	if (!async) {
+#ifdef USE_QT_LOOP
+		if (QThread::currentThread() == qApp->thread()) {
+			if (!!cefBrowser)
+				func(cefBrowser);
+			return;
+		}
+#endif
 		os_event_t *finishedEvent;
 		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
 		bool success = QueueCEFTask([&] () {
@@ -70,9 +83,13 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 	} else {
 		CefRefPtr<CefBrowser> browser = cefBrowser;
 		if (!!browser) {
+#ifdef USE_QT_LOOP
+			QueueBrowserTask(cefBrowser, func);
+#else
 			QueueCEFTask([=] () {
 				func(browser);
 			});
+#endif
 		}
 	}
 }
@@ -150,8 +167,9 @@ void BrowserSource::DestroyBrowser(bool async)
 		 */
 		cefBrowser->GetHost()->WasHidden(true);
 		cefBrowser->GetHost()->CloseBrowser(true);
-		cefBrowser = nullptr;
 	}, async);
+
+	cefBrowser = nullptr;
 }
 
 void BrowserSource::SendMouseClick(
@@ -391,6 +409,8 @@ void BrowserSource::Tick()
 		reset_frame = true;
 #endif
 }
+
+extern void ProcessCef();
 
 void BrowserSource::Render()
 {
