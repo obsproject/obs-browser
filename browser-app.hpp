@@ -24,6 +24,44 @@
 
 typedef std::function<void(CefRefPtr<CefBrowser>)> BrowserFunc;
 
+#ifdef USE_QT_LOOP
+#include <QObject>
+#include <QTimer>
+#include <mutex>
+#include <deque>
+
+typedef std::function<void()> MessageTask;
+
+class MessageObject : public QObject {
+	Q_OBJECT
+
+	friend void QueueBrowserTask(CefRefPtr<CefBrowser> browser,
+			BrowserFunc func);
+
+	struct Task {
+		CefRefPtr<CefBrowser> browser;
+		BrowserFunc func;
+
+		inline Task() {}
+		inline Task(CefRefPtr<CefBrowser> browser_, BrowserFunc func_)
+			: browser(browser_),
+			  func(func_)
+		{}
+	};
+
+	std::mutex browserTaskMutex;
+	std::deque<Task> browserTasks;
+
+public slots:
+	bool ExecuteNextBrowserTask();
+	void ExecuteTask(MessageTask task);
+	void DoCefMessageLoop(int ms);
+	void Process();
+};
+
+extern void QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc func);
+#endif
+
 class BrowserApp : public CefApp,
                    public CefRenderProcessHandler,
                    public CefBrowserProcessHandler,
@@ -66,6 +104,11 @@ public:
 			const CefV8ValueList &arguments,
 			CefRefPtr<CefV8Value> &retval,
 			CefString &exception) override;
+
+#ifdef USE_QT_LOOP
+	virtual void OnScheduleMessagePumpWork(int64 delay_ms) override;
+	QTimer frameTimer;
+#endif
 
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 };

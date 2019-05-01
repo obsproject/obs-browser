@@ -75,7 +75,11 @@ struct QCef {
 
 static inline QCef *obs_browser_init_panel(void)
 {
+#ifdef _WIN32
 	void *lib = os_dlopen("obs-browser");
+#else
+	void *lib = os_dlopen("../obs-plugins/obs-browser");
+#endif
 	QCef *(*create_qcef)(void) = nullptr;
 
 	if (!lib) {
