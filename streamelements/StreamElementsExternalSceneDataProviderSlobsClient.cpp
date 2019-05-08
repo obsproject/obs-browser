@@ -14,10 +14,22 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollections(
 
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
 
-	CefRefPtr<CefValue> manifestValue =
-		CefParseJSON(
-			manifestContent ? myconv.from_bytes(manifestContent) : L"{}",
-			JSON_PARSER_ALLOW_TRAILING_COMMAS);
+	CefRefPtr<CefValue> manifestValue = nullptr;
+
+	try {
+		manifestValue =
+			CefParseJSON(
+				manifestContent ? myconv.from_bytes(manifestContent) : L"{}",
+				JSON_PARSER_ALLOW_TRAILING_COMMAS);
+	}
+	catch (...) {
+		// UTF-8 decoding failed
+		blog(LOG_WARNING,
+			"obs-browser: StreamElementsExternalSceneDataProviderSlobsClient: failed decoding UTF-8 file content: %s",
+			(m_basePath + "/manifest.json").c_str());
+
+		manifestValue = nullptr;
+	}
 
 	if (manifestContent) {
 		bfree(manifestContent);
@@ -28,7 +40,7 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollections(
 			(m_basePath + "/manifest.json").c_str());
 	}
 
-	if (manifestValue->GetType() != VTYPE_DICTIONARY) {
+	if (!manifestValue.get() || manifestValue->GetType() != VTYPE_DICTIONARY) {
 		blog(LOG_WARNING,
 			"obs-browser: StreamElementsExternalSceneDataProviderSlobsClient: invalid file format (expected JSON object): %s",
 			(m_basePath + "/manifest.json").c_str());
@@ -188,7 +200,19 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollection(
 		scene_collection_file_content_t meta_scene_collection;
 
 		meta_scene_collection.path = myconv.from_bytes(m_basePath + "/" + result.collectionId + ".json");
-		meta_scene_collection.content = myconv.from_bytes(scene_collection_content);
+
+		try {
+			meta_scene_collection.content = myconv.from_bytes(scene_collection_content);
+		}
+		catch (...) {
+			// UTF-8 decoding failed
+			blog(LOG_WARNING,
+				"obs-browser: StreamElementsExternalSceneDataProviderSlobsClient: failed decoding UTF-8 file content: %s",
+				(m_basePath + "/" + result.collectionId + ".json").c_str());
+
+			meta_scene_collection.content = L"";
+		}
+
 		result.metadataFiles.push_back(meta_scene_collection);
 
 		bfree(scene_collection_content);
@@ -198,7 +222,7 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollection(
 				meta_scene_collection.content.c_str(),
 				JSON_PARSER_ALLOW_TRAILING_COMMAS);
 
-		if (root->GetType() != VTYPE_NULL && root->GetType() != VTYPE_INVALID) {
+		if (root.get() && root->GetType() != VTYPE_NULL && root->GetType() != VTYPE_INVALID) {
 			success = true;
 
 			std::vector<std::wstring> paths;

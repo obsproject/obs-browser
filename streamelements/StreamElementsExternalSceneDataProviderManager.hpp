@@ -33,7 +33,7 @@ public:
 		result->SetList(list);
 	}
 
-	bool SerializeProviderSceneColletions(
+	bool SerializeProviderSceneCollections(
 		CefRefPtr<CefValue> input,
 		CefRefPtr<CefValue> result)
 	{

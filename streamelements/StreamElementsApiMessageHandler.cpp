@@ -871,7 +871,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		if (args->GetSize()) {
 			StreamElementsGlobalStateManager::GetInstance()->
 				GetExternalSceneDataProviderManager()->
-				SerializeProviderSceneColletions(args->GetValue(0), result);
+				SerializeProviderSceneCollections(args->GetValue(0), result);
 		}
 	API_HANDLER_END()
 
