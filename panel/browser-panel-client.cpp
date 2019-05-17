@@ -30,6 +30,11 @@ CefRefPtr<CefLifeSpanHandler> QCefBrowserClient::GetLifeSpanHandler()
 	return this;
 }
 
+CefRefPtr<CefContextMenuHandler> QCefBrowserClient::GetContextMenuHandler()
+{
+	return this;
+}
+
 CefRefPtr<CefKeyboardHandler> QCefBrowserClient::GetKeyboardHandler()
 {
 	return this;
@@ -187,6 +192,21 @@ bool QCefBrowserClient::OnBeforePopup(
 	QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 	return true;
+}
+
+void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
+					    CefRefPtr<CefFrame>,
+					    CefRefPtr<CefContextMenuParams>,
+					    CefRefPtr<CefMenuModel> model)
+{
+	if (model->IsVisible(MENU_ID_BACK) &&
+	    (!model->IsVisible(MENU_ID_RELOAD) &&
+	     !model->IsVisible(MENU_ID_RELOAD_NOCACHE))) {
+		model->InsertItemAt(2, MENU_ID_RELOAD_NOCACHE, "&Reload");
+	}
+	if (model->IsVisible(MENU_ID_PRINT)) {
+		model->Remove(MENU_ID_PRINT);
+	}
 }
 
 void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
