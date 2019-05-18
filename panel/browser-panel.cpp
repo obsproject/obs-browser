@@ -169,6 +169,9 @@ QCefWidgetInternal::~QCefWidgetInternal()
 					reinterpret_cast<QCefBrowserClient*>(
 						client.get());
 
+			cefBrowser->GetHost()->WasHidden(true);
+			cefBrowser->GetHost()->CloseBrowser(true);
+
 			bc->widget = nullptr;
 		};
 
