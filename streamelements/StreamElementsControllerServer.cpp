@@ -8,8 +8,9 @@ static const char* SOURCE_ADDR = "";
 StreamElementsControllerServer::StreamElementsControllerServer(StreamElementsMessageBus* bus) :
 	m_bus(bus)
 {
-	auto msgReceiver = [this](const char* const buffer, const size_t) {
-		std::string str(buffer);
+	auto msgReceiver = [this](const char* const buffer, const size_t length) {
+		std::string str = "";
+		str.append(buffer, length);
 
 		OnMsgReceivedInternal(str);
 	};

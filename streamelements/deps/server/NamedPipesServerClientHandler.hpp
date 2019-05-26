@@ -4,6 +4,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <vector>
+#include "streamelements/deps/moodycamel/blockingconcurrentqueue.h"
 
 // Single named pipes client handler.
 //
@@ -27,12 +29,17 @@ public:
 	bool WriteMessage(const char* const buffer, size_t length);
 
 private:
+	void CallbackThreadProc();
 	void ThreadProc();
 
 private:
 	HANDLE m_hPipe;
 	std::thread m_thread;
+	std::thread m_callback_thread;
 	msg_handler_t m_msgHandler;
 	std::recursive_mutex m_mutex;
+
+	moodycamel::BlockingConcurrentQueue<std::vector<char>> m_writeQueue;
+	moodycamel::BlockingConcurrentQueue<std::vector<char>> m_readQueue;
 };
 

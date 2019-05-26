@@ -11,6 +11,10 @@ NamedPipesServerClientHandler::NamedPipesServerClientHandler(HANDLE hPipe, msg_h
 	m_thread = std::thread([this]() {
 		ThreadProc();
 	});
+
+	m_callback_thread = std::thread([this]() {
+		CallbackThreadProc();
+	});
 }
 
 NamedPipesServerClientHandler::~NamedPipesServerClientHandler()
@@ -21,6 +25,10 @@ NamedPipesServerClientHandler::~NamedPipesServerClientHandler()
 
 	if (m_thread.joinable()) {
 		m_thread.join();
+	}
+
+	if (m_callback_thread.joinable()) {
+		m_callback_thread.join();
 	}
 }
 
@@ -44,26 +52,25 @@ void NamedPipesServerClientHandler::Disconnect()
 
 bool NamedPipesServerClientHandler::WriteMessage(const char* const buffer, size_t length)
 {
-	std::lock_guard<std::recursive_mutex> guard(m_mutex);
-
 	if (!IsConnected()) {
 		return false;
 	}
 
-	bool fWriteSuccess = TRUE == WriteFile(
-		m_hPipe,
-		buffer,
-		length,
-		NULL,
-		NULL);
+	m_writeQueue.enqueue(std::vector<char>(buffer, buffer + length));
 
-	if (!fWriteSuccess) {
-		blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler::SendMessage: client disconnected");
+	return true;
+}
 
-		Disconnect();
+void NamedPipesServerClientHandler::CallbackThreadProc()
+{
+	while (IsConnected()) {
+		std::vector<char> incoming_message;
+
+		if (m_readQueue.try_dequeue(incoming_message)) {
+			m_msgHandler(incoming_message.data(), incoming_message.size());
+		}
+		else Sleep(25);
 	}
-
-	return fWriteSuccess;
 }
 
 void NamedPipesServerClientHandler::ThreadProc()
@@ -71,56 +78,68 @@ void NamedPipesServerClientHandler::ThreadProc()
 	while (IsConnected()) {
 		bool had_activity = false;
 
-		{
-			std::lock_guard<std::recursive_mutex> guard(m_mutex);
-
-			DWORD bytesRead;
-			DWORD totalBytesAvail;
-			DWORD bytesLeftThisMessage;
-
-			const bool fPeekSuccess = PeekNamedPipe(
+		std::vector<char> message_to_write;
+		while (IsConnected() && m_writeQueue.try_dequeue(message_to_write)) {
+			bool fWriteSuccess = TRUE == WriteFile(
 				m_hPipe,
+				message_to_write.data(),
+				message_to_write.size(),
 				NULL,
-				0,
-				&bytesRead,
-				&totalBytesAvail,
-				&bytesLeftThisMessage);
+				NULL);
 
-			if (!fPeekSuccess) {
-				blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: PeekNamedPipe: client disconnected");
+			if (!fWriteSuccess) {
+				Disconnect();
+			}
+
+			had_activity = true;
+		}
+
+		DWORD bytesRead;
+		DWORD totalBytesAvail;
+		DWORD bytesLeftThisMessage;
+
+		const bool fPeekSuccess = PeekNamedPipe(
+			m_hPipe,
+			NULL,
+			0,
+			&bytesRead,
+			&totalBytesAvail,
+			&bytesLeftThisMessage);
+
+		if (!fPeekSuccess) {
+			blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: PeekNamedPipe: client disconnected");
+
+			Disconnect();
+		}
+		else if (bytesLeftThisMessage > 0) {
+			char* buffer = new char[bytesLeftThisMessage + 1];
+			bool fReadSuccess = TRUE == ReadFile(
+				m_hPipe,
+				buffer,
+				bytesLeftThisMessage,
+				NULL,
+				NULL);
+
+			if (fReadSuccess) {
+				buffer[bytesLeftThisMessage] = 0;
+
+				m_readQueue.enqueue(std::vector<char>(buffer, buffer + bytesLeftThisMessage));
+
+				blog(LOG_DEBUG, "obs-browser: NamedPipesServerClientHandler: incoming message: %s", buffer);
+			}
+			else {
+				blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: ReadFile: client disconnected");
 
 				Disconnect();
 			}
-			else if (bytesLeftThisMessage > 0) {
-				char* buffer = new char[bytesLeftThisMessage + 1];
-				bool fReadSuccess = TRUE == ReadFile(
-					m_hPipe,
-					buffer,
-					bytesLeftThisMessage,
-					NULL,
-					NULL);
 
-				if (fReadSuccess) {
-					buffer[bytesLeftThisMessage] = 0;
+			delete[] buffer;
 
-					m_msgHandler(buffer, bytesLeftThisMessage);
-
-					blog(LOG_DEBUG, "obs-browser: NamedPipesServerClientHandler: incoming message: %s", buffer);
-				}
-				else {
-					blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: ReadFile: client disconnected");
-
-					Disconnect();
-				}
-
-				delete[] buffer;
-
-				had_activity = true;
-			}
+			had_activity = true;
 		}
-		
+	
 		if (!had_activity) {
-			Sleep(250);
+			Sleep(25);
 		}
 	}
 }
