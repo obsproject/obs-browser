@@ -77,9 +77,61 @@ void NamedPipesServerClientHandler::ThreadProc()
 {
 	while (IsConnected()) {
 		bool had_activity = false;
+		bool continue_reading = true;
+
+		while (IsConnected() && continue_reading)
+		{
+			continue_reading = false;
+
+			DWORD bytesRead;
+			DWORD totalBytesAvail;
+			DWORD bytesLeftThisMessage;
+
+			const bool fPeekSuccess = PeekNamedPipe(
+				m_hPipe,
+				NULL,
+				0,
+				&bytesRead,
+				&totalBytesAvail,
+				&bytesLeftThisMessage);
+
+			if (!fPeekSuccess) {
+				blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: PeekNamedPipe: client disconnected");
+
+				Disconnect();
+			}
+			else if (bytesLeftThisMessage > 0) {
+				char* buffer = new char[bytesLeftThisMessage + 1];
+				bool fReadSuccess = TRUE == ReadFile(
+					m_hPipe,
+					buffer,
+					bytesLeftThisMessage,
+					NULL,
+					NULL);
+
+				if (fReadSuccess) {
+					continue_reading = true;
+
+					buffer[bytesLeftThisMessage] = 0;
+
+					m_readQueue.enqueue(std::vector<char>(buffer, buffer + bytesLeftThisMessage));
+
+					blog(LOG_DEBUG, "obs-browser: NamedPipesServerClientHandler: incoming message: %s", buffer);
+				}
+				else {
+					blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: ReadFile: client disconnected");
+
+					Disconnect();
+				}
+
+				delete[] buffer;
+
+				had_activity = true;
+			}
+		}
 
 		std::vector<char> message_to_write;
-		while (IsConnected() && m_writeQueue.try_dequeue(message_to_write)) {
+		if (IsConnected() && m_writeQueue.try_dequeue(message_to_write)) {
 			bool fWriteSuccess = TRUE == WriteFile(
 				m_hPipe,
 				message_to_write.data(),
@@ -90,50 +142,6 @@ void NamedPipesServerClientHandler::ThreadProc()
 			if (!fWriteSuccess) {
 				Disconnect();
 			}
-
-			had_activity = true;
-		}
-
-		DWORD bytesRead;
-		DWORD totalBytesAvail;
-		DWORD bytesLeftThisMessage;
-
-		const bool fPeekSuccess = PeekNamedPipe(
-			m_hPipe,
-			NULL,
-			0,
-			&bytesRead,
-			&totalBytesAvail,
-			&bytesLeftThisMessage);
-
-		if (!fPeekSuccess) {
-			blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: PeekNamedPipe: client disconnected");
-
-			Disconnect();
-		}
-		else if (bytesLeftThisMessage > 0) {
-			char* buffer = new char[bytesLeftThisMessage + 1];
-			bool fReadSuccess = TRUE == ReadFile(
-				m_hPipe,
-				buffer,
-				bytesLeftThisMessage,
-				NULL,
-				NULL);
-
-			if (fReadSuccess) {
-				buffer[bytesLeftThisMessage] = 0;
-
-				m_readQueue.enqueue(std::vector<char>(buffer, buffer + bytesLeftThisMessage));
-
-				blog(LOG_DEBUG, "obs-browser: NamedPipesServerClientHandler: incoming message: %s", buffer);
-			}
-			else {
-				blog(LOG_WARNING, "obs-browser: NamedPipesServerClientHandler: ReadFile: client disconnected");
-
-				Disconnect();
-			}
-
-			delete[] buffer;
 
 			had_activity = true;
 		}
