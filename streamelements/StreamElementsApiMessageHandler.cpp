@@ -891,6 +891,14 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		}
 	API_HANDLER_END()
 
+	API_HANDLER_BEGIN("getStreamingStatus")
+		CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
+
+		d->SetBool("isStreamingActive", obs_frontend_streaming_active());
+
+		result->SetDictionary(d);
+	API_HANDLER_END()
+
 	API_HANDLER_BEGIN("crashProgram")
 		// Crash
 		*((int*)nullptr) = 12345; // exception
