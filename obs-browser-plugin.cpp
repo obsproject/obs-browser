@@ -392,7 +392,7 @@ void RegisterBrowserSource()
 	};
 	info.show = [] (void *data)
 	{
-        BrowserSource *bs = static_cast<BrowserSource *>(data);
+		BrowserSource *bs = static_cast<BrowserSource *>(data);
 		if (bs->estart_on_visible)
 			bs->Refresh();
 		bs->SetShowing(true);
