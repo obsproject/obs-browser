@@ -354,6 +354,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		int n_fps;
 		bool n_shutdown;
 		bool n_restart;
+        bool n_restart_on_visible;
 		std::string n_url;
 		std::string n_css;
 
@@ -364,6 +365,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_fps       = (int)obs_data_get_int(settings, "fps");
 		n_shutdown  = obs_data_get_bool(settings, "shutdown");
 		n_restart   = obs_data_get_bool(settings, "restart_when_active");
+        n_restart_on_visible   = obs_data_get_bool(settings, "restart_on_visible");
 		n_css       = obs_data_get_string(settings, "css");
 		n_url       = obs_data_get_string(settings,
 				n_is_local ? "local_file" : "url");
@@ -378,6 +380,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		    n_fps == fps &&
 		    n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart &&
+            n_restart_on_visible == restart_on_visible &&
 		    n_css == css &&
 		    n_url == url) {
 			return;
@@ -390,6 +393,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		fps_custom            = n_fps_custom;
 		shutdown_on_invisible = n_shutdown;
 		restart               = n_restart;
+        restart_on_visible    = n_restart_on_visible;
 		css                   = n_css;
 		url                   = n_url;
 	}
