@@ -121,7 +121,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 #endif
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
-    obs_data_set_default_bool(settings, "restart_on_visible", false);
+	obs_data_set_default_bool(settings, "restart_on_visible", false);
 	obs_data_set_default_string(settings, "css", default_css);
 }
 

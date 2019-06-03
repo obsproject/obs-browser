@@ -354,7 +354,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		int n_fps;
 		bool n_shutdown;
 		bool n_restart;
-        bool n_restart_on_visible;
+		bool n_restart_on_visible;
 		std::string n_url;
 		std::string n_css;
 
