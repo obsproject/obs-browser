@@ -121,6 +121,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 #endif
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
+	obs_data_set_default_bool(settings, "restart_on_visible", false);
 	obs_data_set_default_string(settings, "css", default_css);
 }
 
@@ -194,7 +195,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 			obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
 			obs_module_text("RefreshBrowserActive"));
-
+	obs_properties_add_bool(props, "restart_on_visible",
+			obs_module_text("RefreshBrowserVisible"));
 	obs_properties_add_button(props, "refreshnocache",
 			obs_module_text("RefreshNoCache"),
 			[] (obs_properties_t *, obs_property_t *, void *data)
@@ -390,7 +392,10 @@ void RegisterBrowserSource()
 	};
 	info.show = [] (void *data)
 	{
-		static_cast<BrowserSource *>(data)->SetShowing(true);
+		BrowserSource *bs = static_cast<BrowserSource *>(data);
+		if (bs->restart_on_visible)
+			bs->Refresh();
+		bs->SetShowing(true);
 	};
 	info.hide = [] (void *data)
 	{
