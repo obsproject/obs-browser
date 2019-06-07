@@ -27,7 +27,9 @@ StreamElementsNativeOBSControlsManager::StreamElementsNativeOBSControlsManager(Q
 		m_startStopStreamingButton->setFixedHeight(28);
 		buttonsVLayout->insertWidget(0, m_startStopStreamingButton);
 
-		SetStreamingInitialState();
+		// Real state will be set by OBS_FRONTEND_EVENT_FINISHED_LOADING event
+		// handled by handle_obs_frontend_event()
+		SetStreamingStoppedState();
 
 		connect(m_startStopStreamingButton, SIGNAL(clicked()),
 			this, SLOT(OnStartStopStreamingButtonClicked()));
@@ -172,15 +174,22 @@ void StreamElementsNativeOBSControlsManager::handle_obs_frontend_event(enum obs_
 	StreamElementsNativeOBSControlsManager* self = (StreamElementsNativeOBSControlsManager*)data;
 
 	switch (event) {
+	case OBS_FRONTEND_EVENT_FINISHED_LOADING:
+		self->SetStreamingInitialState();
+		break;
+
 	case OBS_FRONTEND_EVENT_STREAMING_STARTING:
 		self->SetStreamingTransitionStartingState();
 		break;
+
 	case OBS_FRONTEND_EVENT_STREAMING_STARTED:
 		self->SetStreamingActiveState();
 		break;
+
 	case OBS_FRONTEND_EVENT_STREAMING_STOPPING:
 		self->SetStreamingTransitionStoppingState();
 		break;
+
 	case OBS_FRONTEND_EVENT_STREAMING_STOPPED:
 		self->SetStreamingStoppedState();
 		break;
