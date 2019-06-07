@@ -49,7 +49,9 @@ std::string FormatString(const char* format, ...)
 }
 
 void QtPostTask(void(*func)(void*), void* const data);
+void QtPostTask(std::function<void()> task);
 void QtExecSync(void(*func)(void*), void* const data);
+void QtExecSync(std::function<void()> task);
 std::string DockWidgetAreaToString(const Qt::DockWidgetArea area);
 std::string GetCommandLineOptionValue(const std::string key);
 std::string LoadResourceString(std::string path);

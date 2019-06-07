@@ -899,6 +899,43 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlers()
 		result->SetDictionary(d);
 	API_HANDLER_END()
 
+	API_HANDLER_BEGIN("requestStreamingStart")
+		obs_frontend_streaming_start();
+
+		result->SetBool(true);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("requestStreamingStop")
+		obs_frontend_streaming_stop();
+
+		result->SetBool(true);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("setStreamingStartUIHandlerProperties")
+		if (args->GetSize()) {
+			result->SetBool(
+				StreamElementsGlobalStateManager::GetInstance()
+					->GetNativeOBSControlsManager()
+					->DeserializeStartStreamingUIHandlerProperties(args->GetValue(0)));
+		}
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("adviseStreamingStartUIRequestAccepted")
+		StreamElementsGlobalStateManager::GetInstance()
+			->GetNativeOBSControlsManager()
+			->AdviseRequestStartStreamingAccepted();
+
+		result->SetBool(true);
+	API_HANDLER_END()
+
+	API_HANDLER_BEGIN("adviseStreamingStartUIRequestRejected")
+		StreamElementsGlobalStateManager::GetInstance()
+			->GetNativeOBSControlsManager()
+			->AdviseRequestStartStreamingRejected();
+
+		result->SetBool(true);
+	API_HANDLER_END()
+
 	API_HANDLER_BEGIN("crashProgram")
 		// Crash
 		*((int*)nullptr) = 12345; // exception

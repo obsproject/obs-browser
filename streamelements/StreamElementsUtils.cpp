@@ -58,13 +58,25 @@ static std::vector<std::string> tokenizeString(const std::string& str, const std
 
 /* ========================================================= */
 
+void QtPostTask(std::function<void()> task) {
+	struct local_context {
+		std::function<void()> task;
+	};
+
+	local_context* context = new local_context();
+	context->task = task;
+
+	QtPostTask([](void* const data) {
+		local_context* context = (local_context*)data;
+
+		context->task();
+
+		delete context;
+	}, context);
+}
+
 void QtPostTask(void(*func)(void*), void* const data)
 {
-	/*
-	if (QThread::currentThread() == qApp->thread()) {
-	func(data);
-	}
-	else {*/
 	QTimer *t = new QTimer();
 	t->moveToThread(qApp->thread());
 	t->setSingleShot(true);
@@ -74,7 +86,23 @@ void QtPostTask(void(*func)(void*), void* const data)
 		func(data);
 	});
 	QMetaObject::invokeMethod(t, "start", Qt::QueuedConnection, Q_ARG(int, 0));
-	/*}*/
+}
+
+void QtExecSync(std::function<void()> task) {
+	struct local_context {
+		std::function<void()> task;
+	};
+
+	local_context* context = new local_context();
+	context->task = task;
+
+	QtExecSync([](void* data) {
+		local_context* context = (local_context*)data;
+
+		context->task();
+
+		delete context;
+	}, context);
 }
 
 void QtExecSync(void(*func)(void*), void* const data)

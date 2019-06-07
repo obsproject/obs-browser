@@ -328,6 +328,7 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow* obs_main_window)
 		context->self->m_hotkeyManager = new StreamElementsHotkeyManager();
 		context->self->m_performanceHistoryTracker = new StreamElementsPerformanceHistoryTracker();
 		context->self->m_externalSceneDataProviderManager = new StreamElementsExternalSceneDataProviderManager();
+		context->self->m_nativeObsControlsManager = new StreamElementsNativeOBSControlsManager(context->obs_main_window);
 
 		{
 			// Set up "Live Support" button
@@ -501,6 +502,7 @@ void StreamElementsGlobalStateManager::Shutdown()
 		delete self->m_localWebFilesServer;
 		delete self->m_externalSceneDataProviderManager;
 		delete self->m_httpClient;
+		delete self->m_nativeObsControlsManager;
 	}, this);
 
 	m_initialized = false;

@@ -15,6 +15,7 @@
 #include "StreamElementsLocalWebFilesServer.hpp"
 #include "StreamElementsExternalSceneDataProviderManager.hpp"
 #include "StreamElementsHttpClient.hpp"
+#include "StreamElementsNativeOBSControlsManager.hpp"
 
 class StreamElementsGlobalStateManager :
 	public StreamElementsObsAppMonitor
@@ -58,6 +59,7 @@ public:
 	StreamElementsLocalWebFilesServer* GetLocalWebFilesServer() { return m_localWebFilesServer; }
 	StreamElementsExternalSceneDataProviderManager* GetExternalSceneDataProviderManager() { return m_externalSceneDataProviderManager; }
 	StreamElementsHttpClient* GetHttpClient() { return m_httpClient; }
+	StreamElementsNativeOBSControlsManager* GetNativeOBSControlsManager() { return m_nativeObsControlsManager; }
 	QMainWindow* mainWindow() { return m_mainWindow; }
 
 public:
@@ -88,6 +90,7 @@ private:
 	StreamElementsLocalWebFilesServer* m_localWebFilesServer = nullptr;
 	StreamElementsExternalSceneDataProviderManager* m_externalSceneDataProviderManager = nullptr;
 	StreamElementsHttpClient* m_httpClient = nullptr;
+	StreamElementsNativeOBSControlsManager* m_nativeObsControlsManager = nullptr;
 
 private:
 	static StreamElementsGlobalStateManager* s_instance;

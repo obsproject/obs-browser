@@ -88,6 +88,10 @@ public:
 		std::string result = GetCommandLineOptionValue("streamelements-onboarding-url");
 
 		if (!result.size()) {
+			result = ReadProductEnvironmentConfigurationString("OnboardingUrl");
+		}
+
+		if (!result.size()) {
 			result = "https://obs.streamelements.com/welcome";
 		}
 
