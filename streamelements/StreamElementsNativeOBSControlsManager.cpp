@@ -9,6 +9,20 @@
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 
+StreamElementsNativeOBSControlsManager* StreamElementsNativeOBSControlsManager::GetInstance()
+{
+	static StreamElementsNativeOBSControlsManager* s_instance = nullptr;
+	static std::mutex s_mutex;
+
+	if (s_instance == nullptr) {
+		std::lock_guard<std::mutex> guard(s_mutex);
+
+		s_instance = new StreamElementsNativeOBSControlsManager((QMainWindow*) obs_frontend_get_main_window());
+	}
+
+	return s_instance;
+}
+
 StreamElementsNativeOBSControlsManager::StreamElementsNativeOBSControlsManager(QMainWindow* mainWindow) :
 	m_mainWindow(mainWindow)
 {

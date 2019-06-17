@@ -24,6 +24,9 @@ public:
 	};
 
 public:
+	static StreamElementsNativeOBSControlsManager* GetInstance();
+
+private:
 	StreamElementsNativeOBSControlsManager(QMainWindow* mainWindow);
 	virtual ~StreamElementsNativeOBSControlsManager();
 
