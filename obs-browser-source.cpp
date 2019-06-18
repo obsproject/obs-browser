@@ -516,6 +516,14 @@ void DispatchJSEvent(std::string eventName, std::string jsonString)
 
 		args->SetString(0, eventName);
 		args->SetString(1, jsonString);
+<<<<<<< HEAD
 		SendBrowserProcessMessage(cefBrowser, PID_RENDERER, msg);
+=======
+#if CHROME_VERSION_BUILD >= 3770
+		cefBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, msg);
+#else
+		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
+#endif
+>>>>>>> Fix change with SendProcessMessage
 	});
 }
