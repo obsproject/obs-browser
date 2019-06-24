@@ -32,27 +32,27 @@ extern bool hwaccel;
 #endif
 
 struct BrowserSource {
-	BrowserSource         **p_prev_next            = nullptr;
-	BrowserSource         *next                    = nullptr;
+	BrowserSource **p_prev_next = nullptr;
+	BrowserSource *next = nullptr;
 
-	obs_source_t          *source                  = nullptr;
+	obs_source_t *source = nullptr;
 
-	bool                  tex_sharing_avail        = false;
-	bool                  create_browser           = false;
+	bool tex_sharing_avail = false;
+	bool create_browser = false;
 	CefRefPtr<CefBrowser> cefBrowser;
 
-	std::string           url;
-	std::string           css;
-	gs_texture_t          *texture                 = nullptr;
-	int                   width                    = 0;
-	int                   height                   = 0;
-	bool                  fps_custom               = false;
-	int                   fps                      = 0;
-	bool                  restart                  = false;
-	bool                  shutdown_on_invisible    = false;
-	bool                  is_local                 = false;
+	std::string url;
+	std::string css;
+	gs_texture_t *texture = nullptr;
+	int width = 0;
+	int height = 0;
+	bool fps_custom = false;
+	int fps = 0;
+	bool restart = false;
+	bool shutdown_on_invisible = false;
+	bool is_local = false;
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	bool                  reset_frame              = false;
+	bool reset_frame = false;
 #endif
 
 	inline void DestroyTextures()
@@ -79,22 +79,14 @@ struct BrowserSource {
 	void Update(obs_data_t *settings = nullptr);
 	void Tick();
 	void Render();
-	void SendMouseClick(
-			const struct obs_mouse_event *event,
-			int32_t type,
-			bool mouse_up,
-			uint32_t click_count);
-	void SendMouseMove(
-			const struct obs_mouse_event *event,
-			bool mouse_leave);
-	void SendMouseWheel(
-			const struct obs_mouse_event *event,
-			int x_delta,
-			int y_delta);
+	void SendMouseClick(const struct obs_mouse_event *event, int32_t type,
+			    bool mouse_up, uint32_t click_count);
+	void SendMouseMove(const struct obs_mouse_event *event,
+			   bool mouse_leave);
+	void SendMouseWheel(const struct obs_mouse_event *event, int x_delta,
+			    int y_delta);
 	void SendFocus(bool focus);
-	void SendKeyClick(
-			const struct obs_key_event *event,
-			bool key_up);
+	void SendKeyClick(const struct obs_key_event *event, bool key_up);
 	void SetShowing(bool showing);
 	void SetActive(bool active);
 	void Refresh();

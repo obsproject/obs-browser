@@ -34,17 +34,15 @@ CefRefPtr<CefKeyboardHandler> QCefBrowserClient::GetKeyboardHandler()
 	return this;
 }
 
-
 /* CefDisplayHandler */
-void QCefBrowserClient::OnTitleChange(
-		CefRefPtr<CefBrowser> browser,
-		const CefString &title)
+void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
+				      const CefString &title)
 {
 	if (widget && widget->cefBrowser->IsSame(browser)) {
 		std::string str_title = title;
 		QString qt_title = QString::fromUtf8(str_title.c_str());
 		QMetaObject::invokeMethod(widget, "titleChanged",
-				Q_ARG(QString, qt_title));
+					  Q_ARG(QString, qt_title));
 	} else { /* handle popup title */
 #ifdef _WIN32
 		std::wstring str_title = title;
@@ -55,12 +53,10 @@ void QCefBrowserClient::OnTitleChange(
 }
 
 /* CefRequestHandler */
-bool QCefBrowserClient::OnBeforeBrowse(
-		CefRefPtr<CefBrowser> browser,
-		CefRefPtr<CefFrame>,
-		CefRefPtr<CefRequest> request,
-		bool,
-		bool)
+bool QCefBrowserClient::OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
+				       CefRefPtr<CefFrame>,
+				       CefRefPtr<CefRequest> request, bool,
+				       bool)
 {
 	std::string str_url = request->GetURL();
 
@@ -85,17 +81,14 @@ bool QCefBrowserClient::OnBeforeBrowse(
 	if (widget) {
 		QString qt_url = QString::fromUtf8(str_url.c_str());
 		QMetaObject::invokeMethod(widget, "urlChanged",
-				Q_ARG(QString, qt_url));
+					  Q_ARG(QString, qt_url));
 	}
 	return false;
 }
 
 bool QCefBrowserClient::OnOpenURLFromTab(
-		CefRefPtr<CefBrowser>,
-		CefRefPtr<CefFrame>,
-		const CefString &target_url,
-		CefRequestHandler::WindowOpenDisposition,
-		bool)
+	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, const CefString &target_url,
+	CefRequestHandler::WindowOpenDisposition, bool)
 {
 	std::string str_url = target_url;
 
@@ -107,17 +100,10 @@ bool QCefBrowserClient::OnOpenURLFromTab(
 
 /* CefLifeSpanHandler */
 bool QCefBrowserClient::OnBeforePopup(
-		CefRefPtr<CefBrowser>,
-		CefRefPtr<CefFrame>,
-		const CefString &target_url,
-		const CefString &,
-		CefLifeSpanHandler::WindowOpenDisposition,
-		bool,
-		const CefPopupFeatures &,
-		CefWindowInfo &windowInfo,
-		CefRefPtr<CefClient> &,
-		CefBrowserSettings &,
-		bool *)
+	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, const CefString &target_url,
+	const CefString &, CefLifeSpanHandler::WindowOpenDisposition, bool,
+	const CefPopupFeatures &, CefWindowInfo &windowInfo,
+	CefRefPtr<CefClient> &, CefBrowserSettings &, bool *)
 {
 	std::string str_url = target_url;
 
@@ -126,7 +112,8 @@ bool QCefBrowserClient::OnBeforePopup(
 		PopupWhitelistInfo &info = popup_whitelist[i - 1];
 
 		if (!info.obj) {
-			popup_whitelist.erase(popup_whitelist.begin() + (i - 1));
+			popup_whitelist.erase(popup_whitelist.begin() +
+					      (i - 1));
 			continue;
 		}
 
@@ -145,20 +132,16 @@ bool QCefBrowserClient::OnBeforePopup(
 	return true;
 }
 
-void QCefBrowserClient::OnLoadEnd(
-		CefRefPtr<CefBrowser>,
-		CefRefPtr<CefFrame> frame,
-		int)
+void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
+				  CefRefPtr<CefFrame> frame, int)
 {
 	if (frame->IsMain() && !script.empty())
 		frame->ExecuteJavaScript(script, CefString(), 0);
 }
 
-bool QCefBrowserClient::OnPreKeyEvent(
-		CefRefPtr<CefBrowser> browser,
-		const CefKeyEvent &event,
-		CefEventHandle,
-		bool *)
+bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
+				      const CefKeyEvent &event, CefEventHandle,
+				      bool *)
 {
 #ifdef _WIN32
 	if (event.type != KEYEVENT_RAWKEYDOWN)

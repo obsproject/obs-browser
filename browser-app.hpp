@@ -36,7 +36,7 @@ class MessageObject : public QObject {
 	Q_OBJECT
 
 	friend void QueueBrowserTask(CefRefPtr<CefBrowser> browser,
-			BrowserFunc func);
+				     BrowserFunc func);
 
 	struct Task {
 		CefRefPtr<CefBrowser> browser;
@@ -44,9 +44,9 @@ class MessageObject : public QObject {
 
 		inline Task() {}
 		inline Task(CefRefPtr<CefBrowser> browser_, BrowserFunc func_)
-			: browser(browser_),
-			  func(func_)
-		{}
+			: browser(browser_), func(func_)
+		{
+		}
 	};
 
 	std::mutex browserTaskMutex;
@@ -63,13 +63,13 @@ extern void QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc func);
 #endif
 
 class BrowserApp : public CefApp,
-                   public CefRenderProcessHandler,
-                   public CefBrowserProcessHandler,
-                   public CefV8Handler {
+		   public CefRenderProcessHandler,
+		   public CefBrowserProcessHandler,
+		   public CefV8Handler {
 
 	void ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
-			const char *functionName,
-			CefV8ValueList arguments);
+			       const char *functionName,
+			       CefV8ValueList arguments);
 
 	typedef std::map<int, CefRefPtr<CefV8Value>> CallbackMap;
 
@@ -83,27 +83,29 @@ public:
 	{
 	}
 
-	virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override;
-	virtual CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override;
+	virtual CefRefPtr<CefRenderProcessHandler>
+	GetRenderProcessHandler() override;
+	virtual CefRefPtr<CefBrowserProcessHandler>
+	GetBrowserProcessHandler() override;
 	virtual void OnBeforeChildProcessLaunch(
-			CefRefPtr<CefCommandLine> command_line) override;
+		CefRefPtr<CefCommandLine> command_line) override;
 	virtual void OnRegisterCustomSchemes(
-			CefRawPtr<CefSchemeRegistrar> registrar) override;
+		CefRawPtr<CefSchemeRegistrar> registrar) override;
 	virtual void OnBeforeCommandLineProcessing(
-			const CefString &process_type,
-			CefRefPtr<CefCommandLine> command_line) override;
+		const CefString &process_type,
+		CefRefPtr<CefCommandLine> command_line) override;
 	virtual void OnContextCreated(CefRefPtr<CefBrowser> browser,
-			CefRefPtr<CefFrame> frame,
-			CefRefPtr<CefV8Context> context) override;
-	virtual bool OnProcessMessageReceived(
-			CefRefPtr<CefBrowser> browser,
-			CefProcessId source_process,
-			CefRefPtr<CefProcessMessage> message) override;
+				      CefRefPtr<CefFrame> frame,
+				      CefRefPtr<CefV8Context> context) override;
+	virtual bool
+	OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+				 CefProcessId source_process,
+				 CefRefPtr<CefProcessMessage> message) override;
 	virtual bool Execute(const CefString &name,
-			CefRefPtr<CefV8Value> object,
-			const CefV8ValueList &arguments,
-			CefRefPtr<CefV8Value> &retval,
-			CefString &exception) override;
+			     CefRefPtr<CefV8Value> object,
+			     const CefV8ValueList &arguments,
+			     CefRefPtr<CefV8Value> &retval,
+			     CefString &exception) override;
 
 #ifdef USE_QT_LOOP
 	virtual void OnScheduleMessagePumpWork(int64 delay_ms) override;

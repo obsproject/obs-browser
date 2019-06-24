@@ -61,36 +61,28 @@ CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 	return this;
 }
 
-bool BrowserClient::OnBeforePopup(
-		CefRefPtr<CefBrowser>,
-		CefRefPtr<CefFrame>,
-		const CefString &,
-		const CefString &,
-		WindowOpenDisposition,
-		bool,
-		const CefPopupFeatures &,
-		CefWindowInfo &,
-		CefRefPtr<CefClient> &,
-		CefBrowserSettings&,
-		bool *)
+bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+				  const CefString &, const CefString &,
+				  WindowOpenDisposition, bool,
+				  const CefPopupFeatures &, CefWindowInfo &,
+				  CefRefPtr<CefClient> &, CefBrowserSettings &,
+				  bool *)
 {
 	/* block popups */
 	return true;
 }
 
-void BrowserClient::OnBeforeContextMenu(
-		CefRefPtr<CefBrowser>,
-		CefRefPtr<CefFrame>,
-		CefRefPtr<CefContextMenuParams>,
-		CefRefPtr<CefMenuModel> model)
+void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
+					CefRefPtr<CefFrame>,
+					CefRefPtr<CefContextMenuParams>,
+					CefRefPtr<CefMenuModel> model)
 {
 	/* remove all context menu contributions */
 	model->Clear();
 }
 
 bool BrowserClient::OnProcessMessageReceived(
-	CefRefPtr<CefBrowser> browser,
-	CefProcessId,
+	CefRefPtr<CefBrowser> browser, CefProcessId,
 	CefRefPtr<CefProcessMessage> message)
 {
 	const std::string &name = message->GetName();
@@ -111,18 +103,16 @@ bool BrowserClient::OnProcessMessageReceived(
 		if (!name)
 			return false;
 
-		json = Json::object {
+		json = Json::object{
 			{"name", name},
 			{"width", (int)obs_source_get_width(current_scene)},
-			{"height", (int)obs_source_get_height(current_scene)}
-		};
+			{"height", (int)obs_source_get_height(current_scene)}};
 
 	} else if (name == "getStatus") {
-		json = Json::object {
+		json = Json::object{
 			{"recording", obs_frontend_recording_active()},
 			{"streaming", obs_frontend_streaming_active()},
-			{"replaybuffer", obs_frontend_replay_buffer_active()}
-		};
+			{"replaybuffer", obs_frontend_replay_buffer_active()}};
 
 	} else {
 		return false;
@@ -144,8 +134,7 @@ void BrowserClient::GetViewRect(
 #else
 bool BrowserClient::GetViewRect(
 #endif
-		CefRefPtr<CefBrowser>,
-		CefRect &rect)
+	CefRefPtr<CefBrowser>, CefRect &rect)
 {
 	if (!bs) {
 #if CHROME_VERSION_BUILD >= 3578
@@ -163,13 +152,9 @@ bool BrowserClient::GetViewRect(
 #endif
 }
 
-void BrowserClient::OnPaint(
-		CefRefPtr<CefBrowser>,
-		PaintElementType type,
-		const RectList &,
-		const void *buffer,
-		int width,
-		int height)
+void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
+			    const RectList &, const void *buffer, int width,
+			    int height)
 {
 	if (type != PET_VIEW) {
 		return;
@@ -193,28 +178,23 @@ void BrowserClient::OnPaint(
 
 	if (!bs->texture && width && height) {
 		obs_enter_graphics();
-		bs->texture = gs_texture_create(
-				width, height, GS_BGRA, 1,
-				(const uint8_t **)&buffer,
-				GS_DYNAMIC);
+		bs->texture = gs_texture_create(width, height, GS_BGRA, 1,
+						(const uint8_t **)&buffer,
+						GS_DYNAMIC);
 		bs->width = width;
 		bs->height = height;
 		obs_leave_graphics();
 	} else {
 		obs_enter_graphics();
-		gs_texture_set_image(bs->texture,
-				(const uint8_t *)buffer,
-				width * 4, false);
+		gs_texture_set_image(bs->texture, (const uint8_t *)buffer,
+				     width * 4, false);
 		obs_leave_graphics();
 	}
 }
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-void BrowserClient::OnAcceleratedPaint(
-		CefRefPtr<CefBrowser>,
-		PaintElementType,
-		const RectList &,
-		void *shared_handle)
+void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
+				       const RectList &, void *shared_handle)
 {
 	if (!bs) {
 		return;
@@ -231,7 +211,7 @@ void BrowserClient::OnAcceleratedPaint(
 
 #if USE_TEXTURE_COPY
 		texture = gs_texture_open_shared(
-				(uint32_t)(uintptr_t)shared_handle);
+			(uint32_t)(uintptr_t)shared_handle);
 
 		uint32_t cx = gs_texture_get_width(texture);
 		uint32_t cy = gs_texture_get_height(texture);
@@ -240,7 +220,7 @@ void BrowserClient::OnAcceleratedPaint(
 		bs->texture = gs_texture_create(cx, cy, format, 1, nullptr, 0);
 #else
 		bs->texture = gs_texture_open_shared(
-				(uint32_t)(uintptr_t)shared_handle);
+			(uint32_t)(uintptr_t)shared_handle);
 #endif
 		obs_leave_graphics();
 
@@ -257,10 +237,8 @@ void BrowserClient::OnAcceleratedPaint(
 }
 #endif
 
-void BrowserClient::OnLoadEnd(
-		CefRefPtr<CefBrowser>,
-		CefRefPtr<CefFrame> frame,
-		int)
+void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
+			      int)
 {
 	if (!bs) {
 		return;
@@ -278,7 +256,8 @@ void BrowserClient::OnLoadEnd(
 		script += "link.setAttribute('rel', 'stylesheet');";
 		script += "link.setAttribute('type', 'text/css');";
 		script += "link.setAttribute('href', '" + href + "');";
-		script += "document.getElementsByTagName('head')[0].appendChild(link);";
+		script +=
+			"document.getElementsByTagName('head')[0].appendChild(link);";
 
 		frame->ExecuteJavaScript(script, href, 0);
 	}
@@ -286,11 +265,10 @@ void BrowserClient::OnLoadEnd(
 
 bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
 #if CHROME_VERSION_BUILD >= 3282
-		cef_log_severity_t level,
+				     cef_log_severity_t level,
 #endif
-		const CefString &message,
-		const CefString &source,
-		int line)
+				     const CefString &message,
+				     const CefString &source, int line)
 {
 #if CHROME_VERSION_BUILD >= 3282
 	if (level < LOGSEVERITY_ERROR)
@@ -298,8 +276,6 @@ bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
 #endif
 
 	blog(LOG_INFO, "obs-browser: %s (source: %s:%d)",
-			message.ToString().c_str(),
-			source.ToString().c_str(),
-			line);
+	     message.ToString().c_str(), source.ToString().c_str(), line);
 	return false;
 }

@@ -34,17 +34,18 @@ static HANDLE shutdown_event = nullptr;
 static bool thread_initialized = false;
 
 DECLARE_HANDLE(OBS_DPI_AWARENESS_CONTEXT);
-#define OBS_DPI_AWARENESS_CONTEXT_UNAWARE              ((OBS_DPI_AWARENESS_CONTEXT)-1)
-#define OBS_DPI_AWARENESS_CONTEXT_SYSTEM_AWARE         ((OBS_DPI_AWARENESS_CONTEXT)-2)
-#define OBS_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE    ((OBS_DPI_AWARENESS_CONTEXT)-3)
-#define OBS_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((OBS_DPI_AWARENESS_CONTEXT)-4)
+#define OBS_DPI_AWARENESS_CONTEXT_UNAWARE ((OBS_DPI_AWARENESS_CONTEXT)-1)
+#define OBS_DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((OBS_DPI_AWARENESS_CONTEXT)-2)
+#define OBS_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE \
+	((OBS_DPI_AWARENESS_CONTEXT)-3)
+#define OBS_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 \
+	((OBS_DPI_AWARENESS_CONTEXT)-4)
 
 static bool SetHighDPIv2Scaling()
 {
-	static BOOL (WINAPI *func)(OBS_DPI_AWARENESS_CONTEXT) = nullptr;
+	static BOOL(WINAPI * func)(OBS_DPI_AWARENESS_CONTEXT) = nullptr;
 	func = reinterpret_cast<decltype(func)>(GetProcAddress(
-				GetModuleHandleW(L"USER32"),
-				"SetProcessDpiAwarenessContext"));
+		GetModuleHandleW(L"USER32"), "SetProcessDpiAwarenessContext"));
 	if (!func) {
 		return false;
 	}
@@ -73,8 +74,7 @@ static void shutdown_check_thread(DWORD parent_pid, DWORD main_thread_id)
 	CloseHandle(parent);
 }
 
-int CALLBACK WinMain(HINSTANCE, HINSTANCE,
-	LPSTR, int)
+int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	std::thread shutdown_check;
 
@@ -91,9 +91,8 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE,
 	if (!parent_pid_str.empty()) {
 		shutdown_event = CreateEvent(nullptr, true, false, nullptr);
 		DWORD parent_pid = (DWORD)std::stoi(parent_pid_str);
-		shutdown_check = std::thread(shutdown_check_thread,
-				parent_pid,
-				GetCurrentThreadId());
+		shutdown_check = std::thread(shutdown_check_thread, parent_pid,
+					     GetCurrentThreadId());
 		thread_initialized = true;
 	}
 

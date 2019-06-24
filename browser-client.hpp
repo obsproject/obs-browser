@@ -27,11 +27,11 @@
 struct BrowserSource;
 
 class BrowserClient : public CefClient,
-                      public CefDisplayHandler,
-                      public CefLifeSpanHandler,
-                      public CefContextMenuHandler,
-                      public CefRenderHandler,
-                      public CefLoadHandler {
+		      public CefDisplayHandler,
+		      public CefLifeSpanHandler,
+		      public CefContextMenuHandler,
+		      public CefRenderHandler,
+		      public CefLoadHandler {
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 #if USE_TEXTURE_COPY
@@ -46,8 +46,7 @@ public:
 	CefRect popupRect;
 	CefRect originalPopupRect;
 
-	inline BrowserClient(BrowserSource *bs_, bool sharing_avail)
-		: bs(bs_)
+	inline BrowserClient(BrowserSource *bs_, bool sharing_avail) : bs(bs_)
 	{
 		sharing_available = sharing_avail;
 	}
@@ -59,43 +58,40 @@ public:
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override;
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
-	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler()
-		override;
+	virtual CefRefPtr<CefContextMenuHandler>
+	GetContextMenuHandler() override;
 
-	virtual bool OnProcessMessageReceived(
-			CefRefPtr<CefBrowser> browser,
-			CefProcessId source_process,
-			CefRefPtr<CefProcessMessage> message) override;
+	virtual bool
+	OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+				 CefProcessId source_process,
+				 CefRefPtr<CefProcessMessage> message) override;
 
 	/* CefDisplayHandler */
 	virtual bool OnConsoleMessage(CefRefPtr<CefBrowser> browser,
 #if CHROME_VERSION_BUILD >= 3282
-			cef_log_severity_t level,
+				      cef_log_severity_t level,
 #endif
-			const CefString &message,
-			const CefString &source,
-			int line) override;
+				      const CefString &message,
+				      const CefString &source,
+				      int line) override;
 
 	/* CefLifeSpanHandler */
-	virtual bool OnBeforePopup(
-			CefRefPtr<CefBrowser> browser,
-			CefRefPtr<CefFrame> frame,
-			const CefString &target_url,
-			const CefString &target_frame_name,
-			WindowOpenDisposition target_disposition,
-			bool user_gesture,
-			const CefPopupFeatures &popupFeatures,
-			CefWindowInfo &windowInfo,
-			CefRefPtr<CefClient> &client,
-			CefBrowserSettings &settings,
-			bool *no_javascript_access) override;
+	virtual bool
+	OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+		      const CefString &target_url,
+		      const CefString &target_frame_name,
+		      WindowOpenDisposition target_disposition,
+		      bool user_gesture, const CefPopupFeatures &popupFeatures,
+		      CefWindowInfo &windowInfo, CefRefPtr<CefClient> &client,
+		      CefBrowserSettings &settings,
+		      bool *no_javascript_access) override;
 
 	/* CefContextMenuHandler */
-	virtual void OnBeforeContextMenu(
-			CefRefPtr<CefBrowser> browser,
-			CefRefPtr<CefFrame> frame,
-			CefRefPtr<CefContextMenuParams> params,
-			CefRefPtr<CefMenuModel> model) override;
+	virtual void
+	OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
+			    CefRefPtr<CefFrame> frame,
+			    CefRefPtr<CefContextMenuParams> params,
+			    CefRefPtr<CefMenuModel> model) override;
 
 	/* CefRenderHandler */
 #if CHROME_VERSION_BUILD >= 3578
@@ -103,28 +99,22 @@ public:
 #else
 	virtual bool GetViewRect(
 #endif
-			CefRefPtr<CefBrowser> browser,
-			CefRect &rect) override;
-	virtual void OnPaint(
-			CefRefPtr<CefBrowser> browser,
-			PaintElementType type,
-			const RectList &dirtyRects,
-			const void *buffer,
-			int width,
-			int height) override;
+		CefRefPtr<CefBrowser> browser, CefRect &rect) override;
+	virtual void OnPaint(CefRefPtr<CefBrowser> browser,
+			     PaintElementType type, const RectList &dirtyRects,
+			     const void *buffer, int width,
+			     int height) override;
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	virtual void OnAcceleratedPaint(
-			CefRefPtr<CefBrowser> browser,
-			PaintElementType type,
-			const RectList &dirtyRects,
-			void *shared_handle) override;
+	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
+					PaintElementType type,
+					const RectList &dirtyRects,
+					void *shared_handle) override;
 #endif
 
 	/* CefLoadHandler */
-	virtual void OnLoadEnd(
-			CefRefPtr<CefBrowser> browser,
-			CefRefPtr<CefFrame> frame,
-			int httpStatusCode) override;
+	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
+			       CefRefPtr<CefFrame> frame,
+			       int httpStatusCode) override;
 
 	IMPLEMENT_REFCOUNTING(BrowserClient);
 };

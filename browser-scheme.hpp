@@ -24,11 +24,9 @@
 
 class BrowserSchemeHandlerFactory : public CefSchemeHandlerFactory {
 public:
-	virtual CefRefPtr<CefResourceHandler> Create(
-			CefRefPtr<CefBrowser> browser,
-			CefRefPtr<CefFrame>,
-			const CefString &,
-			CefRefPtr<CefRequest> request) override;
+	virtual CefRefPtr<CefResourceHandler>
+	Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
+	       const CefString &, CefRefPtr<CefRequest> request) override;
 
 	IMPLEMENT_REFCOUNTING(BrowserSchemeHandlerFactory);
 };
@@ -41,18 +39,14 @@ class BrowserSchemeHandler : public CefResourceHandler {
 	int64 remaining = 0;
 
 public:
-	virtual bool ProcessRequest(
-			CefRefPtr<CefRequest> request,
-			CefRefPtr<CefCallback> callback) override;
-	virtual void GetResponseHeaders(
-			CefRefPtr<CefResponse> response,
-			int64 &response_length,
-			CefString &redirectUrl) override;
-	virtual bool ReadResponse(
-			void *data_out,
-			int bytes_to_read,
-			int &bytes_read,
-			CefRefPtr<CefCallback> callback) override;
+	virtual bool ProcessRequest(CefRefPtr<CefRequest> request,
+				    CefRefPtr<CefCallback> callback) override;
+	virtual void GetResponseHeaders(CefRefPtr<CefResponse> response,
+					int64 &response_length,
+					CefString &redirectUrl) override;
+	virtual bool ReadResponse(void *data_out, int bytes_to_read,
+				  int &bytes_read,
+				  CefRefPtr<CefCallback> callback) override;
 	virtual void Cancel() override;
 
 	IMPLEMENT_REFCOUNTING(BrowserSchemeHandler);
