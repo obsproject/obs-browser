@@ -66,6 +66,7 @@ protected:
 
 private slots:
 	void OnStartStopStreamingButtonClicked();
+	void OnStartStopStreamingButtonUpdate();
 
 private:
 	static void handle_obs_frontend_event(enum obs_frontend_event event, void* data);

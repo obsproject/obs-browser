@@ -100,6 +100,8 @@ void StreamElementsNativeOBSControlsManager::SetStreamingActiveState()
 		m_startStopStreamingButton->setEnabled(true);
 
 		SetStreamingStyle(true);
+
+		OnStartStopStreamingButtonUpdate();
 	});
 }
 
@@ -114,6 +116,8 @@ void StreamElementsNativeOBSControlsManager::SetStreamingStoppedState()
 		m_startStopStreamingButton->setEnabled(true);
 
 		SetStreamingStyle(false);
+
+		OnStartStopStreamingButtonUpdate();
 	});
 }
 
@@ -140,6 +144,8 @@ void StreamElementsNativeOBSControlsManager::SetStreamingTransitionStartingState
 		m_startStopStreamingButton->setEnabled(false);
 
 		SetStreamingStyle(true);
+
+		OnStartStopStreamingButtonUpdate();
 	});
 }
 
@@ -150,6 +156,8 @@ void StreamElementsNativeOBSControlsManager::SetStreamingRequestedState()
 		m_startStopStreamingButton->setEnabled(false);
 
 		SetStreamingStyle(true);
+
+		OnStartStopStreamingButtonUpdate();
 
 		StartTimeoutTracker();
 	});
@@ -166,6 +174,8 @@ void StreamElementsNativeOBSControlsManager::SetStreamingTransitionStoppingState
 		m_startStopStreamingButton->setEnabled(false);
 
 		SetStreamingStyle(false);
+
+		OnStartStopStreamingButtonUpdate();
 	});
 }
 
@@ -174,13 +184,21 @@ void StreamElementsNativeOBSControlsManager::OnStartStopStreamingButtonClicked()
 	if (obs_frontend_streaming_active()) {
 		blog(LOG_INFO, "obs-browser: streaming stop requested by UI control");
 
-		obs_frontend_streaming_stop();
+		// obs_frontend_streaming_stop();
+		m_nativeStartStopStreamingButton->click();
 	}
 	else {
 		blog(LOG_INFO, "obs-browser: streaming start requested by UI control");
 
 		BeginStartStreaming();
 	}
+}
+
+void StreamElementsNativeOBSControlsManager::OnStartStopStreamingButtonUpdate()
+{
+	QtExecSync([this]() -> void {
+		m_startStopStreamingButton->setMenu(m_nativeStartStopStreamingButton->menu());
+	});
 }
 
 void StreamElementsNativeOBSControlsManager::handle_obs_frontend_event(enum obs_frontend_event event, void* data)
@@ -310,7 +328,8 @@ void StreamElementsNativeOBSControlsManager::BeginStartStreaming()
 {
 	switch (m_start_streaming_mode) {
 	case start:
-		obs_frontend_streaming_start();
+		// obs_frontend_streaming_start();
+		m_nativeStartStopStreamingButton->click();
 		break;
 
 	case request:
@@ -372,7 +391,8 @@ void StreamElementsNativeOBSControlsManager::StartTimeoutTracker()
 
 		SetStreamingInitialState();
 
-		obs_frontend_streaming_start();
+		// obs_frontend_streaming_start();
+		m_nativeStartStopStreamingButton->click();
 	});
 
 	QMetaObject::invokeMethod(m_timeoutTimer, "start", Qt::QueuedConnection, Q_ARG(int, m_startStreamingRequestAcknowledgeTimeoutSeconds * 1000));
