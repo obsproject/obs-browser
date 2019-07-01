@@ -148,7 +148,7 @@ bool StreamElementsExternalSceneDataProviderSlobsClient::GetSceneCollection(
 		return false;
 	}
 
-	scene_collection_t* collection;
+	scene_collection_t* collection = nullptr;
 
 	for (size_t collectionIndex = 0; collectionIndex < collections.size(); ++collectionIndex) {
 		if (collections[collectionIndex].collectionId == collectionId) {

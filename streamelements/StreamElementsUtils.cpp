@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <codecvt>
 #include <vector>
+#include <regex>
 
 #include <curl/curl.h>
 
@@ -1368,6 +1369,9 @@ std::string CreateSessionSignedAbsolutePathURL(std::wstring path)
 {
  	CefURLParts parts;
 
+	path = std::regex_replace(path, std::wregex(L"#"), L"%23");
+	path = std::regex_replace(path, std::wregex(L"&"), L"%26");
+
 	CefString(&parts.scheme) = "https";
 	CefString(&parts.host) = "absolute";
 	CefString(&parts.path) = std::wstring(L"/") + path;
@@ -1382,6 +1386,9 @@ std::string CreateSessionSignedAbsolutePathURL(std::wstring path)
 	message = CefURIDecode(message, true, cef_uri_unescape_rule_t::UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
 
 	message = message.erase(0, 1);
+
+	//message = std::regex_replace(message, std::regex("#"), "%23");
+	//message = std::regex_replace(message, std::regex("&"), "%26");
 
 	return url.ToString() + std::string("?digest=") +
 		CreateSessionMessageSignature(message);
@@ -1411,7 +1418,12 @@ bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path)
 		else {
 			std::string signature = queryArgs["digest"];
 
-			return VerifySessionMessageSignature(path, signature);
+			std::string message = path;
+
+			//message = std::regex_replace(message, std::regex("#"), "%23");
+			//message = std::regex_replace(message, std::regex("&"), "%26");
+
+			return VerifySessionMessageSignature(message, signature);
 		}
 	}
 }

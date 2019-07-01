@@ -7,8 +7,10 @@
 			overflow: hidden;
 		}
 	</style>
+
+	<meta http-equiv="refresh" content="5; url=${URL}" />
 </head>
-<body>
+<body onload="location.href = '${URL}'; return false">
 	<div style="position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center">
 
 		<div class="lds-css ng-scope">
@@ -84,11 +86,5 @@
 			</style>
 		</div>
 	</div>
-
-	<script type="text/javascript">
-		setTimeout(function () {
-			window.location.href = '${URL}';
-		}, 1);
-	</script>
 </body>
 </html>
