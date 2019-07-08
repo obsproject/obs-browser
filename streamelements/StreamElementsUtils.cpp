@@ -1427,3 +1427,34 @@ bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path)
 		}
 	}
 }
+
+/* ========================================================= */
+
+bool IsAlwaysOnTop(QWidget* window)
+{
+#ifdef WIN32
+	DWORD exStyle = GetWindowLong((HWND)window->winId(), GWL_EXSTYLE);
+	return (exStyle & WS_EX_TOPMOST) != 0;
+#else
+	return (window->windowFlags() & Qt::WindowStaysOnTopHint) != 0;
+#endif
+}
+
+void SetAlwaysOnTop(QWidget* window, bool enable)
+{
+#ifdef WIN32
+	HWND hwnd = (HWND)window->winId();
+	SetWindowPos(hwnd, enable ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
+		SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+#else
+	Qt::WindowFlags flags = window->windowFlags();
+
+	if (enable)
+		flags |= Qt::WindowStaysOnTopHint;
+	else
+		flags &= ~Qt::WindowStaysOnTopHint;
+
+	window->setWindowFlags(flags);
+	window->show();
+#endif
+}

@@ -26,6 +26,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QString>
+#include <QWidget>
 
 template<typename ... Args>
 std::string FormatString(const char* format, ...)
@@ -145,3 +146,8 @@ std::string CreateSessionMessageSignature(std::string& message);
 bool VerifySessionMessageSignature(std::string& message, std::string& signature);
 std::string CreateSessionSignedAbsolutePathURL(std::wstring path);
 bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path);
+
+/* ========================================================= */
+
+bool IsAlwaysOnTop(QWidget* window);
+void SetAlwaysOnTop(QWidget* window, bool enable);

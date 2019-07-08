@@ -69,6 +69,10 @@ StreamElementsBrowserDialog::StreamElementsBrowserDialog(QWidget* parent, std::s
 		(windowFlags() | Qt::CustomizeWindowHint)
 		& ~Qt::WindowContextHelpButtonHint
 		));
+
+	if (!!parent && IsAlwaysOnTop(parent)) {
+		SetAlwaysOnTop(this, true);
+	}
 }
 
 StreamElementsBrowserDialog::~StreamElementsBrowserDialog()
