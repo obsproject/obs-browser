@@ -22,6 +22,7 @@
 #include "json11/json11.hpp"
 #include <obs-frontend-api.h>
 #include <obs.hpp>
+#include <util/platform.h>
 
 using namespace json11;
 
@@ -60,6 +61,13 @@ CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 {
 	return this;
 }
+
+#if CHROME_VERSION_BUILD >= 3683
+CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
+{
+	return this;
+}
+#endif
 
 bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 				  const CefString &, const CefString &,
@@ -240,6 +248,86 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
 		obs_leave_graphics();
 	}
 #endif
+}
+#endif
+
+#if CHROME_VERSION_BUILD >= 3683
+void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser,
+					 int audio_stream_id_, int channels_,
+					 ChannelLayout channel_layout_,
+					 int sample_rate_,
+					 int frames_per_buffer_)
+{
+	channels = channels_;
+	channel_layout = channel_layout_;
+	sample_rate = sample_rate_;
+	frames_per_buffer = frames_per_buffer_;
+	audio_stream_id = audio_stream_id_;
+}
+
+static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
+{
+	switch (cefLayout) {
+	case CEF_CHANNEL_LAYOUT_MONO:
+		return SPEAKERS_MONO; /**< Channels: MONO */
+	case CEF_CHANNEL_LAYOUT_STEREO:
+		return SPEAKERS_STEREO; /**< Channels: FL, FR */
+	case CEF_CHANNEL_LAYOUT_2POINT1:
+		return SPEAKERS_2POINT1; /**< Channels: FL, FR, LFE */
+	case CEF_CHANNEL_LAYOUT_2_2:
+	case CEF_CHANNEL_LAYOUT_QUAD:
+	case CEF_CHANNEL_LAYOUT_4_0:
+		return SPEAKERS_4POINT0; /**< Channels: FL, FR, FC, RC */
+	case CEF_CHANNEL_LAYOUT_4_1:
+		return SPEAKERS_4POINT1; /**< Channels: FL, FR, FC, LFE, RC */
+	case CEF_CHANNEL_LAYOUT_5_1:
+	case CEF_CHANNEL_LAYOUT_5_1_BACK:
+		return SPEAKERS_5POINT1; /**< Channels: FL, FR, FC, LFE, RL, RR */
+	case CEF_CHANNEL_LAYOUT_7_1:
+	case CEF_CHANNEL_LAYOUT_7_1_WIDE_BACK:
+	case CEF_CHANNEL_LAYOUT_7_1_WIDE:
+		return SPEAKERS_7POINT1; /**< Channels: FL, FR, FC, LFE, RL, RR, SL, SR */
+	}
+	return SPEAKERS_UNKNOWN;
+}
+
+void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
+					int audio_stream_id_,
+					const float **data, int frames,
+					int64_t pts)
+{
+	struct obs_source_audio audio = {};
+
+	if (!bs) {
+		return;
+	}
+
+	if (audio_stream_id != audio_stream_id_)
+		return;
+
+	const uint8_t **pcm = (const uint8_t **)data;
+	speaker_layout speakers = GetSpeakerLayout(channel_layout);
+	int speaker_count = get_audio_channels(speakers);
+	for (int i = 0; i < speaker_count; i++)
+		audio.data[i] = pcm[i];
+
+	audio.samples_per_sec = sample_rate;
+	audio.frames = frames;
+	audio.format = AUDIO_FORMAT_FLOAT_PLANAR;
+	audio.speakers = speakers;
+	audio.timestamp = (uint64_t)pts * 1000000LLU;
+
+	obs_source_output_audio(bs->source, &audio);
+}
+
+void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser,
+					 int audio_stream_id_)
+{
+	if (!bs) {
+		return;
+	}
+	if (audio_stream_id != audio_stream_id_)
+		return;
 }
 #endif
 

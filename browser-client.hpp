@@ -31,6 +31,9 @@ class BrowserClient : public CefClient,
 		      public CefLifeSpanHandler,
 		      public CefContextMenuHandler,
 		      public CefRenderHandler,
+#if CHROME_VERSION_BUILD >= 3683
+		      public CefAudioHandler,
+#endif
 		      public CefLoadHandler {
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
@@ -45,6 +48,13 @@ public:
 	BrowserSource *bs;
 	CefRect popupRect;
 	CefRect originalPopupRect;
+#if CHROME_VERSION_BUILD >= 3683
+	int audio_stream_id;
+	int sample_rate;
+	int channels;
+	ChannelLayout channel_layout;
+	int frames_per_buffer;
+#endif
 
 	inline BrowserClient(BrowserSource *bs_, bool sharing_avail) : bs(bs_)
 	{
@@ -60,6 +70,9 @@ public:
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
 	virtual CefRefPtr<CefContextMenuHandler>
 	GetContextMenuHandler() override;
+#if CHROME_VERSION_BUILD >= 3683
+	virtual CefRefPtr<CefAudioHandler> GetAudioHandler() override;
+#endif
 
 	virtual bool
 	OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
@@ -116,7 +129,22 @@ public:
 					const RectList &dirtyRects,
 					void *shared_handle) override;
 #endif
+#if CHROME_VERSION_BUILD >= 3683
+	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
+					 int audio_stream_id,
+					 const float **data, int frames,
+					 int64_t pts) override;
 
+	virtual void OnAudioStreamStopped(CefRefPtr<CefBrowser> browser,
+					  int audio_stream_id);
+
+	virtual void OnAudioStreamStarted(CefRefPtr<CefBrowser> browser,
+					  int audio_stream_id, int channels,
+					  ChannelLayout channel_layout,
+					  int sample_rate,
+					  int frames_per_buffer) override;
+
+#endif
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
 			       CefRefPtr<CefFrame> frame,
