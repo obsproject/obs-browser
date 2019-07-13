@@ -166,9 +166,6 @@ QCefWidgetInternal::~QCefWidgetInternal()
 	CefRefPtr<CefBrowser> browser = cefBrowser;
 	if (!!browser) {
 		auto destroyBrowser = [](CefRefPtr<CefBrowser> cefBrowser) {
-			if (!cefBrowser) {
-				return;
-			}
 			CefRefPtr<CefClient> client =
 				cefBrowser->GetHost()->GetClient();
 			QCefBrowserClient *bc =
@@ -182,10 +179,19 @@ QCefWidgetInternal::~QCefWidgetInternal()
 		};
 
 #ifdef USE_QT_LOOP
-		QueueBrowserTask(cefBrowser, destroyBrowser);
+		destroyBrowser(browser);
 #else
-		QueueCEFTask([=]() { destroyBrowser(browser); });
+		os_event_t *finishedEvent;
+		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
+		bool success = QueueCEFTask([=]() {
+			destroyBrowser(browser);
+			os_event_signal(finishedEvent);
+		});
+		if (success)
+			os_event_wait(finishedEvent);
+		os_event_destroy(finishedEvent);
 #endif
+
 		cefBrowser = nullptr;
 	}
 }
