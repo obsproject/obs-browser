@@ -26,10 +26,12 @@ std::vector<PopupWhitelistInfo> forced_popups;
 
 /* ------------------------------------------------------------------------- */
 
+#if CHROME_VERSION_BUILD < 3770
 CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
 {
 	return cm;
 }
+#endif
 
 class CookieCheck : public CefCookieVisitor {
 public:
@@ -62,7 +64,9 @@ public:
 
 struct QCefCookieManagerInternal : QCefCookieManager {
 	CefRefPtr<CefCookieManager> cm;
+#if CHROME_VERSION_BUILD < 3770
 	CefRefPtr<CefRequestContextHandler> rch;
+#endif
 	CefRefPtr<CefRequestContext> rc;
 
 	QCefCookieManagerInternal(const std::string &storage_path,
@@ -73,21 +77,34 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 
 		BPtr<char> path = obs_module_config_path(storage_path.c_str());
 
+#if CHROME_VERSION_BUILD < 3770
 		cm = CefCookieManager::CreateManager(
 			path.Get(), persist_session_cookies, nullptr);
 		if (!cm)
 			throw "Failed to create cookie manager";
+#endif
 
+#if CHROME_VERSION_BUILD < 3770
 		rch = new QCefRequestContextHandler(cm);
 
 		rc = CefRequestContext::CreateContext(
 			CefRequestContext::GetGlobalContext(), rch);
+#else
+		CefRequestContextSettings settings;
+		CefString(&settings.cache_path) = path.Get();
+		rc = CefRequestContext::CreateContext(
+			settings, CefRefPtr<CefRequestContextHandler>());
+		if (rc)
+			cm = rc->GetCookieManager(nullptr);
+
+		UNUSED_PARAMETER(persist_session_cookies);
+#endif
 	}
 
 	virtual bool DeleteCookies(const std::string &url,
 				   const std::string &name) override
 	{
-		return cm->DeleteCookies(url, name, nullptr);
+		return !!cm ? cm->DeleteCookies(url, name, nullptr) : false;
 	}
 
 	virtual bool SetStoragePath(const std::string &storage_path,
@@ -95,16 +112,34 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 	{
 		BPtr<char> path = obs_module_config_path(storage_path.c_str());
 
+#if CHROME_VERSION_BUILD < 3770
 		return cm->SetStoragePath(path.Get(), persist_session_cookies,
 					  nullptr);
+#else
+		CefRequestContextSettings settings;
+		CefString(&settings.cache_path) = storage_path;
+		rc = CefRequestContext::CreateContext(
+			settings, CefRefPtr<CefRequestContextHandler>());
+		if (rc)
+			cm = rc->GetCookieManager(nullptr);
+
+		UNUSED_PARAMETER(persist_session_cookies);
+		return true;
+#endif
 	}
 
-	virtual bool FlushStore() override { return cm->FlushStore(nullptr); }
+	virtual bool FlushStore() override
+	{
+		return !!cm ? cm->FlushStore(nullptr) : false;
+	}
 
 	virtual void CheckForCookie(const std::string &site,
 				    const std::string &cookie,
 				    cookie_exists_cb callback) override
 	{
+		if (!cm)
+			return;
+
 		CefRefPtr<CookieCheck> c = new CookieCheck(callback, cookie);
 		cm->VisitUrlCookies(site, false, c);
 	}
@@ -181,6 +216,9 @@ void QCefWidgetInternal::Init()
 		CefBrowserSettings cefBrowserSettings;
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
+#if CHROME_VERSION_BUILD >= 3770
+			CefRefPtr<CefDictionaryValue>(),
+#endif
 			rqc);
 #ifdef _WIN32
 		Resize();

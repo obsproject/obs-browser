@@ -66,6 +66,9 @@ bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 				  WindowOpenDisposition, bool,
 				  const CefPopupFeatures &, CefWindowInfo &,
 				  CefRefPtr<CefClient> &, CefBrowserSettings &,
+#if CHROME_VERSION_BUILD >= 3770
+				  CefRefPtr<CefDictionaryValue> &,
+#endif
 				  bool *)
 {
 	/* block popups */
@@ -82,8 +85,11 @@ void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
 }
 
 bool BrowserClient::OnProcessMessageReceived(
-	CefRefPtr<CefBrowser> browser, CefProcessId,
-	CefRefPtr<CefProcessMessage> message)
+	CefRefPtr<CefBrowser> browser,
+#if CHROME_VERSION_BUILD >= 3770
+	CefRefPtr<CefFrame>,
+#endif
+	CefProcessId, CefRefPtr<CefProcessMessage> message)
 {
 	const std::string &name = message->GetName();
 	Json json;
@@ -125,7 +131,7 @@ bool BrowserClient::OnProcessMessageReceived(
 	args->SetInt(0, message->GetArgumentList()->GetInt(0));
 	args->SetString(1, json.dump());
 
-	browser->SendProcessMessage(PID_RENDERER, msg);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 
 	return true;
 }

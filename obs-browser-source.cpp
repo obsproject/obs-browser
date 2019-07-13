@@ -140,6 +140,9 @@ bool BrowserSource::CreateBrowser()
 
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
+#if CHROME_VERSION_BUILD >= 3770
+			CefRefPtr<CefDictionaryValue>(),
+#endif
 			nullptr);
 	});
 }
@@ -296,8 +299,8 @@ void BrowserSource::SetShowing(bool showing)
 				CefRefPtr<CefListValue> args =
 					msg->GetArgumentList();
 				args->SetBool(0, showing);
-				cefBrowser->SendProcessMessage(PID_RENDERER,
-							       msg);
+				SendBrowserProcessMessage(cefBrowser,
+							  PID_RENDERER, msg);
 			},
 			true);
 	}
@@ -320,7 +323,8 @@ void BrowserSource::SetActive(bool active)
 				CefProcessMessage::Create("Active");
 			CefRefPtr<CefListValue> args = msg->GetArgumentList();
 			args->SetBool(0, active);
-			cefBrowser->SendProcessMessage(PID_RENDERER, msg);
+			SendBrowserProcessMessage(cefBrowser, PID_RENDERER,
+						  msg);
 		},
 		true);
 }
@@ -454,6 +458,6 @@ void DispatchJSEvent(std::string eventName, std::string jsonString)
 
 		args->SetString(0, eventName);
 		args->SetString(1, jsonString);
-		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
+		SendBrowserProcessMessage(cefBrowser, PID_RENDERER, msg);
 	});
 }

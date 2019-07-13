@@ -24,6 +24,7 @@ extern std::vector<PopupWhitelistInfo> forced_popups;
 
 /* ------------------------------------------------------------------------- */
 
+#if CHROME_VERSION_BUILD < 3770
 class QCefRequestContextHandler : public CefRequestContextHandler {
 	CefRefPtr<CefCookieManager> cm;
 
@@ -37,6 +38,7 @@ public:
 
 	IMPLEMENT_REFCOUNTING(QCefRequestContextHandler);
 };
+#endif
 
 /* ------------------------------------------------------------------------- */
 
