@@ -147,7 +147,8 @@ bool StreamElementsOutputSettingsManager::SetStreamingSettings(CefRefPtr<CefValu
 
 #define SIMPLE_ENCODER_X264                    "x264"
 #define SIMPLE_ENCODER_QSV                     "qsv"
-#define SIMPLE_ENCODER_NVENC                   "nvenc"
+#define SIMPLE_ENCODER_NVENC                   "nvenc" // Old ffmpeg-based NVEnc
+#define SIMPLE_ENCODER_JIM_NVENC               "jim_nvenc"
 #define SIMPLE_ENCODER_AMD                     "amd"
 
 bool StreamElementsOutputSettingsManager::SetEncodingSettings(CefRefPtr<CefValue> input)
@@ -232,7 +233,7 @@ bool StreamElementsOutputSettingsManager::SetEncodingSettings(CefRefPtr<CefValue
 	}
 	*/
 
-	config_set_string(basicConfig, "AdvOut", "RecType", "Standard");
+	//config_set_string(basicConfig, "AdvOut", "RecType", "Standard");
 
 	//config_set_string(basicConfig, "AdvOut", "RecFilePath", GetDefaultVideoSavePath().c_str());
 	//config_set_string(basicConfig, "AdvOut", "RecFormat", "mp4");
@@ -339,6 +340,52 @@ bool StreamElementsOutputSettingsManager::SetEncodingSettings(CefRefPtr<CefValue
 		obs_data_save_json_safe(settings, streamEncoderJsonPath.c_str(), "tmp", "bak");
 		obs_data_release(settings);
 	}
+
+	return true;
+}
+
+bool StreamElementsOutputSettingsManager::GetEncodingSettings(CefRefPtr<CefValue>& output)
+{
+	SYNC_ACCESS();
+
+	CefRefPtr<CefDictionaryValue> d = CefDictionaryValue::Create();
+
+	config_t* basicConfig = obs_frontend_get_profile_config(); // does not increase refcount
+	
+	if (stricmp(config_get_string(basicConfig, "Output", "Mode"), "Simple") == 0) {
+		d->SetString("videoEncoderId", config_get_string(basicConfig, "SimpleOutput", "StreamEncoder"));
+		d->SetInt("videoBitsPerSecond", config_get_uint(basicConfig, "SimpleOutput", "VBitrate") * 1000);
+		d->SetInt("audioBitsPerSecond", config_get_uint(basicConfig, "SimpleOutput", "ABitrate") * 1000);
+	}
+	else
+	{
+		d->SetString("videoEncoderId", config_get_string(basicConfig, "AdvOut", "Encoder"));
+		d->SetInt("videoBitsPerSecond", config_get_uint(basicConfig, "AdvOut", "FFVBitrate") * 1000);
+		d->SetInt("audioBitsPerSecond", config_get_uint(basicConfig, "AdvOut", "FFABitrate") * 1000);
+
+	}
+
+	d->SetInt("videoFrameWidth", config_get_uint(basicConfig, "Video", "OutputCX"));
+	d->SetInt("videoFrameHeight", config_get_uint(basicConfig, "Video", "OutputCY"));
+
+	switch (config_get_uint(basicConfig, "Video", "FPSType")) {
+		case 0: // Common
+			d->SetDouble("videoFramesPerSecond", (double)atoi(config_get_string(basicConfig, "Video", "FPSCommon")));
+			break;
+
+		case 1: // Integer
+			d->SetDouble("videoFramesPerSecond", config_get_uint(basicConfig, "Video", "FPSInt"));
+			break;
+
+		case 2: // Fractional
+			d->SetDouble("videoFramesPerSecond",
+				(double)config_get_uint(basicConfig, "Video", "FPSNum") / config_get_uint(basicConfig, "Video", "FPSDen"));
+			break;
+	}
+
+	d->SetInt("audioSamplesPerSecond", config_get_uint(basicConfig, "Audio", "SampleRate"));
+
+	output->SetDictionary(d);
 
 	return true;
 }
