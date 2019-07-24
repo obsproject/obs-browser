@@ -336,6 +336,8 @@ void RegisterBrowserSource()
 	info.get_name = [](void *) { return obs_module_text("BrowserSource"); };
 	info.create = [](obs_data_t *settings, obs_source_t *source) -> void * {
 		obs_browser_initialize();
+		obs_source_set_monitoring_type(source, OBS_MONITORING_TYPE_MONITOR_ONLY);
+		obs_source_set_audio_mixers(source, 0xF);
 		return new BrowserSource(settings, source);
 	};
 	info.destroy = [](void *data) {
