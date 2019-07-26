@@ -144,6 +144,9 @@ bool BrowserSource::CreateBrowser()
 			CefRefPtr<CefDictionaryValue>(),
 #endif
 			nullptr);
+#if CHROME_VERSION_BUILD >= 3683
+		cefBrowser->GetHost()->SetAudioMuted(true);
+#endif
 	});
 }
 
