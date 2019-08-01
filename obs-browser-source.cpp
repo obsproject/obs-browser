@@ -24,6 +24,12 @@
 #include <thread>
 #include <mutex>
 
+#ifdef USE_QT_LOOP
+#include <QApplication>
+#include <QEventLoop>
+#include <QThread>
+#endif
+
 using namespace std;
 
 extern bool QueueCEFTask(std::function<void()> task);
@@ -37,7 +43,8 @@ BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	lock_guard<mutex> lock(browser_list_mutex);
 	p_prev_next = &first_browser;
 	next = first_browser;
-	if (first_browser) first_browser->p_prev_next = &next;
+	if (first_browser)
+		first_browser->p_prev_next = &next;
 	first_browser = this;
 
 	/* defer update */
@@ -50,32 +57,44 @@ BrowserSource::~BrowserSource()
 	DestroyTextures();
 
 	lock_guard<mutex> lock(browser_list_mutex);
-	if (next) next->p_prev_next = p_prev_next;
+	if (next)
+		next->p_prev_next = p_prev_next;
 	*p_prev_next = next;
 }
 
-void BrowserSource::ExecuteOnBrowser(std::function<void()> func, bool async)
+void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 {
 	if (!cefBrowser.get()) {
 		return;
 	}
 
 	if (!async) {
+#ifdef USE_QT_LOOP
+		if (QThread::currentThread() == qApp->thread()) {
+			if (!!cefBrowser)
+				func(cefBrowser);
+			return;
+		}
+#endif
 		os_event_t *finishedEvent;
 		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
-		bool success = QueueCEFTask([&] () {
-			if (!!cefBrowser.get())
-				func();
+		bool success = QueueCEFTask([&]() {
+			if (!!cefBrowser)
+				func(cefBrowser);
 			os_event_signal(finishedEvent);
 		});
 		if (success)
 			os_event_wait(finishedEvent);
 		os_event_destroy(finishedEvent);
 	} else {
-		QueueCEFTask([this, func] () {
-			if (!!cefBrowser.get())
-				func();
-		});
+		CefRefPtr<CefBrowser> browser = cefBrowser;
+		if (!!browser) {
+#ifdef USE_QT_LOOP
+			QueueBrowserTask(cefBrowser, func);
+#else
+			QueueCEFTask([=]() { func(browser); });
+#endif
+		}
 	}
 }
 
@@ -84,6 +103,7 @@ bool BrowserSource::CreateBrowser()
 	if (!is_showing && shutdown_on_invisible) {
 		return false;
 	}
+
 
 	static std::mutex sync_mutex;
 
@@ -137,15 +157,14 @@ bool BrowserSource::CreateBrowser()
 #endif
 
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
-				windowInfo,
-				browserClient,
-				url,
-				cefBrowserSettings,
-				nullptr);
-
-		if (!!cefBrowser.get()) {
-			cefBrowser->GetHost()->WasHidden(!obs_source_showing(source));
-		}
+			windowInfo, browserClient, url, cefBrowserSettings,
+#if CHROME_VERSION_BUILD >= 3770
+			CefRefPtr<CefDictionaryValue>(),
+#endif
+			nullptr);
+#if CHROME_VERSION_BUILD >= 3683
+		cefBrowser->GetHost()->SetAudioMuted(true);
+#endif
 	});
 }
 
@@ -174,107 +193,107 @@ void BrowserSource::DestroyBrowser()
 	cefBrowser = nullptr;
 }
 
-void BrowserSource::SendMouseClick(
-		const struct obs_mouse_event *event,
-		int32_t type,
-		bool mouse_up,
-		uint32_t click_count)
+void BrowserSource::SendMouseClick(const struct obs_mouse_event *event,
+				   int32_t type, bool mouse_up,
+				   uint32_t click_count)
 {
 	uint32_t modifiers = event->modifiers;
-	int32_t  x         = event->x;
-	int32_t  y         = event->y;
+	int32_t x = event->x;
+	int32_t y = event->y;
 
-	ExecuteOnBrowser([this, modifiers, x, y, type, mouse_up, click_count] ()
-	{
-		CefMouseEvent e;
-		e.modifiers = modifiers;
-		e.x = x;
-		e.y = y;
-		CefBrowserHost::MouseButtonType buttonType =
-			(CefBrowserHost::MouseButtonType)type;
-		cefBrowser->GetHost()->SendMouseClickEvent(e, buttonType,
-			mouse_up, click_count);
-	}, true);
+	ExecuteOnBrowser(
+		[=](CefRefPtr<CefBrowser> cefBrowser) {
+			CefMouseEvent e;
+			e.modifiers = modifiers;
+			e.x = x;
+			e.y = y;
+			CefBrowserHost::MouseButtonType buttonType =
+				(CefBrowserHost::MouseButtonType)type;
+			cefBrowser->GetHost()->SendMouseClickEvent(
+				e, buttonType, mouse_up, click_count);
+		},
+		true);
 }
 
-void BrowserSource::SendMouseMove(
-		const struct obs_mouse_event *event,
-		bool mouse_leave)
+void BrowserSource::SendMouseMove(const struct obs_mouse_event *event,
+				  bool mouse_leave)
 {
 	uint32_t modifiers = event->modifiers;
-	int32_t  x         = event->x;
-	int32_t  y         = event->y;
+	int32_t x = event->x;
+	int32_t y = event->y;
 
-	ExecuteOnBrowser([this, modifiers, x, y, mouse_leave] ()
-	{
-		CefMouseEvent e;
-		e.modifiers = modifiers;
-		e.x = x;
-		e.y = y;
-		cefBrowser->GetHost()->SendMouseMoveEvent(e, mouse_leave);
-	}, true);
+	ExecuteOnBrowser(
+		[=](CefRefPtr<CefBrowser> cefBrowser) {
+			CefMouseEvent e;
+			e.modifiers = modifiers;
+			e.x = x;
+			e.y = y;
+			cefBrowser->GetHost()->SendMouseMoveEvent(e,
+								  mouse_leave);
+		},
+		true);
 }
 
-void BrowserSource::SendMouseWheel(
-		const struct obs_mouse_event *event,
-		int x_delta,
-		int y_delta)
+void BrowserSource::SendMouseWheel(const struct obs_mouse_event *event,
+				   int x_delta, int y_delta)
 {
 	uint32_t modifiers = event->modifiers;
-	int32_t  x         = event->x;
-	int32_t  y         = event->y;
+	int32_t x = event->x;
+	int32_t y = event->y;
 
-	ExecuteOnBrowser([this, modifiers, x, y, x_delta, y_delta] ()
-	{
-		CefMouseEvent e;
-		e.modifiers = modifiers;
-		e.x = x;
-		e.y = y;
-		cefBrowser->GetHost()->SendMouseWheelEvent(e, x_delta, y_delta);
-	}, true);
+	ExecuteOnBrowser(
+		[=](CefRefPtr<CefBrowser> cefBrowser) {
+			CefMouseEvent e;
+			e.modifiers = modifiers;
+			e.x = x;
+			e.y = y;
+			cefBrowser->GetHost()->SendMouseWheelEvent(e, x_delta,
+								   y_delta);
+		},
+		true);
 }
 
 void BrowserSource::SendFocus(bool focus)
 {
-	ExecuteOnBrowser([this, focus] ()
-	{
-		cefBrowser->GetHost()->SendFocusEvent(focus);
-	}, true);
+	ExecuteOnBrowser(
+		[=](CefRefPtr<CefBrowser> cefBrowser) {
+			cefBrowser->GetHost()->SendFocusEvent(focus);
+		},
+		true);
 }
 
-void BrowserSource::SendKeyClick(
-		const struct obs_key_event *event,
-		bool key_up)
+void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 {
-	uint32_t    modifiers   = event->modifiers;
-	std::string text        = event->text;
-	uint32_t    native_vkey = event->native_vkey;
+	uint32_t modifiers = event->modifiers;
+	std::string text = event->text;
+	uint32_t native_vkey = event->native_vkey;
 
-	ExecuteOnBrowser([this, modifiers, text, native_vkey, key_up] ()
-	{
-		CefKeyEvent e;
-		e.windows_key_code = native_vkey;
-		e.native_key_code = 0;
+	ExecuteOnBrowser(
+		[=](CefRefPtr<CefBrowser> cefBrowser) {
+			CefKeyEvent e;
+			e.windows_key_code = native_vkey;
+			e.native_key_code = 0;
 
-		e.type = key_up ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
+			e.type = key_up ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
 
-		if (!text.empty()) {
-			wstring wide = to_wide(text);
-			if (wide.size())
-				e.character = wide[0];
-		}
+			if (!text.empty()) {
+				wstring wide = to_wide(text);
+				if (wide.size())
+					e.character = wide[0];
+			}
 
-		//e.native_key_code = native_vkey;
-		e.modifiers = modifiers;
+			//e.native_key_code = native_vkey;
+			e.modifiers = modifiers;
 
-		cefBrowser->GetHost()->SendKeyEvent(e);
-		if (!text.empty() && !key_up) {
-			e.type = KEYEVENT_CHAR;
-			e.windows_key_code = e.character;
-			e.native_key_code = native_vkey;
 			cefBrowser->GetHost()->SendKeyEvent(e);
-		}
-	}, true);
+			if (!text.empty() && !key_up) {
+				e.type = KEYEVENT_CHAR;
+				e.windows_key_code = e.character;
+				e.native_key_code = native_vkey;
+				cefBrowser->GetHost()->SendKeyEvent(e);
+			}
+		},
+		true);
 }
 
 void BrowserSource::SetShowing(bool showing)
@@ -308,32 +327,36 @@ void BrowserSource::SetShowing(bool showing)
 
 void BrowserSource::SetActive(bool active)
 {
-	ExecuteOnBrowser([this, active] ()
-	{
-		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("Active");
-		CefRefPtr<CefListValue> args = msg->GetArgumentList();
-		args->SetBool(0, active);
-		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
-	}, true);
+	ExecuteOnBrowser(
+		[=](CefRefPtr<CefBrowser> cefBrowser) {
+			CefRefPtr<CefProcessMessage> msg =
+				CefProcessMessage::Create("Active");
+			CefRefPtr<CefListValue> args = msg->GetArgumentList();
+			args->SetBool(0, active);
+			SendBrowserProcessMessage(cefBrowser, PID_RENDERER,
+						  msg);
+		},
+		true);
 }
 
 void BrowserSource::Refresh()
 {
-	ExecuteOnBrowser([this] ()
-	{
-		cefBrowser->ReloadIgnoreCache();
-	}, true);
+	ExecuteOnBrowser(
+		[](CefRefPtr<CefBrowser> cefBrowser) {
+			cefBrowser->ReloadIgnoreCache();
+		},
+		true);
 }
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 inline void BrowserSource::SignalBeginFrame()
 {
 	if (reset_frame) {
-		ExecuteOnBrowser([this] ()
-		{
-			cefBrowser->GetHost()->SendExternalBeginFrame();
-		}, true);
+		ExecuteOnBrowser(
+			[](CefRefPtr<CefBrowser> cefBrowser) {
+				cefBrowser->GetHost()->SendExternalBeginFrame();
+			},
+			true);
 
 		reset_frame = false;
 	}
@@ -353,41 +376,36 @@ void BrowserSource::Update(obs_data_t *settings)
 		std::string n_url;
 		std::string n_css;
 
-		n_is_local  = obs_data_get_bool(settings, "is_local_file");
-		n_width     = (int)obs_data_get_int(settings, "width");
-		n_height    = (int)obs_data_get_int(settings, "height");
-		n_fps_custom  = obs_data_get_bool(settings, "fps_custom");
-		n_fps       = (int)obs_data_get_int(settings, "fps");
-		n_shutdown  = obs_data_get_bool(settings, "shutdown");
-		n_restart   = obs_data_get_bool(settings, "restart_when_active");
-		n_css       = obs_data_get_string(settings, "css");
-		n_url       = obs_data_get_string(settings,
-				n_is_local ? "local_file" : "url");
+		n_is_local = obs_data_get_bool(settings, "is_local_file");
+		n_width = (int)obs_data_get_int(settings, "width");
+		n_height = (int)obs_data_get_int(settings, "height");
+		n_fps_custom = obs_data_get_bool(settings, "fps_custom");
+		n_fps = (int)obs_data_get_int(settings, "fps");
+		n_shutdown = obs_data_get_bool(settings, "shutdown");
+		n_restart = obs_data_get_bool(settings, "restart_when_active");
+		n_css = obs_data_get_string(settings, "css");
+		n_url = obs_data_get_string(settings,
+					    n_is_local ? "local_file" : "url");
 
 		if (n_is_local)
 			n_url = "http://absolute/" + n_url;
 
-		if (n_is_local == is_local &&
-		    n_width == width &&
-		    n_height == height &&
-		    n_fps_custom == fps_custom &&
-		    n_fps == fps &&
-		    n_shutdown == shutdown_on_invisible &&
-		    n_restart == restart &&
-		    n_css == css &&
-		    n_url == url) {
+		if (n_is_local == is_local && n_width == width &&
+		    n_height == height && n_fps_custom == fps_custom &&
+		    n_fps == fps && n_shutdown == shutdown_on_invisible &&
+		    n_restart == restart && n_css == css && n_url == url) {
 			return;
 		}
 
-		is_local              = n_is_local;
-		width                 = n_width;
-		height                = n_height;
-		fps                   = n_fps;
-		fps_custom            = n_fps_custom;
+		is_local = n_is_local;
+		width = n_width;
+		height = n_height;
+		fps = n_fps;
+		fps_custom = n_fps_custom;
 		shutdown_on_invisible = n_shutdown;
-		restart               = n_restart;
-		css                   = n_css;
-		url                   = n_url;
+		restart = n_restart;
+		css = n_css;
+		url = n_url;
 	}
 
 	DestroyBrowser();
@@ -406,6 +424,8 @@ void BrowserSource::Tick()
 #endif
 }
 
+extern void ProcessCef();
+
 void BrowserSource::Render()
 {
 	bool flip = false;
@@ -414,42 +434,43 @@ void BrowserSource::Render()
 #endif
 
 	if (texture) {
-		gs_effect_t *effect = obs_get_base_effect(
-				OBS_EFFECT_PREMULTIPLIED_ALPHA);
+		gs_effect_t *effect =
+			obs_get_base_effect(OBS_EFFECT_PREMULTIPLIED_ALPHA);
 		while (gs_effect_loop(effect, "Draw"))
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
 	}
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	SignalBeginFrame();
+#elif USE_QT_LOOP
+	ProcessCef();
 #endif
 }
 
-static void ExecuteOnAllBrowsers(function<void(CefRefPtr<CefBrowser>)> func)
+static void ExecuteOnAllBrowsers(BrowserFunc func)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
-	
+
 	BrowserSource *bs = first_browser;
 	while (bs) {
 		BrowserSource *bsw =
 			reinterpret_cast<BrowserSource *>(bs);
 		CefRefPtr<CefBrowser> cefBrowser = bsw->cefBrowser;
 		if (cefBrowser)
-			bsw->ExecuteOnBrowser([=] () {func(cefBrowser);}, true);
+			bsw->ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser) {func(cefBrowser);}, true);
 		bs = bs->next;
 	}
 }
 
 void DispatchJSEvent(std::string eventName, std::string jsonString)
 {
-	ExecuteOnAllBrowsers([=] (CefRefPtr<CefBrowser> cefBrowser)
-	{
+	ExecuteOnAllBrowsers([=](CefRefPtr<CefBrowser> cefBrowser) {
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("DispatchJSEvent");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
 		args->SetString(0, eventName);
 		args->SetString(1, jsonString);
-		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
+		SendBrowserProcessMessage(cefBrowser, PID_RENDERER, msg);
 	});
 }
