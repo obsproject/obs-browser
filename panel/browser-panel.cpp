@@ -4,9 +4,9 @@
 #include "browser-app.hpp"
 
 #include <QWindow>
+#include <QApplication>
 
 #ifdef USE_QT_LOOP
-#include <QApplication>
 #include <QEventLoop>
 #include <QThread>
 #endif
@@ -187,8 +187,16 @@ QCefWidgetInternal::~QCefWidgetInternal()
 			destroyBrowser(browser);
 			os_event_signal(finishedEvent);
 		});
-		if (success)
-			os_event_wait(finishedEvent);
+		if (success) {
+			/* fixes an issue on windows where blocking the main
+			 * UI thread can cause CEF SendMessage calls calls
+			 * to lock up */
+			int code = ETIMEDOUT;
+			while (code == ETIMEDOUT) {
+				QCoreApplication::processEvents();
+				code = os_event_timedwait(finishedEvent, 5);
+			}
+		}
 		os_event_destroy(finishedEvent);
 #endif
 
