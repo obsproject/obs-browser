@@ -9,9 +9,11 @@ init:
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 install:
 - cmd: >-
-    set PREBUILT_CEF_VERSION=3.3239.1705.gf6d6dfc
-  
-    set PREBUILT_OBS_STUDIO_DIST_URL=https://github.com/obsproject/obs-studio/releases/download/21.1.2/OBS-Studio-21.1.2-Full.zip
+    set PREBUILT_CEF_VERSION=3.3440.1805.gbe070f9
+
+    set PREBUILT_OBS_STUDIO_DIST_URL_64=https://cdn-fastly.obsproject.com/downloads/OBS-Studio-23.2.1-Full-x64.zip
+
+    set PREBUILT_OBS_STUDIO_DIST_URL_32=https://cdn-fastly.obsproject.com/downloads/OBS-Studio-23.2.1-Full-x86.zip
   
     cinst -y git
 
@@ -44,9 +46,9 @@ install:
     if exist BugSplat.zip (curl -kL -o BugSplat.zip https://cdn.streamelements.com/obs/dist/third-party/bugsplat/BugSplatNative.zip -f --retry 5 -z BugSplat.zip) else (curl -kL -o BugSplat.zip https://cdn.streamelements.com/obs/dist/third-party/bugsplat/BugSplatNative.zip -f --retry 5 -C -) 2>&1 >nul:
 
 
-    if exist cef64.tar.bz2 (curl -kL -o cef64.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows64.tar.bz2 -f --retry 5 -z cef64.tar.bz2) else (curl -kL -o cef64.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows64.tar.bz2 -f --retry 5 -C -) 2>&1 >nul:
+    if exist cef64.zip (curl -kL -o cef64.zip https://cdn-fastly.obsproject.com/downloads/cef_binary_%PREBUILT_CEF_VERSION%_windows64.zip -f --retry 5 -z cef64.zip) else (curl -kL -o cef64.zip https://cdn-fastly.obsproject.com/downloads/cef_binary_%PREBUILT_CEF_VERSION%_windows64.zip -f --retry 5 -C -) 2>&1 >nul:
 
-    if exist cef32.tar.bz2 (curl -kL -o cef32.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows32.tar.bz2 -f --retry 5 -z cef32.tar.bz2) else (curl -kL -o cef32.tar.bz2 http://opensource.spotify.com/cefbuilds/cef_binary_%PREBUILT_CEF_VERSION%_windows32.tar.bz2 -f --retry 5 -C -) 2>&1 >nul:
+    if exist cef32.zip (curl -kL -o cef32.zip https://cdn-fastly.obsproject.com/downloads/cef_binary_%PREBUILT_CEF_VERSION%_windows32.zip -f --retry 5 -z cef32.zip) else (curl -kL -o cef32.zip https://cdn-fastly.obsproject.com/downloads/cef_binary_%PREBUILT_CEF_VERSION%_windows32.zip -f --retry 5 -C -) 2>&1 >nul:
 
 
     if exist dependencies2017.zip (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -z dependencies2017.zip) else (curl -kLO https://obsproject.com/downloads/dependencies2017.zip -f --retry 5 -C -) 2>&1 >nul:
@@ -54,21 +56,25 @@ install:
 
     if exist vlc.zip (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -z vlc.zip) else (curl -kLO https://obsproject.com/downloads/vlc.zip -f --retry 5 -C -) 2>&1 >nul:
 
-    if exist obs-studio-dist.zip (curl -kL -o obs-studio-dist.zip %PREBUILT_OBS_STUDIO_DIST_URL% -f --retry 5 -z obs-studio-dist.zip) else (curl -kL -o obs-studio-dist.zip %PREBUILT_OBS_STUDIO_DIST_URL% -f --retry 5 -C -) 2>&1 >nul:
 
-    7z x dependencies2017.zip -odependencies2017
+    if exist obs-studio-dist-32.zip (curl -kL -o obs-studio-dist.zip %PREBUILT_OBS_STUDIO_DIST_URL_32% -f --retry 5 -z obs-studio-dist-32.zip) else (curl -kL -o obs-studio-dist-32.zip %PREBUILT_OBS_STUDIO_DIST_URL_32% -f --retry 5 -C -) 2>&1 >nul:
 
-    7z x vlc.zip -ovlc
+    if exist obs-studio-dist-64.zip (curl -kL -o obs-studio-dist.zip %PREBUILT_OBS_STUDIO_DIST_URL_64% -f --retry 5 -z obs-studio-dist-64.zip) else (curl -kL -o obs-studio-dist-64.zip %PREBUILT_OBS_STUDIO_DIST_URL_64% -f --retry 5 -C -) 2>&1 >nul:
+
+    7z x -y dependencies2017.zip -odependencies2017
+
+    7z x -y vlc.zip -ovlc
 
 
-    7z x c:\local\BugSplat.zip
+    7z x -y c:\local\BugSplat.zip
 
-    7z x -so c:\local\cef32.tar.bz2 | 7z x -si -ttar
+    7z x -y c:\local\cef32.zip
 
-    7z x -so c:\local\cef64.tar.bz2 | 7z x -si -ttar
+    7z x -y c:\local\cef64.zip
 
-    7z x c:\local\obs-studio-dist.zip -oobs-studio-dist
+    7z x -y c:\local\obs-studio-dist-32.zip -oobs-studio-dist
 
+    7z x -y c:\local\obs-studio-dist-64.zip -oobs-studio-dist
 
     set DepsPath32=c:\local\dependencies2017\win32
 
@@ -85,9 +91,10 @@ cache:
 - c:\local\BugSplat.zip
 - c:\local\dependencies2017.zip
 - c:\local\vlc.zip
-- c:\local\obs-studio-dist.zip
-- c:\local\cef64.tar.bz2
-- c:\local\cef32.tar.bz2
+- c:\local\obs-studio-dist-32.zip
+- c:\local\obs-studio-dist-64.zip
+- c:\local\cef64.zip
+- c:\local\cef32.zip
 build_script:
 - cmd: >-
     echo ("#define STREAMELEMENTS_PLUGIN_VERSION " + (Get-Date).ToUniversalTime().ToString("yyyyMMdd") + "${Env:APPVEYOR_BUILD_NUMBER}".PadLeft(6, '0')) >c:\local\generate_version.ps1
@@ -111,20 +118,7 @@ build_script:
 
     copy /y c:\local\obs-studio\plugins\obs-browser\streamelements\patch\qt\qalgorithms.h %QTDIR32%\include\qtcore\qalgorithms.h
 
-    echo.===================== BUILD 64 BIT - CEF - OBS-STUDIO =====================
-
-    cd /d c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64
-
-    mkdir build
-
-    cd build
-
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 14 2015 Win64" -DUSE_SANDBOX=true -DUSE_ATL=true -DCEF_RUNTIME_LIBRARY_FLAG=/MT -DCEF_DEBUG_INFO_FLAG=/Zi ..
-
-    msbuild cef.sln /p:Configuration=Release /t:Build
-
-
-
+    echo.===================== BUILD 64 BIT - OBS-STUDIO =====================
 
     cd /d c:\local\obs-studio\build64
 
@@ -138,18 +132,10 @@ build_script:
 
     if "%APPVEYOR_PULL_REQUEST_HEAD_COMMIT%"=="" c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build64\rundir\%build_config%\obs-plugins\64bit" /f obs-browser.pdb;cef-bootstrap.pdb
 
-    echo.===================== BUILD 32 BIT - CEF - OBS-STUDIO =====================
 
-    cd /d c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows32
 
-    mkdir build
 
-    cd build
-
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 14 2015" -DUSE_SANDBOX=true -DUSE_ATL=true -DCEF_RUNTIME_LIBRARY_FLAG=/MT -DCEF_DEBUG_INFO_FLAG=/Zi ..
-
-    msbuild cef.sln /p:Configuration=Release /t:Build
-
+    echo.===================== BUILD 32 BIT - OBS-STUDIO =====================
 
     cd /d c:\local\obs-studio\build32
 
@@ -162,6 +148,9 @@ build_script:
     echo.Upload 32bit PDBs to BugSplat in case this is a commit to master branch.
 
     if "%APPVEYOR_PULL_REQUEST_HEAD_COMMIT%"=="" c:\local\BugSplat\bin\SendPdbs.exe /u "%BUGSPLAT_USERNAME%" /p "%BUGSPLAT_PASSWORD%" /a obs-browser /v "%STREAMELEMENTS_PLUGIN_VERSION%" /b OBS_Live /d "c:\local\obs-studio\build32\rundir\%build_config%\obs-plugins\32bit" /f obs-browser.pdb;cef-bootstrap.pdb
+
+
+
 
     echo.===================== COPY CEF 64 BIT BINARIES FROM OBS-STUDIO-DIST =====================
 
