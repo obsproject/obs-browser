@@ -20,12 +20,12 @@
 #include "browser-client.hpp"
 #include "wide-string.hpp"
 #include <util/threading.h>
+#include <QApplication>
 #include <functional>
 #include <thread>
 #include <mutex>
 
 #ifdef USE_QT_LOOP
-#include <QApplication>
 #include <QEventLoop>
 #include <QThread>
 #endif
@@ -83,8 +83,16 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 				func(cefBrowser);
 			os_event_signal(finishedEvent);
 		});
-		if (success)
-			os_event_wait(finishedEvent);
+		if (success) {
+			/* fixes an issue on windows where blocking the main
+			 * UI thread can cause CEF SendMessage calls calls
+			 * to lock up */
+			int code = ETIMEDOUT;
+			while (code == ETIMEDOUT) {
+				QCoreApplication::processEvents();
+				code = os_event_timedwait(finishedEvent, 5);
+			}
+		}
 		os_event_destroy(finishedEvent);
 	} else {
 		CefRefPtr<CefBrowser> browser = cefBrowser;
