@@ -122,7 +122,7 @@ build_script:
 
     cd /d c:\local\obs-studio\build64
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=true -DENABLE_SCRIPTING=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64  -DBUGSPLAT_ROOT_DIR=c:\local\BugSplat ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017 Win64" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=true -DBROWSER_PANEL_SUPPORT_ENABLED=true -DENABLE_SCRIPTING=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows64  -DBUGSPLAT_ROOT_DIR=c:\local\BugSplat ..
 
     cd /d c:\local\obs-studio\build64
 
@@ -139,7 +139,7 @@ build_script:
 
     cd /d c:\local\obs-studio\build32
 
-    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=false -DBROWSER_PANEL_SUPPORT_ENABLED=true -DENABLE_SCRIPTING=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows32 -DBUGSPLAT_ROOT_DIR=c:\local\BugSplat ..
+    "C:\Program Files\CMake\bin\cmake.exe" -G "Visual Studio 15 2017" -DEXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED=true -DBROWSER_PANEL_SUPPORT_ENABLED=true -DENABLE_SCRIPTING=false -DCOPIED_DEPENDENCIES=false -DCOPY_DEPENDENCIES=true -DBUILD_CAPTIONS=true -DCOMPILE_D3D12_HOOK=true -DCEF_ROOT_DIR=c:\local\cef_binary_%PREBUILT_CEF_VERSION%_windows32 -DBUGSPLAT_ROOT_DIR=c:\local\BugSplat ..
 
     cd /d c:\local\obs-studio\build32
 
