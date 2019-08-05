@@ -173,7 +173,33 @@ QCefWidgetInternal::~QCefWidgetInternal()
 					client.get());
 
 			cefBrowser->GetHost()->WasHidden(true);
+#ifdef _WIN32
+			/* So you're probably wondering what's going on here.
+			 * If you call CefBrowserHost::CloseBrowser, and it
+			 * fails to unload the web page *before* WM_NCDESTROY
+			 * is called on the browser HWND, it will call an
+			 * internal CEF function
+			 * CefBrowserPlatformDelegateNativeWin::CloseHostWindow,
+			 * which will attempt to close the browser's main
+			 * window itself.  Problem is, this closes the root
+			 * window containing the browser's HWND rather than the
+			 * browser's specific HWND for whatever mysterious
+			 * reason.  If the browser is in a dock widget, then
+			 * the window it closes is, unfortunately, the main
+			 * program's window, causing the entire program to shut
+			 * down.
+			 *
+			 * So, instead, we want to destroy the browser by
+			 * calling DestroyWindow on the browser's widget
+			 * ourselves to ensure that WM_NCDESTROY is called.
+			 * This will also forcibly destroy the browser, so
+			 * calling CloseBrowser(true) is unnecessary. */
+			HWND hwnd = cefBrowser->GetHost()->GetWindowHandle();
+			if (hwnd)
+				DestroyWindow(hwnd);
+#else
 			cefBrowser->GetHost()->CloseBrowser(true);
+#endif
 
 			bc->widget = nullptr;
 		};
