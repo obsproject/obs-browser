@@ -14,8 +14,11 @@ class QCefBrowserClient : public CefClient,
 
 public:
 	inline QCefBrowserClient(QCefWidgetInternal *widget_,
-				 const std::string &script_)
-		: widget(widget_), script(script_)
+				 const std::string &script_,
+				 bool allowAllPopups_)
+		: widget(widget_),
+		  script(script_),
+		  allowAllPopups(allowAllPopups_)
 	{
 	}
 
@@ -69,6 +72,7 @@ public:
 
 	QCefWidgetInternal *widget = nullptr;
 	std::string script;
+	bool allowAllPopups;
 
 	IMPLEMENT_REFCOUNTING(QCefBrowserClient);
 };

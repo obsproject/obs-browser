@@ -251,7 +251,7 @@ void QCefWidgetInternal::Init()
 #endif
 
 		CefRefPtr<QCefBrowserClient> browserClient =
-			new QCefBrowserClient(this, script);
+			new QCefBrowserClient(this, script, allowAllPopups_);
 
 		CefBrowserSettings cefBrowserSettings;
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
@@ -319,6 +319,11 @@ void QCefWidgetInternal::setURL(const std::string &url)
 void QCefWidgetInternal::setStartupScript(const std::string &script_)
 {
 	script = script_;
+}
+
+void QCefWidgetInternal::allowAllPopups(bool allow)
+{
+	allowAllPopups_ = allow;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -403,7 +408,7 @@ void QCefInternal::add_force_popup_url(const std::string &url, QObject *obj)
 	forced_popups.emplace_back(url, obj);
 }
 
-extern "C" EXPORT QCef *obs_browser_create_qcef(void)
+extern "C" EXPORT QCef *obs_browser_create_qcef2(void)
 {
 	return new QCefInternal();
 }

@@ -55,6 +55,7 @@ public:
 	std::string script;
 	CefRefPtr<CefRequestContext> rqc;
 	QTimer timer;
+	bool allowAllPopups_ = false;
 
 	virtual void resizeEvent(QResizeEvent *event) override;
 	virtual void showEvent(QShowEvent *event) override;
@@ -62,6 +63,7 @@ public:
 
 	virtual void setURL(const std::string &url) override;
 	virtual void setStartupScript(const std::string &script) override;
+	virtual void allowAllPopups(bool allow) override;
 
 	void Resize();
 
