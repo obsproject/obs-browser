@@ -79,8 +79,8 @@ static inline QCef *obs_browser_init_panel(void)
 		return nullptr;
 	}
 
-	create_qcef = (decltype(create_qcef))os_dlsym(
-		lib, "obs_browser_create_qcef");
+	create_qcef =
+		(decltype(create_qcef))os_dlsym(lib, "obs_browser_create_qcef");
 	if (!create_qcef)
 		return nullptr;
 
