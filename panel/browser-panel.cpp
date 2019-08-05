@@ -408,7 +408,14 @@ void QCefInternal::add_force_popup_url(const std::string &url, QObject *obj)
 	forced_popups.emplace_back(url, obj);
 }
 
-extern "C" EXPORT QCef *obs_browser_create_qcef2(void)
+extern "C" EXPORT QCef *obs_browser_create_qcef(void)
 {
 	return new QCefInternal();
+}
+
+#define BROWSER_PANEL_VERSION 1
+
+extern "C" EXPORT int obs_browser_qcef_version_export(void)
+{
+	return BROWSER_PANEL_VERSION;
 }

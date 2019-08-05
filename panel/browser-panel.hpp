@@ -80,9 +80,30 @@ static inline QCef *obs_browser_init_panel(void)
 	}
 
 	create_qcef = (decltype(create_qcef))os_dlsym(
-		lib, "obs_browser_create_qcef2");
+		lib, "obs_browser_create_qcef");
 	if (!create_qcef)
 		return nullptr;
 
 	return create_qcef();
+}
+
+static inline int obs_browser_qcef_version(void)
+{
+#ifdef _WIN32
+	void *lib = os_dlopen("obs-browser");
+#else
+	void *lib = os_dlopen("../obs-plugins/obs-browser");
+#endif
+	int (*qcef_version)(void) = nullptr;
+
+	if (!lib) {
+		return 0;
+	}
+
+	qcef_version = (decltype(qcef_version))os_dlsym(
+		lib, "obs_browser_qcef_version_export");
+	if (!qcef_version)
+		return 0;
+
+	return qcef_version();
 }
