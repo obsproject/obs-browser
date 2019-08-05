@@ -177,7 +177,33 @@ QCefWidgetInternal::~QCefWidgetInternal()
 					client.get());
 
 			cefBrowser->GetHost()->WasHidden(true);
+#ifdef _WIN32
+			/* So you're probably wondering what's going on here.
+			 * If you call CefBrowserHost::CloseBrowser, and it
+			 * fails to unload the web page *before* WM_NCDESTROY
+			 * is called on the browser HWND, it will call an
+			 * internal CEF function
+			 * CefBrowserPlatformDelegateNativeWin::CloseHostWindow,
+			 * which will attempt to close the browser's main
+			 * window itself.  Problem is, this closes the root
+			 * window containing the browser's HWND rather than the
+			 * browser's specific HWND for whatever mysterious
+			 * reason.  If the browser is in a dock widget, then
+			 * the window it closes is, unfortunately, the main
+			 * program's window, causing the entire program to shut
+			 * down.
+			 *
+			 * So, instead, we want to destroy the browser by
+			 * calling DestroyWindow on the browser's widget
+			 * ourselves to ensure that WM_NCDESTROY is called.
+			 * This will also forcibly destroy the browser, so
+			 * calling CloseBrowser(true) is unnecessary. */
+			HWND hwnd = cefBrowser->GetHost()->GetWindowHandle();
+			if (hwnd)
+				DestroyWindow(hwnd);
+#else
 			cefBrowser->GetHost()->CloseBrowser(true);
+#endif
 
 			bc->widget = nullptr;
 		};
@@ -229,7 +255,7 @@ void QCefWidgetInternal::Init()
 #endif
 
 		CefRefPtr<QCefBrowserClient> browserClient =
-			new QCefBrowserClient(this, script);
+			new QCefBrowserClient(this, script, allowAllPopups_);
 
 		CefBrowserSettings cefBrowserSettings;
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
@@ -297,6 +323,11 @@ void QCefWidgetInternal::setURL(const std::string &url)
 void QCefWidgetInternal::setStartupScript(const std::string &script_)
 {
 	script = script_;
+}
+
+void QCefWidgetInternal::allowAllPopups(bool allow)
+{
+	allowAllPopups_ = allow;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -384,4 +415,11 @@ void QCefInternal::add_force_popup_url(const std::string &url, QObject *obj)
 extern "C" EXPORT QCef *obs_browser_create_qcef(void)
 {
 	return new QCefInternal();
+}
+
+#define BROWSER_PANEL_VERSION 1
+
+extern "C" EXPORT int obs_browser_qcef_version_export(void)
+{
+	return BROWSER_PANEL_VERSION;
 }

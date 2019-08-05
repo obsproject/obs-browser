@@ -109,6 +109,14 @@ bool QCefBrowserClient::OnBeforePopup(
 #endif
 	bool *)
 {
+	if (allowAllPopups) {
+#ifdef _WIN32
+		HWND hwnd = (HWND)widget->effectiveWinId();
+		windowInfo.parent_window = hwnd;
+#endif
+		return false;
+	}
+
 	std::string str_url = target_url;
 
 	std::lock_guard<std::mutex> lock(popup_whitelist_mutex);

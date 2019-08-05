@@ -34,6 +34,7 @@ protected:
 public:
 	virtual void setURL(const std::string &url) = 0;
 	virtual void setStartupScript(const std::string &script) = 0;
+	virtual void allowAllPopups(bool allow) = 0;
 
 signals:
 	void titleChanged(const QString &title);
@@ -78,10 +79,31 @@ static inline QCef *obs_browser_init_panel(void)
 		return nullptr;
 	}
 
-	create_qcef =
-		(decltype(create_qcef))os_dlsym(lib, "obs_browser_create_qcef");
+	create_qcef = (decltype(create_qcef))os_dlsym(
+		lib, "obs_browser_create_qcef");
 	if (!create_qcef)
 		return nullptr;
 
 	return create_qcef();
+}
+
+static inline int obs_browser_qcef_version(void)
+{
+#ifdef _WIN32
+	void *lib = os_dlopen("obs-browser");
+#else
+	void *lib = os_dlopen("../obs-plugins/obs-browser");
+#endif
+	int (*qcef_version)(void) = nullptr;
+
+	if (!lib) {
+		return 0;
+	}
+
+	qcef_version = (decltype(qcef_version))os_dlsym(
+		lib, "obs_browser_qcef_version_export");
+	if (!qcef_version)
+		return 0;
+
+	return qcef_version();
 }
