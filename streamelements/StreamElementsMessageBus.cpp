@@ -88,7 +88,7 @@ void StreamElementsMessageBus::NotifyAllLocalEventListeners(
 			args->SetString(0, event);
 			args->SetString(1, payloadJson);
 
-			browser->SendProcessMessage(PID_RENDERER, msg);
+			SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 		}
 	}
 }

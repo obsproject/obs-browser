@@ -26,6 +26,9 @@ const char* MSG_BIND_JAVASCRIPT_PROPS = "CefRenderProcessHandler::BindJavaScript
 
 bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 	CefRefPtr<CefBrowser> browser,
+#if CHROME_VERSION_BUILD >= 3770
+	CefRefPtr<CefFrame> /*frame*/,
+#endif
 	CefProcessId /*source_process*/,
 	CefRefPtr<CefProcessMessage> message,
 	const long cefClientId)
@@ -104,7 +107,9 @@ bool StreamElementsApiMessageHandler::OnProcessMessageReceived(
 					callbackArgs->SetInt(0, context->cef_app_callback_id);
 					callbackArgs->SetString(1, CefWriteJSON(context->result, JSON_WRITER_DEFAULT));
 
-					context->browser->SendProcessMessage(PID_RENDERER, msg);
+					SendBrowserProcessMessage(
+						context->browser, PID_RENDERER,
+						msg);
 				}
 			};
 
@@ -179,7 +184,7 @@ void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandlersInternal(Ce
 	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create(MSG_BIND_JAVASCRIPT_FUNCTIONS);
 	msg->GetArgumentList()->SetString(0, "host");
 	msg->GetArgumentList()->SetString(1, jsonString);
-	browser->SendProcessMessage(PID_RENDERER, msg);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 }
 
 void StreamElementsApiMessageHandler::RegisterApiPropsInternal(CefRefPtr<CefBrowser> browser)
@@ -204,7 +209,7 @@ void StreamElementsApiMessageHandler::RegisterApiPropsInternal(CefRefPtr<CefBrow
 	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create(MSG_BIND_JAVASCRIPT_PROPS);
 	msg->GetArgumentList()->SetString(0, "host");
 	msg->GetArgumentList()->SetString(1, jsonString);
-	browser->SendProcessMessage(PID_RENDERER, msg);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 }
 
 void StreamElementsApiMessageHandler::DispatchHostReadyEventInternal(CefRefPtr<CefBrowser> browser)
@@ -220,7 +225,7 @@ void StreamElementsApiMessageHandler::DispatchEventInternal(CefRefPtr<CefBrowser
 
 	args->SetString(0, event);
 	args->SetString(1, eventArgsJson);
-	browser->SendProcessMessage(PID_RENDERER, msg);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 }
 
 void StreamElementsApiMessageHandler::RegisterIncomingApiCallHandler(std::string id, incoming_call_handler_t handler)

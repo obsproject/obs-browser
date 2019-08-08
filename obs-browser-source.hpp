@@ -69,7 +69,7 @@ struct BrowserSource {
 	/* ---------------------------- */
 
 	bool CreateBrowser();
-	void DestroyBrowser();
+	void DestroyBrowser(bool async = false);
 	void ExecuteOnBrowser(BrowserFunc func, bool async = false);
 
 	/* ---------------------------- */

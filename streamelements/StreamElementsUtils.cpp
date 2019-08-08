@@ -2,6 +2,10 @@
 #include "StreamElementsConfig.hpp"
 #include "Version.hpp"
 
+#if CHROME_VERSION_BUILD >= 3770
+#include <include/cef_api_hash.h>
+#endif
+
 #include <cstdint>
 #include <codecvt>
 #include <vector>

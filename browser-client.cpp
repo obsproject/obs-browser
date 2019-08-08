@@ -96,7 +96,7 @@ void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
 bool BrowserClient::OnProcessMessageReceived(
 	CefRefPtr<CefBrowser> browser,
 #if CHROME_VERSION_BUILD >= 3770
-	CefRefPtr<CefFrame>,
+	CefRefPtr<CefFrame> frame,
 #endif
 	CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
 {
@@ -132,8 +132,13 @@ bool BrowserClient::OnProcessMessageReceived(
 			{"replaybuffer", obs_frontend_replay_buffer_active()}};
 
 	} else {
+#if CHROME_VERSION_BUILD >= 3770
+		return streamelementsMessageHandler.OnProcessMessageReceived(
+			browser, frame, source_process, message, 0);
+#else
 		return streamelementsMessageHandler.OnProcessMessageReceived(
 					browser, source_process, message, 0);
+#endif
 	}
 
 	CefRefPtr<CefProcessMessage> msg =
@@ -158,6 +163,9 @@ bool BrowserClient::GetViewRect(
 
 	if (!source) {
 #if CHROME_VERSION_BUILD >= 3578
+		// rect width & height must not be 0, see assertion at
+		// https://bitbucket.org/chromiumembedded/cef/src/16a67c450724f60708b8b6af32bd7d547392c485/libcef/browser/osr/render_widget_host_view_osr.cc#lines-575
+		rect.Set(0, 0, 16, 16);
 		return;
 #else
 		return false;

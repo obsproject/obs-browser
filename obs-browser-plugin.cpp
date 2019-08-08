@@ -106,23 +106,22 @@ bool QueueCEFTask(std::function<void()> task)
 static std::mutex cookie_managers_mutex;
 static std::vector<CefRefPtr<CefCookieManager>> cookie_managers;
 
-void register_cookie_manager(CefRefPtr<CefCookieManager> cm)
+void flush_cookie_manager(CefRefPtr<CefCookieManager> cm)
 {
-	std::lock_guard<std::mutex> guard(cookie_managers_mutex);
+	if (!cm)
+		return;
 
-	cookie_managers.emplace_back(cm);
-}
+	cm->FlushStore(nullptr);
+	return;
 
-static void flush_cookie_manager(CefRefPtr<CefCookieManager> cm)
-{
-	os_event_t* complete_event;
+	os_event_t *complete_event;
 
 	os_event_init(&complete_event, OS_EVENT_TYPE_AUTO);
 
-	class CompletionCallback : public CefCompletionCallback
-	{
+	class CompletionCallback : public CefCompletionCallback {
 	public:
-		CompletionCallback(os_event_t* complete_event) : m_complete_event(complete_event)
+		CompletionCallback(os_event_t *complete_event)
+			: m_complete_event(complete_event)
 		{
 		}
 
@@ -134,7 +133,7 @@ static void flush_cookie_manager(CefRefPtr<CefCookieManager> cm)
 		IMPLEMENT_REFCOUNTING(CompletionCallback);
 
 	private:
-		os_event_t* m_complete_event;
+		os_event_t *m_complete_event;
 	};
 
 	CefRefPtr<CefCompletionCallback> callback =
@@ -142,28 +141,63 @@ static void flush_cookie_manager(CefRefPtr<CefCookieManager> cm)
 
 	auto task = [&]() {
 		if (!cm->FlushStore(callback)) {
-			blog(LOG_WARNING,
-				"Failed flushing cookie store");
+			blog(LOG_WARNING, "Failed flushing cookie store");
 
 			os_event_signal(complete_event);
-		}
-		else {
+		} else {
 			blog(LOG_INFO, "Flushed cookie store");
 		}
 	};
 
 	CefPostTask(TID_IO, CefRefPtr<BrowserTask>(new BrowserTask(task)));
 
-	os_event_wait(complete_event);
+	/* fixes an issue on windows where blocking the main
+	 * UI thread can cause CEF SendMessage calls to lock
+	 * up */
+	int code = ETIMEDOUT;
+	while (code == ETIMEDOUT) {
+#ifdef USE_QT_LOOP
+		QCoreApplication::processEvents();
+#endif
+		code = os_event_timedwait(complete_event, 5);
+	}
+
 	os_event_destroy(complete_event);
 }
 
-static void flush_cookie_managers()
+void flush_cookie_managers()
 {
 	std::lock_guard<std::mutex> guard(cookie_managers_mutex);
 
 	for (auto cm : cookie_managers) {
 		flush_cookie_manager(cm);
+	}
+}
+
+void register_cookie_manager(CefRefPtr<CefCookieManager> cm)
+{
+	if (!cm)
+		return;
+
+	std::lock_guard<std::mutex> guard(cookie_managers_mutex);
+
+	cookie_managers.emplace_back(cm);
+}
+
+void unregister_cookie_manager(CefRefPtr<CefCookieManager> cm)
+{
+	if (!cm)
+		return;
+
+	std::lock_guard<std::mutex> guard(cookie_managers_mutex);
+
+	flush_cookie_manager(cm);
+
+	for (auto it = cookie_managers.begin(); it != cookie_managers.end(); ++it) {
+		if (it->get() == cm) {
+			cookie_managers.erase(it);
+			return;
+		}
 	}
 }
 
@@ -356,7 +390,7 @@ static void BrowserShutdown(void)
 	CefDoMessageLoopWork();
 #endif
 	CefShutdown();
-	app = nullptr;
+	//app = nullptr;
 }
 
 #ifndef USE_QT_LOOP
@@ -390,10 +424,8 @@ void RegisterBrowserSource()
 #endif
 			    OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
 			    OBS_SOURCE_DO_NOT_DUPLICATE |
-#if CHROME_VERSION_BUILD >= 3683
-			    OBS_SOURCE_MONITOR_BY_DEFAULT |
-#endif
-                            0;
+			    OBS_SOURCE_MONITOR_BY_DEFAULT;
+
 	info.get_properties = browser_source_get_properties;
 	info.get_defaults = browser_source_get_defaults;
 

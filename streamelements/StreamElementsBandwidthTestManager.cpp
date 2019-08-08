@@ -9,7 +9,7 @@ static void DispatchJSEvent(CefRefPtr<CefBrowser> browser, const char *eventName
 
 	args->SetString(0, eventName);
 	args->SetString(1, jsonString ? jsonString : "null");
-	browser->SendProcessMessage(PID_RENDERER, msg);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 }
 
 StreamElementsBandwidthTestManager::StreamElementsBandwidthTestManager()

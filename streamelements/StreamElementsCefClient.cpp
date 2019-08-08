@@ -195,6 +195,9 @@ void StreamElementsCefClient::OnLoadingStateChange(CefRefPtr<CefBrowser> browser
 
 bool StreamElementsCefClient::OnProcessMessageReceived(
 	CefRefPtr<CefBrowser> browser,
+#if CHROME_VERSION_BUILD >= 3770
+	CefRefPtr<CefFrame> frame,
+#endif
 	CefProcessId source_process,
 	CefRefPtr<CefProcessMessage> message)
 {
@@ -212,9 +215,22 @@ bool StreamElementsCefClient::OnProcessMessageReceived(
 		};
 
 	}
-	else if (m_messageHandler.get() && m_messageHandler->OnProcessMessageReceived(browser, source_process, message, m_cefClientId)) {
+#if CHROME_VERSION_BUILD >= 3770
+	else if (m_messageHandler.get() &&
+		 m_messageHandler->OnProcessMessageReceived(
+			 browser, frame, source_process, message, m_cefClientId)) {
 		return true;
 	}
+
+#else
+	else if (m_messageHandler.get() &&
+			 m_messageHandler->OnProcessMessageReceived(
+				 browser, source_process, message,
+				 m_cefClientId))
+	{
+		return true;
+	}
+#endif
 	else {
 
 		return false;
@@ -227,7 +243,7 @@ bool StreamElementsCefClient::OnProcessMessageReceived(
 	args->SetInt(0, message->GetArgumentList()->GetInt(0));
 	args->SetString(1, json.dump());
 
-	browser->SendProcessMessage(PID_RENDERER, msg);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 
 	return true;
 }
@@ -319,7 +335,7 @@ void StreamElementsCefClient::DispatchJSEvent(std::string event, std::string eve
 
 		args->SetString(0, event);
 		args->SetString(1, eventArgsJson);
-		browser->SendProcessMessage(PID_RENDERER, msg);
+		SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 	}
 }
 
@@ -335,7 +351,7 @@ void StreamElementsCefClient::DispatchJSEvent(CefRefPtr<CefBrowser> browser, std
 
 	args->SetString(0, event);
 	args->SetString(1, eventArgsJson);
-	browser->SendProcessMessage(PID_RENDERER, msg);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 }
 
 bool StreamElementsCefClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,

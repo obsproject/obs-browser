@@ -134,7 +134,7 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	// signal CefClient that render process context has been created
 	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("CefRenderProcessHandler::OnContextCreated");
 	//CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
-	browser->SendProcessMessage(PID_BROWSER, msg);
+	SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -430,7 +430,7 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 
 		CefRefPtr<CefBrowser> browser =
 			CefV8Context::GetCurrentContext()->GetBrowser();
-		browser->SendProcessMessage(PID_BROWSER, msg);
+		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 	} else if (cefClientFunctions.count(name)) {
 		/* dynamic API function binding from CefClient, see "CefRenderProcessHandler::BindJavaScriptFunctions"
 		   message for more details */

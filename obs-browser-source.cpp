@@ -40,34 +40,30 @@ static BrowserSource *first_browser = nullptr;
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
 {
+	/* defer update */
+	obs_source_update(source, nullptr);
+
 	lock_guard<mutex> lock(browser_list_mutex);
 	p_prev_next = &first_browser;
 	next = first_browser;
 	if (first_browser)
 		first_browser->p_prev_next = &next;
 	first_browser = this;
-
-	/* defer update */
-	obs_source_update(source, nullptr);
 }
 
 BrowserSource::~BrowserSource()
 {
-	DestroyBrowser();
-	DestroyTextures();
-
 	lock_guard<mutex> lock(browser_list_mutex);
 	if (next)
 		next->p_prev_next = p_prev_next;
 	*p_prev_next = next;
+
+	DestroyBrowser();
+	DestroyTextures();
 }
 
 void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 {
-	if (!cefBrowser.get()) {
-		return;
-	}
-
 	if (!async) {
 #ifdef USE_QT_LOOP
 		if (QThread::currentThread() == qApp->thread()) {
@@ -85,8 +81,8 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 		});
 		if (success) {
 			/* fixes an issue on windows where blocking the main
-			 * UI thread can cause CEF SendMessage calls calls
-			 * to lock up */
+			 * UI thread can cause CEF SendMessage calls to lock
+			 * up */
 			int code = ETIMEDOUT;
 			while (code == ETIMEDOUT) {
 				QCoreApplication::processEvents();
@@ -98,7 +94,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 		CefRefPtr<CefBrowser> browser = cefBrowser;
 		if (!!browser) {
 #ifdef USE_QT_LOOP
-			QueueBrowserTask(cefBrowser, func);
+			QueueBrowserTask(browser, func);
 #else
 			QueueCEFTask([=]() { func(browser); });
 #endif
@@ -112,17 +108,7 @@ bool BrowserSource::CreateBrowser()
 		return false;
 	}
 
-
-	static std::mutex sync_mutex;
-
-	return QueueCEFTask([this]()
-	{
-		std::lock_guard<std::mutex> guard(sync_mutex);
-
-		if (!!cefBrowser.get()) {
-			return;
-		}
-
+	return QueueCEFTask([this]() {
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
 			obs_enter_graphics();
@@ -173,30 +159,33 @@ bool BrowserSource::CreateBrowser()
 #if CHROME_VERSION_BUILD >= 3683
 		cefBrowser->GetHost()->SetAudioMuted(true);
 #endif
+		if (!is_showing) {
+			cefBrowser->GetHost()->WasHidden(true);
+		}
 	});
 }
 
-void BrowserSource::DestroyBrowser()
+void BrowserSource::DestroyBrowser(bool async)
 {
-	if (!cefBrowser.get()) {
-		return;
-	}
+	ExecuteOnBrowser(
+		[](CefRefPtr<CefBrowser> cefBrowser) {
+			CefRefPtr<CefClient> client =
+				cefBrowser->GetHost()->GetClient();
+			BrowserClient *bc =
+				reinterpret_cast<BrowserClient *>(client.get());
+			if (bc) {
+				bc->bs = nullptr;
+			}
 
-	/*
-	* This stops rendering
-	* http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
-	* https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
-	*/
-	cefBrowser->GetHost()->WasHidden(true);
-	cefBrowser->GetHost()->CloseBrowser(true);
-
-	CefRefPtr<CefClient> client =
-		cefBrowser->GetHost()->GetClient();
-	BrowserClient *bc =
-		reinterpret_cast<BrowserClient*>(client.get());
-	if (bc) {
-		bc->bs = nullptr;
-	}
+			/*
+			 * This stops rendering
+			 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
+			 * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
+			 */
+			cefBrowser->GetHost()->WasHidden(true);
+			cefBrowser->GetHost()->CloseBrowser(true);
+		},
+		async);
 
 	cefBrowser = nullptr;
 }
@@ -308,28 +297,38 @@ void BrowserSource::SetShowing(bool showing)
 {
 	is_showing = showing;
 
-	if (!showing && !!cefBrowser.get()) {
-		cefBrowser->GetHost()->WasHidden(true);
+	CefRefPtr<CefBrowser> browser = cefBrowser;
+
+	if (!browser) {
+		return;
+	}
+
+	if (!showing) {
+		browser->GetHost()->WasHidden(true);
 	}
 
 	if (shutdown_on_invisible) {
 		if (showing) {
 			Update();
 		} else {
-			DestroyBrowser();
+			DestroyBrowser(true);
 		}
-	} else if (!!cefBrowser.get()) {
+	} else {
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("Visibility");
 		CefRefPtr<CefListValue> args =
 			msg->GetArgumentList();
 		args->SetBool(0, showing);
-		cefBrowser->SendProcessMessage(PID_RENDERER, msg);
+		SendBrowserProcessMessage(browser,
+						PID_RENDERER, msg);
 	}
 
-	if (showing && !!cefBrowser.get()) {
-		cefBrowser->GetHost()->WasHidden(false);
-		cefBrowser->GetHost()->Invalidate(PET_VIEW);
+	if (showing) {
+		browser->GetHost()->WasHidden(false);
+		browser->GetHost()->Invalidate(PET_VIEW);
+
+		if (!fps_custom)
+			reset_frame = false;
 	}
 }
 
@@ -416,7 +415,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		url = n_url;
 	}
 
-	DestroyBrowser();
+	DestroyBrowser(true);
 	DestroyTextures();
 	if (!shutdown_on_invisible || obs_source_showing(source))
 		create_browser = true;
@@ -461,11 +460,9 @@ static void ExecuteOnAllBrowsers(BrowserFunc func)
 
 	BrowserSource *bs = first_browser;
 	while (bs) {
-		BrowserSource *bsw =
-			reinterpret_cast<BrowserSource *>(bs);
-		CefRefPtr<CefBrowser> cefBrowser = bsw->cefBrowser;
-		if (cefBrowser)
-			bsw->ExecuteOnBrowser([=] (CefRefPtr<CefBrowser> cefBrowser) {func(cefBrowser);}, true);
+		BrowserSource *bsw = reinterpret_cast<BrowserSource *>(bs);
+		bsw->ExecuteOnBrowser(func, true);
+
 		bs = bs->next;
 	}
 }

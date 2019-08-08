@@ -273,7 +273,8 @@ protected:
 			msg->GetArgumentList()->SetString(0, "host");
 			msg->GetArgumentList()->SetString(1, jsonString);
 
-			m_cef_browser->SendProcessMessage(PID_RENDERER, msg);
+			SendBrowserProcessMessage(m_cef_browser, PID_RENDERER,
+						  msg);
 		}
 
 		// Dispatch hostVisibilityChanged event
@@ -285,7 +286,8 @@ protected:
 			args->SetString(0, "hostContainerVisibilityChanged");
 			args->SetString(1, "null");
 
-			m_cef_browser->SendProcessMessage(PID_RENDERER, msg);
+			SendBrowserProcessMessage(m_cef_browser, PID_RENDERER,
+						  msg);
 		}
 	}
 

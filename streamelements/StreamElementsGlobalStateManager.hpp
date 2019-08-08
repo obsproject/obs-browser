@@ -16,6 +16,7 @@
 #include "StreamElementsExternalSceneDataProviderManager.hpp"
 #include "StreamElementsHttpClient.hpp"
 #include "StreamElementsNativeOBSControlsManager.hpp"
+#include "StreamElementsCookieManager.hpp"
 
 class StreamElementsGlobalStateManager :
 	public StreamElementsObsAppMonitor
@@ -60,6 +61,7 @@ public:
 	StreamElementsExternalSceneDataProviderManager* GetExternalSceneDataProviderManager() { return m_externalSceneDataProviderManager; }
 	StreamElementsHttpClient* GetHttpClient() { return m_httpClient; }
 	StreamElementsNativeOBSControlsManager* GetNativeOBSControlsManager() { return m_nativeObsControlsManager; }
+	StreamElementsCookieManager* GetCookieManager() { return m_cookieManager; }
 	QMainWindow* mainWindow() { return m_mainWindow; }
 
 public:
@@ -91,6 +93,7 @@ private:
 	StreamElementsExternalSceneDataProviderManager* m_externalSceneDataProviderManager = nullptr;
 	StreamElementsHttpClient* m_httpClient = nullptr;
 	StreamElementsNativeOBSControlsManager* m_nativeObsControlsManager = nullptr;
+	StreamElementsCookieManager *m_cookieManager = nullptr;
 
 private:
 	static StreamElementsGlobalStateManager* s_instance;

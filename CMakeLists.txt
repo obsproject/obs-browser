@@ -160,6 +160,7 @@ set(obs-browser_SOURCES
 	streamelements/StreamElementsExternalSceneDataProviderSlobsClient.cpp
 	streamelements/StreamElementsHttpClient.cpp
 	streamelements/StreamElementsNativeOBSControlsManager.cpp
+	streamelements/StreamElementsCookieManager.cpp
 	streamelements/deps/zip/zip.c
 	streamelements/deps/server/NamedPipesServer.cpp
 	streamelements/deps/server/NamedPipesServerClientHandler.cpp
@@ -212,6 +213,7 @@ set(obs-browser_HEADERS
 	streamelements/StreamElementsExternalSceneDataProvider.hpp
 	streamelements/StreamElementsHttpClient.hpp
 	streamelements/StreamElementsNativeOBSControlsManager.hpp
+	streamelements/StreamElementsCookieManager.hpp
 	streamelements/deps/zip/zip.h
 	streamelements/deps/zip/miniz.h
 	streamelements/deps/moodycamel/concurrentqueue.h

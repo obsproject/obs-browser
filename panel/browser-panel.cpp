@@ -20,7 +20,9 @@ extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
 extern os_event_t *cef_started_event;
 
+void flush_cookie_manager(CefRefPtr<CefCookieManager> cm);
 void register_cookie_manager(CefRefPtr<CefCookieManager> cm);
+void unregister_cookie_manager(CefRefPtr<CefCookieManager> cm);
 
 std::mutex                      popup_whitelist_mutex;
 std::vector<PopupWhitelistInfo> popup_whitelist;
@@ -86,8 +88,6 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 			throw "Failed to create cookie manager";
 #endif
 
-		register_cookie_manager(cm);
-
 #if CHROME_VERSION_BUILD < 3770
 		rch = new QCefRequestContextHandler(cm);
 
@@ -103,6 +103,13 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 
 		UNUSED_PARAMETER(persist_session_cookies);
 #endif
+
+		register_cookie_manager(cm);
+	}
+
+	virtual ~QCefCookieManagerInternal()
+	{
+		unregister_cookie_manager(cm);
 	}
 
 	virtual bool DeleteCookies(const std::string &url,
@@ -124,8 +131,11 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		CefString(&settings.cache_path) = storage_path;
 		rc = CefRequestContext::CreateContext(
 			settings, CefRefPtr<CefRequestContextHandler>());
-		if (rc)
+		if (rc) {
+			unregister_cookie_manager(cm);
 			cm = rc->GetCookieManager(nullptr);
+			register_cookie_manager(cm);
+		}
 
 		UNUSED_PARAMETER(persist_session_cookies);
 		return true;
@@ -134,7 +144,12 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 
 	virtual bool FlushStore() override
 	{
-		return !!cm ? cm->FlushStore(nullptr) : false;
+		if (!cm)
+			return false;
+
+		flush_cookie_manager(cm);
+
+		return true;
 	}
 
 	virtual void CheckForCookie(const std::string &site,
@@ -223,7 +238,9 @@ QCefWidgetInternal::~QCefWidgetInternal()
 			 * to lock up */
 			int code = ETIMEDOUT;
 			while (code == ETIMEDOUT) {
+#if USE_QT_LOOP
 				QCoreApplication::processEvents();
+#endif
 				code = os_event_timedwait(finishedEvent, 5);
 			}
 		}
