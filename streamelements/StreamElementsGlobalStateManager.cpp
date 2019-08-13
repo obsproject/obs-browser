@@ -16,6 +16,8 @@
 
 /* ========================================================================= */
 
+void register_cookie_manager(CefRefPtr<CefCookieManager> cm);
+void unregister_cookie_manager(CefRefPtr<CefCookieManager> cm);
 void flush_cookie_manager(CefRefPtr<CefCookieManager> cm);
 void flush_cookie_managers();
 
@@ -468,6 +470,8 @@ void StreamElementsGlobalStateManager::Initialize(QMainWindow *obs_main_window)
 		},
 		this);
 
+	register_cookie_manager(CefCookieManager::GetGlobalManager(nullptr));
+
 	m_initialized = true;
 	m_persistStateEnabled = true;
 
@@ -481,6 +485,8 @@ void StreamElementsGlobalStateManager::Shutdown()
 	if (!m_initialized) {
 		return;
 	}
+
+	unregister_cookie_manager(CefCookieManager::GetGlobalManager(nullptr));
 
 	obs_frontend_remove_event_callback(handle_obs_frontend_event, nullptr);
 
