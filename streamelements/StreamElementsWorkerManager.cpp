@@ -1,5 +1,6 @@
 #include "StreamElementsWorkerManager.hpp"
 #include "StreamElementsApiMessageHandler.hpp"
+#include "StreamElementsGlobalStateManager.hpp"
 
 #include <QUuid>
 #include <QWidget>
@@ -71,13 +72,15 @@ public:
 			cefClient->SetContainerId(id);
 			cefClient->SetLocationArea("worker");
 
-			m_cef_browser =
-				CefBrowserHost::CreateBrowserSync(
-					windowInfo,
-					cefClient,
-					"about:blank",
-					cefBrowserSettings,
-					nullptr);
+			m_cef_browser = CefBrowserHost::CreateBrowserSync(
+				windowInfo, cefClient, "about:blank",
+				cefBrowserSettings,
+#if CHROME_VERSION_BUILD >= 3770
+				CefRefPtr<CefDictionaryValue>(),
+#endif
+				StreamElementsGlobalStateManager::GetInstance()
+					->GetCookieManager()
+					->GetCefRequestContext());
 
 			m_cef_browser->GetMainFrame()->LoadStringW(content, url);
 		});

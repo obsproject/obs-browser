@@ -33,6 +33,13 @@
 #include <windows.h>
 #endif
 
+#ifdef USE_QT_LOOP
+#include <util/base.h>
+#include <util/platform.h>
+#include <util/threading.h>
+#include <QTimer>
+#endif
+
 using namespace json11;
 
 static std::string StringReplaceAll(std::string str, const std::string& from, const std::string& to) {
@@ -54,19 +61,22 @@ CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
 	return this;
 }
 
-void BrowserApp::OnRegisterCustomSchemes(
-		CefRawPtr<CefSchemeRegistrar> registrar)
+void BrowserApp::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar)
 {
-#if CHROME_VERSION_BUILD >= 3029
+#if CHROME_VERSION_BUILD >= 3683
+	registrar->AddCustomScheme("http",
+				   CEF_SCHEME_OPTION_STANDARD |
+					   CEF_SCHEME_OPTION_CORS_ENABLED);
+#elif CHROME_VERSION_BUILD >= 3029
 	registrar->AddCustomScheme("http", true, false, false, false, true,
-			false);
+				   false);
 #else
 	registrar->AddCustomScheme("http", true, false, false, false, true);
 #endif
 }
 
 void BrowserApp::OnBeforeChildProcessLaunch(
-		CefRefPtr<CefCommandLine> command_line)
+	CefRefPtr<CefCommandLine> command_line)
 {
 #ifdef _WIN32
 	std::string pid = std::to_string(GetCurrentProcessId());
@@ -77,8 +87,7 @@ void BrowserApp::OnBeforeChildProcessLaunch(
 }
 
 void BrowserApp::OnBeforeCommandLineProcessing(
-		const CefString &,
-		CefRefPtr<CefCommandLine> command_line)
+	const CefString &, CefRefPtr<CefCommandLine> command_line)
 {
 	if (!shared_texture_available) {
 		bool enableGPU = command_line->HasSwitch("enable-gpu");
@@ -98,24 +107,23 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 }
 
 void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
-		CefRefPtr<CefFrame>,
-		CefRefPtr<CefV8Context> context)
+	CefRefPtr<CefFrame>, CefRefPtr<CefV8Context> context)
 {
 	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
 
 	CefRefPtr<CefV8Value> obsStudioObj = CefV8Value::CreateObject(0, 0);
-	globalObj->SetValue("obsstudio",
-			obsStudioObj, V8_PROPERTY_ATTRIBUTE_NONE);
+	globalObj->SetValue("obsstudio", obsStudioObj,
+			    V8_PROPERTY_ATTRIBUTE_NONE);
 
 	CefRefPtr<CefV8Value> pluginVersion =
 		CefV8Value::CreateString(OBS_BROWSER_VERSION_STRING);
-	obsStudioObj->SetValue("pluginVersion",
-			pluginVersion, V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("pluginVersion", pluginVersion,
+			       V8_PROPERTY_ATTRIBUTE_NONE);
 
 	CefRefPtr<CefV8Value> func =
 		CefV8Value::CreateFunction("getCurrentScene", this);
-	obsStudioObj->SetValue("getCurrentScene",
-			func, V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("getCurrentScene", func,
+			       V8_PROPERTY_ATTRIBUTE_NONE);
 
 	CefRefPtr<CefV8Value> getStatus =
 		CefV8Value::CreateFunction("getStatus", this);
@@ -126,12 +134,12 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	// signal CefClient that render process context has been created
 	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("CefRenderProcessHandler::OnContextCreated");
 	//CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
-	browser->SendProcessMessage(PID_BROWSER, msg);
+	SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
-		const char *functionName,
-		CefV8ValueList arguments)
+				   const char *functionName,
+				   CefV8ValueList arguments)
 {
 	CefRefPtr<CefV8Context> context =
 		browser->GetMainFrame()->GetV8Context();
@@ -149,8 +157,11 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 }
 
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-		CefProcessId source_process,
-		CefRefPtr<CefProcessMessage> message)
+#if CHROME_VERSION_BUILD >= 3770
+					  CefRefPtr<CefFrame> frame,
+#endif
+					  CefProcessId source_process,
+					  CefRefPtr<CefProcessMessage> message)
 {
 	DCHECK(source_process == PID_BROWSER);
 
@@ -199,8 +210,8 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
 		/* Create the CustomEvent object
 		 * We have to use eval to invoke the new operator */
-		context->Eval(script, browser->GetMainFrame()->GetURL(),
-				0, returnValue, exception);
+		context->Eval(script, browser->GetMainFrame()->GetURL(), 0,
+			      returnValue, exception);
 
 		CefV8ValueList arguments;
 		arguments.push_back(returnValue);
@@ -243,6 +254,7 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 				args.push_back(retval);
 			}
 
+		if (callback)
 			callback->ExecuteFunction(NULL, args);
 
 			callbackMap.erase(callbackID);
@@ -385,11 +397,9 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 	return true;
 }
 
-bool BrowserApp::Execute(const CefString &name,
-		CefRefPtr<CefV8Value>,
-		const CefV8ValueList &arguments,
-		CefRefPtr<CefV8Value> &,
-		CefString &)
+bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
+			 const CefV8ValueList &arguments,
+			 CefRefPtr<CefV8Value> &, CefString &)
 {
 	if (name == "getCurrentScene") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
@@ -404,7 +414,7 @@ bool BrowserApp::Execute(const CefString &name,
 
 		CefRefPtr<CefBrowser> browser =
 			CefV8Context::GetCurrentContext()->GetBrowser();
-		browser->SendProcessMessage(PID_BROWSER, msg);
+		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 
 	}
 	else if (name == "getStatus") {
@@ -420,7 +430,7 @@ bool BrowserApp::Execute(const CefString &name,
 
 		CefRefPtr<CefBrowser> browser =
 			CefV8Context::GetCurrentContext()->GetBrowser();
-		browser->SendProcessMessage(PID_BROWSER, msg);
+		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 	} else if (cefClientFunctions.count(name)) {
 		/* dynamic API function binding from CefClient, see "CefRenderProcessHandler::BindJavaScriptFunctions"
 		   message for more details */
@@ -465,7 +475,7 @@ bool BrowserApp::Execute(const CefString &name,
 		}
 
 		// Send message to CefClient
-		browser->SendProcessMessage(PID_BROWSER, msg);
+		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 
 		context->Exit();
 
@@ -477,3 +487,79 @@ bool BrowserApp::Execute(const CefString &name,
 
 	return true;
 }
+
+#ifdef USE_QT_LOOP
+Q_DECLARE_METATYPE(MessageTask);
+MessageObject messageObject;
+
+void QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc func)
+{
+	std::lock_guard<std::mutex> lock(messageObject.browserTaskMutex);
+	messageObject.browserTasks.emplace_back(browser, func);
+
+	QMetaObject::invokeMethod(&messageObject, "ExecuteNextBrowserTask",
+				  Qt::QueuedConnection);
+}
+
+bool MessageObject::ExecuteNextBrowserTask()
+{
+	Task nextTask;
+	{
+		std::lock_guard<std::mutex> lock(browserTaskMutex);
+		if (!browserTasks.size())
+			return false;
+
+		nextTask = browserTasks[0];
+		browserTasks.pop_front();
+	}
+
+	nextTask.func(nextTask.browser);
+	return true;
+}
+
+void MessageObject::ExecuteTask(MessageTask task)
+{
+	task();
+}
+
+void MessageObject::DoCefMessageLoop(int ms)
+{
+	if (ms)
+		QTimer::singleShot((int)ms + 2,
+				   []() { CefDoMessageLoopWork(); });
+	else
+		CefDoMessageLoopWork();
+}
+
+void MessageObject::Process()
+{
+	CefDoMessageLoopWork();
+}
+
+void ProcessCef()
+{
+	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop",
+				  Qt::QueuedConnection, Q_ARG(int, (int)0));
+}
+
+#define MAX_DELAY (1000 / 30)
+
+void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
+{
+	if (delay_ms < 0)
+		delay_ms = 0;
+	else if (delay_ms > MAX_DELAY)
+		delay_ms = MAX_DELAY;
+
+	if (!frameTimer.isActive()) {
+		QObject::connect(&frameTimer, &QTimer::timeout, &messageObject,
+				 &MessageObject::Process);
+		frameTimer.setSingleShot(false);
+		frameTimer.start(33);
+	}
+
+	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop",
+				  Qt::QueuedConnection,
+				  Q_ARG(int, (int)delay_ms));
+}
+#endif

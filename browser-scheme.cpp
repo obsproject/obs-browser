@@ -21,11 +21,10 @@
 
 /* ------------------------------------------------------------------------- */
 
-CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(
-		CefRefPtr<CefBrowser> browser,
-		CefRefPtr<CefFrame>,
-		const CefString &,
-		CefRefPtr<CefRequest> request)
+CefRefPtr<CefResourceHandler>
+BrowserSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser,
+				    CefRefPtr<CefFrame>, const CefString &,
+				    CefRefPtr<CefRequest> request)
 {
 	if (!browser || !request)
 		return nullptr;
@@ -35,9 +34,8 @@ CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(
 
 /* ------------------------------------------------------------------------- */
 
-bool BrowserSchemeHandler::ProcessRequest(
-		CefRefPtr<CefRequest> request,
-		CefRefPtr<CefCallback> callback)
+bool BrowserSchemeHandler::ProcessRequest(CefRefPtr<CefRequest> request,
+					  CefRefPtr<CefCallback> callback)
 {
 	CefURLParts parts;
 	CefParseURL(request->GetURL(), parts);
@@ -45,10 +43,13 @@ bool BrowserSchemeHandler::ProcessRequest(
 	std::string path = CefString(&parts.path);
 
 	path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_SPACES);
-	path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
+	path = CefURIDecode(
+		path, true,
+		cef_uri_unescape_rule_t::
+			UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
 
 #ifdef WIN32
-	inputStream.open(to_wide(path.erase(0,1)), std::ifstream::binary);
+	inputStream.open(to_wide(path.erase(0, 1)), std::ifstream::binary);
 #else
 	inputStream.open(path, std::ifstream::binary);
 #endif
@@ -67,10 +68,9 @@ bool BrowserSchemeHandler::ProcessRequest(
 	return true;
 }
 
-void BrowserSchemeHandler::GetResponseHeaders(
-		CefRefPtr<CefResponse> response,
-		int64 &response_length,
-		CefString &redirectUrl)
+void BrowserSchemeHandler::GetResponseHeaders(CefRefPtr<CefResponse> response,
+					      int64 &response_length,
+					      CefString &redirectUrl)
 {
 	if (!response) {
 		response_length = -1;
@@ -93,11 +93,8 @@ void BrowserSchemeHandler::GetResponseHeaders(
 	redirectUrl = "";
 }
 
-bool BrowserSchemeHandler::ReadResponse(
-		void *data_out,
-		int bytes_to_read,
-		int &bytes_read,
-		CefRefPtr<CefCallback>)
+bool BrowserSchemeHandler::ReadResponse(void *data_out, int bytes_to_read,
+					int &bytes_read, CefRefPtr<CefCallback>)
 {
 	if (!data_out || !inputStream.is_open()) {
 		bytes_read = 0;

@@ -12,6 +12,9 @@ public:
 public:
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
+#if CHROME_VERSION_BUILD >= 3770
+		CefRefPtr<CefFrame> frame,
+#endif
 		CefProcessId source_process,
 		CefRefPtr<CefProcessMessage> message,
 		const long cefClientId) override;
@@ -35,5 +38,5 @@ private:
 	void DispatchEventInternal(CefRefPtr<CefBrowser> browser, std::string event, std::string eventArgsJson);
 
 public:
-	IMPLEMENT_REFCOUNTING(StreamElementsApiMessageHandler)
+	IMPLEMENT_REFCOUNTING(StreamElementsApiMessageHandler);
 };

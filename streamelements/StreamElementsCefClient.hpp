@@ -27,7 +27,7 @@ public:
 
 
 public:
-	IMPLEMENT_REFCOUNTING(StreamElementsCefClientEventHandler)
+	IMPLEMENT_REFCOUNTING(StreamElementsCefClientEventHandler);
 };
 
 class StreamElementsCefClient :
@@ -38,8 +38,10 @@ class StreamElementsCefClient :
 	public CefDisplayHandler,
 	public CefKeyboardHandler,
 	public CefRequestHandler,
-	public CefDragHandler
-{
+#if CHROME_VERSION_BUILD >= 3770
+	public CefResourceRequestHandler,
+#endif
+	public CefDragHandler {
 private:
 	std::string m_containerId = "";
 	std::string m_locationArea = "unknown";
@@ -106,9 +108,22 @@ public:
 	virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override { return this; }
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override { return this; }
 	virtual CefRefPtr<CefDragHandler> GetDragHandler() override { return this; }
+#if CHROME_VERSION_BUILD >= 3770
+	virtual CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
+		CefRefPtr<CefBrowser> /*browser*/, CefRefPtr<CefFrame> /*frame*/,
+		CefRefPtr<CefRequest> /*request*/, bool /*is_navigation*/,
+		bool /*is_download*/, const CefString& /*request_initiator*/,
+		bool& /*disable_default_handling*/) override
+	{
+		return this;
+	}
+#endif
 
 	virtual bool OnProcessMessageReceived(
 		CefRefPtr<CefBrowser> browser,
+#if CHROME_VERSION_BUILD >= 3770
+		CefRefPtr<CefFrame> frame,
+#endif
 		CefProcessId source_process,
 		CefRefPtr<CefProcessMessage> message) override;
 
@@ -175,6 +190,9 @@ public:
 		CefWindowInfo& windowInfo,
 		CefRefPtr<CefClient>& client,
 		CefBrowserSettings& /*settings*/,
+#if CHROME_VERSION_BUILD >= 3770
+		CefRefPtr<CefDictionaryValue>& /*extra_info*/,
+#endif
 		bool* /*no_javascript_access*/) override
 	{
 		if (!target_url.size() || target_url.ToString() == "about:blank") {
@@ -350,5 +368,5 @@ public:
 	static void DispatchJSEvent(CefRefPtr<CefBrowser> browser, std::string event, std::string eventArgsJson);
 
 public:
-	IMPLEMENT_REFCOUNTING(StreamElementsCefClient)
+	IMPLEMENT_REFCOUNTING(StreamElementsCefClient);
 };
