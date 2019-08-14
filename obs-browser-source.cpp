@@ -299,21 +299,23 @@ void BrowserSource::SetShowing(bool showing)
 
 	CefRefPtr<CefBrowser> browser = cefBrowser;
 
-	if (!browser) {
-		return;
-	}
-
-	if (!showing) {
-		browser->GetHost()->WasHidden(true);
-	}
-
 	if (shutdown_on_invisible) {
 		if (showing) {
 			Update();
 		} else {
 			DestroyBrowser(true);
 		}
-	} else {
+	} else if (!!browser) {
+		if (!showing) {
+			browser->GetHost()->WasHidden(true);
+		} else {
+			browser->GetHost()->WasHidden(false);
+			browser->GetHost()->Invalidate(PET_VIEW);
+
+			if (!fps_custom)
+				reset_frame = false;
+		}
+
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("Visibility");
 		CefRefPtr<CefListValue> args =
@@ -321,14 +323,6 @@ void BrowserSource::SetShowing(bool showing)
 		args->SetBool(0, showing);
 		SendBrowserProcessMessage(browser,
 						PID_RENDERER, msg);
-	}
-
-	if (showing) {
-		browser->GetHost()->WasHidden(false);
-		browser->GetHost()->Invalidate(PET_VIEW);
-
-		if (!fps_custom)
-			reset_frame = false;
 	}
 }
 
