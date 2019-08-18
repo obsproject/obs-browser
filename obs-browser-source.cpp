@@ -159,6 +159,7 @@ bool BrowserSource::CreateBrowser()
 #if CHROME_VERSION_BUILD >= 3683
 		cefBrowser->GetHost()->SetAudioMuted(true);
 #endif
+
 		if (!is_showing) {
 			cefBrowser->GetHost()->WasHidden(true);
 		}

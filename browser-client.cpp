@@ -208,15 +208,15 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 
 	if (!source->texture && width && height) {
 		obs_enter_graphics();
-		bs->texture = gs_texture_create(width, height, GS_BGRA, 1,
+		source->texture = gs_texture_create(width, height, GS_BGRA, 1,
 						(const uint8_t **)&buffer,
 						GS_DYNAMIC);
-		bs->width = width;
-		bs->height = height;
+		source->width = width;
+		source->height = height;
 		obs_leave_graphics();
 	} else {
 		obs_enter_graphics();
-		gs_texture_set_image(bs->texture, (const uint8_t *)buffer,
+		gs_texture_set_image(source->texture, (const uint8_t *)buffer,
 				     width * 4, false);
 		obs_leave_graphics();
 	}
@@ -264,7 +264,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
 
 		source->texture = gs_texture_create(cx, cy, format, 1, nullptr, 0);
 #else
-		bs->texture = gs_texture_open_shared(
+		source->texture = gs_texture_open_shared(
 			(uint32_t)(uintptr_t)shared_handle);
 #endif
 		obs_leave_graphics();
@@ -329,7 +329,9 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
 {
 	struct obs_source_audio audio = {};
 
-	if (!bs) {
+	auto source = bs;
+
+	if (!source) {
 		return;
 	}
 
@@ -348,7 +350,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
 	audio.speakers = speakers;
 	audio.timestamp = (uint64_t)pts * 1000000LLU;
 
-	obs_source_output_audio(bs->source, &audio);
+	obs_source_output_audio(source->source, &audio);
 }
 
 void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser,
