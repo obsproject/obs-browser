@@ -408,6 +408,34 @@ void BrowserSource::Update(obs_data_t *settings)
 		restart = n_restart;
 		css = n_css;
 		url = n_url;
+
+#if CHROME_VERSION_BUILD >= 3440 && CHROME_VERSION_BUILD < 3809
+		// This part sets fps_custom = true and overrides fps = OBS global
+		// FPS in case GPU acceleration is on and user has not initially set
+		// custom FPS.
+		//
+		// This is part of an override to CEF bug which is resolved in CEF
+		// 3809 which prevents initially invisible Browser Sources from
+		// displaying correctly on first show, requiring those sources to
+		// be hidden and unhidden again to be rendered correctly.
+		//
+		// An example of content demonstrating the bug here:
+		// https://whatwebcando.today/foreground-detection.html
+		//
+		// More information about CEF bug here:
+		// https://bitbucket.org/chromiumembedded/cef/issues/2618/onacceleratedpaint-is-not-called-with-off
+		//
+
+		extern double GetObsGlobalFramesPerSecond();
+
+		if (hwaccel && !fps_custom) {
+			fps_custom = true;
+			fps = GetObsGlobalFramesPerSecond();
+			is_streamelements_fps_bug_override = true;
+		} else if (hwaccel) {
+			is_streamelements_fps_bug_override = false;
+		}
+#endif
 	}
 
 	DestroyBrowser(true);
@@ -423,6 +451,38 @@ void BrowserSource::Tick()
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	if (!fps_custom)
 		reset_frame = true;
+#endif
+
+#if CHROME_VERSION_BUILD >= 3440 && CHROME_VERSION_BUILD < 3809
+	// This part watches for global video FPS changes and refreshes the
+	// browser in case GPU acceleration is on and FPS change is due.
+	//
+	// This is part of an override to CEF bug which is resolved in CEF
+	// 3809 which prevents initially invisible Browser Sources from
+	// displaying correctly on first show, requiring those sources to
+	// be hidden and unhidden again to be rendered correctly.
+	//
+	// An example of content demonstrating the bug here:
+	// https://whatwebcando.today/foreground-detection.html
+	//
+	// More information about CEF bug here:
+	// https://bitbucket.org/chromiumembedded/cef/issues/2618/onacceleratedpaint-is-not-called-with-off
+	//
+	if (hwaccel && fps_custom && is_streamelements_fps_bug_override &&
+	    (!shutdown_on_invisible || is_showing)) {
+		extern double GetObsGlobalFramesPerSecond();
+
+		if (++streamelements_fps_bug_override_entry_count >= fps) {
+			streamelements_fps_bug_override_entry_count = 0;
+
+			int c_fps = GetObsGlobalFramesPerSecond();
+			if (c_fps != fps) {
+				fps = c_fps;
+
+				Update();
+			}
+		}
+	}
 #endif
 }
 

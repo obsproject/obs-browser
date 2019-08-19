@@ -26,12 +26,12 @@
 
 /* ========================================================= */
 
-static const char* ENV_PRODUCT_NAME = "OBS.Live";
+static const char *ENV_PRODUCT_NAME = "OBS.Live";
 
 /* ========================================================= */
 
 // convert wstring to UTF-8 string
-static std::string wstring_to_utf8(const std::wstring& str)
+static std::string wstring_to_utf8(const std::wstring &str)
 {
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
 	return myconv.to_bytes(str);
@@ -42,7 +42,8 @@ std::string clean_guid_string(std::string input)
 	return std::regex_replace(input, std::regex("-"), "");
 }
 
-static std::vector<std::string> tokenizeString(const std::string& str, const std::string& delimiters)
+static std::vector<std::string> tokenizeString(const std::string &str,
+					       const std::string &delimiters)
 {
 	std::vector<std::string> tokens;
 	// Skip delimiters at beginning.
@@ -50,8 +51,9 @@ static std::vector<std::string> tokenizeString(const std::string& str, const std
 	// Find first "non-delimiter".
 	std::string::size_type pos = str.find_first_of(delimiters, lastPos);
 
-	while (std::string::npos != pos || std::string::npos != lastPos)
-	{  // Found a token, add it to the vector.
+	while (std::string::npos != pos ||
+	       std::string::npos !=
+		       lastPos) { // Found a token, add it to the vector.
 		tokens.push_back(str.substr(lastPos, pos - lastPos));
 		// Skip delimiters.  Note the "not_of"
 		lastPos = str.find_first_not_of(delimiters, pos);
@@ -63,24 +65,27 @@ static std::vector<std::string> tokenizeString(const std::string& str, const std
 
 /* ========================================================= */
 
-void QtPostTask(std::function<void()> task) {
+void QtPostTask(std::function<void()> task)
+{
 	struct local_context {
 		std::function<void()> task;
 	};
 
-	local_context* context = new local_context();
+	local_context *context = new local_context();
 	context->task = task;
 
-	QtPostTask([](void* const data) {
-		local_context* context = (local_context*)data;
+	QtPostTask(
+		[](void *const data) {
+			local_context *context = (local_context *)data;
 
-		context->task();
+			context->task();
 
-		delete context;
-	}, context);
+			delete context;
+		},
+		context);
 }
 
-void QtPostTask(void(*func)(void*), void* const data)
+void QtPostTask(void (*func)(void *), void *const data)
 {
 	QTimer *t = new QTimer();
 	t->moveToThread(qApp->thread());
@@ -90,33 +95,36 @@ void QtPostTask(void(*func)(void*), void* const data)
 
 		func(data);
 	});
-	QMetaObject::invokeMethod(t, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+	QMetaObject::invokeMethod(t, "start", Qt::QueuedConnection,
+				  Q_ARG(int, 0));
 }
 
-void QtExecSync(std::function<void()> task) {
+void QtExecSync(std::function<void()> task)
+{
 	struct local_context {
 		std::function<void()> task;
 	};
 
-	local_context* context = new local_context();
+	local_context *context = new local_context();
 	context->task = task;
 
-	QtExecSync([](void* data) {
-		local_context* context = (local_context*)data;
+	QtExecSync(
+		[](void *data) {
+			local_context *context = (local_context *)data;
 
-		context->task();
+			context->task();
 
-		delete context;
-	}, context);
+			delete context;
+		},
+		context);
 }
 
-void QtExecSync(void(*func)(void*), void* const data)
+void QtExecSync(void (*func)(void *), void *const data)
 {
 	if (QThread::currentThread() == qApp->thread()) {
 		func(data);
-	}
-	else {
-		os_event_t* completeEvent;
+	} else {
+		os_event_t *completeEvent;
 
 		os_event_init(&completeEvent, OS_EVENT_TYPE_AUTO);
 
@@ -130,7 +138,8 @@ void QtExecSync(void(*func)(void*), void* const data)
 
 			os_event_signal(completeEvent);
 		});
-		QMetaObject::invokeMethod(t, "start", Qt::QueuedConnection, Q_ARG(int, 0));
+		QMetaObject::invokeMethod(t, "start", Qt::QueuedConnection,
+					  Q_ARG(int, 0));
 
 		QApplication::sendPostedEvents();
 
@@ -141,8 +150,7 @@ void QtExecSync(void(*func)(void*), void* const data)
 
 std::string DockWidgetAreaToString(const Qt::DockWidgetArea area)
 {
-	switch (area)
-	{
+	switch (area) {
 	case Qt::LeftDockWidgetArea:
 		return "left";
 	case Qt::RightDockWidgetArea:
@@ -191,14 +199,15 @@ std::string LoadResourceString(std::string path)
 
 /* ========================================================= */
 
-static uint64_t FromFileTime(const FILETIME& ft) {
-	ULARGE_INTEGER uli = { 0 };
+static uint64_t FromFileTime(const FILETIME &ft)
+{
+	ULARGE_INTEGER uli = {0};
 	uli.LowPart = ft.dwLowDateTime;
 	uli.HighPart = ft.dwHighDateTime;
 	return uli.QuadPart;
 }
 
-void SerializeSystemTimes(CefRefPtr<CefValue>& output)
+void SerializeSystemTimes(CefRefPtr<CefValue> &output)
 {
 	SYNC_ACCESS();
 
@@ -267,7 +276,7 @@ void SerializeSystemTimes(CefRefPtr<CefValue>& output)
 #endif
 }
 
-void SerializeSystemMemoryUsage(CefRefPtr<CefValue>& output)
+void SerializeSystemMemoryUsage(CefRefPtr<CefValue> &output)
 {
 	output->SetNull();
 
@@ -288,23 +297,27 @@ void SerializeSystemMemoryUsage(CefRefPtr<CefValue>& output)
 		d->SetInt("freePhysicalMemory", mem.ullAvailPhys / DIV);
 		d->SetInt("totalVirtualMemory", mem.ullTotalVirtual / DIV);
 		d->SetInt("freeVirtualMemory", mem.ullAvailVirtual / DIV);
-		d->SetInt("freeExtendedVirtualMemory", mem.ullAvailExtendedVirtual / DIV);
-		d->SetInt("totalPageFileSize", mem.ullTotalPageFile/ DIV);
-		d->SetInt("freePageFileSize", mem.ullAvailPageFile/ DIV);
+		d->SetInt("freeExtendedVirtualMemory",
+			  mem.ullAvailExtendedVirtual / DIV);
+		d->SetInt("totalPageFileSize", mem.ullTotalPageFile / DIV);
+		d->SetInt("freePageFileSize", mem.ullAvailPageFile / DIV);
 	}
 #endif
 }
 
-static CefString getRegStr(HKEY parent, const WCHAR* subkey, const WCHAR* key)
+static CefString getRegStr(HKEY parent, const WCHAR *subkey, const WCHAR *key)
 {
 	CefString result;
 
 	DWORD dataSize = 0;
 
-	if (ERROR_SUCCESS == ::RegGetValueW(parent, subkey, key, RRF_RT_ANY, NULL, NULL, &dataSize)) {
-		WCHAR* buffer = new WCHAR[dataSize];
+	if (ERROR_SUCCESS == ::RegGetValueW(parent, subkey, key, RRF_RT_ANY,
+					    NULL, NULL, &dataSize)) {
+		WCHAR *buffer = new WCHAR[dataSize];
 
-		if (ERROR_SUCCESS == ::RegGetValueW(parent, subkey, key, RRF_RT_ANY, NULL, buffer, &dataSize)) {
+		if (ERROR_SUCCESS == ::RegGetValueW(parent, subkey, key,
+						    RRF_RT_ANY, NULL, buffer,
+						    &dataSize)) {
 			result = buffer;
 		}
 
@@ -314,17 +327,18 @@ static CefString getRegStr(HKEY parent, const WCHAR* subkey, const WCHAR* key)
 	return result;
 };
 
-static DWORD getRegDWORD(HKEY parent, const WCHAR* subkey, const WCHAR* key)
+static DWORD getRegDWORD(HKEY parent, const WCHAR *subkey, const WCHAR *key)
 {
 	DWORD result = 0;
 	DWORD dataSize = sizeof(DWORD);
 
-	::RegGetValueW(parent, subkey, key, RRF_RT_DWORD, NULL, &result, &dataSize);
+	::RegGetValueW(parent, subkey, key, RRF_RT_DWORD, NULL, &result,
+		       &dataSize);
 
 	return result;
 }
 
-void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output)
+void SerializeSystemHardwareProperties(CefRefPtr<CefValue> &output)
 {
 	output->SetNull();
 
@@ -337,14 +351,26 @@ void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output)
 	::GetNativeSystemInfo(&info);
 
 	switch (info.wProcessorArchitecture) {
-	case PROCESSOR_ARCHITECTURE_INTEL: d->SetString("cpuArch", "x86"); break;
-	case PROCESSOR_ARCHITECTURE_IA64: d->SetString("cpuArch", "IA64"); break;
-	case PROCESSOR_ARCHITECTURE_AMD64: d->SetString("cpuArch", "x64"); break;
-	case PROCESSOR_ARCHITECTURE_ARM: d->SetString("cpuArch", "ARM"); break;
-	case PROCESSOR_ARCHITECTURE_ARM64: d->SetString("cpuArch", "ARM64"); break;
+	case PROCESSOR_ARCHITECTURE_INTEL:
+		d->SetString("cpuArch", "x86");
+		break;
+	case PROCESSOR_ARCHITECTURE_IA64:
+		d->SetString("cpuArch", "IA64");
+		break;
+	case PROCESSOR_ARCHITECTURE_AMD64:
+		d->SetString("cpuArch", "x64");
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM:
+		d->SetString("cpuArch", "ARM");
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM64:
+		d->SetString("cpuArch", "ARM64");
+		break;
 
 	default:
-	case PROCESSOR_ARCHITECTURE_UNKNOWN: d->SetString("cpuArch", "Unknown"); break;
+	case PROCESSOR_ARCHITECTURE_UNKNOWN:
+		d->SetString("cpuArch", "Unknown");
+		break;
 	}
 
 	d->SetInt("cpuCount", info.dwNumberOfProcessors);
@@ -377,21 +403,37 @@ void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output)
 	featuresValue->SetDictionary(f);
 	d->SetValue("cpuFeatures", featuresValue);*/
 
-
 	{
 		CefRefPtr<CefListValue> cpuList = CefListValue::Create();
 
 		HKEY hRoot;
-		if (ERROR_SUCCESS == ::RegOpenKeyA(HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor", &hRoot)) {
+		if (ERROR_SUCCESS ==
+		    ::RegOpenKeyA(
+			    HKEY_LOCAL_MACHINE,
+			    "HARDWARE\\DESCRIPTION\\System\\CentralProcessor",
+			    &hRoot)) {
 			WCHAR cpuKeyBuffer[2048];
 
-			for (DWORD index = 0; ERROR_SUCCESS == ::RegEnumKeyW(hRoot, index, cpuKeyBuffer, sizeof(cpuKeyBuffer)); ++index) {
-				CefRefPtr<CefDictionaryValue> p = CefDictionaryValue::Create();
+			for (DWORD index = 0;
+			     ERROR_SUCCESS ==
+			     ::RegEnumKeyW(hRoot, index, cpuKeyBuffer,
+					   sizeof(cpuKeyBuffer));
+			     ++index) {
+				CefRefPtr<CefDictionaryValue> p =
+					CefDictionaryValue::Create();
 
-				p->SetString("name", getRegStr(hRoot, cpuKeyBuffer, L"ProcessorNameString"));
-				p->SetString("vendor", getRegStr(hRoot, cpuKeyBuffer, L"VendorIdentifier"));
-				p->SetInt("speedMHz", getRegDWORD(hRoot, cpuKeyBuffer, L"~MHz"));
-				p->SetString("identifier", getRegStr(hRoot, cpuKeyBuffer, L"Identifier"));
+				p->SetString("name",
+					     getRegStr(hRoot, cpuKeyBuffer,
+						       L"ProcessorNameString"));
+				p->SetString("vendor",
+					     getRegStr(hRoot, cpuKeyBuffer,
+						       L"VendorIdentifier"));
+				p->SetInt("speedMHz",
+					  getRegDWORD(hRoot, cpuKeyBuffer,
+						      L"~MHz"));
+				p->SetString("identifier",
+					     getRegStr(hRoot, cpuKeyBuffer,
+						       L"Identifier"));
 
 				cpuList->SetDictionary(cpuList->GetSize(), p);
 			}
@@ -403,41 +445,64 @@ void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output)
 	}
 
 	{
-		CefRefPtr<CefDictionaryValue> bios = CefDictionaryValue::Create();
+		CefRefPtr<CefDictionaryValue> bios =
+			CefDictionaryValue::Create();
 
 		HKEY hRoot;
-		if (ERROR_SUCCESS == ::RegOpenKeyW(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System", &hRoot)) {
+		if (ERROR_SUCCESS ==
+		    ::RegOpenKeyW(HKEY_LOCAL_MACHINE,
+				  L"HARDWARE\\DESCRIPTION\\System", &hRoot)) {
 			HKEY hBios;
-			if (ERROR_SUCCESS == ::RegOpenKeyW(hRoot, L"BIOS", &hBios)) {
+			if (ERROR_SUCCESS ==
+			    ::RegOpenKeyW(hRoot, L"BIOS", &hBios)) {
 				WCHAR subKeyBuffer[2048];
-				DWORD bufSize = sizeof(subKeyBuffer) / sizeof(subKeyBuffer[0]);
+				DWORD bufSize = sizeof(subKeyBuffer) /
+						sizeof(subKeyBuffer[0]);
 
 				DWORD valueIndex = 0;
 				DWORD valueType = 0;
 
-				LSTATUS callStatus = ::RegEnumValueW(hBios, valueIndex, subKeyBuffer, &bufSize, NULL, &valueType, NULL, NULL);
+				LSTATUS callStatus = ::RegEnumValueW(
+					hBios, valueIndex, subKeyBuffer,
+					&bufSize, NULL, &valueType, NULL, NULL);
 				while (ERROR_NO_MORE_ITEMS != callStatus) {
 					switch (valueType) {
 					case REG_DWORD_BIG_ENDIAN:
 					case REG_DWORD_LITTLE_ENDIAN:
-						bios->SetInt(subKeyBuffer, getRegDWORD(hRoot, L"BIOS", subKeyBuffer));
+						bios->SetInt(
+							subKeyBuffer,
+							getRegDWORD(
+								hRoot, L"BIOS",
+								subKeyBuffer));
 						break;
 
 					case REG_QWORD:
-						bios->SetInt(subKeyBuffer, getRegDWORD(hRoot, L"BIOS", subKeyBuffer));
+						bios->SetInt(
+							subKeyBuffer,
+							getRegDWORD(
+								hRoot, L"BIOS",
+								subKeyBuffer));
 						break;
 
 					case REG_SZ:
 					case REG_EXPAND_SZ:
 					case REG_MULTI_SZ:
-						bios->SetString(subKeyBuffer, getRegStr(hRoot, L"BIOS", subKeyBuffer));
+						bios->SetString(
+							subKeyBuffer,
+							getRegStr(
+								hRoot, L"BIOS",
+								subKeyBuffer));
 						break;
 					}
 
 					++valueIndex;
 
-					bufSize = sizeof(subKeyBuffer) / sizeof(subKeyBuffer[0]);
-					callStatus = ::RegEnumValueW(hBios, valueIndex, subKeyBuffer, &bufSize, NULL, &valueType, NULL, NULL);
+					bufSize = sizeof(subKeyBuffer) /
+						  sizeof(subKeyBuffer[0]);
+					callStatus = ::RegEnumValueW(
+						hBios, valueIndex, subKeyBuffer,
+						&bufSize, NULL, &valueType,
+						NULL, NULL);
 				}
 
 				::RegCloseKey(hBios);
@@ -453,7 +518,7 @@ void SerializeSystemHardwareProperties(CefRefPtr<CefValue>& output)
 
 /* ========================================================= */
 
-void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output)
+void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue> &output)
 {
 	// Response codec collection (array)
 	CefRefPtr<CefListValue> list = CefListValue::Create();
@@ -463,49 +528,57 @@ void SerializeAvailableInputSourceTypes(CefRefPtr<CefValue>& output)
 
 	// Iterate over all input sources
 	bool continue_iteration = true;
-	for (size_t idx = 0; continue_iteration; ++idx)
-	{
+	for (size_t idx = 0; continue_iteration; ++idx) {
 		// Filled by obs_enum_input_types() call below
-		const char* sourceId;
+		const char *sourceId;
 
 		// Get next input source type, obs_enum_input_types() returns true as long as
 		// there is data at the specified index
 		continue_iteration = obs_enum_input_types(idx, &sourceId);
 
-		if (continue_iteration)
-		{
+		if (continue_iteration) {
 			// Get source caps
-			uint32_t sourceCaps = obs_get_source_output_flags(sourceId);
+			uint32_t sourceCaps =
+				obs_get_source_output_flags(sourceId);
 
 			// If source has video
-			if ((sourceCaps & OBS_SOURCE_VIDEO) == OBS_SOURCE_VIDEO)
-			{
+			if ((sourceCaps & OBS_SOURCE_VIDEO) ==
+			    OBS_SOURCE_VIDEO) {
 				// Create source response dictionary
-				CefRefPtr<CefDictionaryValue> dic = CefDictionaryValue::Create();
+				CefRefPtr<CefDictionaryValue> dic =
+					CefDictionaryValue::Create();
 
 				// Set codec dictionary properties
 				dic->SetString("id", sourceId);
-				dic->SetString("name", obs_source_get_display_name(sourceId));
-				dic->SetBool("hasVideo", (sourceCaps & OBS_SOURCE_VIDEO) == OBS_SOURCE_VIDEO);
-				dic->SetBool("hasAudio", (sourceCaps & OBS_SOURCE_AUDIO) == OBS_SOURCE_AUDIO);
+				dic->SetString(
+					"name",
+					obs_source_get_display_name(sourceId));
+				dic->SetBool("hasVideo",
+					     (sourceCaps & OBS_SOURCE_VIDEO) ==
+						     OBS_SOURCE_VIDEO);
+				dic->SetBool("hasAudio",
+					     (sourceCaps & OBS_SOURCE_AUDIO) ==
+						     OBS_SOURCE_AUDIO);
 
 				// Compare sourceId to known video capture devices
-				dic->SetBool("isVideoCaptureDevice",
+				dic->SetBool(
+					"isVideoCaptureDevice",
 					strcmp(sourceId, "dshow_input") == 0 ||
-					strcmp(sourceId, "decklink-input") == 0);
+						strcmp(sourceId,
+						       "decklink-input") == 0);
 
 				// Compare sourceId to known game capture source
 				dic->SetBool("isGameCaptureDevice",
-					strcmp(sourceId, "game_capture") == 0);
+					     strcmp(sourceId, "game_capture") ==
+						     0);
 
 				// Compare sourceId to known browser source
 				dic->SetBool("isBrowserSource",
-					strcmp(sourceId, "browser_source") == 0);
+					     strcmp(sourceId,
+						    "browser_source") == 0);
 
 				// Append dictionary to response list
-				list->SetDictionary(
-					list->GetSize(),
-					dic);
+				list->SetDictionary(list->GetSize(), dic);
 			}
 		}
 	}
@@ -548,7 +621,8 @@ std::string GetAppStyleSheetSelectorContent(std::string selector)
 	std::smatch selector_match;
 
 	if (std::regex_search(css, selector_match, selector_regex)) {
-		result = std::string(selector_match[1].first, selector_match[1].second);
+		result = std::string(selector_match[1].first,
+				     selector_match[1].second);
 	}
 
 	return result;
@@ -558,9 +632,11 @@ std::string GetCurrentThemeName()
 {
 	std::string result;
 
-	config_t* globalConfig = obs_frontend_get_global_config(); // does not increase refcount
+	config_t *globalConfig =
+		obs_frontend_get_global_config(); // does not increase refcount
 
-	const char *themeName = config_get_string(globalConfig, "General", "CurrentTheme");
+	const char *themeName =
+		config_get_string(globalConfig, "General", "CurrentTheme");
 	if (!themeName) {
 		/* Use deprecated "Theme" value if available */
 		themeName = config_get_string(globalConfig, "General", "Theme");
@@ -588,14 +664,9 @@ std::string GetCefVersionString()
 {
 	char buf[64];
 
-	sprintf(buf,
-		"cef.%d.%d.chrome.%d.%d.%d.%d",
-		cef_version_info(0),
-		cef_version_info(1),
-		cef_version_info(2),
-		cef_version_info(3),
-		cef_version_info(4),
-		cef_version_info(5));
+	sprintf(buf, "cef.%d.%d.chrome.%d.%d.%d.%d", cef_version_info(0),
+		cef_version_info(1), cef_version_info(2), cef_version_info(3),
+		cef_version_info(4), cef_version_info(5));
 
 	return std::string(buf);
 }
@@ -614,8 +685,10 @@ std::string GetStreamElementsPluginVersionString()
 {
 	char version_buf[64];
 	sprintf(version_buf, "%d.%d.%d.%d",
-		(int)((STREAMELEMENTS_PLUGIN_VERSION % 1000000000000L) / 10000000000L),
-		(int)((STREAMELEMENTS_PLUGIN_VERSION % 10000000000L) / 100000000L),
+		(int)((STREAMELEMENTS_PLUGIN_VERSION % 1000000000000L) /
+		      10000000000L),
+		(int)((STREAMELEMENTS_PLUGIN_VERSION % 10000000000L) /
+		      100000000L),
 		(int)((STREAMELEMENTS_PLUGIN_VERSION % 100000000L) / 1000000L),
 		(int)(STREAMELEMENTS_PLUGIN_VERSION % 1000000L));
 
@@ -626,7 +699,8 @@ std::string GetStreamElementsApiVersionString()
 {
 	char version_buf[64];
 
-	sprintf(version_buf, "%d.%d", HOST_API_VERSION_MAJOR, HOST_API_VERSION_MINOR);
+	sprintf(version_buf, "%d.%d", HOST_API_VERSION_MAJOR,
+		HOST_API_VERSION_MINOR);
 
 	return version_buf;
 }
@@ -635,9 +709,10 @@ std::string GetStreamElementsApiVersionString()
 
 #include <winhttp.h>
 #pragma comment(lib, "Winhttp.lib")
-void SetGlobalCURLOptions(CURL* curl, const char* url)
+void SetGlobalCURLOptions(CURL *curl, const char *url)
 {
-	std::string proxy = GetCommandLineOptionValue("streamelements-http-proxy");
+	std::string proxy =
+		GetCommandLineOptionValue("streamelements-http-proxy");
 
 	if (!proxy.size()) {
 #ifdef _WIN32
@@ -650,24 +725,28 @@ void SetGlobalCURLOptions(CURL* curl, const char* url)
 
 				std::map<std::string, std::string> schemes;
 				for (auto kvstr : tokenizeString(proxy, ";")) {
-					std::vector<std::string> kv = tokenizeString(kvstr, "=");
+					std::vector<std::string> kv =
+						tokenizeString(kvstr, "=");
 
 					if (kv.size() == 2) {
-						std::transform(kv[0].begin(), kv[0].end(), kv[0].begin(), tolower);
+						std::transform(kv[0].begin(),
+							       kv[0].end(),
+							       kv[0].begin(),
+							       tolower);
 						schemes[kv[0]] = kv[1];
 					}
 				}
 
-				std::string scheme = tokenizeString(url, ":")[0];
-				std::transform(scheme.begin(), scheme.end(), scheme.begin(), tolower);
+				std::string scheme =
+					tokenizeString(url, ":")[0];
+				std::transform(scheme.begin(), scheme.end(),
+					       scheme.begin(), tolower);
 
 				if (schemes.count(scheme)) {
 					proxy = schemes[scheme];
-				}
-				else if (schemes.count("http")) {
+				} else if (schemes.count("http")) {
 					proxy = schemes["http"];
-				}
-				else {
+				} else {
 					proxy = "";
 				}
 			}
@@ -693,37 +772,34 @@ void SetGlobalCURLOptions(CURL* curl, const char* url)
 	}
 }
 
-struct http_callback_context
-{
+struct http_callback_context {
 	http_client_callback_t callback;
-	void* userdata;
+	void *userdata;
 };
-static size_t http_write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
+static size_t http_write_callback(char *ptr, size_t size, size_t nmemb,
+				  void *userdata)
 {
-	http_callback_context* context = (http_callback_context*)userdata;
+	http_callback_context *context = (http_callback_context *)userdata;
 
 	bool result = true;
 	if (context->callback) {
-		result = context->callback(ptr, size * nmemb, context->userdata, nullptr, 0);
+		result = context->callback(ptr, size * nmemb, context->userdata,
+					   nullptr, 0);
 	}
 
 	if (result) {
 		return size * nmemb;
-	}
-	else {
+	} else {
 		return 0;
 	}
 };
 
-bool HttpGet(
-	const char* url,
-	http_client_request_headers_t request_headers,
-	http_client_callback_t callback,
-	void* userdata)
+bool HttpGet(const char *url, http_client_request_headers_t request_headers,
+	     http_client_callback_t callback, void *userdata)
 {
 	bool result = false;
 
-	CURL* curl = curl_easy_init();
+	CURL *curl = curl_easy_init();
 
 	if (curl) {
 		SetGlobalCURLOptions(curl, url);
@@ -741,17 +817,19 @@ bool HttpGet(
 		context.callback = callback;
 		context.userdata = userdata;
 
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_write_callback);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+				 http_write_callback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &context);
 
 		curl_slist *headers = NULL;
 		for (auto h : request_headers) {
-			headers = curl_slist_append(headers, (h.first + ": " + h.second).c_str());
+			headers = curl_slist_append(
+				headers, (h.first + ": " + h.second).c_str());
 		}
 
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-		char* errorbuf = new char[CURL_ERROR_SIZE];
+		char *errorbuf = new char[CURL_ERROR_SIZE];
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuf);
 
 		CURLcode res = curl_easy_perform(curl);
@@ -767,10 +845,11 @@ bool HttpGet(
 
 		if (callback) {
 			if (!result) {
-				callback(nullptr, 0, 0, errorbuf, (int)http_code);
-			}
-			else {
-				callback(nullptr, 0, 0, nullptr, (int)http_code);
+				callback(nullptr, 0, 0, errorbuf,
+					 (int)http_code);
+			} else {
+				callback(nullptr, 0, 0, nullptr,
+					 (int)http_code);
 			}
 		}
 
@@ -782,17 +861,13 @@ bool HttpGet(
 	return result;
 }
 
-bool HttpPost(
-	const char* url,
-	http_client_request_headers_t request_headers,
-	void* buffer,
-	size_t buffer_len,
-	http_client_callback_t callback,
-	void* userdata)
+bool HttpPost(const char *url, http_client_request_headers_t request_headers,
+	      void *buffer, size_t buffer_len, http_client_callback_t callback,
+	      void *userdata)
 {
 	bool result = false;
 
-	CURL* curl = curl_easy_init();
+	CURL *curl = curl_easy_init();
 
 	if (curl) {
 		SetGlobalCURLOptions(curl, url);
@@ -810,7 +885,8 @@ bool HttpPost(
 		context.callback = callback;
 		context.userdata = userdata;
 
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_write_callback);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+				 http_write_callback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &context);
 
 		curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -819,12 +895,13 @@ bool HttpPost(
 
 		curl_slist *headers = NULL;
 		for (auto h : request_headers) {
-			headers = curl_slist_append(headers, (h.first + ": " + h.second).c_str());
+			headers = curl_slist_append(
+				headers, (h.first + ": " + h.second).c_str());
 		}
 
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-		char* errorbuf = new char[CURL_ERROR_SIZE];
+		char *errorbuf = new char[CURL_ERROR_SIZE];
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuf);
 
 		CURLcode res = curl_easy_perform(curl);
@@ -840,10 +917,11 @@ bool HttpPost(
 
 		if (callback) {
 			if (!result) {
-				callback(nullptr, 0, 0, errorbuf, (int)http_code);
-			}
-			else {
-				callback(nullptr, 0, 0, nullptr, (int)http_code);
+				callback(nullptr, 0, 0, errorbuf,
+					 (int)http_code);
+			} else {
+				callback(nullptr, 0, 0, nullptr,
+					 (int)http_code);
 			}
 		}
 
@@ -857,18 +935,16 @@ bool HttpPost(
 
 static const size_t MAX_HTTP_STRING_RESPONSE_LENGTH = 1024 * 1024 * 100;
 
-bool HttpGetString(
-	const char* url,
-	http_client_request_headers_t request_headers,
-	http_client_string_callback_t callback,
-	void* userdata)
+bool HttpGetString(const char *url,
+		   http_client_request_headers_t request_headers,
+		   http_client_string_callback_t callback, void *userdata)
 {
 	std::vector<char> buffer;
 	std::string error = "";
 	int http_status_code = 0;
 
-	auto cb = [&](void* data, size_t datalen, void* userdata, char* error_msg, int http_code) -> bool
-	{
+	auto cb = [&](void *data, size_t datalen, void *userdata,
+		      char *error_msg, int http_code) -> bool {
 		if (http_code != 0) {
 			http_status_code = http_code;
 		}
@@ -879,43 +955,35 @@ bool HttpGetString(
 			return false;
 		}
 
-		char* in = (char*)data;
+		char *in = (char *)data;
 
 		std::copy(in, in + datalen, std::back_inserter(buffer));
 
 		return buffer.size() < MAX_HTTP_STRING_RESPONSE_LENGTH;
 	};
 
-	bool success = HttpGet(
-		url,
-		request_headers,
-		cb,
-		nullptr);
+	bool success = HttpGet(url, request_headers, cb, nullptr);
 
 	buffer.push_back(0);
 
-	callback(
-		(char*)&buffer[0],
-		userdata,
-		error.size() ? (char*)error.c_str() : nullptr,
-		http_status_code);
+	callback((char *)&buffer[0], userdata,
+		 error.size() ? (char *)error.c_str() : nullptr,
+		 http_status_code);
 
 	return success;
 }
 
-bool HttpPostString(
-	const char* url,
-	http_client_request_headers_t request_headers,
-	const char* postData,
-	http_client_string_callback_t callback,
-	void* userdata)
+bool HttpPostString(const char *url,
+		    http_client_request_headers_t request_headers,
+		    const char *postData,
+		    http_client_string_callback_t callback, void *userdata)
 {
 	std::vector<char> buffer;
 	std::string error = "";
 	int http_status_code = 0;
 
-	auto cb = [&](void* data, size_t datalen, void* userdata, char* error_msg, int http_code) -> bool
-	{
+	auto cb = [&](void *data, size_t datalen, void *userdata,
+		      char *error_msg, int http_code) -> bool {
 		if (http_code != 0) {
 			http_status_code = http_code;
 		}
@@ -926,35 +994,28 @@ bool HttpPostString(
 			return false;
 		}
 
-		char* in = (char*)data;
+		char *in = (char *)data;
 
 		std::copy(in, in + datalen, std::back_inserter(buffer));
 
 		return buffer.size() < MAX_HTTP_STRING_RESPONSE_LENGTH;
 	};
 
-	bool success = HttpPost(
-		url,
-		request_headers,
-		(void*)postData,
-		strlen(postData),
-		cb,
-		nullptr);
+	bool success = HttpPost(url, request_headers, (void *)postData,
+				strlen(postData), cb, nullptr);
 
 	buffer.push_back(0);
 
-	callback(
-		(char*)&buffer[0],
-		userdata,
-		error.size() ? (char*)error.c_str() : nullptr,
-		http_status_code);
+	callback((char *)&buffer[0], userdata,
+		 error.size() ? (char *)error.c_str() : nullptr,
+		 http_status_code);
 
 	return success;
 }
 
 /* ========================================================= */
 
-static std::string GetEnvironmentConfigRegKeyPath(const char* productName)
+static std::string GetEnvironmentConfigRegKeyPath(const char *productName)
 {
 #ifdef _WIN64
 	std::string REG_KEY_PATH = "SOFTWARE\\WOW6432Node\\StreamElements";
@@ -970,23 +1031,19 @@ static std::string GetEnvironmentConfigRegKeyPath(const char* productName)
 	return REG_KEY_PATH;
 }
 
-static std::string ReadEnvironmentConfigString(const char* regValueName, const char* productName)
+static std::string ReadEnvironmentConfigString(const char *regValueName,
+					       const char *productName)
 {
 	std::string result = "";
 
 	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(productName);
 
 	DWORD bufLen = 16384;
-	char* buffer = new char[bufLen];
+	char *buffer = new char[bufLen];
 
-	LSTATUS lResult = RegGetValueA(
-		HKEY_LOCAL_MACHINE,
-		REG_KEY_PATH.c_str(),
-		regValueName,
-		RRF_RT_REG_SZ,
-		NULL,
-		buffer,
-		&bufLen);
+	LSTATUS lResult = RegGetValueA(HKEY_LOCAL_MACHINE, REG_KEY_PATH.c_str(),
+				       regValueName, RRF_RT_REG_SZ, NULL,
+				       buffer, &bufLen);
 
 	if (ERROR_SUCCESS == lResult) {
 		result = buffer;
@@ -997,26 +1054,22 @@ static std::string ReadEnvironmentConfigString(const char* regValueName, const c
 	return result;
 }
 
-bool WriteEnvironmentConfigString(const char* regValueName, const char* regValue, const char* productName)
+bool WriteEnvironmentConfigString(const char *regValueName,
+				  const char *regValue, const char *productName)
 {
 	bool result = false;
 
 	std::string REG_KEY_PATH = GetEnvironmentConfigRegKeyPath(productName);
 
-	LSTATUS lResult = RegSetKeyValueA(
-		HKEY_LOCAL_MACHINE,
-		REG_KEY_PATH.c_str(),
-		regValueName,
-		REG_SZ,
-		regValue,
-		strlen(regValue));
+	LSTATUS lResult = RegSetKeyValueA(HKEY_LOCAL_MACHINE,
+					  REG_KEY_PATH.c_str(), regValueName,
+					  REG_SZ, regValue, strlen(regValue));
 
 	if (lResult != ERROR_SUCCESS) {
-		result = WriteEnvironmentConfigStrings({
-			{ productName ? productName : "", regValueName, regValue }
-		});
-	}
-	else {
+		result = WriteEnvironmentConfigStrings(
+			{{productName ? productName : "", regValueName,
+			  regValue}});
+	} else {
 		result = true;
 	}
 
@@ -1032,17 +1085,16 @@ static std::wstring GetCurrentDllFolderPathW()
 	WCHAR path[MAX_PATH];
 	HMODULE hModule;
 
-	if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-		(LPWSTR)&GetCurrentDllFolderPathW, &hModule))
-	{
+	if (GetModuleHandleExW(
+		    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+			    GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+		    (LPWSTR)&GetCurrentDllFolderPathW, &hModule)) {
 		GetModuleFileNameW(hModule, path, sizeof(path));
 		PathRemoveFileSpecW(path);
 
 		result = std::wstring(path);
 
-		if (!result.empty() &&
-			result[result.size() - 1] != '\\')
+		if (!result.empty() && result[result.size() - 1] != '\\')
 			result += L"\\";
 	}
 
@@ -1055,9 +1107,9 @@ bool WriteEnvironmentConfigStrings(streamelements_env_update_requests requests)
 
 	for (auto req : requests) {
 		if (req.product.size()) {
-			args.push_back(req.product + "/" + req.key + "=" + req.value);
-		}
-		else {
+			args.push_back(req.product + "/" + req.key + "=" +
+				       req.value);
+		} else {
 			args.push_back(req.key + "=" + req.value);
 		}
 	}
@@ -1080,32 +1132,30 @@ bool WriteEnvironmentConfigStrings(streamelements_env_update_requests requests)
 		wArgs = wArgs.substr(0, wArgs.size() - 1);
 	}
 
-	std::wstring wExePath = GetCurrentDllFolderPathW() + L"obs-streamelements-set-machine-config.exe";
+	std::wstring wExePath = GetCurrentDllFolderPathW() +
+				L"obs-streamelements-set-machine-config.exe";
 
-	HINSTANCE hInst = ShellExecuteW(
-		NULL,
-		L"runas",
-		wExePath.c_str(),
-		wArgs.c_str(),
-		NULL,
-		SW_SHOW);
+	HINSTANCE hInst = ShellExecuteW(NULL, L"runas", wExePath.c_str(),
+					wArgs.c_str(), NULL, SW_SHOW);
 
 	BOOL bResult = hInst > (HINSTANCE)32;
 
 	return bResult;
 }
 
-std::string ReadProductEnvironmentConfigurationString(const char* key)
+std::string ReadProductEnvironmentConfigurationString(const char *key)
 {
 	return ReadEnvironmentConfigString(key, ENV_PRODUCT_NAME);
 }
 
-bool WriteProductEnvironmentConfigurationString(const char* key, const char* value)
+bool WriteProductEnvironmentConfigurationString(const char *key,
+						const char *value)
 {
 	return WriteEnvironmentConfigString(key, value, ENV_PRODUCT_NAME);
 }
 
-bool WriteProductEnvironmentConfigurationStrings(streamelements_env_update_requests requests)
+bool WriteProductEnvironmentConfigurationStrings(
+	streamelements_env_update_requests requests)
 {
 	for (int i = 0; i < requests.size(); ++i) {
 		requests[i].product = ENV_PRODUCT_NAME;
@@ -1142,10 +1192,12 @@ static std::string CreateCryptoSecureRandomNumberString()
 
 	BCRYPT_ALG_HANDLE hAlgo;
 
-	if (0 == BCryptOpenAlgorithmProvider(&hAlgo, BCRYPT_RNG_ALGORITHM, NULL, 0)) {
+	if (0 == BCryptOpenAlgorithmProvider(&hAlgo, BCRYPT_RNG_ALGORITHM, NULL,
+					     0)) {
 		uint64_t buffer;
 
-		if (0 == BCryptGenRandom(hAlgo, (PUCHAR)&buffer, sizeof(buffer), 0)) {
+		if (0 == BCryptGenRandom(hAlgo, (PUCHAR)&buffer, sizeof(buffer),
+					 0)) {
 			char buf[sizeof(buffer) * 2 + 1];
 			sprintf_s(buf, sizeof(buf), "%llX", buffer);
 
@@ -1166,17 +1218,22 @@ static std::string CreateCryptoSecureRandomNumberString()
 #pragma comment(lib, "Advapi32.lib")
 std::string GetComputerSystemUniqueId()
 {
-	const char* REG_VALUE_NAME = "MachineUniqueIdentifier";
+	const char *REG_VALUE_NAME = "MachineUniqueIdentifier";
 
-	std::string result = ReadEnvironmentConfigString(REG_VALUE_NAME, nullptr);
+	std::string result =
+		ReadEnvironmentConfigString(REG_VALUE_NAME, nullptr);
 	std::string prevResult = result;
 
 	if (result.size()) {
 		// Discard invalid values
-		if (result == "WUID/03000200-0400-0500-0006-000700080009" || // Known duplicate
-		    result == "WUID/00000000-0000-0000-0000-000000000000" || // Null value
-		    result == "WUID/FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF" || // Invalid value
-		    result == "WUID/00412F4E-0000-0000-0000-0000FFFFFFFF") { // Set by russian MS Office crack
+		if (result ==
+			    "WUID/03000200-0400-0500-0006-000700080009" || // Known duplicate
+		    result ==
+			    "WUID/00000000-0000-0000-0000-000000000000" || // Null value
+		    result ==
+			    "WUID/FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF" || // Invalid value
+		    result ==
+			    "WUID/00412F4E-0000-0000-0000-0000FFFFFFFF") { // Set by russian MS Office crack
 			result = "";
 		}
 	}
@@ -1192,84 +1249,97 @@ std::string GetComputerSystemUniqueId()
 
 			// https://docs.microsoft.com/en-us/windows/desktop/wmisdk/setting-the-default-process-security-level-using-c-
 			CoInitializeSecurity(
-				NULL,                       // security descriptor
-				-1,                          // use this simple setting
-				NULL,                        // use this simple setting
-				NULL,                        // reserved
-				RPC_C_AUTHN_LEVEL_DEFAULT,   // authentication level  
+				NULL, // security descriptor
+				-1,   // use this simple setting
+				NULL, // use this simple setting
+				NULL, // reserved
+				RPC_C_AUTHN_LEVEL_DEFAULT, // authentication level
 				RPC_C_IMP_LEVEL_IMPERSONATE, // impersonation level
-				NULL,                        // use this simple setting
-				EOAC_NONE,                   // no special capabilities
-				NULL);                          // reserved
+				NULL,      // use this simple setting
+				EOAC_NONE, // no special capabilities
+				NULL);     // reserved
 
 			IWbemLocator *pLocator;
 
 			// https://docs.microsoft.com/en-us/windows/desktop/wmisdk/creating-a-connection-to-a-wmi-namespace
-			hr = CoCreateInstance(
-				CLSID_WbemLocator, 0,
-				CLSCTX_INPROC_SERVER,
-				IID_IWbemLocator,
-				(LPVOID*)&pLocator);
+			hr = CoCreateInstance(CLSID_WbemLocator, 0,
+					      CLSCTX_INPROC_SERVER,
+					      IID_IWbemLocator,
+					      (LPVOID *)&pLocator);
 
 			if (SUCCEEDED(hr)) {
 				IWbemServices *pSvc = 0;
 
 				// https://docs.microsoft.com/en-us/windows/desktop/wmisdk/creating-a-connection-to-a-wmi-namespace
 				hr = pLocator->ConnectServer(
-					BSTR(L"root\\cimv2"),  //namespace
-					NULL,       // User name 
-					NULL,       // User password
-					0,         // Locale 
-					NULL,     // Security flags
-					0,         // Authority 
-					0,        // Context object 
-					&pSvc);   // IWbemServices proxy
+					BSTR(L"root\\cimv2"), //namespace
+					NULL,                 // User name
+					NULL,                 // User password
+					0,                    // Locale
+					NULL,                 // Security flags
+					0,                    // Authority
+					0,                    // Context object
+					&pSvc); // IWbemServices proxy
 
 				if (SUCCEEDED(hr)) {
-					hr = CoSetProxyBlanket(pSvc,
-						RPC_C_AUTHN_WINNT,
-						RPC_C_AUTHZ_NONE,
-						NULL,
+					hr = CoSetProxyBlanket(
+						pSvc, RPC_C_AUTHN_WINNT,
+						RPC_C_AUTHZ_NONE, NULL,
 						RPC_C_AUTHN_LEVEL_CALL,
 						RPC_C_IMP_LEVEL_IMPERSONATE,
-						NULL,
-						EOAC_NONE
-					);
+						NULL, EOAC_NONE);
 
 					if (SUCCEEDED(hr)) {
-						IEnumWbemClassObject *pEnumerator = NULL;
+						IEnumWbemClassObject
+							*pEnumerator = NULL;
 
 						hr = pSvc->ExecQuery(
 							(BSTR)L"WQL",
 							(BSTR)L"select * from Win32_ComputerSystemProduct",
 							WBEM_FLAG_FORWARD_ONLY,
-							NULL,
-							&pEnumerator);
+							NULL, &pEnumerator);
 
 						if (SUCCEEDED(hr)) {
-							IWbemClassObject *pObj = NULL;
+							IWbemClassObject *pObj =
+								NULL;
 
 							ULONG resultCount;
 							hr = pEnumerator->Next(
 								WBEM_INFINITE,
-								1,
-								&pObj,
+								1, &pObj,
 								&resultCount);
 
 							if (SUCCEEDED(hr)) {
 								VARIANT value;
 
-								hr = pObj->Get(L"UUID", 0, &value, NULL, NULL);
+								hr = pObj->Get(
+									L"UUID",
+									0,
+									&value,
+									NULL,
+									NULL);
 
-								if (SUCCEEDED(hr)) {
-									if (value.vt != VT_NULL) {
-										result = std::string("SWID/") + clean_guid_string(wstring_to_utf8(std::wstring(value.bstrVal)));
-										result += "-";
-										result += clean_guid_string(CreateGloballyUniqueIdString());
-										result += "-";
-										result += CreateCryptoSecureRandomNumberString();
+								if (SUCCEEDED(
+									    hr)) {
+									if (value.vt !=
+									    VT_NULL) {
+										result =
+											std::string(
+												"SWID/") +
+											clean_guid_string(wstring_to_utf8(
+												std::wstring(
+													value.bstrVal)));
+										result +=
+											"-";
+										result += clean_guid_string(
+											CreateGloballyUniqueIdString());
+										result +=
+											"-";
+										result +=
+											CreateCryptoSecureRandomNumberString();
 									}
-									VariantClear(&value);
+									VariantClear(
+										&value);
 								}
 							}
 
@@ -1291,20 +1361,23 @@ std::string GetComputerSystemUniqueId()
 
 	if (!result.size()) {
 		// Failed retrieving UUID, generate our own
-		result = std::string("SEID/") + clean_guid_string(CreateGloballyUniqueIdString());
+		result = std::string("SEID/") +
+			 clean_guid_string(CreateGloballyUniqueIdString());
 		result += "-";
 		result += CreateCryptoSecureRandomNumberString();
 	}
 
 	if (result.size() && result != prevResult) {
 		// Save for future use
-		WriteEnvironmentConfigString(REG_VALUE_NAME, result.c_str(), nullptr);
+		WriteEnvironmentConfigString(REG_VALUE_NAME, result.c_str(),
+					     nullptr);
 	}
 
 	return result;
 }
 
-bool ParseQueryString(std::string input, std::map<std::string, std::string>& result)
+bool ParseQueryString(std::string input,
+		      std::map<std::string, std::string> &result)
 {
 	std::string s = input;
 
@@ -1315,8 +1388,7 @@ bool ParseQueryString(std::string input, std::map<std::string, std::string>& res
 		if (offset != std::string::npos) {
 			left = s.substr(0, offset);
 			s = s.substr(offset + 1);
-		}
-		else {
+		} else {
 			left = s;
 			s = "";
 		}
@@ -1335,7 +1407,7 @@ bool ParseQueryString(std::string input, std::map<std::string, std::string>& res
 	return true;
 }
 
-std::string CreateSHA256Digest(std::string& input)
+std::string CreateSHA256Digest(std::string &input)
 {
 	std::vector<unsigned char> hash(picosha2::k_digest_size);
 	picosha2::hash256(input.begin(), input.end(), hash.begin(), hash.end());
@@ -1346,12 +1418,14 @@ std::string CreateSHA256Digest(std::string& input)
 static std::mutex s_session_message_signature_mutex;
 static std::string s_session_message_signature_random = "";
 
-std::string CreateSessionMessageSignature(std::string& message)
+std::string CreateSessionMessageSignature(std::string &message)
 {
 	if (!s_session_message_signature_random.size()) {
-		std::lock_guard<std::mutex> guard(s_session_message_signature_mutex);
+		std::lock_guard<std::mutex> guard(
+			s_session_message_signature_mutex);
 		if (!s_session_message_signature_random.size()) {
-			s_session_message_signature_random = CreateCryptoSecureRandomNumberString();
+			s_session_message_signature_random =
+				CreateCryptoSecureRandomNumberString();
 		}
 	}
 
@@ -1360,7 +1434,7 @@ std::string CreateSessionMessageSignature(std::string& message)
 	return CreateSHA256Digest(digest_input);
 }
 
-bool VerifySessionMessageSignature(std::string& message, std::string& signature)
+bool VerifySessionMessageSignature(std::string &message, std::string &signature)
 {
 	std::string digest_input = message + s_session_message_signature_random;
 
@@ -1371,7 +1445,7 @@ bool VerifySessionMessageSignature(std::string& message, std::string& signature)
 
 std::string CreateSessionSignedAbsolutePathURL(std::wstring path)
 {
- 	CefURLParts parts;
+	CefURLParts parts;
 
 	path = std::regex_replace(path, std::wregex(L"#"), L"%23");
 	path = std::regex_replace(path, std::wregex(L"&"), L"%26");
@@ -1386,8 +1460,12 @@ std::string CreateSessionSignedAbsolutePathURL(std::wstring path)
 
 	std::string message = CefString(&parts.path).ToString();
 
-	message = CefURIDecode(message, true, cef_uri_unescape_rule_t::UU_SPACES);
-	message = CefURIDecode(message, true, cef_uri_unescape_rule_t::UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
+	message =
+		CefURIDecode(message, true, cef_uri_unescape_rule_t::UU_SPACES);
+	message = CefURIDecode(
+		message, true,
+		cef_uri_unescape_rule_t::
+			UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
 
 	message = message.erase(0, 1);
 
@@ -1395,21 +1473,24 @@ std::string CreateSessionSignedAbsolutePathURL(std::wstring path)
 	//message = std::regex_replace(message, std::regex("&"), "%26");
 
 	return url.ToString() + std::string("?digest=") +
-		CreateSessionMessageSignature(message);
+	       CreateSessionMessageSignature(message);
 }
 
-bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path)
+bool VerifySessionSignedAbsolutePathURL(std::string url, std::string &path)
 {
 	CefURLParts parts;
 
 	if (!CefParseURL(CefString(url), parts)) {
 		return false;
-	}
-	else {
+	} else {
 		path = CefString(&parts.path).ToString();
 
-		path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_SPACES);
-		path = CefURIDecode(path, true, cef_uri_unescape_rule_t::UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
+		path = CefURIDecode(path, true,
+				    cef_uri_unescape_rule_t::UU_SPACES);
+		path = CefURIDecode(
+			path, true,
+			cef_uri_unescape_rule_t::
+				UU_URL_SPECIAL_CHARS_EXCEPT_PATH_SEPARATORS);
 
 		path = path.erase(0, 1);
 
@@ -1418,8 +1499,7 @@ bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path)
 
 		if (!queryArgs.count("digest")) {
 			return false;
-		}
-		else {
+		} else {
 			std::string signature = queryArgs["digest"];
 
 			std::string message = path;
@@ -1427,14 +1507,15 @@ bool VerifySessionSignedAbsolutePathURL(std::string url, std::string& path)
 			//message = std::regex_replace(message, std::regex("#"), "%23");
 			//message = std::regex_replace(message, std::regex("&"), "%26");
 
-			return VerifySessionMessageSignature(message, signature);
+			return VerifySessionMessageSignature(message,
+							     signature);
 		}
 	}
 }
 
 /* ========================================================= */
 
-bool IsAlwaysOnTop(QWidget* window)
+bool IsAlwaysOnTop(QWidget *window)
 {
 #ifdef WIN32
 	DWORD exStyle = GetWindowLong((HWND)window->winId(), GWL_EXSTYLE);
@@ -1444,12 +1525,12 @@ bool IsAlwaysOnTop(QWidget* window)
 #endif
 }
 
-void SetAlwaysOnTop(QWidget* window, bool enable)
+void SetAlwaysOnTop(QWidget *window, bool enable)
 {
 #ifdef WIN32
 	HWND hwnd = (HWND)window->winId();
 	SetWindowPos(hwnd, enable ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
-		SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+		     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 #else
 	Qt::WindowFlags flags = window->windowFlags();
 
@@ -1461,4 +1542,26 @@ void SetAlwaysOnTop(QWidget* window, bool enable)
 	window->setWindowFlags(flags);
 	window->show();
 #endif
+}
+
+double GetObsGlobalFramesPerSecond()
+{
+	config_t *basicConfig =
+		obs_frontend_get_profile_config(); // does not increase refcount
+
+	switch (config_get_uint(basicConfig, "Video", "FPSType")) {
+	case 0: // Common
+		return (double)atoi(
+			config_get_string(basicConfig, "Video", "FPSCommon"));
+		break;
+
+	case 1: // Integer
+		return (double)config_get_uint(basicConfig, "Video", "FPSInt");
+		break;
+
+	case 2: // Fractional
+		return (double)config_get_uint(basicConfig, "Video", "FPSNum") /
+		       (double)config_get_uint(basicConfig, "Video", "FPSDen");
+		break;
+	}
 }

@@ -178,3 +178,5 @@ private:
 	RecursiveNestingLevelCounter __recursive_nesting_level_guard( \
 		&__recursive_nesting_level);                           \
 	if (__recursive_nesting_level_guard.level() > 1) return;
+
+double GetObsGlobalFramesPerSecond();

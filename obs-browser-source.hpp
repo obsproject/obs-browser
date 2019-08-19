@@ -54,7 +54,22 @@ struct BrowserSource {
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	bool reset_frame = false;
 #endif
-	bool                  is_showing               = false;
+	bool is_showing = false;
+#if CHROME_VERSION_BUILD >= 3440 && CHROME_VERSION_BUILD < 3809
+	// This is part of an override to CEF bug which is resolved in CEF
+	// 3809 which prevents initially invisible Browser Sources from
+	// displaying correctly on first show, requiring those sources to
+	// be hidden and unhidden again to be rendered correctly.
+	//
+	// An example of content demonstrating the bug here:
+	// https://whatwebcando.today/foreground-detection.html
+	//
+	// More information about CEF bug here:
+	// https://bitbucket.org/chromiumembedded/cef/issues/2618/onacceleratedpaint-is-not-called-with-off
+	//
+	bool is_streamelements_fps_bug_override = false;
+	int streamelements_fps_bug_override_entry_count = 0;
+#endif
 
 	inline void DestroyTextures()
 	{
