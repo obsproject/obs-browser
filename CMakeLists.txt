@@ -93,6 +93,7 @@ endif()
 
 set(obs-browser_SOURCES
 	obs-browser-source.cpp
+	obs-browser-source-audio.cpp
 	obs-browser-plugin.cpp
 	browser-scheme.cpp
 	browser-client.cpp
