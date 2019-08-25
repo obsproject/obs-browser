@@ -27,8 +27,9 @@ install:
 
     git clone --recursive https://github.com/jp9000/obs-studio.git c:\local\obs-studio
 
-
     cd /d c:\local\obs-studio
+
+    git checkout 23.2.1
 
     git submodule update --init --recursive
 
