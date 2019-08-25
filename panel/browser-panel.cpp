@@ -238,9 +238,7 @@ QCefWidgetInternal::~QCefWidgetInternal()
 			 * to lock up */
 			int code = ETIMEDOUT;
 			while (code == ETIMEDOUT) {
-#if USE_QT_LOOP
 				QCoreApplication::processEvents();
-#endif
 				code = os_event_timedwait(finishedEvent, 5);
 			}
 		}
