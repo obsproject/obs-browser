@@ -420,21 +420,17 @@ void RegisterBrowserSource()
 	info.type = OBS_SOURCE_TYPE_INPUT;
 	info.output_flags = OBS_SOURCE_VIDEO |
 #if CHROME_VERSION_BUILD >= 3683
-		OBS_SOURCE_AUDIO |
+			    OBS_SOURCE_AUDIO |
 #endif
-		OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
-		OBS_SOURCE_DO_NOT_DUPLICATE |
-#ifdef OBS_SOURCE_MONITOR_BY_DEFAULT
-		OBS_SOURCE_MONITOR_BY_DEFAULT;
-#else
-		0;
-#endif
+			    OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
+			    OBS_SOURCE_DO_NOT_DUPLICATE |
+			    OBS_SOURCE_MONITOR_BY_DEFAULT;
 
 	info.get_properties = browser_source_get_properties;
 	info.get_defaults = browser_source_get_defaults;
 
-	info.get_name = [](void*) { return obs_module_text("BrowserSource"); };
-	info.create = [](obs_data_t* settings, obs_source_t* source) -> void* {
+	info.get_name = [](void *) { return obs_module_text("BrowserSource"); };
+	info.create = [](obs_data_t *settings, obs_source_t *source) -> void * {
 		if (source == nullptr) {
 			return nullptr;
 		}
@@ -442,82 +438,64 @@ void RegisterBrowserSource()
 		obs_browser_initialize();
 		return new BrowserSource(settings, source);
 	};
-	info.destroy = [](void* data) {
-		delete static_cast<BrowserSource*>(data);
+	info.destroy = [](void *data) {
+		delete static_cast<BrowserSource *>(data);
 	};
-	info.update = [](void* data, obs_data_t* settings) {
-		static_cast<BrowserSource*>(data)->Update(settings);
+	info.update = [](void *data, obs_data_t *settings) {
+		static_cast<BrowserSource *>(data)->Update(settings);
 	};
-	info.get_width = [](void* data) {
-		return (uint32_t) static_cast<BrowserSource*>(data)->width;
+	info.get_width = [](void *data) {
+		return (uint32_t) static_cast<BrowserSource *>(data)->width;
 	};
-	info.get_height = [](void* data) {
-		return (uint32_t) static_cast<BrowserSource*>(data)->height;
+	info.get_height = [](void *data) {
+		return (uint32_t) static_cast<BrowserSource *>(data)->height;
 	};
-	info.video_tick = [](void* data, float) {
-		static_cast<BrowserSource*>(data)->Tick();
+	info.video_tick = [](void *data, float) {
+		static_cast<BrowserSource *>(data)->Tick();
 	};
-	info.video_render = [](void* data, gs_effect_t*) {
-		static_cast<BrowserSource*>(data)->Render();
+	info.video_render = [](void *data, gs_effect_t *) {
+		static_cast<BrowserSource *>(data)->Render();
 	};
-	info.mouse_click = [](void* data, const struct obs_mouse_event* event,
-		int32_t type, bool mouse_up,
-		uint32_t click_count) {
-			static_cast<BrowserSource*>(data)->SendMouseClick(
-				event, type, mouse_up, click_count);
+	info.mouse_click = [](void *data, const struct obs_mouse_event *event,
+			      int32_t type, bool mouse_up,
+			      uint32_t click_count) {
+		static_cast<BrowserSource *>(data)->SendMouseClick(
+			event, type, mouse_up, click_count);
 	};
-	info.mouse_move = [](void* data, const struct obs_mouse_event* event,
-		bool mouse_leave) {
-			static_cast<BrowserSource*>(data)->SendMouseMove(event,
-				mouse_leave);
+	info.mouse_move = [](void *data, const struct obs_mouse_event *event,
+			     bool mouse_leave) {
+		static_cast<BrowserSource *>(data)->SendMouseMove(event,
+								  mouse_leave);
 	};
-	info.mouse_wheel = [](void* data, const struct obs_mouse_event* event,
-		int x_delta, int y_delta) {
-			static_cast<BrowserSource*>(data)->SendMouseWheel(
-				event, x_delta, y_delta);
+	info.mouse_wheel = [](void *data, const struct obs_mouse_event *event,
+			      int x_delta, int y_delta) {
+		static_cast<BrowserSource *>(data)->SendMouseWheel(
+			event, x_delta, y_delta);
 	};
-	info.focus = [](void* data, bool focus) {
-		static_cast<BrowserSource*>(data)->SendFocus(focus);
+	info.focus = [](void *data, bool focus) {
+		static_cast<BrowserSource *>(data)->SendFocus(focus);
 	};
-	info.key_click = [](void* data, const struct obs_key_event* event,
-		bool key_up) {
-			static_cast<BrowserSource*>(data)->SendKeyClick(event, key_up);
+	info.key_click = [](void *data, const struct obs_key_event *event,
+			    bool key_up) {
+		static_cast<BrowserSource *>(data)->SendKeyClick(event, key_up);
 	};
-	info.show = [](void* data) {
-		static_cast<BrowserSource*>(data)->SetShowing(true);
+	info.show = [](void *data) {
+		static_cast<BrowserSource *>(data)->SetShowing(true);
 	};
-	info.hide = [](void* data) {
-		static_cast<BrowserSource*>(data)->SetShowing(false);
+	info.hide = [](void *data) {
+		static_cast<BrowserSource *>(data)->SetShowing(false);
 	};
-	info.activate = [](void* data) {
-		BrowserSource* bs = static_cast<BrowserSource*>(data);
+	info.activate = [](void *data) {
+		BrowserSource *bs = static_cast<BrowserSource *>(data);
 		if (bs->restart)
 			bs->Refresh();
 		bs->SetActive(true);
 	};
-	info.deactivate = [](void* data) {
-		static_cast<BrowserSource*>(data)->SetActive(false);
+	info.deactivate = [](void *data) {
+		static_cast<BrowserSource *>(data)->SetActive(false);
 	};
 
-#if LIBOBS_API_VER >= MAKE_SEMANTIC_VERSION(24,0,0)
-	//
-	// OBS 24 adds a *audio_mix pointer to the obs_source_info
-	// structure.
-	// We make the browser source backwards compatible by ensuring
-	// that we'll pass the structure less the added pointer since
-	// obs_register_source_s checks for input size and adjusts
-	// if it's too large (should be vice-versa, but it is what it is)
-	//
-	if (obs_get_version() < MAKE_SEMANTIC_VERSION(24, 0, 0)) {
-#ifdef _WIN64
-		obs_register_source_s(&info, sizeof(info) - sizeof(void*));
-#else
-		obs_register_source_s(&info, sizeof(info) - sizeof(void*));
-#endif
-	}
-#else
 	obs_register_source(&info);
-#endif
 }
 
 /* ========================================================================= */
