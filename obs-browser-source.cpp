@@ -170,12 +170,9 @@ void BrowserSource::DestroyBrowser(bool async)
 				bc->bs = nullptr;
 			}
 
-			/*
-		 * This stops rendering
-		 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
-		 * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
-		 */
+#if CHROME_VERSION_BUILD < 3507
 			cefBrowser->GetHost()->WasHidden(true);
+#endif
 			cefBrowser->GetHost()->CloseBrowser(true);
 		},
 		async);
@@ -288,6 +285,7 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 
 void BrowserSource::SetShowing(bool showing)
 {
+#if CHROME_VERSION_BUILD < 3507
 	if (!showing) {
 		ExecuteOnBrowser(
 			[](CefRefPtr<CefBrowser> cefBrowser) {
@@ -295,6 +293,7 @@ void BrowserSource::SetShowing(bool showing)
 			},
 			true);
 	}
+#endif
 
 	if (shutdown_on_invisible) {
 		if (showing) {
@@ -316,6 +315,7 @@ void BrowserSource::SetShowing(bool showing)
 			true);
 	}
 
+#if CHROME_VERSION_BUILD < 3507
 	if (showing) {
 		ExecuteOnBrowser(
 			[](CefRefPtr<CefBrowser> cefBrowser) {
@@ -324,6 +324,7 @@ void BrowserSource::SetShowing(bool showing)
 			},
 			true);
 	}
+#endif
 }
 
 void BrowserSource::SetActive(bool active)
