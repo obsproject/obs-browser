@@ -172,7 +172,9 @@ QCefWidgetInternal::~QCefWidgetInternal()
 				reinterpret_cast<QCefBrowserClient *>(
 					client.get());
 
+#if CHROME_VERSION_BUILD < 3507
 			cefBrowser->GetHost()->WasHidden(true);
+#endif
 #ifdef _WIN32
 			/* So you're probably wondering what's going on here.
 			 * If you call CefBrowserHost::CloseBrowser, and it
