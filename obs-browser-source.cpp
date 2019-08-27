@@ -30,6 +30,12 @@
 #include <QThread>
 #endif
 
+#if CHROME_VERSION_BUILD < 3507
+#define ENABLE_FRAME_BEGIN 1
+#else
+#define ENABLE_FRAME_BEGIN 0
+#endif
+
 using namespace std;
 
 extern bool QueueCEFTask(std::function<void()> task);
@@ -137,8 +143,20 @@ bool BrowserSource::CreateBrowser()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (!fps_custom) {
+#if ENABLE_FRAME_BEGIN
 			windowInfo.external_begin_frame_enabled = true;
 			cefBrowserSettings.windowless_frame_rate = 0;
+#else
+			struct obs_video_info ovi;
+			obs_get_video_info(&ovi);
+
+			uint32_t obs_fps =
+				(ovi.fps_den == 1)
+					? ovi.fps_num
+					: (ovi.fps_num / ovi.fps_den) + 1;
+
+			cefBrowserSettings.windowless_frame_rate = (int)obs_fps;
+#endif
 		} else {
 			cefBrowserSettings.windowless_frame_rate = fps;
 		}
