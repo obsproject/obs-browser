@@ -459,7 +459,7 @@ void BrowserSource::Render()
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
 	}
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED && ENABLE_FRAME_BEGIN
 	SignalBeginFrame();
 #elif USE_QT_LOOP
 	ProcessCef();
