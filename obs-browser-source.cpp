@@ -141,15 +141,7 @@ bool BrowserSource::CreateBrowser()
 			windowInfo.external_begin_frame_enabled = true;
 			cefBrowserSettings.windowless_frame_rate = 0;
 #else
-			struct obs_video_info ovi;
-			obs_get_video_info(&ovi);
-
-			uint32_t obs_fps =
-				(ovi.fps_den == 1)
-					? ovi.fps_num
-					: (ovi.fps_num / ovi.fps_den) + 1;
-
-			cefBrowserSettings.windowless_frame_rate = (int)obs_fps;
+			cefBrowserSettings.windowless_frame_rate = obs_fps;
 #endif
 		} else {
 			cefBrowserSettings.windowless_frame_rate = fps;
@@ -435,10 +427,38 @@ void BrowserSource::Update(obs_data_t *settings)
 	ClearAudioStreams();
 	if (!shutdown_on_invisible || obs_source_showing(source))
 		create_browser = true;
+
+	first_update = false;
 }
+
+#if !ENABLE_FRAME_SIGNAL
+void BrowserSource::CheckFPS()
+{
+	struct obs_video_info ovi = {};
+	obs_get_video_info(&ovi);
+
+	int new_fps = 0;
+	new_fps = (ovi.fps_den > 1) ? (int)(ovi.fps_num / ovi.fps_den) + 1
+				    : (int)ovi.fps_num;
+
+	if (new_fps && new_fps != obs_fps) {
+		obs_fps = new_fps;
+		Update(nullptr);
+
+	} else if (!new_fps) {
+		obs_fps = new_fps;
+		create_browser = false;
+	}
+}
+#endif
 
 void BrowserSource::Tick()
 {
+#if !ENABLE_FRAME_SIGNAL
+	if (!first_update && !fps_custom)
+		CheckFPS();
+#endif
+
 	if (create_browser && CreateBrowser())
 		create_browser = false;
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED

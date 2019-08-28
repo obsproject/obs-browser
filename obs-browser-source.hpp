@@ -65,9 +65,13 @@ struct BrowserSource {
 	int height = 0;
 	bool fps_custom = false;
 	int fps = 0;
+#if !ENABLE_FRAME_SIGNAL
+	int obs_fps = 0;
+#endif
 	bool restart = false;
 	bool shutdown_on_invisible = false;
 	bool is_local = false;
+	bool first_update = true;
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	bool reset_frame = false;
 #endif
@@ -95,6 +99,9 @@ struct BrowserSource {
 	~BrowserSource();
 
 	void Update(obs_data_t *settings = nullptr);
+#if !ENABLE_FRAME_SIGNAL
+	void CheckFPS();
+#endif
 	void Tick();
 	void Render();
 	void EnumAudioStreams(obs_source_enum_proc_t cb, void *param);
