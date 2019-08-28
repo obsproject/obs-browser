@@ -35,6 +35,12 @@
 extern bool hwaccel;
 #endif
 
+#if CHROME_VERSION_BUILD < 3507
+#define ENABLE_FRAME_SIGNAL 1
+#else
+#define ENABLE_FRAME_SIGNAL 0
+#endif
+
 struct AudioStream {
 	OBSSource source;
 	speaker_layout speakers;
