@@ -195,6 +195,15 @@ void BrowserSource::DestroyBrowser(bool async)
 	cefBrowser = nullptr;
 }
 
+void BrowserSource::ClearAudioStreams()
+{
+	QueueCEFTask([this]() {
+		audio_streams.clear();
+		std::lock_guard<std::mutex> lock(audio_sources_mutex);
+		audio_sources.clear();
+	});
+}
+
 void BrowserSource::SendMouseClick(const struct obs_mouse_event *event,
 				   int32_t type, bool mouse_up,
 				   uint32_t click_count)
@@ -423,6 +432,7 @@ void BrowserSource::Update(obs_data_t *settings)
 
 	DestroyBrowser(true);
 	DestroyTextures();
+	ClearAudioStreams();
 	if (!shutdown_on_invisible || obs_source_showing(source))
 		create_browser = true;
 }

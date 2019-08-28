@@ -86,6 +86,7 @@ struct BrowserSource {
 
 	bool CreateBrowser();
 	void DestroyBrowser(bool async = false);
+	void ClearAudioStreams();
 	void ExecuteOnBrowser(BrowserFunc func, bool async = false);
 
 	/* ---------------------------- */
