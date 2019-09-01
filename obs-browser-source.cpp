@@ -291,11 +291,13 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 void BrowserSource::SetShowing(bool showing)
 {
 	if (!showing) {
+#if ENABLE_WASHIDDEN
 		ExecuteOnBrowser(
 			[](CefRefPtr<CefBrowser> cefBrowser) {
 				cefBrowser->GetHost()->WasHidden(true);
 			},
 			true);
+#endif
 	}
 
 	if (shutdown_on_invisible) {
@@ -319,12 +321,14 @@ void BrowserSource::SetShowing(bool showing)
 	}
 
 	if (showing) {
+#if ENABLE_WASHIDDEN
 		ExecuteOnBrowser(
 			[](CefRefPtr<CefBrowser> cefBrowser) {
 				cefBrowser->GetHost()->WasHidden(false);
 				cefBrowser->GetHost()->Invalidate(PET_VIEW);
 			},
 			true);
+#endif
 	}
 }
 
