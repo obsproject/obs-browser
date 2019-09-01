@@ -35,12 +35,6 @@
 extern bool hwaccel;
 #endif
 
-#if CHROME_VERSION_BUILD < 3507
-#define ENABLE_FRAME_SIGNAL 1
-#else
-#define ENABLE_FRAME_SIGNAL 0
-#endif
-
 struct AudioStream {
 	OBSSource source;
 	speaker_layout speakers;
@@ -65,9 +59,6 @@ struct BrowserSource {
 	int height = 0;
 	bool fps_custom = false;
 	int fps = 0;
-#if !ENABLE_FRAME_SIGNAL
-	int obs_fps = 0;
-#endif
 	bool restart = false;
 	bool shutdown_on_invisible = false;
 	bool is_local = false;
@@ -99,9 +90,6 @@ struct BrowserSource {
 	~BrowserSource();
 
 	void Update(obs_data_t *settings = nullptr);
-#if !ENABLE_FRAME_SIGNAL
-	void CheckFPS();
-#endif
 	void Tick();
 	void Render();
 	void EnumAudioStreams(obs_source_enum_proc_t cb, void *param);

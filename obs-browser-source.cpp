@@ -130,12 +130,8 @@ bool BrowserSource::CreateBrowser()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (!fps_custom) {
-#if ENABLE_FRAME_SIGNAL
 			windowInfo.external_begin_frame_enabled = true;
 			cefBrowserSettings.windowless_frame_rate = 0;
-#else
-			cefBrowserSettings.windowless_frame_rate = obs_fps;
-#endif
 		} else {
 			cefBrowserSettings.windowless_frame_rate = fps;
 		}
@@ -424,34 +420,8 @@ void BrowserSource::Update(obs_data_t *settings)
 	first_update = false;
 }
 
-#if !ENABLE_FRAME_SIGNAL
-void BrowserSource::CheckFPS()
-{
-	struct obs_video_info ovi = {};
-	obs_get_video_info(&ovi);
-
-	int new_fps = 0;
-	new_fps = (ovi.fps_den > 1) ? (int)(ovi.fps_num / ovi.fps_den) + 1
-				    : (int)ovi.fps_num;
-
-	if (new_fps && new_fps != obs_fps) {
-		obs_fps = new_fps;
-		Update(nullptr);
-
-	} else if (!new_fps) {
-		obs_fps = new_fps;
-		create_browser = false;
-	}
-}
-#endif
-
 void BrowserSource::Tick()
 {
-#if !ENABLE_FRAME_SIGNAL
-	if (!first_update && !fps_custom)
-		CheckFPS();
-#endif
-
 	if (create_browser && CreateBrowser())
 		create_browser = false;
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
@@ -476,7 +446,7 @@ void BrowserSource::Render()
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
 	}
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED && ENABLE_FRAME_SIGNAL
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	SignalBeginFrame();
 #elif USE_QT_LOOP
 	ProcessCef();
