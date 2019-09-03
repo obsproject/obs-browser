@@ -80,14 +80,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 			os_event_signal(finishedEvent);
 		});
 		if (success) {
-			/* fixes an issue on windows where blocking the main
-			 * UI thread can cause CEF SendMessage calls to lock
-			 * up */
-			int code = ETIMEDOUT;
-			while (code == ETIMEDOUT) {
-				QCoreApplication::processEvents();
-				code = os_event_timedwait(finishedEvent, 5);
-			}
+			os_event_wait(finishedEvent);
 		}
 		os_event_destroy(finishedEvent);
 	} else {
@@ -122,8 +115,8 @@ bool BrowserSource::CreateBrowser()
 		struct obs_video_info ovi;
 		obs_get_video_info(&ovi);
 
-		CefRefPtr<BrowserClient> browserClient =
-			new BrowserClient(this, hwaccel && tex_sharing_avail);
+		CefRefPtr<BrowserClient> browserClient = new BrowserClient(
+			this, hwaccel && tex_sharing_avail, reroute_audio);
 
 		CefWindowInfo windowInfo;
 #if CHROME_VERSION_BUILD < 3071
@@ -157,11 +150,14 @@ bool BrowserSource::CreateBrowser()
 #endif
 			nullptr);
 #if CHROME_VERSION_BUILD >= 3683
-		cefBrowser->GetHost()->SetAudioMuted(true);
+		if (reroute_audio)
+			cefBrowser->GetHost()->SetAudioMuted(true);
 #endif
 
 		if (!is_showing) {
+#if ENABLE_WASHIDDEN
 			cefBrowser->GetHost()->WasHidden(true);
+#endif
 		}
 	});
 }
@@ -189,6 +185,15 @@ void BrowserSource::DestroyBrowser(bool async)
 		async);
 
 	cefBrowser = nullptr;
+}
+
+void BrowserSource::ClearAudioStreams()
+{
+	QueueCEFTask([this]() {
+		audio_streams.clear();
+		std::lock_guard<std::mutex> lock(audio_sources_mutex);
+		audio_sources.clear();
+	});
 }
 
 void BrowserSource::SendMouseClick(const struct obs_mouse_event *event,
@@ -308,11 +313,14 @@ void BrowserSource::SetShowing(bool showing)
 		}
 	} else if (!!browser) {
 		if (!showing) {
+#if ENABLE_WASHIDDEN
 			browser->GetHost()->WasHidden(true);
+#endif
 		} else {
+#if ENABLE_WASHIDDEN
 			browser->GetHost()->WasHidden(false);
 			browser->GetHost()->Invalidate(PET_VIEW);
-
+#endif
 			if (!fps_custom)
 				reset_frame = false;
 		}
@@ -375,6 +383,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		int n_fps;
 		bool n_shutdown;
 		bool n_restart;
+		bool n_reroute;
 		std::string n_url;
 		std::string n_css;
 
@@ -388,6 +397,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_css = obs_data_get_string(settings, "css");
 		n_url = obs_data_get_string(settings,
 					    n_is_local ? "local_file" : "url");
+		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 
 		if (n_is_local)
 			n_url = "http://absolute/" + n_url;
@@ -395,7 +405,8 @@ void BrowserSource::Update(obs_data_t *settings)
 		if (n_is_local == is_local && n_width == width &&
 		    n_height == height && n_fps_custom == fps_custom &&
 		    n_fps == fps && n_shutdown == shutdown_on_invisible &&
-		    n_restart == restart && n_css == css && n_url == url) {
+		    n_restart == restart && n_css == css && n_url == url &&
+		    n_reroute == reroute_audio) {
 			return;
 		}
 
@@ -405,6 +416,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		fps = n_fps;
 		fps_custom = n_fps_custom;
 		shutdown_on_invisible = n_shutdown;
+		reroute_audio = n_reroute;
 		restart = n_restart;
 		css = n_css;
 		url = n_url;
@@ -440,8 +452,11 @@ void BrowserSource::Update(obs_data_t *settings)
 
 	DestroyBrowser(true);
 	DestroyTextures();
+	ClearAudioStreams();
 	if (!shutdown_on_invisible || obs_source_showing(source))
 		create_browser = true;
+
+	first_update = false;
 }
 
 void BrowserSource::Tick()

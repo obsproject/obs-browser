@@ -192,6 +192,25 @@ QCefWidgetInternal::~QCefWidgetInternal()
 					client.get());
 
 			cefBrowser->GetHost()->WasHidden(true);
+#ifndef _WIN32
+			cefBrowser->GetHost()->CloseBrowser(true);
+#endif
+
+			bc->widget = nullptr;
+		};
+
+#ifdef USE_QT_LOOP
+		destroyBrowser(browser);
+#else
+		os_event_t *finishedEvent;
+		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
+		bool success = QueueCEFTask([=]() {
+			destroyBrowser(browser);
+			os_event_signal(finishedEvent);
+		});
+		if (success) {
+			os_event_wait(finishedEvent);
+
 #ifdef _WIN32
 			/* So you're probably wondering what's going on here.
 			 * If you call CefBrowserHost::CloseBrowser, and it
@@ -216,31 +235,7 @@ QCefWidgetInternal::~QCefWidgetInternal()
 			HWND hwnd = cefBrowser->GetHost()->GetWindowHandle();
 			if (hwnd)
 				DestroyWindow(hwnd);
-#else
-			cefBrowser->GetHost()->CloseBrowser(true);
 #endif
-
-			bc->widget = nullptr;
-		};
-
-#ifdef USE_QT_LOOP
-		destroyBrowser(browser);
-#else
-		os_event_t *finishedEvent;
-		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
-		bool success = QueueCEFTask([=]() {
-			destroyBrowser(browser);
-			os_event_signal(finishedEvent);
-		});
-		if (success) {
-			/* fixes an issue on windows where blocking the main
-			 * UI thread can cause CEF SendMessage calls calls
-			 * to lock up */
-			int code = ETIMEDOUT;
-			while (code == ETIMEDOUT) {
-				QCoreApplication::processEvents();
-				code = os_event_timedwait(finishedEvent, 5);
-			}
 		}
 		os_event_destroy(finishedEvent);
 #endif

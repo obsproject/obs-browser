@@ -151,17 +151,7 @@ void flush_cookie_manager(CefRefPtr<CefCookieManager> cm)
 
 	CefPostTask(TID_IO, CefRefPtr<BrowserTask>(new BrowserTask(task)));
 
-	/* fixes an issue on windows where blocking the main
-	 * UI thread can cause CEF SendMessage calls to lock
-	 * up */
-	int code = ETIMEDOUT;
-	while (code == ETIMEDOUT) {
-#ifdef USE_QT_LOOP
-		QCoreApplication::processEvents();
-#endif
-		code = os_event_timedwait(complete_event, 5);
-	}
-
+	os_event_wait(complete_event);
 	os_event_destroy(complete_event);
 }
 
@@ -225,6 +215,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
 	obs_data_set_default_string(settings, "css", default_css);
+	obs_data_set_default_bool(settings, "reroute_audio", true);
 }
 
 static bool is_local_file_modified(obs_properties_t *props, obs_property_t *,
@@ -303,6 +294,9 @@ static obs_properties_t *browser_source_get_properties(void *data)
 			static_cast<BrowserSource *>(data)->Refresh();
 			return false;
 		});
+
+	obs_properties_add_bool(props, "reroute_audio",
+				obs_module_text("RerouteAudio"));
 	return props;
 }
 
@@ -460,6 +454,18 @@ void RegisterBrowserSource()
 	info.video_render = [](void *data, gs_effect_t *) {
 		static_cast<BrowserSource *>(data)->Render();
 	};
+#if CHROME_VERSION_BUILD >= 3683
+	info.audio_mix = [](void *data, uint64_t *ts_out,
+			    struct audio_output_data *audio_output,
+			    size_t channels, size_t sample_rate) {
+		return static_cast<BrowserSource *>(data)->AudioMix(
+			ts_out, audio_output, channels, sample_rate);
+	};
+	info.enum_active_sources = [](void *data, obs_source_enum_proc_t cb,
+				      void *param) {
+		static_cast<BrowserSource *>(data)->EnumAudioStreams(cb, param);
+	};
+#endif
 	info.mouse_click = [](void *data, const struct obs_mouse_event *event,
 			      int32_t type, bool mouse_up,
 			      uint32_t click_count) {

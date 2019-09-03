@@ -45,6 +45,7 @@ class BrowserClient : public CefClient,
 	void *last_handle = INVALID_HANDLE_VALUE;
 #endif
 	bool sharing_available = false;
+	bool reroute_audio = true;
 
 public:
 	BrowserSource *bs = nullptr;
@@ -59,9 +60,12 @@ public:
 	int frames_per_buffer;
 #endif
 
-	inline BrowserClient(BrowserSource *bs_, bool sharing_avail) : bs(bs_)
+	inline BrowserClient(BrowserSource *bs_, bool sharing_avail,
+			     bool reroute_audio_)
+		: bs(bs_),
+		  sharing_available(sharing_avail),
+		  reroute_audio(reroute_audio_)
 	{
-		sharing_available = sharing_avail;
 	}
 
 	virtual ~BrowserClient();
