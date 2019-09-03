@@ -69,6 +69,7 @@ struct BrowserSource {
 	bool shutdown_on_invisible = false;
 	bool is_local = false;
 	bool first_update = true;
+	bool reroute_audio = true;
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	bool reset_frame = false;
 #endif

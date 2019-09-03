@@ -65,7 +65,7 @@ CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 #if CHROME_VERSION_BUILD >= 3683
 CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
 {
-	return this;
+	return reroute_audio ? this : nullptr;
 }
 #endif
 

@@ -111,8 +111,8 @@ bool BrowserSource::CreateBrowser()
 		struct obs_video_info ovi;
 		obs_get_video_info(&ovi);
 
-		CefRefPtr<BrowserClient> browserClient =
-			new BrowserClient(this, hwaccel && tex_sharing_avail);
+		CefRefPtr<BrowserClient> browserClient = new BrowserClient(
+			this, hwaccel && tex_sharing_avail, reroute_audio);
 
 		CefWindowInfo windowInfo;
 #if CHROME_VERSION_BUILD < 3071
@@ -146,7 +146,8 @@ bool BrowserSource::CreateBrowser()
 #endif
 			nullptr);
 #if CHROME_VERSION_BUILD >= 3683
-		cefBrowser->GetHost()->SetAudioMuted(true);
+		if (reroute_audio)
+			cefBrowser->GetHost()->SetAudioMuted(true);
 #endif
 	});
 }
@@ -380,6 +381,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		int n_fps;
 		bool n_shutdown;
 		bool n_restart;
+		bool n_reroute;
 		std::string n_url;
 		std::string n_css;
 
@@ -393,6 +395,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_css = obs_data_get_string(settings, "css");
 		n_url = obs_data_get_string(settings,
 					    n_is_local ? "local_file" : "url");
+		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 
 		if (n_is_local)
 			n_url = "http://absolute/" + n_url;
@@ -400,7 +403,8 @@ void BrowserSource::Update(obs_data_t *settings)
 		if (n_is_local == is_local && n_width == width &&
 		    n_height == height && n_fps_custom == fps_custom &&
 		    n_fps == fps && n_shutdown == shutdown_on_invisible &&
-		    n_restart == restart && n_css == css && n_url == url) {
+		    n_restart == restart && n_css == css && n_url == url &&
+		    n_reroute == reroute_audio) {
 			return;
 		}
 
@@ -410,6 +414,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		fps = n_fps;
 		fps_custom = n_fps_custom;
 		shutdown_on_invisible = n_shutdown;
+		reroute_audio = n_reroute;
 		restart = n_restart;
 		css = n_css;
 		url = n_url;
