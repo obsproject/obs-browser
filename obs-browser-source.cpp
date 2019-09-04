@@ -37,6 +37,27 @@ extern bool QueueCEFTask(std::function<void()> task);
 static mutex browser_list_mutex;
 static BrowserSource *first_browser = nullptr;
 
+static void SendBrowserVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
+{
+	if (!browser)
+		return;
+
+#if ENABLE_WASHIDDEN
+	if (isVisible) {
+		browser->GetHost()->WasHidden(false);
+		browser->GetHost()->Invalidate(PET_VIEW);
+	} else {
+		browser->GetHost()->WasHidden(true);
+	}
+#endif
+
+	CefRefPtr<CefProcessMessage> msg =
+		CefProcessMessage::Create("Visibility");
+	CefRefPtr<CefListValue> args = msg->GetArgumentList();
+	args->SetBool(0, isVisible);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
+}
+
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
 {
@@ -149,6 +170,8 @@ bool BrowserSource::CreateBrowser()
 		if (reroute_audio)
 			cefBrowser->GetHost()->SetAudioMuted(true);
 #endif
+
+		SendBrowserVisibility(cefBrowser, is_showing);
 	});
 }
 
@@ -291,15 +314,7 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 
 void BrowserSource::SetShowing(bool showing)
 {
-	if (!showing) {
-#if ENABLE_WASHIDDEN
-		ExecuteOnBrowser(
-			[](CefRefPtr<CefBrowser> cefBrowser) {
-				cefBrowser->GetHost()->WasHidden(true);
-			},
-			true);
-#endif
-	}
+	is_showing = showing;
 
 	if (shutdown_on_invisible) {
 		if (showing) {
@@ -308,28 +323,11 @@ void BrowserSource::SetShowing(bool showing)
 			DestroyBrowser(true);
 		}
 	} else {
-		ExecuteOnBrowser(
-			[=](CefRefPtr<CefBrowser> cefBrowser) {
-				CefRefPtr<CefProcessMessage> msg =
-					CefProcessMessage::Create("Visibility");
-				CefRefPtr<CefListValue> args =
-					msg->GetArgumentList();
-				args->SetBool(0, showing);
-				SendBrowserProcessMessage(cefBrowser,
-							  PID_RENDERER, msg);
-			},
-			true);
-	}
+		if (showing && !fps_custom) {
+			reset_frame = false;
+		}
 
-	if (showing) {
-#if ENABLE_WASHIDDEN
-		ExecuteOnBrowser(
-			[](CefRefPtr<CefBrowser> cefBrowser) {
-				cefBrowser->GetHost()->WasHidden(false);
-				cefBrowser->GetHost()->Invalidate(PET_VIEW);
-			},
-			true);
-#endif
+		SendBrowserVisibility(cefBrowser, showing);
 	}
 }
 
