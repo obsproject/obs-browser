@@ -50,6 +50,7 @@ public:
 			   CefRefPtr<CefRequestContext> rqc);
 	~QCefWidgetInternal();
 
+	QScopedPointer<QWidget> containerWidget;
 	CefRefPtr<CefBrowser> cefBrowser;
 	std::string url;
 	std::string script;
