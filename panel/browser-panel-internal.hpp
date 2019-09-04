@@ -65,6 +65,7 @@ public:
 	virtual void setURL(const std::string &url) override;
 	virtual void setStartupScript(const std::string &script) override;
 	virtual void allowAllPopups(bool allow) override;
+	virtual void closeBrowser() override;
 
 	void Resize();
 

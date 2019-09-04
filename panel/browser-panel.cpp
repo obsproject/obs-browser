@@ -163,6 +163,11 @@ QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_,
 
 QCefWidgetInternal::~QCefWidgetInternal()
 {
+	closeBrowser();
+}
+
+void QCefWidgetInternal::closeBrowser()
+{
 	CefRefPtr<CefBrowser> browser = cefBrowser;
 	if (!!browser) {
 		auto destroyBrowser = [](CefRefPtr<CefBrowser> cefBrowser) {
@@ -408,7 +413,7 @@ extern "C" EXPORT QCef *obs_browser_create_qcef(void)
 	return new QCefInternal();
 }
 
-#define BROWSER_PANEL_VERSION 1
+#define BROWSER_PANEL_VERSION 2
 
 extern "C" EXPORT int obs_browser_qcef_version_export(void)
 {
