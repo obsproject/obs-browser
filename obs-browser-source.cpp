@@ -37,6 +37,27 @@ extern bool QueueCEFTask(std::function<void()> task);
 static mutex browser_list_mutex;
 static BrowserSource *first_browser = nullptr;
 
+static void SendBrowserVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
+{
+	if (!browser)
+		return;
+
+#if ENABLE_WASHIDDEN
+	if (isVisible) {
+		browser->GetHost()->WasHidden(false);
+		browser->GetHost()->Invalidate(PET_VIEW);
+	} else {
+		browser->GetHost()->WasHidden(true);
+	}
+#endif
+
+	CefRefPtr<CefProcessMessage> msg =
+		CefProcessMessage::Create("Visibility");
+	CefRefPtr<CefListValue> args = msg->GetArgumentList();
+	args->SetBool(0, isVisible);
+	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
+}
+
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
 {
@@ -154,11 +175,7 @@ bool BrowserSource::CreateBrowser()
 			cefBrowser->GetHost()->SetAudioMuted(true);
 #endif
 
-		if (!is_showing) {
-#if ENABLE_WASHIDDEN
-			cefBrowser->GetHost()->WasHidden(true);
-#endif
-		}
+		SendBrowserVisibility(cefBrowser, is_showing);
 	});
 }
 
@@ -303,35 +320,18 @@ void BrowserSource::SetShowing(bool showing)
 {
 	is_showing = showing;
 
-	CefRefPtr<CefBrowser> browser = cefBrowser;
-
 	if (shutdown_on_invisible) {
 		if (showing) {
 			Update();
 		} else {
 			DestroyBrowser(true);
 		}
-	} else if (!!browser) {
-		if (!showing) {
-#if ENABLE_WASHIDDEN
-			browser->GetHost()->WasHidden(true);
-#endif
-		} else {
-#if ENABLE_WASHIDDEN
-			browser->GetHost()->WasHidden(false);
-			browser->GetHost()->Invalidate(PET_VIEW);
-#endif
-			if (!fps_custom)
-				reset_frame = false;
+	} else {
+		if (showing && !fps_custom) {
+			reset_frame = false;
 		}
 
-		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("Visibility");
-		CefRefPtr<CefListValue> args =
-			msg->GetArgumentList();
-		args->SetBool(0, showing);
-		SendBrowserProcessMessage(browser,
-						PID_RENDERER, msg);
+		SendBrowserVisibility(cefBrowser, showing);
 	}
 }
 

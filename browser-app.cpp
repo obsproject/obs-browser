@@ -107,7 +107,8 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 }
 
 void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
-	CefRefPtr<CefFrame>, CefRefPtr<CefV8Context> context)
+				  CefRefPtr<CefFrame>,
+				  CefRefPtr<CefV8Context> context)
 {
 	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
 
@@ -127,8 +128,12 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 
 	CefRefPtr<CefV8Value> getStatus =
 		CefV8Value::CreateFunction("getStatus", this);
-	obsStudioObj->SetValue("getStatus",
-			getStatus, V8_PROPERTY_ATTRIBUTE_NONE);
+	obsStudioObj->SetValue("getStatus", getStatus,
+			       V8_PROPERTY_ATTRIBUTE_NONE);
+
+#if !ENABLE_WASHIDDEN
+	SetDocumentVisibility(browser, pendingDocumentVisibilityState);
+#endif
 
 	///
 	// signal CefClient that render process context has been created
@@ -156,6 +161,91 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 	context->Exit();
 }
 
+#if !ENABLE_WASHIDDEN
+void BrowserApp::SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
+					    CefRefPtr<CefFrame> frame,
+					    bool isVisible)
+{
+	CefRefPtr<CefV8Context> context = frame->GetV8Context();
+
+	context->Enter();
+
+	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
+
+	CefRefPtr<CefV8Value> documentObject = globalObj->GetValue("document");
+
+	if (!!documentObject) {
+		documentObject->SetValue("hidden",
+					 CefV8Value::CreateBool(!isVisible),
+					 V8_PROPERTY_ATTRIBUTE_READONLY);
+
+		documentObject->SetValue(
+			"visibilityState",
+			CefV8Value::CreateString(isVisible ? "visible"
+							   : "hidden"),
+			V8_PROPERTY_ATTRIBUTE_READONLY);
+
+		std::string script = "new CustomEvent('visibilitychange', {});";
+
+		CefRefPtr<CefV8Value> returnValue;
+		CefRefPtr<CefV8Exception> exception;
+
+		/* Create the CustomEvent object
+		 * We have to use eval to invoke the new operator */
+		bool success = context->Eval(script, frame->GetURL(), 0,
+					     returnValue, exception);
+
+		if (success) {
+			CefV8ValueList arguments;
+			arguments.push_back(returnValue);
+
+			CefRefPtr<CefV8Value> dispatchEvent =
+				documentObject->GetValue("dispatchEvent");
+
+			/* Dispatch visibilitychange event on the document
+			 * object */
+			dispatchEvent->ExecuteFunction(documentObject,
+						       arguments);
+		}
+	}
+
+	context->Exit();
+}
+
+void BrowserApp::SetDocumentVisibility(CefRefPtr<CefBrowser> browser,
+				       bool isVisible)
+{
+	/* This method might be called before OnContextCreated
+	 * call is made. We'll save the requested visibility
+	 * state here, and use it later in OnContextCreated to
+	 * set initial page visibility state. */
+	pendingDocumentVisibilityState = isVisible;
+
+	std::vector<int64> frameIdentifiers;
+
+	/* Set visibility state for every frame in the browser
+	 *
+	 * According to the Page Visibility API documentation:
+	 * https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
+	 *
+	 * "Visibility states of an <iframe> are the same as
+	 * the parent document. Hiding an <iframe> using CSS
+	 * properties (such as display: none;) doesn't trigger
+	 * visibility events or change the state of the document
+	 * contained within the frame."
+	 *
+	 * Thus, we set the same visibility state for every frame of the browser.
+	 */
+	browser->GetFrameIdentifiers(frameIdentifiers);
+
+	for (int64 frameId : frameIdentifiers) {
+		CefRefPtr<CefFrame> frame = browser->GetFrame(frameId);
+
+		SetFrameDocumentVisibility(browser, frame, isVisible);
+	}
+}
+#endif
+
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 #if CHROME_VERSION_BUILD >= 3770
 					  CefRefPtr<CefFrame> frame,
@@ -172,6 +262,10 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		arguments.push_back(CefV8Value::CreateBool(args->GetBool(0)));
 
 		ExecuteJSFunction(browser, "onVisibilityChange", arguments);
+
+#if !ENABLE_WASHIDDEN
+		SetDocumentVisibility(browser, args->GetBool(0));
+#endif
 
 	} else if (message->GetName() == "Active") {
 		CefV8ValueList arguments;
