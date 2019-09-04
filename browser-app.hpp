@@ -115,5 +115,15 @@ public:
 	QTimer frameTimer;
 #endif
 
+#if !ENABLE_WASHIDDEN
+	bool pendingDocumentVisibilityState = false;
+
+	void SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
+					CefRefPtr<CefFrame> frame,
+					bool isVisible);
+	void SetDocumentVisibility(CefRefPtr<CefBrowser> browser,
+				   bool isVisible);
+#endif
+
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 };
