@@ -323,9 +323,11 @@ void BrowserSource::SetShowing(bool showing)
 			DestroyBrowser(true);
 		}
 	} else {
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (showing && !fps_custom) {
 			reset_frame = false;
 		}
+#endif
 
 		SendBrowserVisibility(cefBrowser, showing);
 	}
