@@ -270,8 +270,12 @@ static void BrowserInit(void)
 	app = new BrowserApp(tex_sharing_avail);
 	CefExecuteProcess(args, app, nullptr);
 	CefInitialize(args, settings, app, nullptr);
+#if !ENABLE_LOCAL_FILE_URL_SCHEME
+	/* Register http://absolute/ scheme handler for older
+	 * CEF builds which do not support file:// URLs */
 	CefRegisterSchemeHandlerFactory("http", "absolute",
 					new BrowserSchemeHandlerFactory());
+#endif
 	os_event_signal(cef_started_event);
 }
 
