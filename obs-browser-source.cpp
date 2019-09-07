@@ -18,6 +18,7 @@
 
 #include "obs-browser-source.hpp"
 #include "browser-client.hpp"
+#include "browser-scheme.hpp"
 #include "wide-string.hpp"
 #include <util/threading.h>
 #include <QApplication>
@@ -158,6 +159,14 @@ bool BrowserSource::CreateBrowser()
 		}
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
+#endif
+
+#if ENABLE_LOCAL_FILE_URL_SCHEME
+		if (is_local) {
+			/* Disable web security for file:// URLs to allow
+			 * local content access to remote APIs */
+			cefBrowserSettings.web_security = STATE_DISABLED;
+		}
 #endif
 
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
@@ -397,8 +406,20 @@ void BrowserSource::Update(obs_data_t *settings)
 					    n_is_local ? "local_file" : "url");
 		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 
-		if (n_is_local)
+		if (n_is_local) {
+#if !ENABLE_LOCAL_FILE_URL_SCHEME
+			/* http://absolute/ based mapping for older CEF */
 			n_url = "http://absolute/" + n_url;
+#elif defined(_WIN32)
+			/* Widows-style local file URL:
+			 * file:///C:/file/path.webm */
+			n_url = "file:///" + n_url;
+#else
+			/* UNIX-style local file URL:
+			 * file:///home/user/file.webm */
+			n_url = "file://" + n_url;
+#endif
+		}
 
 		if (n_is_local == is_local && n_width == width &&
 		    n_height == height && n_fps_custom == fps_custom &&
