@@ -111,10 +111,6 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 		CefV8Value::CreateFunction("getStatus", this);
 	obsStudioObj->SetValue("getStatus", getStatus,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
-
-#if !ENABLE_WASHIDDEN
-	SetDocumentVisibility(browser, pendingDocumentVisibilityState);
-#endif
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
