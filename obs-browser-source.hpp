@@ -35,12 +35,6 @@
 extern bool hwaccel;
 #endif
 
-#if CHROME_VERSION_BUILD < 3507
-#define ENABLE_WASHIDDEN 1
-#else
-#define ENABLE_WASHIDDEN 0
-#endif
-
 struct AudioStream {
 	OBSSource source;
 	speaker_layout speakers;
