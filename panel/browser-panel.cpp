@@ -75,7 +75,8 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		if (os_event_try(cef_started_event) != 0)
 			throw "Browser thread not initialized";
 
-		BPtr<char> path = obs_module_config_path(storage_path.c_str());
+		BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
+		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
 
 #if CHROME_VERSION_BUILD < 3770
 		cm = CefCookieManager::CreateManager(
@@ -110,7 +111,8 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 	virtual bool SetStoragePath(const std::string &storage_path,
 				    bool persist_session_cookies) override
 	{
-		BPtr<char> path = obs_module_config_path(storage_path.c_str());
+		BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
+		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
 
 #if CHROME_VERSION_BUILD < 3770
 		return cm->SetStoragePath(path.Get(), persist_session_cookies,
@@ -388,7 +390,8 @@ QCefInternal::create_cookie_manager(const std::string &storage_path,
 
 BPtr<char> QCefInternal::get_cookie_path(const std::string &storage_path)
 {
-	return obs_module_config_path(storage_path.c_str());
+	BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
+	return os_get_abs_path_ptr(rpath.Get());
 }
 
 void QCefInternal::add_popup_whitelist_url(const std::string &url, QObject *obj)
