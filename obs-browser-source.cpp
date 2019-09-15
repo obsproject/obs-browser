@@ -22,6 +22,7 @@
 #include "wide-string.hpp"
 #include <util/threading.h>
 #include <QApplication>
+#include <util/dstr.h>
 #include <functional>
 #include <thread>
 #include <mutex>
@@ -420,6 +421,15 @@ void BrowserSource::Update(obs_data_t *settings)
 			n_url = "file://" + n_url;
 #endif
 		}
+
+#if ENABLE_LOCAL_FILE_URL_SCHEME
+		if (astrcmpi_n(n_url.c_str(), "http://absolute/", 16) == 0) {
+			/* Replace http://absolute/ URLs with file://
+			 * URLs if file:// URLs are enabled */
+			n_url = "file:///" + n_url.substr(16);
+			n_is_local = true;
+		}
+#endif
 
 		if (n_is_local == is_local && n_width == width &&
 		    n_height == height && n_fps_custom == fps_custom &&
