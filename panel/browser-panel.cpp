@@ -306,8 +306,9 @@ QPaintEngine *QCefWidgetInternal::paintEngine() const
 	return nullptr;
 }
 
-void QCefWidgetInternal::setURL(const std::string &url)
+void QCefWidgetInternal::setURL(const std::string &url_)
 {
+	url = url_;
 	if (cefBrowser) {
 		cefBrowser->GetMainFrame()->LoadURL(url);
 	}
