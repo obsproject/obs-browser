@@ -449,6 +449,8 @@ void BrowserSource::Update(obs_data_t *settings)
 		restart = n_restart;
 		css = n_css;
 		url = n_url;
+
+		obs_source_set_audio_active(source, reroute_audio);
 	}
 
 	DestroyBrowser(true);
