@@ -209,20 +209,7 @@ void QCefWidgetInternal::closeBrowser()
 		}
 #endif
 
-#ifdef USE_QT_LOOP
 		destroyBrowser(browser);
-#else
-		os_event_t *finishedEvent;
-		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
-		bool success = QueueCEFTask([=]() {
-			destroyBrowser(browser);
-			os_event_signal(finishedEvent);
-		});
-		if (success) {
-			os_event_wait(finishedEvent);
-		}
-		os_event_destroy(finishedEvent);
-#endif
 		cefBrowser = nullptr;
 	}
 }
