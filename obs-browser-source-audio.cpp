@@ -25,15 +25,16 @@ void BrowserSource::EnumAudioStreams(obs_source_enum_proc_t cb, void *param)
 	}
 }
 
-static inline void mix_audio(float *p_out, float *p_in, size_t pos,
+static inline void mix_audio(float *__restrict p_out,
+			     const float *__restrict p_in, size_t pos,
 			     size_t count)
 {
-	register float *out = p_out;
-	register float *in = p_in + pos;
-	register float *end = in + count;
+	float *__restrict out = p_out;
+	const float *__restrict in = p_in + pos;
+	const float *__restrict end = in + count;
 
 	while (in < end)
-		*(out++) += *(in++);
+		*out++ += *in++;
 }
 
 bool BrowserSource::AudioMix(uint64_t *ts_out,
