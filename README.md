@@ -17,9 +17,9 @@ window.obsstudio.pluginVersion
 /**
  * onVisibilityChange gets callbacks when the visibility of the browser source changes in OBS
  *
- * @param {bool} visiblity - True -> visible, False -> hidden
+ * @param {bool} visibility - True -> visible, False -> hidden
  */
-window.obsstudio.onVisibilityChange = function(visiblity) {
+window.obsstudio.onVisibilityChange = function(visibility) {
 	
 };
 ```
@@ -132,7 +132,7 @@ Visual Studio 12 2013 Win64, Visual Studio 14 2015 Win64 or Visual Studio 15 201
 * Open cef.sln from the 'build' subdirectory
 
 #### Building
-* Build atleast libcef_dll_wrapper (as Release), the rest is optional and are just clients to test with
+* Build at least libcef_dll_wrapper (as Release), the rest is optional and are just clients to test with
 
 ### Building OBS and obs-browser
 #### Follow the OBS build instructions
