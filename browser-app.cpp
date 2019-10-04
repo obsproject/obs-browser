@@ -83,6 +83,18 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 
 	command_line->AppendSwitch("enable-system-flash");
 
+	if (command_line->HasSwitch("disable-features")) {
+		// Don't override existing, as this can break OSR
+		std::string disableFeatures =
+			command_line->GetSwitchValue("disable-features");
+		disableFeatures += ",HardwareMediaKeyHandling";
+		command_line->AppendSwitchWithValue("disable-features",
+						    disableFeatures);
+	} else {
+		command_line->AppendSwitchWithValue("disable-features",
+						    "HardwareMediaKeyHandling");
+	}
+
 	command_line->AppendSwitchWithValue("autoplay-policy",
 					    "no-user-gesture-required");
 }
