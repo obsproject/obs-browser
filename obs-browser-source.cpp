@@ -131,9 +131,6 @@ bool BrowserSource::CreateBrowser()
 		bool hwaccel = false;
 #endif
 
-		struct obs_video_info ovi;
-		obs_get_video_info(&ovi);
-
 		CefRefPtr<BrowserClient> browserClient = new BrowserClient(
 			this, hwaccel && tex_sharing_avail, reroute_audio);
 
