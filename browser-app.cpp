@@ -87,14 +87,20 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 		// Don't override existing, as this can break OSR
 		std::string disableFeatures =
 			command_line->GetSwitchValue("disable-features");
-		disableFeatures += ",HardwareMediaKeyHandling,"
-				   "NetworkService";
+		disableFeatures += ",HardwareMediaKeyHandling"
+#ifdef __APPLE__
+				   ",NetworkService"
+#endif
+			;
 		command_line->AppendSwitchWithValue("disable-features",
 						    disableFeatures);
 	} else {
 		command_line->AppendSwitchWithValue("disable-features",
-						    "HardwareMediaKeyHandling,"
-						    "NetworkService");
+						    "HardwareMediaKeyHandling"
+#ifdef __APPLE__
+						    ",NetworkService"
+#endif
+		);
 	}
 
 	command_line->AppendSwitchWithValue("autoplay-policy",
