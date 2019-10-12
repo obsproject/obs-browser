@@ -324,8 +324,7 @@ void RegisterBrowserSource()
 			    OBS_SOURCE_AUDIO |
 #endif
 			    OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
-			    OBS_SOURCE_DO_NOT_DUPLICATE |
-			    OBS_SOURCE_MONITOR_BY_DEFAULT;
+			    OBS_SOURCE_DO_NOT_DUPLICATE;
 	info.get_properties = browser_source_get_properties;
 	info.get_defaults = browser_source_get_defaults;
 
