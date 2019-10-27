@@ -185,27 +185,24 @@ bool BrowserSource::CreateBrowser()
 	});
 }
 
-void BrowserSource::DestroyBrowser(bool async)
+void BrowserSource::DestroyBrowser()
 {
-	ExecuteOnBrowser(
-		[](CefRefPtr<CefBrowser> cefBrowser) {
-			CefRefPtr<CefClient> client =
-				cefBrowser->GetHost()->GetClient();
-			BrowserClient *bc =
-				reinterpret_cast<BrowserClient *>(client.get());
-			if (bc) {
-				bc->bs = nullptr;
-			}
+	if (!cefBrowser)
+		return;
 
-			/*
-		 * This stops rendering
-		 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
-		 * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
-		 */
-			cefBrowser->GetHost()->WasHidden(true);
-			cefBrowser->GetHost()->CloseBrowser(true);
-		},
-		async);
+	CefRefPtr<CefClient> client = cefBrowser->GetHost()->GetClient();
+	BrowserClient *bc = reinterpret_cast<BrowserClient *>(client.get());
+	if (bc) {
+		bc->bs = nullptr;
+	}
+
+	/*
+	 * This stops rendering
+	 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
+	 * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
+	 */
+	cefBrowser->GetHost()->WasHidden(true);
+	cefBrowser->GetHost()->CloseBrowser(true);
 
 	cefBrowser = nullptr;
 }
@@ -330,7 +327,7 @@ void BrowserSource::SetShowing(bool showing)
 		if (showing) {
 			Update();
 		} else {
-			DestroyBrowser(true);
+			DestroyBrowser();
 		}
 	} else {
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
@@ -453,7 +450,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		obs_source_set_audio_active(source, reroute_audio);
 	}
 
-	DestroyBrowser(true);
+	DestroyBrowser();
 	DestroyTextures();
 	ClearAudioStreams();
 	if (!shutdown_on_invisible || obs_source_showing(source))
