@@ -81,8 +81,6 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 		}
 	}
 
-	command_line->AppendSwitch("enable-system-flash");
-
 	if (command_line->HasSwitch("disable-features")) {
 		// Don't override existing, as this can break OSR
 		std::string disableFeatures =
