@@ -52,6 +52,8 @@ window.addEventListener('obsSceneChanged', function(evt) {
 * obsStreamingStopped
 * obsRecordingStarting
 * obsRecordingStarted
+* obsRecordingPaused
+* obsRecordingUnpaused
 * obsRecordingStopping
 * obsRecordingStopped
 * obsReplaybufferStarting
@@ -75,6 +77,7 @@ window.obsstudio.getStatus(function data) { console.log(data); });
 
 data is a Javascript object containing the following properties:
 * recording (true/false)
+* recordingPaused (true/false)
 * streaming (true/false)
 * replaybuffer (true/false)
 ```

@@ -431,6 +431,12 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
 		DispatchJSEvent("obsRecordingStarted", "");
 		break;
+	case OBS_FRONTEND_EVENT_RECORDING_PAUSED:
+		DispatchJSEvent("obsRecordingPaused", "");
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_UNPAUSED:
+		DispatchJSEvent("obsRecordingUnpaused", "");
+		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPING:
 		DispatchJSEvent("obsRecordingStopping", "");
 		break;
