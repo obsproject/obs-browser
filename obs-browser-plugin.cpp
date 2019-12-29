@@ -327,6 +327,7 @@ void RegisterBrowserSource()
 			    OBS_SOURCE_DO_NOT_DUPLICATE;
 	info.get_properties = browser_source_get_properties;
 	info.get_defaults = browser_source_get_defaults;
+	info.icon_type = OBS_ICON_TYPE_BROWSER;
 
 	info.get_name = [](void *) { return obs_module_text("BrowserSource"); };
 	info.create = [](obs_data_t *settings, obs_source_t *source) -> void * {
