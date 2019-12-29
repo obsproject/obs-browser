@@ -192,8 +192,9 @@ static obs_properties_t *browser_source_get_properties(void *data)
 				obs_module_text("RerouteAudio"));
 
 	obs_properties_add_int(props, "fps", obs_module_text("FPS"), 1, 60, 1);
-	obs_properties_add_text(props, "css", obs_module_text("CSS"),
-				OBS_TEXT_MULTILINE);
+	obs_property_t *p = obs_properties_add_text(
+		props, "css", obs_module_text("CSS"), OBS_TEXT_MULTILINE);
+	obs_property_text_set_monospace(p, true);
 	obs_properties_add_bool(props, "shutdown",
 				obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
