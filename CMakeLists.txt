@@ -50,7 +50,7 @@ include_directories("${CEF_ROOT_DIR}")
 
 set(obs-browser_LIBRARIES
 	libobs
-	obs-frontend-api
+#	obs-frontend-api
 	)
 
 list(APPEND obs-browser_LIBRARIES
