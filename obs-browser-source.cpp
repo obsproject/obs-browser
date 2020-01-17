@@ -129,15 +129,12 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 
 bool BrowserSource::CreateBrowser()
 {
-	blog(LOG_INFO, "CreateBrowser");
 #ifdef WIN32
 	return QueueCEFTask([this]() {
 #endif
 #if defined(USE_UI_LOOP) && defined(__APPLE__)
-	blog(LOG_INFO, "CreateBrowser APPLE");
 	message->ExecuteTask([this]() {
 #endif
-		blog(LOG_INFO, "CreateBrowser APPLE main thread");
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
 			obs_enter_graphics();
@@ -186,14 +183,12 @@ bool BrowserSource::CreateBrowser()
 			cefBrowserSettings.web_security = STATE_DISABLED;
 		}
 #endif
-		blog(LOG_INFO, "CreateBrowserSync");
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
 #if CHROME_VERSION_BUILD >= 3770
 			CefRefPtr<CefDictionaryValue>(),
 #endif
 			nullptr);
-		blog(LOG_INFO, "CreateBrowserSync - end");
 #if CHROME_VERSION_BUILD >= 3683
 		if (reroute_audio)
 			cefBrowser->GetHost()->SetAudioMuted(true);
