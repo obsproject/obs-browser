@@ -26,10 +26,13 @@
 #include <thread>
 #include <mutex>
 
-#ifdef USE_QT_LOOP
+#if defined(USE_UI_LOOP) && defined(WIN32)
 #include <QApplication>
 #include <QEventLoop>
 #include <QThread>
+#elif defined(USE_UI_LOOP) && defined(__APPLE__)
+#include "browser-mac-cpp-int.hpp"
+extern BrowserCppInt* message;
 #endif
 
 using namespace std;
@@ -88,8 +91,12 @@ BrowserSource::~BrowserSource()
 void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 {
 	if (!async) {
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
+#ifdef WIN32
 		if (QThread::currentThread() == qApp->thread()) {
+#elif __APPLE__
+		if (message->isMainThread()) {
+#endif
 			if (!!cefBrowser)
 				func(cefBrowser);
 			return;
@@ -109,8 +116,10 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 	} else {
 		CefRefPtr<CefBrowser> browser = cefBrowser;
 		if (!!browser) {
-#ifdef USE_QT_LOOP
+#if defined(USE_UI_LOOP) && defined(WIN32)
 			QueueBrowserTask(cefBrowser, func);
+#elif defined(USE_UI_LOOP) && defined(__APPLE__)
+			message->QueueBrowserTask(cefBrowser, func);
 #else
 			QueueCEFTask([=]() { func(browser); });
 #endif
@@ -120,7 +129,15 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 
 bool BrowserSource::CreateBrowser()
 {
+	blog(LOG_INFO, "CreateBrowser");
+#ifdef WIN32
 	return QueueCEFTask([this]() {
+#endif
+#if defined(USE_UI_LOOP) && defined(__APPLE__)
+	blog(LOG_INFO, "CreateBrowser APPLE");
+	message->ExecuteTask([this]() {
+#endif
+		blog(LOG_INFO, "CreateBrowser APPLE main thread");
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
 			obs_enter_graphics();
@@ -169,13 +186,14 @@ bool BrowserSource::CreateBrowser()
 			cefBrowserSettings.web_security = STATE_DISABLED;
 		}
 #endif
-
+		blog(LOG_INFO, "CreateBrowserSync");
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
 #if CHROME_VERSION_BUILD >= 3770
 			CefRefPtr<CefDictionaryValue>(),
 #endif
 			nullptr);
+		blog(LOG_INFO, "CreateBrowserSync - end");
 #if CHROME_VERSION_BUILD >= 3683
 		if (reroute_audio)
 			cefBrowser->GetHost()->SetAudioMuted(true);
@@ -183,6 +201,9 @@ bool BrowserSource::CreateBrowser()
 
 		SendBrowserVisibility(cefBrowser, is_showing);
 	});
+#if defined(USE_UI_LOOP) && defined(__APPLE__)
+	return true;
+#endif
 }
 
 void BrowserSource::DestroyBrowser(bool async)
@@ -490,8 +511,10 @@ void BrowserSource::Render()
 
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 	SignalBeginFrame();
-#elif USE_QT_LOOP
+#elif defined(USE_UI_LOOP) && defined(WIN32)
 	ProcessCef();
+#elif defined(USE_UI_LOOP) && defined(__APPLE__)
+	message->Process();
 #endif
 }
 

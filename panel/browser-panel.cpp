@@ -6,7 +6,7 @@
 #include <QWindow>
 #include <QApplication>
 
-#ifdef USE_QT_LOOP
+#if defined(USE_UI_LOOP) && defined (WIN32)
 #include <QEventLoop>
 #include <QThread>
 #endif

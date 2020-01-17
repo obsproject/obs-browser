@@ -24,9 +24,9 @@ if (EXPERIMENTAL_SHARED_TEXTURE_SUPPORT)
 endif()
 
 if(NOT APPLE)
-	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
+	option(USE_UI_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
 else()
-	set(USE_QT_LOOP TRUE)
+	set(USE_UI_LOOP TRUE)
 endif()
 
 if(APPLE)
@@ -56,23 +56,26 @@ set(obs-browser_LIBRARIES
 list(APPEND obs-browser_LIBRARIES
 	${CEF_LIBRARIES})
 
-if(BROWSER_PANEL_SUPPORT_ENABLED OR USE_QT_LOOP)
-	if(DEFINED QTDIR${_lib_suffix})
-		list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
-	elseif(DEFINED QTDIR)
-		list(APPEND CMAKE_PREFIX_PATH "${QTDIR}")
-	elseif(DEFINED ENV{QTDIR${_lib_suffix}})
-		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR${_lib_suffix}}")
-	elseif(DEFINED ENV{QTDIR})
-		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR}")
-	endif()
+if(NOT APPLE)
+	if(BROWSER_PANEL_SUPPORT_ENABLED OR USE_UI_LOOP)
+		if(DEFINED QTDIR${_lib_suffix})
+			list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
+		elseif(DEFINED QTDIR)
+			list(APPEND CMAKE_PREFIX_PATH "${QTDIR}")
+		elseif(DEFINED ENV{QTDIR${_lib_suffix}})
+			list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR${_lib_suffix}}")
+		elseif(DEFINED ENV{QTDIR})
+			list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR}")
+		endif()
 
-	set(CMAKE_AUTOMOC TRUE)
-	find_package(Qt5Widgets REQUIRED)
-	list(APPEND obs-browser_LIBRARIES
-		Qt5::Widgets
-		)
+		set(CMAKE_AUTOMOC TRUE)
+		find_package(Qt5Widgets REQUIRED)
+		list(APPEND obs-browser_LIBRARIES
+			Qt5::Widgets
+			)
+	endif()
 endif()
+
 
 if(MSVC)
 	option(BROWSER_USE_STATIC_CRT "Use static CRT" ON)
@@ -124,6 +127,26 @@ if(WIN32 AND BROWSER_PANEL_SUPPORT_ENABLED)
 		)
 endif()
 
+if(APPLE)
+	list(APPEND obs-browser_SOURCES
+			browser-mac.mm
+			browser-mac-cpp-int.cpp
+		)
+	list(APPEND obs-browser_HEADERS
+			browser-mac.hpp
+			obs-browser-objc-int.hpp
+			browser-mac-cpp-int.hpp
+		)
+
+	find_library(COREFOUNDATION CoreFoundation)
+	find_library(COCOA Cocoa)
+
+	include_directories(
+			${COREFOUNDATION}
+			${COCOA}
+		)
+endif()
+
 add_library(obs-browser MODULE
 	${obs-browser_SOURCES}
 	${obs-browser_HEADERS}
@@ -132,8 +155,16 @@ add_library(obs-browser MODULE
 target_link_libraries(obs-browser
 	${obs-browser_LIBRARIES}
 	)
-if(USE_QT_LOOP)
-	target_compile_definitions(obs-browser PRIVATE USE_QT_LOOP)
+
+if(APPLE)
+	target_link_libraries(obs-browser
+			${COREFOUNDATION}
+			${COCOA}
+		)
+endif()
+
+if(USE_UI_LOOP)
+	target_compile_definitions(obs-browser PRIVATE USE_UI_LOOP)
 endif()
 
 # ----------------------------------------------------------------------------

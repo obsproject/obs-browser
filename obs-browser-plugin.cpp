@@ -46,6 +46,10 @@
 #include <obs-frontend-api.h>
 #endif
 
+#if defined(USE_UI_LOOP) && defined(__APPLE__)
+#include "browser-mac-cpp-int.hpp"
+#endif
+
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
 
@@ -65,9 +69,12 @@ bool hwaccel = false;
 
 /* ========================================================================= */
 
-#ifdef USE_QT_LOOP
+#if defined(USE_UI_LOOP) && defined (WIN32)
 extern MessageObject messageObject;
+#elif defined(USE_UI_LOOP) && defined (__APPLE__)
+extern BrowserCppInt* message;
 #endif
+
 
 class BrowserTask : public CefTask {
 public:
@@ -76,13 +83,17 @@ public:
 	inline BrowserTask(std::function<void()> task_) : task(task_) {}
 	virtual void Execute() override
 	{
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
 		/* you have to put the tasks on the Qt event queue after this
 		 * call otherwise the CEF message pump may stop functioning
 		 * correctly, it's only supposed to take 10ms max */
+#ifdef WIN32
 		QMetaObject::invokeMethod(&messageObject, "ExecuteTask",
 					  Qt::QueuedConnection,
 					  Q_ARG(MessageTask, task));
+#elif __APPLE__
+		message->ExecuteTask(task);
+#endif
 #else
 		task();
 #endif
@@ -228,7 +239,7 @@ static void BrowserInit(void)
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
 
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
 	settings.external_message_pump = true;
 	settings.multi_threaded_message_loop = false;
 #endif
@@ -272,7 +283,9 @@ static void BrowserInit(void)
 #endif
 
 	app = new BrowserApp(tex_sharing_avail);
+	blog(LOG_INFO, "CefExecuteProcess");
 	CefExecuteProcess(args, app, nullptr);
+	blog(LOG_INFO, "CefInitialize");
 	CefInitialize(args, settings, app, nullptr);
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 	/* Register http://absolute/ scheme handler for older
@@ -281,24 +294,34 @@ static void BrowserInit(void)
 					new BrowserSchemeHandlerFactory());
 #endif
 	os_event_signal(cef_started_event);
+	blog(LOG_INFO, "Done initializing");
 }
 
-#ifdef USE_QT_LOOP
+
+#if defined(USE_UI_LOOP) && defined(WIN32)
 extern MessageObject messageObject;
+#elif defined(USE_UI_LOOP) && defined(__APPLE)
+extern BrowserCppInt* message;
 #endif
+
 
 static void BrowserShutdown(void)
 {
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
+#ifdef WIN32
 	while (messageObject.ExecuteNextBrowserTask())
 		;
+#elif __APPLE__
+	while (message->ExecuteNextBrowserTask())
+		;
+#endif
 	CefDoMessageLoopWork();
 #endif
 	CefShutdown();
 	app = nullptr;
 }
 
-#ifndef USE_QT_LOOP
+#ifndef USE_UI_LOOP
 static void BrowserManagerThread(void)
 {
 	BrowserInit();
@@ -310,7 +333,7 @@ static void BrowserManagerThread(void)
 extern "C" EXPORT void obs_browser_initialize(void)
 {
 	if (!os_atomic_set_bool(&manager_initialized, true)) {
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
 		BrowserInit();
 #else
 		manager_thread = thread(BrowserManagerThread);
@@ -511,8 +534,11 @@ bool obs_module_load(void)
 {
 	blog(LOG_INFO, "[obs-browser]: Version %s", OBS_BROWSER_VERSION_STRING);
 
-#ifdef USE_QT_LOOP
+#if defined(USE_UI_LOOP) && defined(WIN32)
 	qRegisterMetaType<MessageTask>("MessageTask");
+#elif defined(USE_UI_LOOP) && defined(__APPLE__)
+	message = new BrowserCppInt();
+	message ->init();
 #endif
 
 	os_event_init(&cef_started_event, OS_EVENT_TYPE_MANUAL);
@@ -557,7 +583,7 @@ bool obs_module_load(void)
 
 void obs_module_unload(void)
 {
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
 	BrowserShutdown();
 #else
 	if (manager_thread.joinable()) {
