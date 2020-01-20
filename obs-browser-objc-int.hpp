@@ -24,6 +24,7 @@
 #include <deque>
 
 #include "cef-headers.hpp"
+#include <string>
 
 typedef std::function<void()> MessageTask;
 typedef std::function<void(CefRefPtr<CefBrowser>)> BrowserFunc;
@@ -56,7 +57,7 @@ public:
     void QueueBrowserTask(CefRefPtr<CefBrowser> browser,
 				     BrowserFunc func);
     bool isMainThread();
-
+    std::string getExecutablePath();
 private:
     void *self;
 };

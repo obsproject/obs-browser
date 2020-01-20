@@ -227,29 +227,37 @@ static void BrowserInit(void)
 		string path = obs_get_module_binary_path(obs_current_module());
 		path = path.substr(0, path.find_last_of('/') + 1);
 		path += "//obs-browser-page";
-	#ifdef _WIN32
+#ifdef _WIN32
 		path += ".exe";
 		CefMainArgs args;
-	#else
+#else
 		/* On non-windows platforms, ie macOS, we'll want to pass thru flags to
 		* CEF */
 		struct obs_cmdline_args cmdline_args = obs_get_cmdline_args();
 		CefMainArgs args(cmdline_args.argc, cmdline_args.argv);
-	#endif
+#endif
 
 		CefSettings settings;
 		settings.log_severity = LOGSEVERITY_DISABLE;
 		settings.windowless_rendering_enabled = true;
 		settings.no_sandbox = true;
 
-	#ifdef USE_UI_LOOP
+#ifdef USE_UI_LOOP
 		settings.external_message_pump = true;
 		settings.multi_threaded_message_loop = false;
-	#endif
+#endif
 
-	#if defined(__APPLE__) && !defined(BROWSER_DEPLOY)
+#ifdef __APPLE__
+#ifdef BROWSER_DEPLOY
+		std::string binPath = message->getExecutablePath();
+		binPath = binPath.substr(0, binPath.find_last_of('/'));
+		binPath = binPath.substr(0, binPath.find_last_of('/'));
+		binPath += "/Frameworks/Chromium\ Embedded\ Framework.framework";
+		CefString(&settings.framework_dir_path) = binPath;
+#else
 		CefString(&settings.framework_dir_path) = CEF_LIBRARY;
-	#endif
+#endif
+#endif
 
 		std::string obs_locale = obs_get_locale();
 		std::string accepted_languages;
@@ -277,23 +285,23 @@ static void BrowserInit(void)
 
 		bool tex_sharing_avail = false;
 
-	#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
 			obs_enter_graphics();
 			hwaccel = tex_sharing_avail = gs_shared_texture_available();
 			obs_leave_graphics();
 		}
-	#endif
+#endif
 
 		app = new BrowserApp(tex_sharing_avail);
 		CefExecuteProcess(args, app, nullptr);
 		CefInitialize(args, settings, app, nullptr);
-	#if !ENABLE_LOCAL_FILE_URL_SCHEME
+#if !ENABLE_LOCAL_FILE_URL_SCHEME
 		/* Register http://absolute/ scheme handler for older
 		* CEF builds which do not support file:// URLs */
 		CefRegisterSchemeHandlerFactory("http", "absolute",
 						new BrowserSchemeHandlerFactory());
-	#endif
+#endif
 		os_event_signal(cef_started_event);
 #if defined(__APPLE__) && defined(USE_UI_LOOP)
 	});

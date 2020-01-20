@@ -19,6 +19,7 @@
 #include <obs.h>
 #include "browser-mac.hpp"
 #include "obs-browser-objc-int.hpp"
+#include <mach-o/dyld.h>
 
 @implementation MessageObject
 
@@ -90,6 +91,14 @@ void BrowserObjCInt::QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc
 bool BrowserObjCInt::isMainThread()
 {
     return [NSThread isMainThread];
+}
+
+std::string BrowserObjCInt::getExecutablePath()
+{
+    char path[1024];
+    uint32_t size = sizeof(path);
+    _NSGetExecutablePath(path, &size);
+    return path;
 }
 
 @end

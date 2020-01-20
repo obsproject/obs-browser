@@ -64,3 +64,8 @@ bool BrowserCppInt::isMainThread(void)
 {
     return _impl->isMainThread();
 }
+
+std::string BrowserCppInt::getExecutablePath(void)
+{
+    return _impl->getExecutablePath();
+}

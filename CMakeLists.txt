@@ -24,7 +24,7 @@ if (EXPERIMENTAL_SHARED_TEXTURE_SUPPORT)
 endif()
 
 if(NOT APPLE)
-	option(USE_UI_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
+	option(USE_UI_LOOP "Runs CEF on the main UI thread instead of in its own thread" OFF)
 else()
 	set(USE_UI_LOOP TRUE)
 endif()

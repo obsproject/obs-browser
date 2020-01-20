@@ -20,6 +20,7 @@
 #define __BROWSER_CPP_INT__
 
 #include "obs-browser-objc-int.hpp"
+#include <string>
 
 class BrowserCppInt
 {
@@ -35,6 +36,7 @@ public:
     void QueueBrowserTask(CefRefPtr<CefBrowser> browser,
 				     BrowserFunc func);
     bool isMainThread();
+    std::string getExecutablePath();
 
 private:
     BrowserObjCInt * _impl;
