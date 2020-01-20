@@ -183,12 +183,19 @@ bool BrowserSource::CreateBrowser()
 			cefBrowserSettings.web_security = STATE_DISABLED;
 		}
 #endif
+		blog(LOG_INFO, "CreateBrowserSync - start");
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
 #if CHROME_VERSION_BUILD >= 3770
 			CefRefPtr<CefDictionaryValue>(),
 #endif
 			nullptr);
+		if (cefBrowser) {
+			blog(LOG_INFO, "CreateBrowserSync - success");
+		} else {
+			blog(LOG_INFO, "CreateBrowserSync - fail");
+		}
+		blog(LOG_INFO, "CreateBrowserSync - end");
 #if CHROME_VERSION_BUILD >= 3683
 		if (reroute_audio)
 			cefBrowser->GetHost()->SetAudioMuted(true);

@@ -221,80 +221,79 @@ static CefRefPtr<BrowserApp> app;
 
 static void BrowserInit(void)
 {
-	string path = obs_get_module_binary_path(obs_current_module());
-	path = path.substr(0, path.find_last_of('/') + 1);
-	path += "//obs-browser-page";
-#ifdef _WIN32
-	path += ".exe";
-	CefMainArgs args;
-#else
-	/* On non-windows platforms, ie macOS, we'll want to pass thru flags to
-	 * CEF */
-	struct obs_cmdline_args cmdline_args = obs_get_cmdline_args();
-	CefMainArgs args(cmdline_args.argc, cmdline_args.argv);
-#endif
+	message->ExecuteTask([]() {
+		string path = obs_get_module_binary_path(obs_current_module());
+		path = path.substr(0, path.find_last_of('/') + 1);
+		path += "//obs-browser-page";
+	#ifdef _WIN32
+		path += ".exe";
+		CefMainArgs args;
+	#else
+		/* On non-windows platforms, ie macOS, we'll want to pass thru flags to
+		* CEF */
+		struct obs_cmdline_args cmdline_args = obs_get_cmdline_args();
+		CefMainArgs args(cmdline_args.argc, cmdline_args.argv);
+	#endif
 
-	CefSettings settings;
-	settings.log_severity = LOGSEVERITY_DISABLE;
-	settings.windowless_rendering_enabled = true;
-	settings.no_sandbox = true;
+		CefSettings settings;
+		settings.log_severity = LOGSEVERITY_DISABLE;
+		settings.windowless_rendering_enabled = true;
+		settings.no_sandbox = true;
 
-#ifdef USE_UI_LOOP
-	settings.external_message_pump = true;
-	settings.multi_threaded_message_loop = false;
-#endif
+	#ifdef USE_UI_LOOP
+		settings.external_message_pump = true;
+		settings.multi_threaded_message_loop = false;
+	#endif
 
-#if defined(__APPLE__) && !defined(BROWSER_DEPLOY)
-	CefString(&settings.framework_dir_path) = CEF_LIBRARY;
-#endif
+	#if defined(__APPLE__) && !defined(BROWSER_DEPLOY)
+		CefString(&settings.framework_dir_path) = CEF_LIBRARY;
+	#endif
 
-	std::string obs_locale = obs_get_locale();
-	std::string accepted_languages;
-	if (obs_locale != "en-US") {
-		accepted_languages = obs_locale;
-		accepted_languages += ",";
-		accepted_languages += "en-US,en";
-	} else {
-		accepted_languages = "en-US,en";
-	}
+		std::string obs_locale = obs_get_locale();
+		std::string accepted_languages;
+		if (obs_locale != "en-US") {
+			accepted_languages = obs_locale;
+			accepted_languages += ",";
+			accepted_languages += "en-US,en";
+		} else {
+			accepted_languages = "en-US,en";
+		}
 
-	BPtr<char> conf_path = obs_module_config_path("");
-	os_mkdir(conf_path);
+		BPtr<char> conf_path = obs_module_config_path("");
+		os_mkdir(conf_path);
 
-	/* Remove trailing slash since apparently this will
-	 * literally cause chromium to crash since it thinks
-	 * it's a different path */
-	conf_path[strlen(conf_path.Get()) - 1] = '\0';
+		/* Remove trailing slash since apparently this will
+		* literally cause chromium to crash since it thinks
+		* it's a different path */
+		conf_path[strlen(conf_path.Get()) - 1] = '\0';
 
-	BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
-	CefString(&settings.locale) = obs_get_locale();
-	CefString(&settings.accept_language_list) = accepted_languages;
-	CefString(&settings.cache_path) = conf_path_abs;
-	CefString(&settings.browser_subprocess_path) = path;
+		BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
+		CefString(&settings.locale) = obs_get_locale();
+		CefString(&settings.accept_language_list) = accepted_languages;
+		CefString(&settings.cache_path) = conf_path_abs;
+		CefString(&settings.browser_subprocess_path) = path;
 
-	bool tex_sharing_avail = false;
+		bool tex_sharing_avail = false;
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-	if (hwaccel) {
-		obs_enter_graphics();
-		hwaccel = tex_sharing_avail = gs_shared_texture_available();
-		obs_leave_graphics();
-	}
-#endif
+	#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+		if (hwaccel) {
+			obs_enter_graphics();
+			hwaccel = tex_sharing_avail = gs_shared_texture_available();
+			obs_leave_graphics();
+		}
+	#endif
 
-	app = new BrowserApp(tex_sharing_avail);
-	blog(LOG_INFO, "CefExecuteProcess");
-	CefExecuteProcess(args, app, nullptr);
-	blog(LOG_INFO, "CefInitialize");
-	CefInitialize(args, settings, app, nullptr);
-#if !ENABLE_LOCAL_FILE_URL_SCHEME
-	/* Register http://absolute/ scheme handler for older
-	 * CEF builds which do not support file:// URLs */
-	CefRegisterSchemeHandlerFactory("http", "absolute",
-					new BrowserSchemeHandlerFactory());
-#endif
-	os_event_signal(cef_started_event);
-	blog(LOG_INFO, "Done initializing");
+		app = new BrowserApp(tex_sharing_avail);
+		CefExecuteProcess(args, app, nullptr);
+		CefInitialize(args, settings, app, nullptr);
+	#if !ENABLE_LOCAL_FILE_URL_SCHEME
+		/* Register http://absolute/ scheme handler for older
+		* CEF builds which do not support file:// URLs */
+		CefRegisterSchemeHandlerFactory("http", "absolute",
+						new BrowserSchemeHandlerFactory());
+	#endif
+		os_event_signal(cef_started_event);
+	});
 }
 
 

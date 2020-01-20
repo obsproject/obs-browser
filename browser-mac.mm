@@ -54,9 +54,7 @@ bool BrowserObjCInt::ExecuteNextBrowserTask()
 
 void BrowserObjCInt::ExecuteTask(MessageTask task)
 {
-    blog(LOG_INFO, "ExecuteTask");
     dispatch_async(dispatch_get_main_queue(), ^{
-        blog(LOG_INFO, "ExecuteTask - main thread");
         task();
     });
 }
@@ -64,7 +62,6 @@ void BrowserObjCInt::ExecuteTask(MessageTask task)
 void BrowserObjCInt::DoCefMessageLoop(int ms)
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-    // NSLog(@"DoCefMessageLoop");
     // if (ms)
 	// 	QTimer::singleShot((int)ms + 2,
 	// 			   []() { CefDoMessageLoopWork(); });
