@@ -251,7 +251,6 @@ static void BrowserInit(void)
 #ifdef BROWSER_DEPLOY
 		std::string binPath = message->getExecutablePath();
 		binPath = binPath.substr(0, binPath.find_last_of('/'));
-		binPath = binPath.substr(0, binPath.find_last_of('/'));
 		binPath += "/Frameworks/Chromium\ Embedded\ Framework.framework";
 		CefString(&settings.framework_dir_path) = binPath;
 #else
