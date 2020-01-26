@@ -500,6 +500,34 @@ static const wchar_t *blacklisted_devices[] = {
 	L"Intel", L"Microsoft", L"Radeon HD 8850M", L"Radeon HD 7660", nullptr};
 #endif
 
+static inline bool is_intel(const std::wstring &str)
+{
+	return wstrstri(str.c_str(), L"Intel") != 0;
+}
+
+static void check_hwaccel_support(void)
+{
+	/* do not use hardware acceleration if a blacklisted device is the
+	 * default and on 2 or more adapters */
+	const wchar_t **device = blacklisted_devices;
+
+	if (adapterCount >= 2 || !is_intel(deviceId)) {
+		while (*device) {
+			if (!!wstrstri(deviceId.c_str(), *device)) {
+				hwaccel = false;
+				blog(LOG_INFO, "[obs-browser]: "
+					       "Blacklisted device "
+					       "detected, "
+					       "disabling browser "
+					       "source hardware "
+					       "acceleration.");
+				break;
+			}
+			device++;
+		}
+	}
+}
+
 bool obs_module_load(void)
 {
 	blog(LOG_INFO, "[obs-browser]: Version %s", OBS_BROWSER_VERSION_STRING);
@@ -522,22 +550,7 @@ bool obs_module_load(void)
 	obs_data_t *private_data = obs_get_private_data();
 	hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
 	if (hwaccel) {
-		/* do not use hardware acceleration if a blacklisted device is
-		 * the default and on 2 or more adapters */
-		const wchar_t **device = blacklisted_devices;
-		while (*device) {
-			if (!!wstrstri(deviceId.c_str(), *device)) {
-				hwaccel = false;
-				blog(LOG_INFO, "[obs-browser]: "
-					       "Blacklisted device "
-					       "detected, "
-					       "disabling browser "
-					       "source hardware "
-					       "acceleration.");
-				break;
-			}
-			device++;
-		}
+		check_hwaccel_support();
 	}
 	obs_data_release(private_data);
 #endif
