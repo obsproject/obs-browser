@@ -171,10 +171,6 @@ if (WIN32)
 	set_target_properties(obs-browser-page PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
 endif(WIN32)
 
-if (APPLE AND XCODE)
-	set_xcode_property(obs-browser-page CLANG_CXX_LIBRARY "libc++")
-endif(APPLE AND XCODE)
-
 # ----------------------------------------------------------------------------
 
 if (WIN32)
