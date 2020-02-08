@@ -40,6 +40,12 @@ public:
 				    bool user_gesture,
 				    bool is_redirect) override;
 
+	virtual void OnLoadError(CefRefPtr<CefBrowser> browser,
+				 CefRefPtr<CefFrame> frame,
+				 CefLoadHandler::ErrorCode errorCode,
+				 const CefString &errorText,
+				 const CefString &failedUrl) override;
+
 	virtual bool OnOpenURLFromTab(
 		CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 		const CefString &target_url,
