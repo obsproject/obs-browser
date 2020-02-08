@@ -365,19 +365,12 @@ void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 	if (frame->IsMain()) {
 		std::string base64EncodedCSS = base64_encode(bs->css);
 
-		std::string href;
-		href += "data:text/css;charset=utf-8;base64,";
-		href += base64EncodedCSS;
-
 		std::string script;
-		script += "var link = document.createElement('link');";
-		script += "link.setAttribute('rel', 'stylesheet');";
-		script += "link.setAttribute('type', 'text/css');";
-		script += "link.setAttribute('href', '" + href + "');";
-		script +=
-			"document.getElementsByTagName('head')[0].appendChild(link);";
+		script += "const obsCSS = document.createElement('style');";
+		script += "obsCSS.innerHTML = atob(\"" + base64EncodedCSS + "\");";
+		script += "document.querySelector('head').appendChild(obsCSS);";
 
-		frame->ExecuteJavaScript(script, href, 0);
+		frame->ExecuteJavaScript(script, "", 0);
 	}
 }
 
