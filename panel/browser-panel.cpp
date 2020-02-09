@@ -11,6 +11,10 @@
 #include <QThread>
 #endif
 
+#ifdef __APPLE__
+#include <objc/objc.h>
+#endif
+
 #include <obs-module.h>
 #include <util/threading.h>
 #include <util/base.h>
@@ -189,7 +193,6 @@ void QCefWidgetInternal::closeBrowser()
 			bc->widget = nullptr;
 		};
 
-#ifdef _WIN32
 		/* So you're probably wondering what's going on here.  If you
 		 * call CefBrowserHost::CloseBrowser, and it fails to unload
 		 * the web page *before* WM_NCDESTROY is called on the browser
@@ -206,11 +209,17 @@ void QCefWidgetInternal::closeBrowser()
 		 * So, instead, before closing the browser, we need to decouple
 		 * the browser from the widget.  To do this, we hide it, then
 		 * remove its parent. */
+#ifdef _WIN32
 		HWND hwnd = (HWND)cefBrowser->GetHost()->GetWindowHandle();
 		if (hwnd) {
 			ShowWindow(hwnd, SW_HIDE);
 			SetParent(hwnd, nullptr);
 		}
+#elif __APPLE__
+		// felt hacky, might delete later
+		id view = (id)cefBrowser->GetHost()->GetWindowHandle();
+		((void (*)(id, SEL))objc_msgSend)(
+			view, sel_getUid("removeFromSuperview"));
 #endif
 
 		destroyBrowser(browser);
