@@ -149,6 +149,9 @@ if((WIN32 OR APPLE) AND BROWSER_PANEL_SUPPORT_ENABLED)
 		panel/browser-panel-client.hpp
 		panel/browser-panel-internal.hpp
 		)
+	if (APPLE)
+		list(APPEND obs-browser_LIBRARIES objc)
+	endif()
 endif()
 
 add_library(obs-browser MODULE
