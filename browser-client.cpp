@@ -126,8 +126,11 @@ bool BrowserClient::OnProcessMessageReceived(
 		json = Json::object{
 			{"recording", obs_frontend_recording_active()},
 			{"streaming", obs_frontend_streaming_active()},
+			{"recordingPaused", obs_frontend_recording_paused()},
 			{"replaybuffer", obs_frontend_replay_buffer_active()}};
 
+	} else if (name == "saveReplayBuffer") {
+		obs_frontend_replay_buffer_save();
 	} else {
 		return false;
 	}

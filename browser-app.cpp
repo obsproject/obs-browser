@@ -120,14 +120,19 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("pluginVersion", pluginVersion,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
-	CefRefPtr<CefV8Value> func =
+	CefRefPtr<CefV8Value> getCurrentScene =
 		CefV8Value::CreateFunction("getCurrentScene", this);
-	obsStudioObj->SetValue("getCurrentScene", func,
+	obsStudioObj->SetValue("getCurrentScene", getCurrentScene,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
 	CefRefPtr<CefV8Value> getStatus =
 		CefV8Value::CreateFunction("getStatus", this);
 	obsStudioObj->SetValue("getStatus", getStatus,
+			       V8_PROPERTY_ATTRIBUTE_NONE);
+
+	CefRefPtr<CefV8Value> saveReplayBuffer =
+		CefV8Value::CreateFunction("saveReplayBuffer", this);
+	obsStudioObj->SetValue("saveReplayBuffer", saveReplayBuffer,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
 #if !ENABLE_WASHIDDEN
@@ -352,29 +357,14 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
-	if (name == "getCurrentScene") {
+	if (name == "getCurrentScene" || name == "getStatus" || name == "saveReplayBuffer") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
 		}
 
 		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("getCurrentScene");
-		CefRefPtr<CefListValue> args = msg->GetArgumentList();
-		args->SetInt(0, callbackId);
-
-		CefRefPtr<CefBrowser> browser =
-			CefV8Context::GetCurrentContext()->GetBrowser();
-		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
-
-	} else if (name == "getStatus") {
-		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
-			callbackId++;
-			callbackMap[callbackId] = arguments[0];
-		}
-
-		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("getStatus");
+			CefProcessMessage::Create(name);
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetInt(0, callbackId);
 

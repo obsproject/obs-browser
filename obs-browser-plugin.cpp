@@ -409,7 +409,8 @@ void RegisterBrowserSource()
 
 /* ========================================================================= */
 
-extern void DispatchJSEvent(std::string eventName, std::string jsonString);
+extern void DispatchJSEvent(std::string eventName, std::string jsonString,
+			    BrowserSource *browser = nullptr);
 
 static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 {
@@ -432,11 +433,29 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
 		DispatchJSEvent("obsRecordingStarted", "");
 		break;
+	case OBS_FRONTEND_EVENT_RECORDING_PAUSED:
+		DispatchJSEvent("obsRecordingPaused", "");
+		break;
+	case OBS_FRONTEND_EVENT_RECORDING_UNPAUSED:
+		DispatchJSEvent("obsRecordingUnpaused", "");
+		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPING:
 		DispatchJSEvent("obsRecordingStopping", "");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
 		DispatchJSEvent("obsRecordingStopped", "");
+		break;
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING:
+		DispatchJSEvent("obsReplaybufferStarting", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED:
+		DispatchJSEvent("obsReplaybufferStarted", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPING:
+		DispatchJSEvent("obsReplaybufferStopping", nullptr);
+		break;
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED:
+		DispatchJSEvent("obsReplaybufferStopped", nullptr);
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED: {
 		OBSSource source = obs_frontend_get_current_scene();
