@@ -505,6 +505,7 @@ static inline bool is_intel(const std::wstring &str)
 	return wstrstri(str.c_str(), L"Intel") != 0;
 }
 
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 static void check_hwaccel_support(void)
 {
 	/* do not use hardware acceleration if a blacklisted device is the
@@ -527,6 +528,7 @@ static void check_hwaccel_support(void)
 		}
 	}
 }
+#endif
 
 bool obs_module_load(void)
 {
