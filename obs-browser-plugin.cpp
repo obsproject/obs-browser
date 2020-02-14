@@ -170,7 +170,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 
 	obs_property_set_modified_callback(prop, is_local_file_modified);
 	obs_properties_add_path(props, "local_file",
-				obs_module_text("Local file"), OBS_PATH_FILE,
+				obs_module_text("LocalFile"), OBS_PATH_FILE,
 				"*.*", path->array);
 	obs_properties_add_text(props, "url", obs_module_text("URL"),
 				OBS_TEXT_DEFAULT);
