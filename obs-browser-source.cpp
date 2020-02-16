@@ -425,6 +425,18 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 
 		if (n_is_local) {
+			n_url = CefURIEncode(n_url, false);
+
+#ifdef _WIN32
+			n_url.replace(n_url.find("%3A"), 3, ":");
+#endif
+
+			while (n_url.find("%5C") != std::string::npos)
+				n_url.replace(n_url.find("%5C"), 3, "/");
+
+			while (n_url.find("%2F") != std::string::npos)
+				n_url.replace(n_url.find("%2F"), 3, "/");
+
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 			/* http://absolute/ based mapping for older CEF */
 			n_url = "http://absolute/" + n_url;
