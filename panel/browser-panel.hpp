@@ -7,6 +7,10 @@
 #include <functional>
 #include <string>
 
+#if defined(__APPLE__)
+#include <dlfcn.h>
+#endif
+
 struct QCefCookieManager {
 	virtual ~QCefCookieManager() {}
 
@@ -68,44 +72,36 @@ struct QCef {
 					 QObject *obj) = 0;
 };
 
-static inline QCef *obs_browser_init_panel(void)
+static inline void *obs_browser_dlsym(const char *name)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	void *lib = os_dlopen("obs-browser");
+#elif defined(__APPLE__)
+	void *lib = RTLD_DEFAULT;
 #else
 	void *lib = os_dlopen("../obs-plugins/obs-browser");
 #endif
-	QCef *(*create_qcef)(void) = nullptr;
-
 	if (!lib) {
 		return nullptr;
 	}
 
-	create_qcef =
-		(decltype(create_qcef))os_dlsym(lib, "obs_browser_create_qcef");
+	return os_dlsym(lib, name);
+}
+
+static inline QCef *obs_browser_init_panel(void)
+{
+	QCef *(*create_qcef)(void) = (decltype(create_qcef))obs_browser_dlsym(
+		"obs_browser_create_qcef");
 	if (!create_qcef)
 		return nullptr;
-
 	return create_qcef();
 }
 
 static inline int obs_browser_qcef_version(void)
 {
-#ifdef _WIN32
-	void *lib = os_dlopen("obs-browser");
-#else
-	void *lib = os_dlopen("../obs-plugins/obs-browser");
-#endif
-	int (*qcef_version)(void) = nullptr;
-
-	if (!lib) {
-		return 0;
-	}
-
-	qcef_version = (decltype(qcef_version))os_dlsym(
-		lib, "obs_browser_qcef_version_export");
+	int (*qcef_version)(void) = (decltype(qcef_version))obs_browser_dlsym(
+		"obs_browser_qcef_version_export");
 	if (!qcef_version)
 		return 0;
-
 	return qcef_version();
 }
