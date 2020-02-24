@@ -357,7 +357,8 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
-	if (name == "getCurrentScene" || name == "getStatus" || name == "saveReplayBuffer") {
+	if (name == "getCurrentScene" || name == "getStatus" ||
+	    name == "saveReplayBuffer") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
