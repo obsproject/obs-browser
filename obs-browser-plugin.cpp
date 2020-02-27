@@ -446,16 +446,16 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		DispatchJSEvent("obsRecordingStopped", "");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING:
-		DispatchJSEvent("obsReplaybufferStarting", nullptr);
+		DispatchJSEvent("obsReplaybufferStarting", "");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED:
-		DispatchJSEvent("obsReplaybufferStarted", nullptr);
+		DispatchJSEvent("obsReplaybufferStarted", "");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPING:
-		DispatchJSEvent("obsReplaybufferStopping", nullptr);
+		DispatchJSEvent("obsReplaybufferStopping", "");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED:
-		DispatchJSEvent("obsReplaybufferStopped", nullptr);
+		DispatchJSEvent("obsReplaybufferStopped", "");
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED: {
 		OBSSource source = obs_frontend_get_current_scene();
