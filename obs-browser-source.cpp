@@ -295,12 +295,13 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 	uint32_t modifiers = event->modifiers;
 	std::string text = event->text;
 	uint32_t native_vkey = event->native_vkey;
+	uint32_t native_scancode = event->native_scancode;
 
 	ExecuteOnBrowser(
 		[=](CefRefPtr<CefBrowser> cefBrowser) {
 			CefKeyEvent e;
 			e.windows_key_code = native_vkey;
-			e.native_key_code = 0;
+			e.native_key_code = native_scancode;
 
 			e.type = key_up ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
 
