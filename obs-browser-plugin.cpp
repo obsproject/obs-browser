@@ -270,7 +270,18 @@ static void BrowserInit(void)
 
 	app = new BrowserApp(tex_sharing_avail);
 	CefExecuteProcess(args, app, nullptr);
+#ifdef _WIN32
+	/* Massive (but amazing) hack to prevent chromium from modifying our
+	 * process tokens and permissions, which caused us problems with winrt,
+	 * used with window capture.  Note, the structure internally is just
+	 * two pointers normally.  If it causes problems with future versions
+	 * we'll just switch back to the static library but I doubt we'll need
+	 * to. */
+	uintptr_t zeroed_memory_lol[512] = {};
+	CefInitialize(args, settings, app, zeroed_memory_lol);
+#else
 	CefInitialize(args, settings, app, nullptr);
+#endif
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 	/* Register http://absolute/ scheme handler for older
 	 * CEF builds which do not support file:// URLs */
