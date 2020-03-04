@@ -40,6 +40,12 @@ else()
 			${CEF_ROOT_DIR}/build/libcef_dll
 			${CEF_ROOT_DIR}/build/libcef_dll_wrapper)
 	if(WIN32)
+		find_library(CEFSANDBOX_LIBRARY
+			NAMES cef_sandbox.lib
+			PATHS ${CEF_ROOT_DIR}/Release)
+		find_library(CEFSANDBOX_LIBRARY_DEBUG
+			NAMES cef_sandbox.lib
+			PATHS ${CEF_ROOT_DIR}/Debug)
 		find_library(CEFWRAPPER_LIBRARY_DEBUG
 			NAMES cef_dll_wrapper libcef_dll_wrapper
 			PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Debug ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Debug)
@@ -61,9 +67,11 @@ endif()
 if(WIN32)
 	set(CEF_LIBRARIES
 			${CEF_LIBRARY}
+			optimized ${CEFSANDBOX_LIBRARY}
 			optimized ${CEFWRAPPER_LIBRARY})
 	if (CEFWRAPPER_LIBRARY_DEBUG)
 		list(APPEND CEF_LIBRARIES
+				debug ${CEFSANDBOX_LIBRARY_DEBUG}
 				debug ${CEFWRAPPER_LIBRARY_DEBUG})
 	endif()
 else()

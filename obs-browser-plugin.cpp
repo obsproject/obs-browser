@@ -270,7 +270,16 @@ static void BrowserInit(void)
 
 	app = new BrowserApp(tex_sharing_avail);
 	CefExecuteProcess(args, app, nullptr);
-	CefInitialize(args, settings, app, nullptr);
+
+	{
+		void *windows_sandbox_info = NULL;
+#ifdef _WIN32
+		CefScopedSandboxInfo scoped_sandbox;
+		windows_sandbox_info = scoped_sandbox.sandbox_info();
+#endif
+		CefInitialize(args, settings, app, windows_sandbox_info);
+	}
+
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 	/* Register http://absolute/ scheme handler for older
 	 * CEF builds which do not support file:// URLs */

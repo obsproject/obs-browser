@@ -87,7 +87,13 @@ if(MSVC)
 	endforeach()
 	list(APPEND obs-browser_LIBRARIES
 		d3d11
+		Dbghelp
 		dxgi
+		Shlwapi
+		Version
+		wbemuuid
+		Winmm
+		Ws2_32
 		)
 endif()
 
