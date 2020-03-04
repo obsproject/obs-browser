@@ -277,7 +277,7 @@ static void BrowserInit(void)
 	 * two pointers normally.  If it causes problems with future versions
 	 * we'll just switch back to the static library but I doubt we'll need
 	 * to. */
-	uintptr_t zeroed_memory_lol[512] = {};
+	uintptr_t zeroed_memory_lol[32] = {};
 	CefInitialize(args, settings, app, zeroed_memory_lol);
 #else
 	CefInitialize(args, settings, app, nullptr);
