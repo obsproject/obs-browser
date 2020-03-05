@@ -28,6 +28,10 @@
 #include <thread>
 #include <mutex>
 
+#ifdef __linux__
+#include "linux-keyboard-helpers.hpp"
+#endif
+
 #ifdef USE_QT_LOOP
 #include <QEventLoop>
 #include <QThread>
@@ -294,13 +298,19 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 {
 	uint32_t modifiers = event->modifiers;
 	std::string text = event->text;
+#ifdef __linux__
+	uint32_t native_vkey = KeyboardCodeFromXKeysym(event->native_vkey);
+#else
 	uint32_t native_vkey = event->native_vkey;
+#endif
+	uint32_t native_scancode = event->native_scancode;
+	uint32_t native_modifiers = event->native_modifiers;
 
 	ExecuteOnBrowser(
 		[=](CefRefPtr<CefBrowser> cefBrowser) {
 			CefKeyEvent e;
 			e.windows_key_code = native_vkey;
-			e.native_key_code = 0;
+			e.native_key_code = native_scancode;
 
 			e.type = key_up ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
 
@@ -311,13 +321,18 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 			}
 
 			//e.native_key_code = native_vkey;
-			e.modifiers = modifiers;
+			e.modifiers = native_modifiers;
 
 			cefBrowser->GetHost()->SendKeyEvent(e);
 			if (!text.empty() && !key_up) {
 				e.type = KEYEVENT_CHAR;
+#ifdef __linux__
+				e.windows_key_code =
+					KeyboardCodeFromXKeysym(e.character);
+#else
 				e.windows_key_code = e.character;
-				e.native_key_code = native_vkey;
+#endif
+				e.native_key_code = native_scancode;
 				cefBrowser->GetHost()->SendKeyEvent(e);
 			}
 		},
