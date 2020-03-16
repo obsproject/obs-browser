@@ -424,7 +424,7 @@ void BrowserSource::Update(obs_data_t *settings)
 					    n_is_local ? "local_file" : "url");
 		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 
-		if (n_is_local) {
+		if (n_is_local && !n_url.empty()) {
 			n_url = CefURIEncode(n_url, false);
 
 #ifdef _WIN32
