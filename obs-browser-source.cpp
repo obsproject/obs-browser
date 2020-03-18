@@ -428,7 +428,12 @@ void BrowserSource::Update(obs_data_t *settings)
 			n_url = CefURIEncode(n_url, false);
 
 #ifdef _WIN32
-			n_url.replace(n_url.find("%3A"), 3, ":");
+			size_t slash = n_url.find("%2F");
+			size_t colon = n_url.find("%3A");
+
+			if (slash != std::string::npos &&
+			    colon != std::string::npos && colon < slash)
+				n_url.replace(colon, 3, ":");
 #endif
 
 			while (n_url.find("%5C") != std::string::npos)
