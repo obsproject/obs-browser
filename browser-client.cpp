@@ -367,12 +367,13 @@ void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 	}
 
 	if (frame->IsMain()) {
-		std::string base64EncodedCSS = base64_encode(bs->css);
+		std::string uriEncodedCSS =
+			CefURIEncode(bs->css, false).ToString();
 
 		std::string script;
 		script += "const obsCSS = document.createElement('style');";
-		script += "obsCSS.innerHTML = atob(\"" + base64EncodedCSS +
-			  "\");";
+		script += "obsCSS.innerHTML = decodeURIComponent(\"" +
+			  uriEncodedCSS + "\");";
 		script += "document.querySelector('head').appendChild(obsCSS);";
 
 		frame->ExecuteJavaScript(script, "", 0);
