@@ -104,6 +104,7 @@ bool QueueCEFTask(std::function<void()> task)
 static const char *default_css = "\
 body { \
 background-color: rgba(0, 0, 0, 0); \
+color: rgb(255, 255, 255); \
 margin: 0px auto; \
 overflow: hidden; \
 }";
