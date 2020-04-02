@@ -3,7 +3,6 @@
 #define XK_3270
 #include <X11/keysym.h>
 #include <X11/XF86keysym.h>
-#include <X11/Xcursor/Xcursor.h>
 
 #ifndef VKEY_UNKNOWN
 
