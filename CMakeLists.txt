@@ -37,7 +37,10 @@ if(UNIX AND NOT APPLE)
 		message(STATUS "X11 Not found -- obs-browser plugin disabled.")
 		return()
 	endif()
-	include_directories("${X11_INCLUDE_DIR}")
+	include_directories(
+		"${X11_INCLUDE_DIR}"
+		"${X11_X11_INCLUDE_PATH}"
+		)
 endif()
 
 
