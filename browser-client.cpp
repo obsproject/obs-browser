@@ -62,7 +62,7 @@ CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 	return this;
 }
 
-#if CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 3865
 CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
 {
 	return reroute_audio ? this : nullptr;
@@ -256,7 +256,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
 }
 #endif
 
-#if CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 3865
 static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
 {
 	switch (cefLayout) {

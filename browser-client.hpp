@@ -31,7 +31,7 @@ class BrowserClient : public CefClient,
 		      public CefLifeSpanHandler,
 		      public CefContextMenuHandler,
 		      public CefRenderHandler,
-#if CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 3865
 		      public CefAudioHandler,
 #endif
 		      public CefLoadHandler {
@@ -67,7 +67,7 @@ public:
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
 	virtual CefRefPtr<CefContextMenuHandler>
 	GetContextMenuHandler() override;
-#if CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 3865
 	virtual CefRefPtr<CefAudioHandler> GetAudioHandler() override;
 #endif
 
@@ -126,7 +126,7 @@ public:
 					const RectList &dirtyRects,
 					void *shared_handle) override;
 #endif
-#if CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 3865
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
 					 int audio_stream_id,
 					 const float **data, int frames,
