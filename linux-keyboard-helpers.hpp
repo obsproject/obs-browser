@@ -665,8 +665,8 @@ static uint32_t KeyboardCodeFromXKeysym(unsigned int keysym)
 	case XK_ugrave:
 	case XK_Ugrave:
 	case XK_brokenbar:
-		return VKEY_OEM_102; // international backslash key in 102
-			// keyboard.
+		// international backslash key in 102 keyboard
+		return VKEY_OEM_102;
 
 	// When evdev is in use, /usr/share/X11/xkb/symbols/inet maps F13-18
 	// keys to the special XF86XK symbols to support Microsoft Ergonomic
