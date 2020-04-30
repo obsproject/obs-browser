@@ -196,6 +196,10 @@ if (WIN32)
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
 	)
 
+	target_sources(obs-browser-page
+		PRIVATE obs-browser-page.manifest
+	)
+
 	add_custom_command(TARGET obs-browser POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
 		"${CEF_ROOT_DIR}/Release/chrome_elf.dll"
