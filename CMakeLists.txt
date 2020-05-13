@@ -150,6 +150,8 @@ if(USE_QT_LOOP)
 	target_compile_definitions(obs-browser PRIVATE USE_QT_LOOP)
 endif()
 
+set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
+
 # ----------------------------------------------------------------------------
 
 set(obs-browser-page_SOURCES
@@ -171,6 +173,7 @@ add_executable(obs-browser-page
 target_link_libraries(obs-browser-page
 	${CEF_LIBRARIES}
 	)
+set_target_properties(obs-browser-page PROPERTIES FOLDER "plugins/obs-browser")
 
 if (APPLE)
 	set_target_properties(obs-browser-page PROPERTIES
