@@ -19,6 +19,16 @@ if(APPLE)
 			${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Release
 			${CEF_ROOT_DIR}/build/libcef_dll
 			${CEF_ROOT_DIR}/build/libcef_dll_wrapper)
+elseif(UNIX)
+	find_library(CEF_LIBRARY
+		NAMES libcef.so "Chromium Embedded Framework"
+		NO_DEFAULT_PATH
+		PATHS ${CEF_ROOT_DIR} ${CEF_ROOT_DIR}/Release)
+	find_library(CEFWRAPPER_LIBRARY
+		NAMES libcef_dll_wrapper.a
+		NO_DEFAULT_PATH
+		PATHS ${CEF_ROOT_DIR}/build/libcef_dll_wrapper
+			${CEF_ROOT_DIR}/libcef_dll_wrapper)
 else()
 	find_library(CEF_LIBRARY
 		NAMES cef libcef cef.lib libcef.o "Chromium Embedded Framework"

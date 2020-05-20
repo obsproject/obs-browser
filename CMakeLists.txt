@@ -36,9 +36,16 @@ if(APPLE)
 	endif()
 endif()
 
-if (BROWSER_FRONTEND_API_SUPPORT)
-	set(BROWSER_FRONTEND_API_SUPPORT_ENABLED)
+if(UNIX AND NOT APPLE)
+	find_package(X11 REQUIRED)
+	if(NOT X11_FOUND)
+		message(STATUS "X11 Not found -- obs-browser plugin disabled.")
+		return()
+	endif()
+	include_directories("${X11_INCLUDE_DIR}")
 endif()
+
+
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in"
 	"${CMAKE_CURRENT_BINARY_DIR}/browser-config.h")
@@ -167,6 +174,8 @@ if(USE_UI_LOOP)
 	target_compile_definitions(obs-browser PRIVATE USE_UI_LOOP)
 endif()
 
+set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
+
 # ----------------------------------------------------------------------------
 
 set(obs-browser-page_SOURCES
@@ -189,6 +198,7 @@ add_executable(obs-browser-page
 target_link_libraries(obs-browser-page
 	${CEF_LIBRARIES}
 	)
+set_target_properties(obs-browser-page PROPERTIES FOLDER "plugins/obs-browser")
 
 if (APPLE)
 	set_target_properties(obs-browser-page PROPERTIES
@@ -199,9 +209,10 @@ if (WIN32)
 	set_target_properties(obs-browser-page PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
 endif(WIN32)
 
-if (APPLE AND XCODE)
-	set_xcode_property(obs-browser-page CLANG_CXX_LIBRARY "libc++")
-endif(APPLE AND XCODE)
+if (UNIX AND NOT APPLE)
+    set_target_properties(obs-browser PROPERTIES INSTALL_RPATH "$ORIGIN/")
+    set_target_properties(obs-browser-page PROPERTIES INSTALL_RPATH "$ORIGIN/")
+endif()
 
 # ----------------------------------------------------------------------------
 
@@ -237,6 +248,10 @@ if (WIN32)
 		CONFIGURATIONS Release RelWithDebInfo MinSizeRel
 	)
 
+	target_sources(obs-browser-page
+		PRIVATE obs-browser-page.manifest
+	)
+
 	add_custom_command(TARGET obs-browser POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
 		"${CEF_ROOT_DIR}/Release/chrome_elf.dll"
@@ -260,6 +275,11 @@ if (WIN32)
 		"${CEF_ROOT_DIR}/Release/v8_context_snapshot.bin"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
 	)
+endif()
+
+if (UNIX AND NOT APPLE)
+	install(DIRECTORY "${CEF_ROOT_DIR}/Resources/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
+	install(DIRECTORY "${CEF_ROOT_DIR}/Release/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
 endif()
 
 if(APPLE AND NOT BROWSER_DEPLOY)

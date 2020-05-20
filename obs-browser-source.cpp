@@ -20,14 +20,18 @@
 #include "browser-client.hpp"
 #include "browser-scheme.hpp"
 #include "wide-string.hpp"
+#include "json11/json11.hpp"
 #include <util/threading.h>
 #include <util/dstr.h>
 #include <functional>
 #include <thread>
 #include <mutex>
 
+#ifdef __linux__
+#include "linux-keyboard-helpers.hpp"
+#endif
+
 #if defined(USE_UI_LOOP) && defined(WIN32)
-#include <QApplication>
 #include <QEventLoop>
 #include <QThread>
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
@@ -36,6 +40,7 @@ extern BrowserCppInt* message;
 #endif
 
 using namespace std;
+using namespace json11;
 
 extern bool QueueCEFTask(std::function<void()> task);
 
@@ -62,6 +67,9 @@ static void SendBrowserVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
 	args->SetBool(0, isVisible);
 	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 }
+
+void DispatchJSEvent(std::string eventName, std::string jsonString,
+		     BrowserSource *browser = nullptr);
 
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
@@ -152,9 +160,6 @@ bool BrowserSource::CreateBrowser()
 #else
 		bool hwaccel = false;
 #endif
-
-		struct obs_video_info ovi;
-		obs_get_video_info(&ovi);
 
 		CefRefPtr<BrowserClient> browserClient = new BrowserClient(
 			this, hwaccel && tex_sharing_avail, reroute_audio);
@@ -327,13 +332,19 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 {
 	uint32_t modifiers = event->modifiers;
 	std::string text = event->text;
+#ifdef __linux__
+	uint32_t native_vkey = KeyboardCodeFromXKeysym(event->native_vkey);
+#else
 	uint32_t native_vkey = event->native_vkey;
+#endif
+	uint32_t native_scancode = event->native_scancode;
+	uint32_t native_modifiers = event->native_modifiers;
 
 	ExecuteOnBrowser(
 		[=](CefRefPtr<CefBrowser> cefBrowser) {
 			CefKeyEvent e;
 			e.windows_key_code = native_vkey;
-			e.native_key_code = 0;
+			e.native_key_code = native_scancode;
 
 			e.type = key_up ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
 
@@ -344,13 +355,18 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 			}
 
 			//e.native_key_code = native_vkey;
-			e.modifiers = modifiers;
+			e.modifiers = native_modifiers;
 
 			cefBrowser->GetHost()->SendKeyEvent(e);
 			if (!text.empty() && !key_up) {
 				e.type = KEYEVENT_CHAR;
+#ifdef __linux__
+				e.windows_key_code =
+					KeyboardCodeFromXKeysym(e.character);
+#else
 				e.windows_key_code = e.character;
-				e.native_key_code = native_vkey;
+#endif
+				e.native_key_code = native_scancode;
 				cefBrowser->GetHost()->SendKeyEvent(e);
 			}
 		},
@@ -368,6 +384,19 @@ void BrowserSource::SetShowing(bool showing)
 			DestroyBrowser(true);
 		}
 	} else {
+		ExecuteOnBrowser(
+			[=](CefRefPtr<CefBrowser> cefBrowser) {
+				CefRefPtr<CefProcessMessage> msg =
+					CefProcessMessage::Create("Visibility");
+				CefRefPtr<CefListValue> args =
+					msg->GetArgumentList();
+				args->SetBool(0, showing);
+				SendBrowserProcessMessage(cefBrowser,
+							  PID_RENDERER, msg);
+			},
+			true);
+		Json json = Json::object{{"visible", showing}};
+		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (showing && !fps_custom) {
 			reset_frame = false;
@@ -390,6 +419,8 @@ void BrowserSource::SetActive(bool active)
 						  msg);
 		},
 		true);
+	Json json = Json::object{{"active", active}};
+	DispatchJSEvent("obsSourceActiveChanged", json.dump(), this);
 }
 
 void BrowserSource::Refresh()
@@ -442,7 +473,24 @@ void BrowserSource::Update(obs_data_t *settings)
 					    n_is_local ? "local_file" : "url");
 		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 
-		if (n_is_local) {
+		if (n_is_local && !n_url.empty()) {
+			n_url = CefURIEncode(n_url, false);
+
+#ifdef _WIN32
+			size_t slash = n_url.find("%2F");
+			size_t colon = n_url.find("%3A");
+
+			if (slash != std::string::npos &&
+			    colon != std::string::npos && colon < slash)
+				n_url.replace(colon, 3, ":");
+#endif
+
+			while (n_url.find("%5C") != std::string::npos)
+				n_url.replace(n_url.find("%5C"), 3, "/");
+
+			while (n_url.find("%2F") != std::string::npos)
+				n_url.replace(n_url.find("%2F"), 3, "/");
+
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 			/* http://absolute/ based mapping for older CEF */
 			n_url = "http://absolute/" + n_url;
@@ -532,6 +580,16 @@ void BrowserSource::Render()
 #endif
 }
 
+static void ExecuteOnBrowser(BrowserFunc func, BrowserSource *bs)
+{
+	lock_guard<mutex> lock(browser_list_mutex);
+
+	if (bs) {
+		BrowserSource *bsw = reinterpret_cast<BrowserSource *>(bs);
+		bsw->ExecuteOnBrowser(func, true);
+	}
+}
+
 static void ExecuteOnAllBrowsers(BrowserFunc func)
 {
 	lock_guard<mutex> lock(browser_list_mutex);
@@ -544,9 +602,10 @@ static void ExecuteOnAllBrowsers(BrowserFunc func)
 	}
 }
 
-void DispatchJSEvent(std::string eventName, std::string jsonString)
+void DispatchJSEvent(std::string eventName, std::string jsonString,
+		     BrowserSource *browser)
 {
-	ExecuteOnAllBrowsers([=](CefRefPtr<CefBrowser> cefBrowser) {
+	const auto jsEvent = [=](CefRefPtr<CefBrowser> cefBrowser) {
 		CefRefPtr<CefProcessMessage> msg =
 			CefProcessMessage::Create("DispatchJSEvent");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
@@ -554,5 +613,10 @@ void DispatchJSEvent(std::string eventName, std::string jsonString)
 		args->SetString(0, eventName);
 		args->SetString(1, jsonString);
 		SendBrowserProcessMessage(cefBrowser, PID_RENDERER, msg);
-	});
+	};
+
+	if (!browser)
+		ExecuteOnAllBrowsers(jsEvent);
+	else
+		ExecuteOnBrowser(jsEvent, browser);
 }
