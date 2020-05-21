@@ -137,12 +137,9 @@ endif()
 if(APPLE)
 	list(APPEND obs-browser_SOURCES
 			browser-mac.mm
-			browser-mac-cpp-int.cpp
 		)
 	list(APPEND obs-browser_HEADERS
-			browser-mac.hpp
-			obs-browser-objc-int.hpp
-			browser-mac-cpp-int.hpp
+			browser-mac.h
 		)
 
 	find_library(COREFOUNDATION CoreFoundation)

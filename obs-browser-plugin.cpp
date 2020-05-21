@@ -47,7 +47,7 @@
 #endif
 
 #if defined(USE_UI_LOOP) && defined(__APPLE__)
-#include "browser-mac-cpp-int.hpp"
+#include "browser-mac.h"
 #endif
 
 OBS_DECLARE_MODULE()
@@ -71,8 +71,6 @@ bool hwaccel = false;
 
 #if defined(USE_UI_LOOP) && defined (WIN32)
 extern MessageObject messageObject;
-#elif defined(USE_UI_LOOP) && defined (__APPLE__)
-extern BrowserCppInt* message;
 #endif
 
 
@@ -92,7 +90,7 @@ public:
 					  Qt::QueuedConnection,
 					  Q_ARG(MessageTask, task));
 #elif __APPLE__
-		message->ExecuteTask(task);
+		ExecuteTask(task);
 #endif
 #else
 		task();
@@ -228,7 +226,7 @@ static CefRefPtr<BrowserApp> app;
 static void BrowserInit(void)
 {
 #if defined(__APPLE__) && defined(USE_UI_LOOP)
-	message->ExecuteTask([]() {
+	ExecuteTask([]() {
 #endif
 		string path = obs_get_module_binary_path(obs_current_module());
 		path = path.substr(0, path.find_last_of('/') + 1);
@@ -255,7 +253,7 @@ static void BrowserInit(void)
 
 #ifdef __APPLE__
 #ifdef BROWSER_DEPLOY
-		std::string binPath = message->getExecutablePath();
+		std::string binPath = getExecutablePath();
 		binPath = binPath.substr(0, binPath.find_last_of('/'));
 		binPath += "/Frameworks/Chromium\ Embedded\ Framework.framework";
 		CefString(&settings.framework_dir_path) = binPath;
@@ -339,7 +337,7 @@ static void BrowserShutdown(void)
 	while (messageObject.ExecuteNextBrowserTask())
 		;
 #elif __APPLE__
-	while (message->ExecuteNextBrowserTask())
+	while (ExecuteNextBrowserTask())
 		;
 #endif
 	CefDoMessageLoopWork();
@@ -612,9 +610,6 @@ bool obs_module_load(void)
 
 #if defined(USE_UI_LOOP) && defined(WIN32)
 	qRegisterMetaType<MessageTask>("MessageTask");
-#elif defined(USE_UI_LOOP) && defined(__APPLE__)
-	message = new BrowserCppInt();
-	message ->init();
 #endif
 
 	os_event_init(&cef_started_event, OS_EVENT_TYPE_MANUAL);

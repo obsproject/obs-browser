@@ -35,8 +35,7 @@
 #include <QEventLoop>
 #include <QThread>
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
-#include "browser-mac-cpp-int.hpp"
-extern BrowserCppInt* message;
+#include "browser-mac.h"
 #endif
 
 using namespace std;
@@ -103,7 +102,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 #ifdef WIN32
 		if (QThread::currentThread() == qApp->thread()) {
 #elif __APPLE__
-		if (message->isMainThread()) {
+		if (isMainThread()) {
 #endif
 			if (!!cefBrowser)
 				func(cefBrowser);
@@ -115,7 +114,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 #if defined(USE_UI_LOOP) && defined(WIN32)
 		bool success = QueueCEFTask([&]() {
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
-		message->ExecuteTask([&]() {
+		ExecuteTask([&]() {
 #endif
 			if (!!cefBrowser)
 				func(cefBrowser);
@@ -135,7 +134,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 #if defined(USE_UI_LOOP) && defined(WIN32)
 			QueueBrowserTask(cefBrowser, func);
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
-			message->QueueBrowserTask(cefBrowser, func);
+			QueueBrowserTask(cefBrowser, func);
 #else
 			QueueCEFTask([=]() { func(browser); });
 #endif
@@ -149,7 +148,7 @@ bool BrowserSource::CreateBrowser()
 	return QueueCEFTask([this]() {
 #endif
 #if defined(USE_UI_LOOP) && defined(__APPLE__)
-	message->ExecuteTask([this]() {
+	ExecuteTask([this]() {
 #endif
 #if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
@@ -251,7 +250,7 @@ void BrowserSource::ClearAudioStreams()
 #if defined(USE_UI_LOOP) && defined(WIN32)
 	QueueCEFTask([this]() {
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
-	message->ExecuteTask([this]() {
+	ExecuteTask([this]() {
 #endif
 		audio_streams.clear();
 		std::lock_guard<std::mutex> lock(audio_sources_mutex);
@@ -576,7 +575,7 @@ void BrowserSource::Render()
 #elif defined(USE_UI_LOOP) && defined(WIN32)
 	ProcessCef();
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
-	message->Process();
+	Process();
 #endif
 }
 

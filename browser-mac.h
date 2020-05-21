@@ -16,9 +16,6 @@
 
 ******************************************************************************/
 
-#ifndef __BROWSER_OBJC_INTERFACE_H__
-#define __BROWSER_OBJC_INTERFACE_H__
-
 #include <functional>
 #include <mutex>
 #include <deque>
@@ -40,26 +37,14 @@ struct Task {
     }
 };
 
-class BrowserObjCInt
-{
-	std::mutex browserTaskMutex;
-	std::deque<Task> browserTasks;
+extern std::mutex browserTaskMutex;
+extern std::deque<Task> browserTasks;
 
-public:
-    BrowserObjCInt(void);
-    ~BrowserObjCInt(void);
-
-    void init(void);
-	bool ExecuteNextBrowserTask();
-	void ExecuteTask(MessageTask task);
-	void DoCefMessageLoop(int ms);
-	void Process();
-    void QueueBrowserTask(CefRefPtr<CefBrowser> browser,
-				     BrowserFunc func);
-    bool isMainThread();
-    std::string getExecutablePath();
-private:
-    void *self;
-};
-
-#endif
+bool ExecuteNextBrowserTask();
+void ExecuteTask(MessageTask task);
+void DoCefMessageLoop(int ms);
+void Process();
+void QueueBrowserTask(CefRefPtr<CefBrowser> browser,
+                    BrowserFunc func);
+bool isMainThread();
+std::string getExecutablePath();

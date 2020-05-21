@@ -32,7 +32,7 @@
 #include <QTimer>
 #endif
 #ifdef __APPLE__
-#include "browser-mac-cpp-int.hpp"
+#include "browser-mac.h"
 #endif
 #endif
 
@@ -444,10 +444,6 @@ void ProcessCef()
 #ifdef USE_UI_LOOP
 #define MAX_DELAY (1000 / 30)
 
-#ifdef __APPLE__
-BrowserCppInt* message;
-#endif
-
 void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
 {
 	if (delay_ms < 0)
@@ -468,7 +464,7 @@ void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
 				  Qt::QueuedConnection,
 				  Q_ARG(int, (int)delay_ms));
 #elif __APPLE__
-	message->DoCefMessageLoop((int)delay_ms);
+	DoCefMessageLoop((int)delay_ms);
 #endif
 }
 #endif

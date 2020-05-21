@@ -17,27 +17,16 @@
 ******************************************************************************/
 
 #include <obs.h>
-#include "browser-mac.hpp"
-#include "obs-browser-objc-int.hpp"
+#include "browser-mac.h"
 #include <mach-o/dyld.h>
 
-@implementation MessageObject
+#import "Foundation/Foundation.h"
+#import <Cocoa/Cocoa.h>
 
-BrowserObjCInt::BrowserObjCInt( void )
-    : self( NULL )
-{   }
+std::mutex browserTaskMutex;
+std::deque<Task> browserTasks;
 
-BrowserObjCInt::~BrowserObjCInt( void )
-{
-    [(id)self dealloc];
-}
-
-void BrowserObjCInt::init( void )
-{
-    self = [[MessageObject alloc] init];
-}
-
-bool BrowserObjCInt::ExecuteNextBrowserTask()
+bool ExecuteNextBrowserTask()
 {
 	Task nextTask;
 	{
@@ -53,32 +42,28 @@ bool BrowserObjCInt::ExecuteNextBrowserTask()
 	return true;
 }
 
-void BrowserObjCInt::ExecuteTask(MessageTask task)
+void ExecuteTask(MessageTask task)
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         task();
     });
 }
 
-void BrowserObjCInt::DoCefMessageLoop(int ms)
+void DoCefMessageLoop(int ms)
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-    // if (ms)
-	// 	QTimer::singleShot((int)ms + 2,
-	// 			   []() { CefDoMessageLoopWork(); });
-	// else
 		CefDoMessageLoopWork();
     });
 }
 
-void BrowserObjCInt::Process()
+void Process()
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         CefDoMessageLoopWork();
     });
 }
 
-void BrowserObjCInt::QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc func)
+void QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc func)
 {
 	std::lock_guard<std::mutex> lock(browserTaskMutex);
 	browserTasks.emplace_back(browser, func);
@@ -88,17 +73,15 @@ void BrowserObjCInt::QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc
     });
 }
 
-bool BrowserObjCInt::isMainThread()
+bool isMainThread()
 {
     return [NSThread isMainThread];
 }
 
-std::string BrowserObjCInt::getExecutablePath()
+std::string getExecutablePath()
 {
     char path[1024];
     uint32_t size = sizeof(path);
     _NSGetExecutablePath(path, &size);
     return path;
 }
-
-@end
