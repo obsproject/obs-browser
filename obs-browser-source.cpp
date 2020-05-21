@@ -112,7 +112,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 #endif
 		os_event_t *finishedEvent;
 		os_event_init(&finishedEvent, OS_EVENT_TYPE_AUTO);
-#if defined(USE_UI_LOOP) && defined(WIN32)
+#ifdef WIN32
 		bool success = QueueCEFTask([&]() {
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
 		message->ExecuteTask([&]() {
@@ -121,11 +121,11 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 				func(cefBrowser);
 			os_event_signal(finishedEvent);
 		});
-#if defined(USE_UI_LOOP) && defined(WIN32)
+#ifdef WIN32
 		if (success) {
 #endif
 			os_event_wait(finishedEvent);
-#if defined(USE_UI_LOOP) && defined(WIN32)
+#ifdef WIN32
 		}
 #endif
 		os_event_destroy(finishedEvent);
@@ -248,7 +248,7 @@ void BrowserSource::DestroyBrowser(bool async)
 
 void BrowserSource::ClearAudioStreams()
 {
-#if defined(USE_UI_LOOP) && defined(WIN32)
+#ifdef WIN32
 	QueueCEFTask([this]() {
 #elif defined(USE_UI_LOOP) && defined(__APPLE__)
 	message->ExecuteTask([this]() {
