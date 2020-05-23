@@ -33,6 +33,7 @@ protected:
 
 public:
 	virtual void setURL(const std::string &url) = 0;
+	virtual void reloadPage() = 0;
 	virtual void setStartupScript(const std::string &script) = 0;
 	virtual void allowAllPopups(bool allow) = 0;
 	virtual void closeBrowser() = 0;

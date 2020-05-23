@@ -314,6 +314,12 @@ void QCefWidgetInternal::setURL(const std::string &url_)
 	}
 }
 
+void QCefWidgetInternal::reloadPage()
+{
+	if (cefBrowser)
+		cefBrowser->ReloadIgnoreCache();
+}
+
 void QCefWidgetInternal::setStartupScript(const std::string &script_)
 {
 	script = script_;
