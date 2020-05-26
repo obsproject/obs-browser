@@ -24,11 +24,16 @@
 #include <windows.h>
 #endif
 
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
 #include <util/base.h>
 #include <util/platform.h>
 #include <util/threading.h>
+#ifdef WIN32
 #include <QTimer>
+#endif
+#ifdef __APPLE__
+#include "browser-mac.h"
+#endif
 #endif
 
 using namespace json11;
@@ -81,7 +86,25 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 		}
 	}
 
-	command_line->AppendSwitch("enable-system-flash");
+	if (command_line->HasSwitch("disable-features")) {
+		// Don't override existing, as this can break OSR
+		std::string disableFeatures =
+			command_line->GetSwitchValue("disable-features");
+		disableFeatures += ",HardwareMediaKeyHandling"
+#ifdef __APPLE__
+				   ",NetworkService"
+#endif
+			;
+		command_line->AppendSwitchWithValue("disable-features",
+						    disableFeatures);
+	} else {
+		command_line->AppendSwitchWithValue("disable-features",
+						    "HardwareMediaKeyHandling"
+#ifdef __APPLE__
+						    ",NetworkService"
+#endif
+		);
+	}
 
 	command_line->AppendSwitchWithValue("autoplay-policy",
 					    "no-user-gesture-required");
@@ -102,14 +125,19 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("pluginVersion", pluginVersion,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
-	CefRefPtr<CefV8Value> func =
+	CefRefPtr<CefV8Value> getCurrentScene =
 		CefV8Value::CreateFunction("getCurrentScene", this);
-	obsStudioObj->SetValue("getCurrentScene", func,
+	obsStudioObj->SetValue("getCurrentScene", getCurrentScene,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
 	CefRefPtr<CefV8Value> getStatus =
 		CefV8Value::CreateFunction("getStatus", this);
 	obsStudioObj->SetValue("getStatus", getStatus,
+			       V8_PROPERTY_ATTRIBUTE_NONE);
+
+	CefRefPtr<CefV8Value> saveReplayBuffer =
+		CefV8Value::CreateFunction("saveReplayBuffer", this);
+	obsStudioObj->SetValue("saveReplayBuffer", saveReplayBuffer,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
 #if !ENABLE_WASHIDDEN
@@ -334,29 +362,15 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
-	if (name == "getCurrentScene") {
+	if (name == "getCurrentScene" || name == "getStatus" ||
+	    name == "saveReplayBuffer") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
 		}
 
 		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("getCurrentScene");
-		CefRefPtr<CefListValue> args = msg->GetArgumentList();
-		args->SetInt(0, callbackId);
-
-		CefRefPtr<CefBrowser> browser =
-			CefV8Context::GetCurrentContext()->GetBrowser();
-		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
-
-	} else if (name == "getStatus") {
-		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
-			callbackId++;
-			callbackMap[callbackId] = arguments[0];
-		}
-
-		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create("getStatus");
+			CefProcessMessage::Create(name);
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetInt(0, callbackId);
 
@@ -372,7 +386,7 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 	return true;
 }
 
-#ifdef USE_QT_LOOP
+#if defined(USE_UI_LOOP) && defined(WIN32)
 Q_DECLARE_METATYPE(MessageTask);
 MessageObject messageObject;
 
@@ -425,7 +439,9 @@ void ProcessCef()
 	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop",
 				  Qt::QueuedConnection, Q_ARG(int, (int)0));
 }
+#endif
 
+#ifdef USE_UI_LOOP
 #define MAX_DELAY (1000 / 30)
 
 void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
@@ -434,6 +450,8 @@ void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
 		delay_ms = 0;
 	else if (delay_ms > MAX_DELAY)
 		delay_ms = MAX_DELAY;
+
+#ifdef WIN32
 
 	if (!frameTimer.isActive()) {
 		QObject::connect(&frameTimer, &QTimer::timeout, &messageObject,
@@ -445,5 +463,8 @@ void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
 	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop",
 				  Qt::QueuedConnection,
 				  Q_ARG(int, (int)delay_ms));
+#elif __APPLE__
+	DoCefMessageLoop((int)delay_ms);
+#endif
 }
 #endif

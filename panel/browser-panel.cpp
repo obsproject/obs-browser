@@ -6,7 +6,7 @@
 #include <QWindow>
 #include <QApplication>
 
-#ifdef USE_QT_LOOP
+#if defined(USE_UI_LOOP) && defined (WIN32)
 #include <QEventLoop>
 #include <QThread>
 #endif
@@ -216,17 +216,18 @@ void QCefWidgetInternal::closeBrowser()
 
 void QCefWidgetInternal::Init()
 {
-	QSize size = this->size() * devicePixelRatio();
 	WId id = winId();
 
-	bool success = QueueCEFTask([this, size, id]() {
+	bool success = QueueCEFTask([this, id]() {
 		CefWindowInfo windowInfo;
 
 		/* Make sure Init isn't called more than once. */
 		if (cefBrowser)
 			return;
 
+		QSize size = this->size();
 #ifdef _WIN32
+		size *= devicePixelRatio();
 		RECT rc = {0, 0, size.width(), size.height()};
 		windowInfo.SetAsChild((HWND)id, rc);
 #elif __APPLE__

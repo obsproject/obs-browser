@@ -24,9 +24,9 @@ if (EXPERIMENTAL_SHARED_TEXTURE_SUPPORT)
 endif()
 
 if(NOT APPLE)
-	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
+	option(USE_UI_LOOP "Runs CEF on the main UI thread instead of in its own thread" OFF)
 else()
-	set(USE_QT_LOOP TRUE)
+	set(USE_UI_LOOP TRUE)
 endif()
 
 if(APPLE)
@@ -36,9 +36,16 @@ if(APPLE)
 	endif()
 endif()
 
-if (BROWSER_FRONTEND_API_SUPPORT)
-	set(BROWSER_FRONTEND_API_SUPPORT_ENABLED)
+if(UNIX AND NOT APPLE)
+	find_package(X11 REQUIRED)
+	if(NOT X11_FOUND)
+		message(STATUS "X11 Not found -- obs-browser plugin disabled.")
+		return()
+	endif()
+	include_directories("${X11_INCLUDE_DIR}")
 endif()
+
+
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in"
 	"${CMAKE_CURRENT_BINARY_DIR}/browser-config.h")
@@ -50,29 +57,32 @@ include_directories("${CEF_ROOT_DIR}")
 
 set(obs-browser_LIBRARIES
 	libobs
-	obs-frontend-api
+#	obs-frontend-api
 	)
 
 list(APPEND obs-browser_LIBRARIES
 	${CEF_LIBRARIES})
 
-if(BROWSER_PANEL_SUPPORT_ENABLED OR USE_QT_LOOP)
-	if(DEFINED QTDIR${_lib_suffix})
-		list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
-	elseif(DEFINED QTDIR)
-		list(APPEND CMAKE_PREFIX_PATH "${QTDIR}")
-	elseif(DEFINED ENV{QTDIR${_lib_suffix}})
-		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR${_lib_suffix}}")
-	elseif(DEFINED ENV{QTDIR})
-		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR}")
-	endif()
+if(NOT APPLE)
+	if(BROWSER_PANEL_SUPPORT_ENABLED OR USE_UI_LOOP)
+		if(DEFINED QTDIR${_lib_suffix})
+			list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
+		elseif(DEFINED QTDIR)
+			list(APPEND CMAKE_PREFIX_PATH "${QTDIR}")
+		elseif(DEFINED ENV{QTDIR${_lib_suffix}})
+			list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR${_lib_suffix}}")
+		elseif(DEFINED ENV{QTDIR})
+			list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR}")
+		endif()
 
-	set(CMAKE_AUTOMOC TRUE)
-	find_package(Qt5Widgets REQUIRED)
-	list(APPEND obs-browser_LIBRARIES
-		Qt5::Widgets
-		)
+		set(CMAKE_AUTOMOC TRUE)
+		find_package(Qt5Widgets REQUIRED)
+		list(APPEND obs-browser_LIBRARIES
+			Qt5::Widgets
+			)
+	endif()
 endif()
+
 
 if(MSVC)
 	option(BROWSER_USE_STATIC_CRT "Use static CRT" ON)
@@ -124,6 +134,23 @@ if(WIN32 AND BROWSER_PANEL_SUPPORT_ENABLED)
 		)
 endif()
 
+if(APPLE)
+	list(APPEND obs-browser_SOURCES
+			browser-mac.mm
+		)
+	list(APPEND obs-browser_HEADERS
+			browser-mac.h
+		)
+
+	find_library(COREFOUNDATION CoreFoundation)
+	find_library(COCOA Cocoa)
+
+	include_directories(
+			${COREFOUNDATION}
+			${COCOA}
+		)
+endif()
+
 add_library(obs-browser MODULE
 	${obs-browser_SOURCES}
 	${obs-browser_HEADERS}
@@ -132,9 +159,19 @@ add_library(obs-browser MODULE
 target_link_libraries(obs-browser
 	${obs-browser_LIBRARIES}
 	)
-if(USE_QT_LOOP)
-	target_compile_definitions(obs-browser PRIVATE USE_QT_LOOP)
+
+if(APPLE)
+	target_link_libraries(obs-browser
+			${COREFOUNDATION}
+			${COCOA}
+		)
 endif()
+
+if(USE_UI_LOOP)
+	target_compile_definitions(obs-browser PRIVATE USE_UI_LOOP)
+endif()
+
+set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
 
 # ----------------------------------------------------------------------------
 
@@ -158,6 +195,7 @@ add_executable(obs-browser-page
 target_link_libraries(obs-browser-page
 	${CEF_LIBRARIES}
 	)
+set_target_properties(obs-browser-page PROPERTIES FOLDER "plugins/obs-browser")
 
 if (APPLE)
 	set_target_properties(obs-browser-page PROPERTIES
@@ -168,9 +206,10 @@ if (WIN32)
 	set_target_properties(obs-browser-page PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
 endif(WIN32)
 
-if (APPLE AND XCODE)
-	set_xcode_property(obs-browser-page CLANG_CXX_LIBRARY "libc++")
-endif(APPLE AND XCODE)
+if (UNIX AND NOT APPLE)
+    set_target_properties(obs-browser PROPERTIES INSTALL_RPATH "$ORIGIN/")
+    set_target_properties(obs-browser-page PROPERTIES INSTALL_RPATH "$ORIGIN/")
+endif()
 
 # ----------------------------------------------------------------------------
 
@@ -206,6 +245,10 @@ if (WIN32)
 		CONFIGURATIONS Release RelWithDebInfo MinSizeRel
 	)
 
+	target_sources(obs-browser-page
+		PRIVATE obs-browser-page.manifest
+	)
+
 	add_custom_command(TARGET obs-browser POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
 		"${CEF_ROOT_DIR}/Release/chrome_elf.dll"
@@ -229,6 +272,11 @@ if (WIN32)
 		"${CEF_ROOT_DIR}/Release/v8_context_snapshot.bin"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
 	)
+endif()
+
+if (UNIX AND NOT APPLE)
+	install(DIRECTORY "${CEF_ROOT_DIR}/Resources/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
+	install(DIRECTORY "${CEF_ROOT_DIR}/Release/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
 endif()
 
 if(APPLE AND NOT BROWSER_DEPLOY)

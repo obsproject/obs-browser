@@ -25,7 +25,7 @@
 
 typedef std::function<void(CefRefPtr<CefBrowser>)> BrowserFunc;
 
-#ifdef USE_QT_LOOP
+#if  defined(USE_UI_LOOP) && defined(WIN32)
 #include <QObject>
 #include <QTimer>
 #include <mutex>
@@ -111,9 +111,11 @@ public:
 			     CefRefPtr<CefV8Value> &retval,
 			     CefString &exception) override;
 
-#ifdef USE_QT_LOOP
+#ifdef USE_UI_LOOP
 	virtual void OnScheduleMessagePumpWork(int64 delay_ms) override;
+#ifdef WIN32
 	QTimer frameTimer;
+#endif
 #endif
 
 #if !ENABLE_WASHIDDEN
