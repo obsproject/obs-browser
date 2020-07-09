@@ -194,7 +194,7 @@ Build in Xcode (⌘+B)
 #### Getting
 
 *  Download CEF Windows 64bit from [http://opensource.spotify.com/cefbuilds/index.html](http://opensource.spotify.com/cefbuilds/index.html)
-  *  Use CEF branch 3440 or newer (3579 if you want shared texture support)
+  *  Use CEF branch 3770
 *  Extract and cd into the folder
 
 #### Setting Up the Project
