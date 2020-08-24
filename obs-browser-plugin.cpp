@@ -50,6 +50,10 @@
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
+MODULE_EXPORT const char *obs_module_description(void)
+{
+	return "CEF-based web browser source & panels";
+}
 
 using namespace std;
 using namespace json11;
