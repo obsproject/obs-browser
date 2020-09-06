@@ -155,12 +155,12 @@ set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
 # ----------------------------------------------------------------------------
 
 set(obs-browser-page_SOURCES
-	obs-browser-page/obs-browser-page-main.cpp
+	obs-browser-page-main/obs-browser-page-main.cpp
 	browser-app.cpp
 	deps/json11/json11.cpp
 	)
 set(obs-browser-page_HEADERS
-	obs-browser-page/obs-browser-page-main.cpp
+	obs-browser-page-main/obs-browser-page-main.cpp
 	browser-app.hpp
 	deps/json11/json11.hpp
 	cef-headers.hpp
