@@ -567,7 +567,7 @@ static void check_hwaccel_support(void)
 bool obs_module_load(void)
 {
 	blog(LOG_INFO, "[obs-browser]: Version %s", OBS_BROWSER_VERSION_STRING);
-
+	blog(LOG_INFO, "[obs-browser]: CEF Version %s", CEF_VERSION);
 #ifdef USE_QT_LOOP
 	qRegisterMetaType<MessageTask>("MessageTask");
 #endif
