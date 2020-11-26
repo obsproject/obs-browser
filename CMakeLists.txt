@@ -181,7 +181,8 @@ if (APPLE)
 endif(APPLE)
 
 if (WIN32)
-	set_target_properties(obs-browser-page PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+	set_target_properties(obs-browser PROPERTIES LINK_FLAGS "/IGNORE:4099")
+	set_target_properties(obs-browser-page PROPERTIES LINK_FLAGS "/IGNORE:4099 /SUBSYSTEM:WINDOWS")
 endif(WIN32)
 
 if (UNIX AND NOT APPLE)
