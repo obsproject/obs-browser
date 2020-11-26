@@ -217,15 +217,19 @@ if (WIN32)
 		"${CEF_ROOT_DIR}/Release/libGLESv2.dll"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
 		COMMAND ${CMAKE_COMMAND} -E copy
-		"${CEF_ROOT_DIR}/Release/natives_blob.bin"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-		COMMAND ${CMAKE_COMMAND} -E copy
 		"${CEF_ROOT_DIR}/Release/snapshot_blob.bin"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
 		COMMAND ${CMAKE_COMMAND} -E copy
 		"${CEF_ROOT_DIR}/Release/v8_context_snapshot.bin"
 		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
 	)
+	if(EXISTS "${CEF_ROOT_DIR}/Release/natives_blob.bin")
+		add_custom_command(TARGET obs-browser POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy
+			"${CEF_ROOT_DIR}/Release/natives_blob.bin"
+			"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
+		)
+	endif()
 endif()
 
 if (UNIX AND NOT APPLE)
