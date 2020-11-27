@@ -37,7 +37,7 @@
 #include <include/cef_render_process_handler.h>
 #include <include/cef_request_context_handler.h>
 
-#if CHROME_VERSION_BUILD < 3507
+#if CHROME_VERSION_BUILD < 3507 || CHROME_VERSION_BUILD >= 4183
 #define ENABLE_WASHIDDEN 1
 #else
 #define ENABLE_WASHIDDEN 0
