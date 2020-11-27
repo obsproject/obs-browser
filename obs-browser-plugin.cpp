@@ -260,7 +260,9 @@ static void BrowserInit(void)
 	CefString(&settings.locale) = obs_get_locale();
 	CefString(&settings.accept_language_list) = accepted_languages;
 	CefString(&settings.cache_path) = conf_path_abs;
-	CefString(&settings.browser_subprocess_path) = path;
+	char *abs_path = os_get_abs_path_ptr(path.c_str());
+	CefString(&settings.browser_subprocess_path) = abs_path;
+	bfree(abs_path);
 
 	bool tex_sharing_avail = false;
 
@@ -368,7 +370,7 @@ void RegisterBrowserSource()
 	info.video_render = [](void *data, gs_effect_t *) {
 		static_cast<BrowserSource *>(data)->Render();
 	};
-#if CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 4103
 	info.audio_mix = [](void *data, uint64_t *ts_out,
 			    struct audio_output_data *audio_output,
 			    size_t channels, size_t sample_rate) {
