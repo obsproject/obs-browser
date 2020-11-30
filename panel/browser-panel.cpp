@@ -33,6 +33,10 @@ CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
 }
 #endif
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#define SUPPORTS_FRACTIONAL_SCALING
+#endif
+
 class CookieCheck : public CefCookieVisitor {
 public:
 	QCefCookieManager::cookie_exists_cb callback;
@@ -227,7 +231,11 @@ void QCefWidgetInternal::Init()
 
 		QSize size = this->size();
 #ifdef _WIN32
+#ifdef SUPPORTS_FRACTIONAL_SCALING
+		size *= devicePixelRatioF();
+#elif
 		size *= devicePixelRatio();
+#endif
 		RECT rc = {0, 0, size.width(), size.height()};
 		windowInfo.SetAsChild((HWND)id, rc);
 #elif __APPLE__
@@ -263,7 +271,11 @@ void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 void QCefWidgetInternal::Resize()
 {
 #ifdef _WIN32
+#ifdef SUPPORTS_FRACTIONAL_SCALING
+	QSize size = this->size() * devicePixelRatioF();
+#elif
 	QSize size = this->size() * devicePixelRatio();
+#endif
 
 	QueueCEFTask([this, size]() {
 		if (!cefBrowser)
