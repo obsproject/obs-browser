@@ -56,6 +56,7 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 * obsReplaybufferSaved
 * obsReplaybufferStopping
 * obsReplaybufferStopped
+* obsExit
 
 ### Get the current scene
 
