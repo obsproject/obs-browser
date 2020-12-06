@@ -53,6 +53,7 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 * obsRecordingStopped
 * obsReplaybufferStarting
 * obsReplaybufferStarted
+* obsReplaybufferSaved
 * obsReplaybufferStopping
 * obsReplaybufferStopped
 

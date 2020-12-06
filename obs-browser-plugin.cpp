@@ -468,6 +468,9 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED:
 		DispatchJSEvent("obsReplaybufferStarted", "");
 		break;
+	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED:
+		DispatchJSEvent("obsReplaybufferSaved", "");
+		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPING:
 		DispatchJSEvent("obsReplaybufferStopping", "");
 		break;
