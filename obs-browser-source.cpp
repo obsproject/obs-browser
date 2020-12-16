@@ -542,8 +542,14 @@ void BrowserSource::Render()
 #endif
 
 	if (texture) {
+#ifdef __APPLE__
+		gs_effect_t *effect = obs_get_base_effect(
+			(hwaccel) ? OBS_EFFECT_DEFAULT_RECT
+				  : OBS_EFFECT_PREMULTIPLIED_ALPHA);
+#else
 		gs_effect_t *effect =
 			obs_get_base_effect(OBS_EFFECT_PREMULTIPLIED_ALPHA);
+#endif
 		while (gs_effect_loop(effect, "Draw"))
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
 	}

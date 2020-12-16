@@ -40,7 +40,11 @@ class BrowserClient : public CefClient,
 #if USE_TEXTURE_COPY
 	gs_texture_t *texture = nullptr;
 #endif
+#ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
+#elif defined(__APPLE__)
+	void *last_handle = nullptr;
+#endif
 #endif
 	bool sharing_available = false;
 	bool reroute_audio = true;
