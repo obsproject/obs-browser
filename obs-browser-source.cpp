@@ -130,7 +130,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 bool BrowserSource::CreateBrowser()
 {
 	return QueueCEFTask([this]() {
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
 			obs_enter_graphics();
 			tex_sharing_avail = gs_shared_texture_available();
@@ -151,19 +151,25 @@ bool BrowserSource::CreateBrowser()
 		windowInfo.height = height;
 		windowInfo.windowless_rendering_enabled = true;
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 		windowInfo.shared_texture_enabled = hwaccel;
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef _WIN32
 		if (!fps_custom) {
 			windowInfo.external_begin_frame_enabled = true;
 			cefBrowserSettings.windowless_frame_rate = 0;
 		} else {
 			cefBrowserSettings.windowless_frame_rate = fps;
 		}
+#else
+		double video_fps = obs_get_active_fps();
+		cefBrowserSettings.windowless_frame_rate =
+			(fps_custom) ? fps : video_fps;
+#endif
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
@@ -297,6 +303,7 @@ void BrowserSource::SendFocus(bool focus)
 void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 {
 	uint32_t modifiers = event->modifiers;
+	UNUSED_PARAMETER(modifiers);
 	std::string text = event->text;
 #ifdef __linux__
 	uint32_t native_vkey = KeyboardCodeFromXKeysym(event->native_vkey);
@@ -363,7 +370,7 @@ void BrowserSource::SetShowing(bool showing)
 			true);
 		Json json = Json::object{{"visible", showing}};
 		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 		if (showing && !fps_custom) {
 			reset_frame = false;
 		}
@@ -397,8 +404,8 @@ void BrowserSource::Refresh()
 		},
 		true);
 }
-
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef _WIN32
 inline void BrowserSource::SignalBeginFrame()
 {
 	if (reset_frame) {
@@ -411,6 +418,8 @@ inline void BrowserSource::SignalBeginFrame()
 		reset_frame = false;
 	}
 }
+}
+#endif
 #endif
 
 void BrowserSource::Update(obs_data_t *settings)
@@ -517,7 +526,7 @@ void BrowserSource::Tick()
 {
 	if (create_browser && CreateBrowser())
 		create_browser = false;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	if (!fps_custom)
 		reset_frame = true;
 #endif
@@ -528,7 +537,7 @@ extern void ProcessCef();
 void BrowserSource::Render()
 {
 	bool flip = false;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	flip = hwaccel;
 #endif
 
@@ -539,9 +548,9 @@ void BrowserSource::Render()
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
 	}
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	SignalBeginFrame();
-#elif USE_QT_LOOP
+#elseif USE_QT_LOOP
 	ProcessCef();
 #endif
 }

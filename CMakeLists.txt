@@ -15,20 +15,17 @@ if(NOT CEF_FOUND)
 	return()
 endif()
 
-option(EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin (Win32)" ON)
+option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" OFF)
+if(WIN32)
+    set(SHARED_TEXTURE_SUPPORT_ENABLED ON)
+endif()
+
 option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
 
 if(NOT APPLE)
 	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
 else()
-	set(USE_QT_LOOP TRUE)
-endif()
-
-if(APPLE)
-	option(BROWSER_DEPLOY "Marks full deployment of browser plugin" OFF)
-	if(BROWSER_DEPLOY)
-		add_definitions(-DBROWSER_DEPLOY)
-	endif()
+	set(USE_QT_LOOP ON)
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -146,38 +143,110 @@ add_library(obs-browser MODULE
 target_link_libraries(obs-browser
 	${obs-browser_LIBRARIES}
 	)
+
 if(USE_QT_LOOP)
 	target_compile_definitions(obs-browser PRIVATE USE_QT_LOOP)
+endif()
+
+if(SHARED_TEXTURE_SUPPORT_ENABLED)
+    target_compile_definitions(obs-browser PRIVATE SHARED_TEXTURE_SUPPORT_ENABLED)
 endif()
 
 set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
 
 # ----------------------------------------------------------------------------
 
-set(obs-browser-page_SOURCES
-	obs-browser-page/obs-browser-page-main.cpp
-	browser-app.cpp
-	deps/json11/json11.cpp
-	)
-set(obs-browser-page_HEADERS
-	obs-browser-page/obs-browser-page-main.cpp
-	browser-app.hpp
-	deps/json11/json11.hpp
-	cef-headers.hpp
-	)
-
-add_executable(obs-browser-page
-	${obs-browser-page_SOURCES}
-	${obs-browser-page_HEADERS}
-	)
-target_link_libraries(obs-browser-page
-	${CEF_LIBRARIES}
-	)
-set_target_properties(obs-browser-page PROPERTIES FOLDER "plugins/obs-browser")
-
 if (APPLE)
-	set_target_properties(obs-browser-page PROPERTIES
-		COMPILE_FLAGS "-mmacosx-version-min=10.8")
+	set(obs-browser-page_SOURCES
+		obs-browser-page/obs-browser-page-main.cpp
+		browser-app.cpp
+		deps/json11/json11.cpp
+		)
+	set(obs-browser-page_HEADERS
+		obs-browser-page/obs-browser-page-main.cpp
+		browser-app.hpp
+		deps/json11/json11.hpp
+		cef-headers.hpp
+		)
+
+	set(CEF_HELPER_TARGET "obs-browser-page")
+	set(CEF_HELPER_OUTPUT_NAME "OBS Helper")
+	set(CEF_HELPER_APP_SUFFIXES
+		"::"
+		" (GPU):_gpu:.gpu"
+		" (Plugin):_plugin:.plugin"
+		" (Renderer):_renderer:.renderer"
+	)
+
+	foreach(_suffix_list ${CEF_HELPER_APP_SUFFIXES})
+    	# Convert to a list and extract the suffix values.
+    	string(REPLACE ":" ";" _suffix_list ${_suffix_list})
+    	list(GET _suffix_list 0 _name_suffix)
+    	list(GET _suffix_list 1 _target_suffix)
+    	list(GET _suffix_list 2 _plist_suffix)
+
+    	# Define Helper target and output names.
+    	set(_helper_target "${CEF_HELPER_TARGET}${_target_suffix}")
+    	set(_helper_output_name "${CEF_HELPER_OUTPUT_NAME}${_name_suffix}")
+
+    	# Create Helper-specific variants of the helper-Info.plist file. Do this
+    	# manually because the configure_file command (which is executed as part of
+    	# MACOSX_BUNDLE_INFO_PLIST) uses global env variables and would insert the
+    	# wrong values with multiple targets.
+    	set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist")
+    	file(READ "${CMAKE_CURRENT_SOURCE_DIR}/helper-Info.plist" _plist_contents)
+    	string(REPLACE "\${EXECUTABLE_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
+    	string(REPLACE "\${PRODUCT_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
+    	string(REPLACE "\${BUNDLE_ID_SUFFIX}" "${_plist_suffix}" _plist_contents ${_plist_contents})
+    	file(WRITE ${_helper_info_plist} ${_plist_contents})
+
+    	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.obsproject.obs-studio.helper${_plist_suffix}")
+
+    	# Create Helper executable target.
+    	add_executable(${_helper_target} MACOSX_BUNDLE
+    		${obs-browser-page_SOURCES}
+    		${obs-browser-page_HEADERS})
+    	target_link_libraries(${_helper_target} ${CEF_LIBRARIES})
+    	set_target_properties(${_helper_target} PROPERTIES
+    		MACOSX_BUNDLE_INFO_PLIST ${_helper_info_plist}
+    		OUTPUT_NAME ${_helper_output_name}
+            FOLDER "plugins/obs-browser/helpers/"
+			COMPILE_FLAGS "-mmacosx-version-min=10.8"
+    	)
+
+        if(XCODE)
+			set(TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
+		else(XCODE)
+			set(TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+		endif(XCODE)
+
+		add_custom_command(TARGET obs-browser POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy_directory
+			"${TARGET_DIR}/${_helper_output_name}.app"
+			"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${_helper_output_name}.app"
+			VERBATIM)
+  	endforeach()
+else()
+    set(obs-browser-page_SOURCES
+    	obs-browser-page/obs-browser-page-main.cpp
+    	browser-app.cpp
+    	deps/json11/json11.cpp
+    	)
+    set(obs-browser-page_HEADERS
+    	obs-browser-page/obs-browser-page-main.cpp
+    	browser-app.hpp
+    	deps/json11/json11.hpp
+    	cef-headers.hpp
+    	)
+
+    add_executable(obs-browser-page
+    	${obs-browser-page_SOURCES}
+    	${obs-browser-page_HEADERS}
+    	)
+    target_link_libraries(obs-browser-page
+    	${CEF_LIBRARIES}
+    	)
+    set_target_properties(obs-browser-page PROPERTIES FOLDER "plugins/obs-browser")
 endif(APPLE)
 
 if (WIN32)
@@ -238,18 +307,7 @@ if (UNIX AND NOT APPLE)
 	install(DIRECTORY "${CEF_ROOT_DIR}/Release/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
 endif()
 
-if(APPLE AND NOT BROWSER_DEPLOY)
-	add_custom_command(TARGET obs-browser POST_BUILD
-		COMMAND "install_name_tool" -change
-		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
-		"${CEF_LIBRARY}/Chromium Embedded Framework"
-		"obs-browser.so")
-	add_custom_command(TARGET obs-browser-page POST_BUILD
-		COMMAND "install_name_tool" -change
-		"@rpath/Frameworks/Chromium Embedded Framework.framework/Chromium Embedded Framework"
-		"${CEF_LIBRARY}/Chromium Embedded Framework"
-		"obs-browser-page")
-endif()
-
 install_obs_plugin_with_data(obs-browser data)
+if(NOT APPLE)
 install_obs_plugin(obs-browser-page)
+endif()

@@ -67,14 +67,19 @@ if(WIN32)
 				debug ${CEFWRAPPER_LIBRARY_DEBUG})
 	endif()
 else()
-	# Fixes cmake 3.19.0 commit that added support for modern Xcode build system, but "forgot"
-	# to also escape framework names themselves in addition to the framework path:
-	# Commit https://gitlab.kitware.com/cmake/cmake/-/commit/ce2dee9e5bae37c8117087bb83add075c3c123b4
-	if(${CMAKE_VERSION} VERSION_GREATER "3.19.0" AND XCODE)
-		string(REPLACE "Chromium Embedded Framework" "\"Chromium Embedded Framework\"" CEF_LIBRARY_FIXED ${CEF_LIBRARY})
-		set(CEF_LIBRARIES
+	if(APPLE)
+		# Fixes cmake 3.19.0 commit that added support for modern Xcode build system, but "forgot"
+		# to also escape framework names themselves in addition to the framework path:
+		# Commit https://gitlab.kitware.com/cmake/cmake/-/commit/ce2dee9e5bae37c8117087bb83add075c3c123b4
+		if(${CMAKE_VERSION} VERSION_GREATER "3.19.0" AND XCODE)
+			string(REPLACE "Chromium Embedded Framework" "\"Chromium Embedded Framework\"" CEF_LIBRARY_FIXED ${CEF_LIBRARY})
+			set(CEF_LIBRARIES
 				${CEF_LIBRARY_FIXED}
 				${CEFWRAPPER_LIBRARY})
+		else()
+			set(CEF_LIBRARIES
+				${CEFWRAPPER_LIBRARY})
+		endif()
 	else()
 		set(CEF_LIBRARIES
 				${CEF_LIBRARY}
