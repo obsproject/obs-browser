@@ -8,6 +8,8 @@ include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/UI/obs-frontend-api")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
+option(BROWSER_LEGACY "Use legacy CEF version 3770" OFF)
+
 find_package(CEF QUIET)
 
 if(NOT CEF_FOUND)
@@ -16,7 +18,7 @@ if(NOT CEF_FOUND)
 endif()
 
 option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" OFF)
-if(WIN32)
+if(WIN32 OR (APPLE AND NOT BROWSER_LEGACY))
     set(SHARED_TEXTURE_SUPPORT_ENABLED ON)
 endif()
 
@@ -148,6 +150,10 @@ if(USE_QT_LOOP)
 	target_compile_definitions(obs-browser PRIVATE USE_QT_LOOP)
 endif()
 
+if(BROWSER_LEGACY)
+    target_compile_definitions(obs-browser PRIVATE BROWSER_LEGACY)
+endif()
+
 if(SHARED_TEXTURE_SUPPORT_ENABLED)
     target_compile_definitions(obs-browser PRIVATE SHARED_TEXTURE_SUPPORT_ENABLED)
 endif()
@@ -156,7 +162,7 @@ set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
 
 # ----------------------------------------------------------------------------
 
-if (APPLE)
+if (APPLE AND NOT BROWSER_LEGACY)
 	set(obs-browser-page_SOURCES
 		obs-browser-page/obs-browser-page-main.cpp
 		browser-app.cpp
@@ -247,7 +253,10 @@ else()
     	${CEF_LIBRARIES}
     	)
     set_target_properties(obs-browser-page PROPERTIES FOLDER "plugins/obs-browser")
-endif(APPLE)
+    if(APPLE)
+        target_compile_definitions(obs-browser PRIVATE BROWSER_LEGACY)
+    endif()
+endif()
 
 if (WIN32)
 	set_target_properties(obs-browser PROPERTIES LINK_FLAGS "/IGNORE:4099")
@@ -308,6 +317,6 @@ if (UNIX AND NOT APPLE)
 endif()
 
 install_obs_plugin_with_data(obs-browser data)
-if(NOT APPLE)
+if(BROWSER_LEGACY OR NOT APPLE)
 install_obs_plugin(obs-browser-page)
 endif()

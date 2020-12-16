@@ -254,7 +254,7 @@ static void BrowserInit(void)
 	CefString(&settings.locale) = obs_get_locale();
 	CefString(&settings.accept_language_list) = accepted_languages;
 	CefString(&settings.cache_path) = conf_path_abs;
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(BROWSER_LEGACY)
 	char *abs_path = os_get_abs_path_ptr(path.c_str());
 	CefString(&settings.browser_subprocess_path) = abs_path;
 	bfree(abs_path);

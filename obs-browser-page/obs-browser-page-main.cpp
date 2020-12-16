@@ -99,7 +99,7 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #else
 int main(int argc, char *argv[])
 {
-#if defined(__APPLE__)
+#if defined(__APPLE__) && !defined(BROWSER_LEGACY)
 	CefScopedLibraryLoader library_loader;
 	if (!library_loader.LoadInHelper())
 		return 1;
