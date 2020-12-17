@@ -634,6 +634,12 @@ bool obs_module_load(void)
 	}
 	obs_data_release(private_data);
 #endif
+
+#if defined(__APPLE__) && CHROME_VERSION_BUILD < 4183
+	// Make sure CEF malloc hijacking happens early in the process
+	obs_browser_initialize();
+#endif
+
 	return true;
 }
 
