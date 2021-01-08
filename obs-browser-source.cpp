@@ -555,7 +555,7 @@ void BrowserSource::Render()
 
 #if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	SignalBeginFrame();
-#elseif USE_QT_LOOP
+#elif USE_QT_LOOP
 	ProcessCef();
 #endif
 }
