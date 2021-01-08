@@ -40,9 +40,7 @@ struct AudioStream {
 };
 #endif
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
 extern bool hwaccel;
-#endif
 
 struct BrowserSource {
 	BrowserSource **p_prev_next = nullptr;
@@ -66,7 +64,7 @@ struct BrowserSource {
 	bool is_local = false;
 	bool first_update = true;
 	bool reroute_audio = true;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	bool reset_frame = false;
 #endif
 	bool is_showing = false;
@@ -116,7 +114,7 @@ struct BrowserSource {
 	void SetActive(bool active);
 	void Refresh();
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	inline void SignalBeginFrame();
 #endif
 };

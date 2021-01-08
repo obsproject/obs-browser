@@ -28,7 +28,7 @@ using namespace json11;
 
 BrowserClient::~BrowserClient()
 {
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED && USE_TEXTURE_COPY
+#if defined(SHARED_TEXTURE_SUPPORT_ENABLED) && USE_TEXTURE_COPY
 	if (sharing_available) {
 		obs_enter_graphics();
 		gs_texture_destroy(texture);
@@ -179,7 +179,7 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 		return;
 	}
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	if (sharing_available) {
 		return;
 	}
@@ -211,7 +211,7 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 	}
 }
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
 				       const RectList &, void *shared_handle)
 {

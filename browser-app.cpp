@@ -85,24 +85,19 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 		// Don't override existing, as this can break OSR
 		std::string disableFeatures =
 			command_line->GetSwitchValue("disable-features");
-		disableFeatures += ",HardwareMediaKeyHandling"
-#ifdef __APPLE__
-				   ",NetworkService"
-#endif
-			;
+		disableFeatures += ",HardwareMediaKeyHandling";
 		command_line->AppendSwitchWithValue("disable-features",
 						    disableFeatures);
 	} else {
 		command_line->AppendSwitchWithValue("disable-features",
-						    "HardwareMediaKeyHandling"
-#ifdef __APPLE__
-						    ",NetworkService"
-#endif
-		);
+						    "HardwareMediaKeyHandling");
 	}
 
 	command_line->AppendSwitchWithValue("autoplay-policy",
 					    "no-user-gesture-required");
+#ifdef __APPLE__
+	command_line->AppendSwitch("use-mock-keychain");
+#endif
 }
 
 void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
