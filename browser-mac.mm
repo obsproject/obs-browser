@@ -19,6 +19,8 @@
 #include <obs.h>
 #include "browser-mac.h"
 #include <mach-o/dyld.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
 #import "Foundation/Foundation.h"
 #import <Cocoa/Cocoa.h>
@@ -97,7 +99,14 @@ std::string getExecutablePath()
 
 bool isHighThanBigSur()
 {
+    char buf[100];
+    size_t buflen = 100;
+    if (sysctlbyname("machdep.cpu.brand_string", &buf, &buflen, NULL, 0) < 0)
+        return false;
+
+    blog(LOG_INFO, "Brand name: %s", buf);
+
     NSOperatingSystemVersion OSversion = [NSProcessInfo processInfo].operatingSystemVersion;
     return ((OSversion.majorVersion >= 10 && OSversion.minorVersion >= 16) ||
-        OSversion.majorVersion >= 11);
+        OSversion.majorVersion >= 11) && strcmp("Apple M1", buf) != 0;
 }
