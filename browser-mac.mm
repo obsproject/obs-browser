@@ -104,8 +104,6 @@ bool isHighThanBigSur()
     if (sysctlbyname("machdep.cpu.brand_string", &buf, &buflen, NULL, 0) < 0)
         return false;
 
-    blog(LOG_INFO, "Brand name: %s", buf);
-
     NSOperatingSystemVersion OSversion = [NSProcessInfo processInfo].operatingSystemVersion;
     return ((OSversion.majorVersion >= 10 && OSversion.minorVersion >= 16) ||
         OSversion.majorVersion >= 11) && strcmp("Apple M1", buf) != 0;
