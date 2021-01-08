@@ -23,6 +23,8 @@
 #import "Foundation/Foundation.h"
 #import <Cocoa/Cocoa.h>
 
+#include "obs.h"
+
 std::mutex browserTaskMutex;
 std::deque<Task> browserTasks;
 
@@ -45,6 +47,13 @@ bool ExecuteNextBrowserTask()
 void ExecuteTask(MessageTask task)
 {
     dispatch_async(dispatch_get_main_queue(), ^{
+        task();
+    });
+}
+
+void ExecuteSyncTask(MessageTask task)
+{
+    dispatch_sync(dispatch_get_main_queue(), ^{
         task();
     });
 }
@@ -84,4 +93,11 @@ std::string getExecutablePath()
     uint32_t size = sizeof(path);
     _NSGetExecutablePath(path, &size);
     return path;
+}
+
+bool isHighThanBigSur()
+{
+    NSOperatingSystemVersion OSversion = [NSProcessInfo processInfo].operatingSystemVersion;
+    return ((OSversion.majorVersion >= 10 && OSversion.minorVersion >= 16) ||
+        OSversion.majorVersion >= 11);
 }
