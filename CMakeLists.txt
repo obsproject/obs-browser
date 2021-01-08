@@ -57,6 +57,14 @@ set(obs-browser_LIBRARIES
 list(APPEND obs-browser_LIBRARIES
 	${CEF_LIBRARIES})
 
+if (APPLE)
+	find_library(COREFOUNDATION CoreFoundation)
+	find_library(APPKIT AppKit)
+	list(APPEND obs-browser_LIBRARIES
+			${COREFOUNDATION}
+			${APPKIT})
+endif()
+
 if(BROWSER_PANEL_SUPPORT_ENABLED OR USE_QT_LOOP)
 	if(DEFINED QTDIR${_lib_suffix})
 		list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
@@ -122,6 +130,12 @@ set(obs-browser_HEADERS
 	deps/wide-string.hpp
 	cef-headers.hpp
 	)
+
+if (APPLE)
+	list(APPEND obs-browser_SOURCES
+		macutil.mm
+		)
+endif()
 
 # only allow browser panels on win32 for now -- other operating systems
 # need more testing
