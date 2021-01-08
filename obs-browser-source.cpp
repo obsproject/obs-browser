@@ -418,7 +418,6 @@ inline void BrowserSource::SignalBeginFrame()
 		reset_frame = false;
 	}
 }
-}
 #endif
 #endif
 
