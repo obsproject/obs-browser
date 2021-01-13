@@ -273,17 +273,26 @@ static void BrowserInit(void)
 		}
 
 		BPtr<char> conf_path = obs_module_config_path("");
-		os_mkdir(conf_path);
+		if (conf_path) {
+			if (os_mkdir(conf_path) >= 0) {
+				/* Remove trailing slash since apparently this will
+				* literally cause chromium to crash since it thinks
+				* it's a different path */
+				conf_path[strlen(conf_path.Get()) - 1] = '\0';
 
-		/* Remove trailing slash since apparently this will
-		* literally cause chromium to crash since it thinks
-		* it's a different path */
-		conf_path[strlen(conf_path.Get()) - 1] = '\0';
+				BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
+				CefString(&settings.cache_path) = conf_path_abs;
+			} else {
+				blog(LOG_WARNING, "obs-browser: Could not create cache directory");
+			}
 
-		BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
+
+		} else {
+			blog(LOG_INFO, "obs-browser: empty config path");
+		}
+
 		CefString(&settings.locale) = obs_get_locale();
 		CefString(&settings.accept_language_list) = accepted_languages;
-		CefString(&settings.cache_path) = conf_path_abs;
 		CefString(&settings.browser_subprocess_path) = path;
 
 		bool tex_sharing_avail = false;
