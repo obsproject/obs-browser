@@ -56,6 +56,8 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 * obsReplaybufferSaved
 * obsReplaybufferStopping
 * obsReplaybufferStopped
+* obsVirtualcamStarted
+* obsVirtualcamStopped
 * obsExit
 
 ### Get the current scene
@@ -86,6 +88,7 @@ window.obsstudio.getCurrentScene(function(scene) {
  * @property {boolean} recordingPaused
  * @property {boolean} streaming
  * @property {boolean} replaybuffer
+ * @property {boolean} virtualcam
  */
 
 /**

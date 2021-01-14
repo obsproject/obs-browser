@@ -470,6 +470,12 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED:
 		DispatchJSEvent("obsReplaybufferStopped", "");
 		break;
+	case OBS_FRONTEND_EVENT_VIRTUALCAM_STARTED:
+		DispatchJSEvent("obsVirtualcamStarted", "");
+		break;
+	case OBS_FRONTEND_EVENT_VIRTUALCAM_STOPPED:
+		DispatchJSEvent("obsVirtualcamStopped", "");
+		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED: {
 		OBSSource source = obs_frontend_get_current_scene();
 		obs_source_release(source);
