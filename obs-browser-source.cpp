@@ -174,6 +174,9 @@ bool BrowserSource::CreateBrowser()
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
 
+		cefBrowserSettings.default_font_size = 16;
+		cefBrowserSettings.default_fixed_font_size = 16;
+
 #if ENABLE_LOCAL_FILE_URL_SCHEME
 		if (is_local) {
 			/* Disable web security for file:// URLs to allow
