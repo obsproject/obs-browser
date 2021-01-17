@@ -20,6 +20,10 @@
 #include <util/base.h>
 #include <thread>
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include <X11/Xlib.h>
+#endif
+
 extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
 extern os_event_t *cef_started_event;
@@ -86,6 +90,7 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
 		if (os_mkdirs(rpath.Get()) == MKDIR_ERROR)
 			throw "Failed to create cookie directory";
+
 		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
 
 #if CHROME_VERSION_BUILD < 3770
@@ -171,6 +176,9 @@ QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_,
 	setAttribute(Qt::WA_NativeWindow);
 
 	setFocusPolicy(Qt::ClickFocus);
+
+	window = new QWindow();
+	window->setFlags(Qt::FramelessWindowHint);
 }
 
 QCefWidgetInternal::~QCefWidgetInternal()
@@ -231,28 +239,28 @@ void QCefWidgetInternal::closeBrowser()
 
 void QCefWidgetInternal::Init()
 {
-	WId id = winId();
+	WId handle = window->winId();
 
-	bool success = QueueCEFTask([this, id]() {
+	QSize size = this->size();
+#ifdef SUPPORTS_FRACTIONAL_SCALING
+	size *= devicePixelRatioF();
+#else
+	size *= devicePixelRatio();
+#endif
+
+	bool success = QueueCEFTask([this, handle, size]() {
 		CefWindowInfo windowInfo;
 
 		/* Make sure Init isn't called more than once. */
 		if (cefBrowser)
 			return;
 
-		QSize size = this->size();
 #ifdef _WIN32
-#ifdef SUPPORTS_FRACTIONAL_SCALING
-		size *= devicePixelRatioF();
-#elif
-		size *= devicePixelRatio();
-#endif
 		RECT rc = {0, 0, size.width(), size.height()};
-		windowInfo.SetAsChild((HWND)id, rc);
-#elif __APPLE__
-		windowInfo.SetAsChild((CefWindowHandle)id, 0, 0, size.width(),
-				      size.height());
+#else
+		CefRect rc = {0, 0, size.width(), size.height()};
 #endif
+		windowInfo.SetAsChild((CefWindowHandle)handle, rc);
 
 		CefRefPtr<QCefBrowserClient> browserClient =
 			new QCefBrowserClient(this, script, allowAllPopups_);
@@ -264,13 +272,19 @@ void QCefWidgetInternal::Init()
 			CefRefPtr<CefDictionaryValue>(),
 #endif
 			rqc);
-#ifdef _WIN32
-		Resize();
-#endif
 	});
 
-	if (success)
+	if (success) {
 		timer.stop();
+
+		if (!container) {
+			container =
+				QWidget::createWindowContainer(window, this);
+			container->show();
+		}
+
+		Resize();
+	}
 }
 
 void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
@@ -281,23 +295,47 @@ void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 
 void QCefWidgetInternal::Resize()
 {
-#ifdef _WIN32
 #ifdef SUPPORTS_FRACTIONAL_SCALING
 	QSize size = this->size() * devicePixelRatioF();
-#elif
+#else
 	QSize size = this->size() * devicePixelRatio();
 #endif
 
-	QueueCEFTask([this, size]() {
+	bool success = QueueCEFTask([this, size]() {
 		if (!cefBrowser)
 			return;
-		HWND hwnd = cefBrowser->GetHost()->GetWindowHandle();
-		SetWindowPos(hwnd, nullptr, 0, 0, size.width(), size.height(),
+
+		CefWindowHandle handle =
+			cefBrowser->GetHost()->GetWindowHandle();
+
+		if (!handle)
+			return;
+
+#ifdef _WIN32
+		SetWindowPos((HWND)handle, nullptr, 0, 0, size.width(),
+			     size.height(),
 			     SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-		SendMessage(hwnd, WM_SIZE, 0,
+		SendMessage((HWND)handle, WM_SIZE, 0,
 			    MAKELPARAM(size.width(), size.height()));
-	});
+#elif __APPLE__
+#else
+		Display *xDisplay = cef_get_xdisplay();
+
+		if (!xDisplay)
+			return;
+
+		XWindowChanges changes = {0};
+		changes.x = 0;
+		changes.y = 0;
+		changes.width = size.width();
+		changes.height = size.height();
+		XConfigureWindow(xDisplay, (Window)handle,
+				 CWX | CWY | CWHeight | CWWidth, &changes);
 #endif
+	});
+
+	if (success && container)
+		container->resize(size.width(), size.height());
 }
 
 void QCefWidgetInternal::showEvent(QShowEvent *event)

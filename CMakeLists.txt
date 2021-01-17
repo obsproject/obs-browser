@@ -137,9 +137,7 @@ if (APPLE)
 		)
 endif()
 
-# only allow browser panels on win32 for now -- other operating systems
-# need more testing
-if((WIN32 OR APPLE) AND BROWSER_PANEL_SUPPORT_ENABLED)
+if(BROWSER_PANEL_SUPPORT_ENABLED)
 	list(APPEND obs-browser_SOURCES
 		panel/browser-panel.cpp
 		panel/browser-panel-client.cpp
