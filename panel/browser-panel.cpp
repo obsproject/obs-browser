@@ -84,8 +84,8 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 			throw "Browser thread not initialized";
 
 		BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
-		if (os_mkdirs(rpath.Get()) != 0)
-			throw "Failed to create cookie diretory";
+		if (os_mkdirs(rpath.Get()) == MKDIR_ERROR)
+			throw "Failed to create cookie directory";
 		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
 
 #if CHROME_VERSION_BUILD < 3770
