@@ -1,5 +1,6 @@
 #pragma once
 
+#include <obs-module.h>
 #include <util/platform.h>
 #include <util/util.hpp>
 #include <QWidget>
@@ -72,36 +73,46 @@ struct QCef {
 					 QObject *obj) = 0;
 };
 
-static inline void *obs_browser_dlsym(const char *name)
+static inline void *get_browser_lib()
 {
-#if defined(_WIN32)
-	void *lib = os_dlopen("obs-browser");
-#elif defined(__APPLE__)
-	void *lib = RTLD_DEFAULT;
-#else
-	void *lib = os_dlopen("../obs-plugins/obs-browser");
-#endif
-	if (!lib) {
-		return nullptr;
-	}
+	obs_module_t *browserModule = obs_get_module("obs-browser");
 
-	return os_dlsym(lib, name);
+	if (!browserModule)
+		return nullptr;
+
+	return obs_get_module_lib(browserModule);
 }
 
 static inline QCef *obs_browser_init_panel(void)
 {
-	QCef *(*create_qcef)(void) = (decltype(create_qcef))obs_browser_dlsym(
-		"obs_browser_create_qcef");
+	void *lib = get_browser_lib();
+	QCef *(*create_qcef)(void) = nullptr;
+
+	if (!lib)
+		return nullptr;
+
+	create_qcef =
+		(decltype(create_qcef))os_dlsym(lib, "obs_browser_create_qcef");
+
 	if (!create_qcef)
 		return nullptr;
+
 	return create_qcef();
 }
 
 static inline int obs_browser_qcef_version(void)
 {
-	int (*qcef_version)(void) = (decltype(qcef_version))obs_browser_dlsym(
-		"obs_browser_qcef_version_export");
+	void *lib = get_browser_lib();
+	int (*qcef_version)(void) = nullptr;
+
+	if (!lib)
+		return 0;
+
+	qcef_version = (decltype(qcef_version))os_dlsym(
+		lib, "obs_browser_qcef_version_export");
+
 	if (!qcef_version)
 		return 0;
+
 	return qcef_version();
 }
