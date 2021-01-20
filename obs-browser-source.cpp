@@ -552,8 +552,11 @@ void BrowserSource::Render()
 		gs_effect_t *effect =
 			obs_get_base_effect(OBS_EFFECT_PREMULTIPLIED_ALPHA);
 #endif
+
+		const bool previous = gs_set_linear_srgb(true);
 		while (gs_effect_loop(effect, "Draw"))
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
+		gs_set_linear_srgb(previous);
 	}
 
 #if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
