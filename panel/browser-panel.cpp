@@ -264,7 +264,7 @@ void QCefWidgetInternal::Init()
 #ifdef __APPLE__
 		windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0,
 				      size.width(), size.height());
-#elif
+#else
 		windowInfo.SetAsChild((CefWindowHandle)handle, rc);
 #endif
 
