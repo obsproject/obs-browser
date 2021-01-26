@@ -260,7 +260,13 @@ void QCefWidgetInternal::Init()
 #else
 		CefRect rc = {0, 0, size.width(), size.height()};
 #endif
+
+#ifdef __APPLE__
+		windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0,
+				      size.width(), size.height());
+#elif
 		windowInfo.SetAsChild((CefWindowHandle)handle, rc);
+#endif
 
 		CefRefPtr<QCefBrowserClient> browserClient =
 			new QCefBrowserClient(this, script, allowAllPopups_);
