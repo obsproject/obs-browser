@@ -62,7 +62,9 @@ static thread manager_thread;
 static bool manager_initialized = false;
 os_event_t *cef_started_event = nullptr;
 
+#if defined(_WIN32) || defined(__APPLE__)
 static int adapterCount = 0;
+#endif
 static std::wstring deviceId;
 
 bool hwaccel = false;

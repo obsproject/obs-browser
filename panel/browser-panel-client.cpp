@@ -105,6 +105,7 @@ void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 				    const CefString &errorText,
 				    const CefString &failedUrl)
 {
+	UNUSED_PARAMETER(browser);
 	if (errorCode == ERR_ABORTED)
 		return;
 
@@ -155,6 +156,8 @@ bool QCefBrowserClient::OnBeforePopup(
 #ifdef _WIN32
 		HWND hwnd = (HWND)widget->effectiveWinId();
 		windowInfo.parent_window = hwnd;
+#else
+		UNUSED_PARAMETER(windowInfo);
 #endif
 		return false;
 	}
@@ -206,6 +209,9 @@ bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 		browser->ReloadIgnoreCache();
 		return true;
 	}
+#else
+	UNUSED_PARAMETER(browser);
+	UNUSED_PARAMETER(event);
 #endif
 	return false;
 }

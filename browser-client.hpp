@@ -62,9 +62,9 @@ public:
 #endif
 	inline BrowserClient(BrowserSource *bs_, bool sharing_avail,
 			     bool reroute_audio_)
-		: bs(bs_),
-		  sharing_available(sharing_avail),
-		  reroute_audio(reroute_audio_)
+		: sharing_available(sharing_avail),
+		  reroute_audio(reroute_audio_),
+		  bs(bs_)
 	{
 	}
 
