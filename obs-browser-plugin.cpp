@@ -214,6 +214,51 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	return props;
 }
 
+static void missing_file_callback(void *src, const char *new_path, void *data)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(src);
+
+	if (bs) {
+		obs_source_t *source = bs->source;
+		obs_data_t *settings = obs_source_get_settings(source);
+		obs_data_set_string(settings, "local_file", new_path);
+		obs_source_update(source, settings);
+		obs_data_release(settings);
+	}
+
+	UNUSED_PARAMETER(data);
+}
+
+static obs_missing_files_t *browser_source_missingfiles(void *data)
+{
+	BrowserSource *bs = static_cast<BrowserSource *>(data);
+	obs_missing_files_t *files = obs_missing_files_create();
+
+	if (bs) {
+		obs_source_t *source = bs->source;
+		obs_data_t *settings = obs_source_get_settings(source);
+
+		bool enabled = obs_data_get_bool(settings, "is_local_file");
+		const char *path = obs_data_get_string(settings, "local_file");
+
+		if (enabled && strcmp(path, "") != 0) {
+			if (!os_file_exists(path)) {
+				obs_missing_file_t *file =
+					obs_missing_file_create(
+						path, missing_file_callback,
+						OBS_MISSING_FILE_SOURCE,
+						bs->source, NULL);
+
+				obs_missing_files_add_file(files, file);
+			}
+		}
+
+		obs_data_release(settings);
+	}
+
+	return files;
+}
+
 static CefRefPtr<BrowserApp> app;
 
 static void BrowserInit(void)
@@ -370,6 +415,7 @@ void RegisterBrowserSource()
 	info.destroy = [](void *data) {
 		delete static_cast<BrowserSource *>(data);
 	};
+	info.missing_files = browser_source_missingfiles;
 	info.update = [](void *data, obs_data_t *settings) {
 		static_cast<BrowserSource *>(data)->Update(settings);
 	};
