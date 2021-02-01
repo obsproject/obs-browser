@@ -280,8 +280,9 @@ static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
 	case CEF_CHANNEL_LAYOUT_7_1_WIDE_BACK:
 	case CEF_CHANNEL_LAYOUT_7_1_WIDE:
 		return SPEAKERS_7POINT1; /**< Channels: FL, FR, FC, LFE, RL, RR, SL, SR */
+	default:
+		return SPEAKERS_UNKNOWN;
 	}
-	return SPEAKERS_UNKNOWN;
 }
 #endif
 
@@ -290,6 +291,7 @@ void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser,
 					 const CefAudioParameters &params_,
 					 int channels_)
 {
+	UNUSED_PARAMETER(browser);
 	channels = channels_;
 	channel_layout = (ChannelLayout)params_.channel_layout;
 	sample_rate = params_.sample_rate;
@@ -300,6 +302,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
 					const float **data, int frames,
 					int64_t pts)
 {
+	UNUSED_PARAMETER(browser);
 	if (!bs) {
 		return;
 	}
@@ -319,6 +322,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
 
 void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser)
 {
+	UNUSED_PARAMETER(browser);
 	if (!bs) {
 		return;
 	}
@@ -327,6 +331,8 @@ void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser)
 void BrowserClient::OnAudioStreamError(CefRefPtr<CefBrowser> browser,
 				       const CefString &message)
 {
+	UNUSED_PARAMETER(browser);
+	UNUSED_PARAMETER(message);
 	if (!bs) {
 		return;
 	}
@@ -357,6 +363,7 @@ static CefAudioHandler::ChannelLayout Convert2CEFSpeakerLayout(int channels)
 bool BrowserClient::GetAudioParameters(CefRefPtr<CefBrowser> browser,
 				       CefAudioParameters &params)
 {
+	UNUSED_PARAMETER(browser);
 	int channels = (int)audio_output_get_channels(obs_get_audio());
 	params.channel_layout = Convert2CEFSpeakerLayout(channels);
 	params.sample_rate = (int)audio_output_get_sample_rate(obs_get_audio());
@@ -368,6 +375,7 @@ void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser, int id,
 					 int, ChannelLayout channel_layout,
 					 int sample_rate, int)
 {
+	UNUSED_PARAMETER(browser);
 	if (!bs) {
 		return;
 	}
@@ -393,6 +401,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, int id,
 					const float **data, int frames,
 					int64_t pts)
 {
+	UNUSED_PARAMETER(browser);
 	if (!bs) {
 		return;
 	}
@@ -415,6 +424,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, int id,
 
 void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser, int id)
 {
+	UNUSED_PARAMETER(browser);
 	if (!bs) {
 		return;
 	}

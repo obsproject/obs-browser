@@ -31,6 +31,11 @@
 #include <QTimer>
 #endif
 
+#define UNUSED_PARAMETER(x) \
+	{                   \
+		(void)x;    \
+	}
+
 using namespace json11;
 
 CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
@@ -162,6 +167,8 @@ void BrowserApp::SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
 					    CefRefPtr<CefFrame> frame,
 					    bool isVisible)
 {
+	UNUSED_PARAMETER(browser);
+
 	CefRefPtr<CefV8Context> context = frame->GetV8Context();
 
 	context->Enter();
@@ -248,6 +255,7 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 					  CefProcessId source_process,
 					  CefRefPtr<CefProcessMessage> message)
 {
+	UNUSED_PARAMETER(frame);
 	DCHECK(source_process == PID_BROWSER);
 
 	CefRefPtr<CefListValue> args = message->GetArgumentList();
