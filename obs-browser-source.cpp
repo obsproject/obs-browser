@@ -313,8 +313,9 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 	uint32_t native_vkey = event->native_vkey;
 	uint32_t modifiers = event->modifiers;
 #else
+	uint32_t native_vkey = event->native_vkey;
 	uint32_t native_scancode = event->native_scancode;
-	UNUSED_PARAMETER(modifiers);
+	uint32_t modifiers = event->native_modifiers;
 #endif
 
 	ExecuteOnBrowser(
