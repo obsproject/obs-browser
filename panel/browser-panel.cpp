@@ -177,8 +177,10 @@ QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_,
 
 	setFocusPolicy(Qt::ClickFocus);
 
+#ifndef __APPLE__
 	window = new QWindow();
 	window->setFlags(Qt::FramelessWindowHint);
+#endif
 }
 
 QCefWidgetInternal::~QCefWidgetInternal()
@@ -239,50 +241,59 @@ void QCefWidgetInternal::closeBrowser()
 
 void QCefWidgetInternal::Init()
 {
+#ifndef __APPLE__
 	WId handle = window->winId();
-
 	QSize size = this->size();
 #ifdef SUPPORTS_FRACTIONAL_SCALING
 	size *= devicePixelRatioF();
 #else
 	size *= devicePixelRatio();
 #endif
-
-	bool success = QueueCEFTask([this, handle, size]() {
-		CefWindowInfo windowInfo;
-
-		/* Make sure Init isn't called more than once. */
-		if (cefBrowser)
-			return;
-
-#ifdef _WIN32
-		RECT rc = {0, 0, size.width(), size.height()};
+	bool success = QueueCEFTask(
+		[this, handle, size]()
 #else
-		CefRect rc = {0, 0, size.width(), size.height()};
+	WId handle = winId();
+	bool success = QueueCEFTask(
+		[this, handle]()
 #endif
+		{
+			CefWindowInfo windowInfo;
+
+			/* Make sure Init isn't called more than once. */
+			if (cefBrowser)
+				return;
 
 #ifdef __APPLE__
-		windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0,
-				      size.width(), size.height());
+			QSize size = this->size();
+
+			windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0,
+					      size.width(), size.height());
 #else
-		windowInfo.SetAsChild((CefWindowHandle)handle, rc);
+#ifdef _WIN32
+			RECT rc = {0, 0, size.width(), size.height()};
+#else
+			CefRect rc = {0, 0, size.width(), size.height()};
+#endif
+			windowInfo.SetAsChild((CefWindowHandle)handle, rc);
 #endif
 
-		CefRefPtr<QCefBrowserClient> browserClient =
-			new QCefBrowserClient(this, script, allowAllPopups_);
+			CefRefPtr<QCefBrowserClient> browserClient =
+				new QCefBrowserClient(this, script,
+						      allowAllPopups_);
 
-		CefBrowserSettings cefBrowserSettings;
-		cefBrowser = CefBrowserHost::CreateBrowserSync(
-			windowInfo, browserClient, url, cefBrowserSettings,
+			CefBrowserSettings cefBrowserSettings;
+			cefBrowser = CefBrowserHost::CreateBrowserSync(
+				windowInfo, browserClient, url,
+				cefBrowserSettings,
 #if CHROME_VERSION_BUILD >= 3770
-			CefRefPtr<CefDictionaryValue>(),
+				CefRefPtr<CefDictionaryValue>(),
 #endif
-			rqc);
-	});
+				rqc);
+		});
 
 	if (success) {
 		timer.stop();
-
+#ifndef __APPLE__
 		if (!container) {
 			container =
 				QWidget::createWindowContainer(window, this);
@@ -290,12 +301,14 @@ void QCefWidgetInternal::Init()
 		}
 
 		Resize();
+#endif
 	}
 }
 
 void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 {
 	QWidget::resizeEvent(event);
+#ifndef __APPLE__
 	Resize();
 }
 
@@ -323,7 +336,6 @@ void QCefWidgetInternal::Resize()
 			     SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 		SendMessage((HWND)handle, WM_SIZE, 0,
 			    MAKELPARAM(size.width(), size.height()));
-#elif __APPLE__
 #else
 		Display *xDisplay = cef_get_xdisplay();
 
@@ -342,6 +354,7 @@ void QCefWidgetInternal::Resize()
 
 	if (success && container)
 		container->resize(size.width(), size.height());
+#endif
 }
 
 void QCefWidgetInternal::showEvent(QShowEvent *event)

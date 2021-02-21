@@ -55,8 +55,10 @@ public:
 	std::string script;
 	CefRefPtr<CefRequestContext> rqc;
 	QTimer timer;
+#ifndef __APPLE__
 	QPointer<QWindow> window;
 	QPointer<QWidget> container;
+#endif
 	bool allowAllPopups_ = false;
 
 	virtual void resizeEvent(QResizeEvent *event) override;
