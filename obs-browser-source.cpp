@@ -558,7 +558,9 @@ void BrowserSource::Render()
 			obs_get_base_effect(OBS_EFFECT_PREMULTIPLIED_ALPHA);
 #endif
 
-		const bool previous = gs_set_linear_srgb(true);
+		const bool current =
+			gs_is_srgb_format(gs_texture_get_color_format(texture));
+		const bool previous = gs_set_linear_srgb(current);
 		while (gs_effect_loop(effect, "Draw"))
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
 		gs_set_linear_srgb(previous);
