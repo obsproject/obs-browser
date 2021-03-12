@@ -486,11 +486,9 @@ bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
 	case LOGSEVERITY_FATAL:
 		errorLevel = LOG_ERROR;
 		break;
-	}
-#if CHROME_VERSION_BUILD >= 3282
-	if (level < LOGSEVERITY_ERROR)
+	default:
 		return false;
-#endif
+	}
 
 	blog(errorLevel, "obs-browser: %s (source: %s:%d)",
 	     message.ToString().c_str(), source.ToString().c_str(), line);
