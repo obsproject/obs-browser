@@ -232,7 +232,7 @@ if (APPLE AND NOT BROWSER_LEGACY)
     		MACOSX_BUNDLE_INFO_PLIST ${_helper_info_plist}
     		OUTPUT_NAME ${_helper_output_name}
             FOLDER "plugins/obs-browser/helpers/"
-			COMPILE_FLAGS "-mmacosx-version-min=10.8"
+			COMPILE_FLAGS "-mmacosx-version-min=10.13"
     	)
 
         if(XCODE)
@@ -271,6 +271,10 @@ else()
     if(APPLE)
         target_compile_definitions(obs-browser PRIVATE BROWSER_LEGACY)
     endif()
+endif()
+if(APPLE)
+	set_target_properties(obs-browser-page PROPERTIES
+		COMPILE_FLAGS "-mmacosx-version-min=10.13")
 endif()
 
 if (WIN32)
