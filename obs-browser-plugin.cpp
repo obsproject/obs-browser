@@ -24,6 +24,7 @@
 #include <obs-module.h>
 #include <obs.hpp>
 #include <functional>
+#include <sstream>
 #include <thread>
 #include <mutex>
 
@@ -234,6 +235,25 @@ static void BrowserInit(void)
 	settings.log_severity = LOGSEVERITY_DISABLE;
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
+
+	uint32_t obs_ver = obs_get_version();
+	uint32_t obs_maj = obs_ver >> 24;
+	uint32_t obs_min = (obs_ver >> 16) & 0xFF;
+	uint32_t obs_pat = obs_ver && 0xFFFF;
+
+	/* This allows servers the ability to determine that browser panels and
+	 * browser sources are coming from OBS. */
+	std::stringstream prod_ver;
+	prod_ver << "Chrome/";
+	prod_ver << std::to_string(CHROME_VERSION_MAJOR) << "."
+		 << std::to_string(CHROME_VERSION_MINOR) << "."
+		 << std::to_string(CHROME_VERSION_BUILD) << "."
+		 << std::to_string(CHROME_VERSION_PATCH);
+	prod_ver << " OBS/";
+	prod_ver << std::to_string(obs_maj) << "." << std::to_string(obs_min)
+		 << "." << std::to_string(obs_pat);
+
+	CefString(&settings.product_version) = prod_ver.str();
 
 #ifdef USE_QT_LOOP
 	settings.external_message_pump = true;
