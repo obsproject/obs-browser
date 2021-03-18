@@ -19,6 +19,7 @@
 #pragma once
 
 #include <graphics/graphics.h>
+#include <util/threading.h>
 #include "cef-headers.hpp"
 #include "browser-config.h"
 #include "obs-browser-source.hpp"
@@ -39,9 +40,10 @@ class BrowserClient : public CefClient,
 #endif
 		      public CefLoadHandler {
 
-#ifdef ENABLE_BROWSER_SHARED_TEXTURE
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 #ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
+	void *extra_handle = INVALID_HANDLE_VALUE;
 #elif defined(__APPLE__)
 	void *last_handle = nullptr;
 #endif
@@ -109,7 +111,7 @@ public:
 	OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 		      const CefString &target_url,
 		      const CefString &target_frame_name,
-		      WindowOpenDisposition target_disposition,
+		      cef_window_open_disposition_t target_disposition,
 		      bool user_gesture, const CefPopupFeatures &popupFeatures,
 		      CefWindowInfo &windowInfo, CefRefPtr<CefClient> &client,
 		      CefBrowserSettings &settings,
@@ -151,7 +153,7 @@ public:
 			     PaintElementType type, const RectList &dirtyRects,
 			     const void *buffer, int width,
 			     int height) override;
-#ifdef ENABLE_BROWSER_SHARED_TEXTURE
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
 					PaintElementType type,
 					const RectList &dirtyRects,

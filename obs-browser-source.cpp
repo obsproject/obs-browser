@@ -164,7 +164,7 @@ bool BrowserSource::CreateBrowser()
 		CefBrowserSettings cefBrowserSettings;
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#ifdef _WIN32
+#ifdef BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED
 		if (!fps_custom) {
 			windowInfo.external_begin_frame_enabled = true;
 			cefBrowserSettings.windowless_frame_rate = 0;
@@ -389,7 +389,8 @@ void BrowserSource::SetShowing(bool showing)
 			true);
 		Json json = Json::object{{"visible", showing}};
 		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
+	defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 		if (showing && !fps_custom) {
 			reset_frame = false;
 		}
@@ -424,7 +425,7 @@ void BrowserSource::Refresh()
 		true);
 }
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#ifdef _WIN32
+#ifdef BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED
 inline void BrowserSource::SignalBeginFrame()
 {
 	if (reset_frame) {
@@ -550,10 +551,10 @@ void BrowserSource::Tick()
 	if (create_browser && CreateBrowser())
 		create_browser = false;
 #if defined(SHARED_TEXTURE_SUPPORT_ENABLED)
-#if defined(_WIN32)
+#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED)
 	if (!fps_custom)
 		reset_frame = true;
-#elif defined(__APPLE__)
+#else
 	struct obs_video_info ovi;
 	obs_get_video_info(&ovi);
 	double video_fps = (double)ovi.fps_num / (double)ovi.fps_den;
@@ -622,7 +623,8 @@ void BrowserSource::Render()
 		gs_enable_framebuffer_srgb(previous);
 	}
 
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
+	defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	SignalBeginFrame();
 #elif USE_QT_LOOP
 	ProcessCef();
