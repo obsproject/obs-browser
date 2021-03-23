@@ -212,6 +212,7 @@ void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
 	}
 }
 
+#if defined(_WIN32)
 bool QCefBrowserClient::RunContextMenu(
 	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 	CefRefPtr<CefContextMenuParams>, CefRefPtr<CefMenuModel> model,
@@ -262,6 +263,7 @@ bool QCefBrowserClient::RunContextMenu(
 		});
 	return true;
 }
+#endif
 
 void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
 				  CefRefPtr<CefFrame> frame, int)

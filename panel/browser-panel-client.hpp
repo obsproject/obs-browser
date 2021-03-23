@@ -75,11 +75,13 @@ public:
 			    CefRefPtr<CefContextMenuParams> params,
 			    CefRefPtr<CefMenuModel> model) override;
 
+#if defined(_WIN32)
 	virtual bool
 	RunContextMenu(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 		       CefRefPtr<CefContextMenuParams> params,
 		       CefRefPtr<CefMenuModel> model,
 		       CefRefPtr<CefRunContextMenuCallback> callback) override;
+#endif
 
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
