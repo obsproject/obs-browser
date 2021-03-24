@@ -17,9 +17,10 @@ if(NOT CEF_FOUND)
 	return()
 endif()
 
-option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" OFF)
 if(WIN32 OR (APPLE AND NOT BROWSER_LEGACY))
-    set(SHARED_TEXTURE_SUPPORT_ENABLED ON)
+    option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" ON)
+else()
+    option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" OFF)
 endif()
 
 option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
