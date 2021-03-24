@@ -28,7 +28,7 @@ option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
 if(NOT APPLE)
 	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
 else()
-	set(USE_QT_LOOP ON)
+	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" ON)
 endif()
 
 if(UNIX AND NOT APPLE)
