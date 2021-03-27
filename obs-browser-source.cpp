@@ -32,7 +32,7 @@
 #include "linux-keyboard-helpers.hpp"
 #endif
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 #include <QEventLoop>
 #include <QThread>
 #endif
@@ -97,7 +97,7 @@ BrowserSource::~BrowserSource()
 void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 {
 	if (!async) {
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 		if (QThread::currentThread() == qApp->thread()) {
 			if (!!cefBrowser)
 				func(cefBrowser);
@@ -118,7 +118,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 	} else {
 		CefRefPtr<CefBrowser> browser = cefBrowser;
 		if (!!browser) {
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 			QueueBrowserTask(cefBrowser, func);
 #else
 			QueueCEFTask([=]() { func(browser); });
@@ -130,7 +130,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 bool BrowserSource::CreateBrowser()
 {
 	return QueueCEFTask([this]() {
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 		if (hwaccel) {
 			obs_enter_graphics();
 			tex_sharing_avail = gs_shared_texture_available();
@@ -151,13 +151,13 @@ bool BrowserSource::CreateBrowser()
 		windowInfo.height = height;
 		windowInfo.windowless_rendering_enabled = true;
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 		windowInfo.shared_texture_enabled = hwaccel;
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 #ifdef _WIN32
 		if (!fps_custom) {
 			windowInfo.external_begin_frame_enabled = true;
@@ -378,7 +378,7 @@ void BrowserSource::SetShowing(bool showing)
 			true);
 		Json json = Json::object{{"visible", showing}};
 		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(_WIN32) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
 		if (showing && !fps_custom) {
 			reset_frame = false;
 		}
@@ -412,7 +412,7 @@ void BrowserSource::Refresh()
 		},
 		true);
 }
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 #ifdef _WIN32
 inline void BrowserSource::SignalBeginFrame()
 {
@@ -533,7 +533,7 @@ void BrowserSource::Tick()
 {
 	if (create_browser && CreateBrowser())
 		create_browser = false;
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(_WIN32) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	if (!fps_custom)
 		reset_frame = true;
 #endif
@@ -544,7 +544,7 @@ extern void ProcessCef();
 void BrowserSource::Render()
 {
 	bool flip = false;
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	flip = hwaccel;
 #endif
 
@@ -566,9 +566,9 @@ void BrowserSource::Render()
 		gs_set_linear_srgb(previous);
 	}
 
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(_WIN32) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	SignalBeginFrame();
-#elif USE_QT_LOOP
+#elif defined(ENABLE_BROWSER_QT_LOOP)
 	ProcessCef();
 #endif
 }

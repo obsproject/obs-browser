@@ -64,7 +64,7 @@ struct BrowserSource {
 	bool is_local = false;
 	bool first_update = true;
 	bool reroute_audio = true;
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(_WIN32) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	bool reset_frame = false;
 #endif
 	bool is_showing = false;
@@ -114,7 +114,7 @@ struct BrowserSource {
 	void SetActive(bool active);
 	void Refresh();
 
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(_WIN32) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	inline void SignalBeginFrame();
 #endif
 };
