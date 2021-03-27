@@ -6,7 +6,7 @@
 #include <QWindow>
 #include <QApplication>
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 #include <QEventLoop>
 #include <QThread>
 #endif

@@ -24,7 +24,7 @@
 #include <windows.h>
 #endif
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 #include <util/base.h>
 #include <util/platform.h>
 #include <util/threading.h>
@@ -405,7 +405,7 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 	return true;
 }
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 Q_DECLARE_METATYPE(MessageTask);
 MessageObject messageObject;
 

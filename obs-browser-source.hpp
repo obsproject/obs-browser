@@ -72,7 +72,7 @@ struct BrowserSource {
 	uint32_t last_cy = 0;
 	gs_color_format last_format = GS_UNKNOWN;
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 #ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
 #elif defined(__APPLE__)
@@ -93,7 +93,7 @@ struct BrowserSource {
 	std::atomic<bool> destroying = false;
 	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
 #if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
-	defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+	defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	bool reset_frame = false;
 #endif
 	bool is_showing = false;
@@ -153,7 +153,7 @@ struct BrowserSource {
 	void Refresh();
 
 #if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
-	defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+	defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	inline void SignalBeginFrame();
 #endif
 

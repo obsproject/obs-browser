@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
     <key>CFBundleDisplayName</key>
     <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleExecutable</key>
@@ -16,8 +14,6 @@
     <string>${PRODUCT_NAME}</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
     <key>LSEnvironment</key>
     <dict>
         <key>MallocNanoZone</key>
@@ -26,10 +22,12 @@
     <key>LSFileQuarantineEnabled</key>
     <true/>
     <key>LSMinimumSystemVersion</key>
-    <string>10.13.0</string>
+    <string>${MINIMUM_VERSION}</string>
     <key>LSUIElement</key>
     <string>1</string>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>(c) 2012-${CURRENT_YEAR} Hugh Bailey</string>
 </dict>
 </plist>
