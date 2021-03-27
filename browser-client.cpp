@@ -319,7 +319,7 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 		return;
 	}
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	if (sharing_available) {
 		return;
 	}
@@ -351,7 +351,7 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 	}
 }
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 void BrowserClient::UpdateExtraTexture()
 {
 	if (bs->texture) {

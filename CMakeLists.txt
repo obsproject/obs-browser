@@ -1,346 +1,343 @@
-cmake_minimum_required(VERSION 2.8.12)
 project(obs-browser)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
-set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+macro(find_qt)
+  set(oneValueArgs VERSION)
+  set(multiValueArgs COMPONENTS COMPONENTS_WIN COMPONENTS_MAC COMPONENTS_LINUX)
+  cmake_parse_arguments(FIND_QT "" "${oneValueArgs}" "${multiValueArgs}"
+                        ${ARGN})
 
-include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/UI/obs-frontend-api")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/deps")
+  if(OS_WINDOWS)
+    find_package(
+      Qt${FIND_QT_VERSION}
+      COMPONENTS ${FIND_QT_COMPONENTS} ${FIND_QT_COMPONENTS_WIN}
+      REQUIRED)
+  elseif(OS_MACOS)
+    find_package(
+      Qt${FIND_QT_VERSION}
+      COMPONENTS ${FIND_QT_COMPONENTS} ${FIND_QT_COMPONENTS_MAC}
+      REQUIRED)
+  else()
+    find_package(
+      Qt${FIND_QT_VERSION}
+      COMPONENTS ${FIND_QT_COMPONENTS} ${FIND_QT_COMPONENTS_LINUX}
+      REQUIRED)
+  endif()
 
-option(BROWSER_LEGACY "Use legacy CEF version 3770" OFF)
+  foreach(_COMPONENT IN LISTS FIND_QT_COMPONENTS FIND_QT_COMPONENTS_WIN
+                              FIND_QT_COMPONENTS_MAC FIND_QT_COMPONENTS_LINUX)
+    if(NOT TARGET Qt::${_COMPONENT} AND TARGET
+                                        Qt${FIND_QT_VERSION}::${_COMPONENT})
 
-find_package(CEF QUIET)
-
-if(NOT CEF_FOUND)
-	message(FATAL_ERROR "CEF Not found -- set CEF_ROOT_DIR or set BUILD_BROWSER=OFF.")
-endif()
-
-if(WIN32 OR (APPLE AND NOT BROWSER_LEGACY))
-    option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" ON)
-else()
-    option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" OFF)
-endif()
-
-option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
-
-if(NOT APPLE)
-	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" OFF)
-else()
-	option(USE_QT_LOOP "Runs CEF on the main UI thread alongside Qt instead of in its own thread" ON)
-endif()
-
-if(UNIX AND NOT APPLE)
-	find_package(X11 REQUIRED)
-	if(NOT X11_FOUND)
-		message(FATAL_ERROR "X11 Not found -- install a X11 environment or set BUILD_BROWSER=OFF.")
-	endif()
-	include_directories("${X11_INCLUDE_DIR}")
-endif()
-
-file(READ "${CEF_ROOT_DIR}/include/cef_version.h" ver)
-string(REGEX MATCH "CHROME_VERSION_BUILD ([0-9][0-9][0-9][0-9]+)" _ ${ver})
-set(CHROME_VERSION_BUILD ${CMAKE_MATCH_1})
-message(STATUS "Chromium cef version: ${CHROME_VERSION_BUILD}")
-
-
-configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in"
-	"${CMAKE_CURRENT_BINARY_DIR}/browser-config.h")
-
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-include_directories("${CEF_ROOT_DIR}")
-
-# ----------------------------------------------------------------------------
-
-set(obs-browser_LIBRARIES
-	libobs
-	obs-frontend-api
-	)
-
-list(APPEND obs-browser_LIBRARIES
-	${CEF_LIBRARIES})
-
-if (APPLE)
-	find_library(COREFOUNDATION CoreFoundation)
-	find_library(APPKIT AppKit)
-	list(APPEND obs-browser_LIBRARIES
-			${COREFOUNDATION}
-			${APPKIT})
-endif()
-
-if(BROWSER_PANEL_SUPPORT_ENABLED OR USE_QT_LOOP)
-	if(DEFINED QTDIR${_lib_suffix})
-		list(APPEND CMAKE_PREFIX_PATH "${QTDIR${_lib_suffix}}")
-	elseif(DEFINED QTDIR)
-		list(APPEND CMAKE_PREFIX_PATH "${QTDIR}")
-	elseif(DEFINED ENV{QTDIR${_lib_suffix}})
-		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR${_lib_suffix}}")
-	elseif(DEFINED ENV{QTDIR})
-		list(APPEND CMAKE_PREFIX_PATH "$ENV{QTDIR}")
-	endif()
-
-	set(CMAKE_AUTOMOC TRUE)
-	find_package(Qt5Widgets REQUIRED)
-	list(APPEND obs-browser_LIBRARIES
-		Qt5::Widgets
-		)
-endif()
-
-if(MSVC)
-	string(REPLACE "/MD" "/MT"
-		"CMAKE_C_FLAGS"
-		"${CMAKE_C_FLAGS}")
-
-	string(REPLACE "/MD" "/MT"
-		"CMAKE_CXX_FLAGS"
-		"${CMAKE_CXX_FLAGS}")
-
-	string(TOUPPER "${CMAKE_CONFIGURATION_TYPES}" UPPER_CONFIG_TYPES)
-	foreach(CONFIG_TYPE ${UPPER_CONFIG_TYPES})
-		string(REPLACE "/MD" "/MT"
-			"CMAKE_C_FLAGS_${CONFIG_TYPE}"
-			"${CMAKE_C_FLAGS_${CONFIG_TYPE}}")
-
-		string(REPLACE "/MD" "/MT"
-			"CMAKE_CXX_FLAGS_${CONFIG_TYPE}"
-			"${CMAKE_CXX_FLAGS_${CONFIG_TYPE}}")
-	endforeach()
-	list(APPEND obs-browser_LIBRARIES
-		d3d11
-		dxgi
-		)
-endif()
-
-set(obs-browser_SOURCES
-	obs-browser-source.cpp
-	obs-browser-source-audio.cpp
-	obs-browser-plugin.cpp
-	browser-scheme.cpp
-	browser-client.cpp
-	browser-app.cpp
-	deps/json11/json11.cpp
-	deps/base64/base64.cpp
-	deps/wide-string.cpp
-	)
-set(obs-browser_HEADERS
-	obs-browser-source.hpp
-	browser-scheme.hpp
-	browser-client.hpp
-	browser-app.hpp
-	browser-version.h
-	deps/json11/json11.hpp
-	deps/base64/base64.hpp
-	deps/obs-websocket-api/obs-websocket-api.h
-	deps/wide-string.hpp
-	cef-headers.hpp
-	)
-
-if (APPLE)
-	list(APPEND obs-browser_SOURCES
-		macutil.mm
-		)
-endif()
-
-if(BROWSER_PANEL_SUPPORT_ENABLED)
-	list(APPEND obs-browser_SOURCES
-		panel/browser-panel.cpp
-		panel/browser-panel-client.cpp
-		)
-	list(APPEND obs-browser_HEADERS
-		panel/browser-panel.hpp
-		panel/browser-panel-client.hpp
-		panel/browser-panel-internal.hpp
-		)
-	if (APPLE)
-		list(APPEND obs-browser_LIBRARIES objc)
-	endif()
-endif()
-
-add_library(obs-browser MODULE
-	${obs-browser_SOURCES}
-	${obs-browser_HEADERS}
-	)
-
-target_link_libraries(obs-browser
-	${obs-browser_LIBRARIES}
-	)
-
-if(USE_QT_LOOP)
-	target_compile_definitions(obs-browser PRIVATE USE_QT_LOOP)
-endif()
-
-if(BROWSER_LEGACY)
-    target_compile_definitions(obs-browser PRIVATE BROWSER_LEGACY)
-endif()
-
-if(SHARED_TEXTURE_SUPPORT_ENABLED)
-    target_compile_definitions(obs-browser PRIVATE SHARED_TEXTURE_SUPPORT_ENABLED)
-endif()
-
-set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
-
-# ----------------------------------------------------------------------------
-
-if (APPLE AND NOT BROWSER_LEGACY)
-	set(obs-browser-page_SOURCES
-		obs-browser-page/obs-browser-page-main.cpp
-		browser-app.cpp
-		deps/json11/json11.cpp
-		)
-	set(obs-browser-page_HEADERS
-		obs-browser-page/obs-browser-page-main.cpp
-		browser-app.hpp
-		deps/json11/json11.hpp
-		cef-headers.hpp
-		)
-
-	set(CEF_HELPER_TARGET "obs-browser-page")
-	set(CEF_HELPER_OUTPUT_NAME "OBS Helper")
-	set(CEF_HELPER_APP_SUFFIXES
-		"::"
-		" (GPU):_gpu:.gpu"
-		" (Plugin):_plugin:.plugin"
-		" (Renderer):_renderer:.renderer"
-	)
-
-	foreach(_suffix_list ${CEF_HELPER_APP_SUFFIXES})
-    	# Convert to a list and extract the suffix values.
-    	string(REPLACE ":" ";" _suffix_list ${_suffix_list})
-    	list(GET _suffix_list 0 _name_suffix)
-    	list(GET _suffix_list 1 _target_suffix)
-    	list(GET _suffix_list 2 _plist_suffix)
-
-    	# Define Helper target and output names.
-    	set(_helper_target "${CEF_HELPER_TARGET}${_target_suffix}")
-    	set(_helper_output_name "${CEF_HELPER_OUTPUT_NAME}${_name_suffix}")
-
-    	# Create Helper-specific variants of the helper-Info.plist file. Do this
-    	# manually because the configure_file command (which is executed as part of
-    	# MACOSX_BUNDLE_INFO_PLIST) uses global env variables and would insert the
-    	# wrong values with multiple targets.
-    	set(_helper_info_plist "${CMAKE_CURRENT_BINARY_DIR}/helper-Info${_target_suffix}.plist")
-    	file(READ "${CMAKE_CURRENT_SOURCE_DIR}/helper-Info.plist" _plist_contents)
-    	string(REPLACE "\${EXECUTABLE_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
-    	string(REPLACE "\${PRODUCT_NAME}" "${_helper_output_name}" _plist_contents ${_plist_contents})
-    	string(REPLACE "\${BUNDLE_ID_SUFFIX}" "${_plist_suffix}" _plist_contents ${_plist_contents})
-    	file(WRITE ${_helper_info_plist} ${_plist_contents})
-
-    	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.obsproject.obs-studio.helper${_plist_suffix}")
-
-    	# Create Helper executable target.
-    	add_executable(${_helper_target} MACOSX_BUNDLE
-    		${obs-browser-page_SOURCES}
-    		${obs-browser-page_HEADERS})
-    	target_link_libraries(${_helper_target} ${CEF_LIBRARIES})
-    	set_target_properties(${_helper_target} PROPERTIES
-    		MACOSX_BUNDLE_INFO_PLIST ${_helper_info_plist}
-    		OUTPUT_NAME ${_helper_output_name}
-            FOLDER "plugins/obs-browser/helpers/"
-			COMPILE_FLAGS "-mmacosx-version-min=10.13"
-    	)
-
-        if(XCODE)
-			set(TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
-		else(XCODE)
-			set(TARGET_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-		endif(XCODE)
-
-		add_custom_command(TARGET obs-browser POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy_directory
-			"${TARGET_DIR}/${_helper_output_name}.app"
-			"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/bin/${_helper_output_name}.app"
-			VERBATIM)
-  	endforeach()
-else()
-    set(obs-browser-page_SOURCES
-    	obs-browser-page/obs-browser-page-main.cpp
-    	browser-app.cpp
-    	deps/json11/json11.cpp
-    	)
-    set(obs-browser-page_HEADERS
-    	obs-browser-page/obs-browser-page-main.cpp
-    	browser-app.hpp
-    	deps/json11/json11.hpp
-    	cef-headers.hpp
-    	)
-
-    add_executable(obs-browser-page
-    	${obs-browser-page_SOURCES}
-    	${obs-browser-page_HEADERS}
-    	)
-    target_link_libraries(obs-browser-page
-    	${CEF_LIBRARIES}
-    	)
-    set_target_properties(obs-browser-page PROPERTIES FOLDER "plugins/obs-browser")
-    if(APPLE)
-        target_compile_definitions(obs-browser PRIVATE BROWSER_LEGACY)
+      add_library(Qt::${_COMPONENT} INTERFACE IMPORTED)
+      set_target_properties(
+        Qt::${_COMPONENT} PROPERTIES INTERFACE_LINK_LIBRARIES
+                                     "Qt${FIND_QT_VERSION}::${_COMPONENT}")
     endif()
-endif()
-if(APPLE)
-	set_target_properties(obs-browser-page PROPERTIES
-		COMPILE_FLAGS "-mmacosx-version-min=10.13")
-endif()
+  endforeach()
+endmacro()
 
-if (WIN32)
-	set_target_properties(obs-browser PROPERTIES LINK_FLAGS "/IGNORE:4099")
-	set_target_properties(obs-browser-page PROPERTIES LINK_FLAGS "/IGNORE:4099 /SUBSYSTEM:WINDOWS")
-endif(WIN32)
+option(
+  ENABLE_BROWSER
+  "Enable building OBS with browser source plugin (required Chromium Embedded Framework)"
+  ${OS_LINUX})
 
-if (UNIX AND NOT APPLE)
-    set_target_properties(obs-browser PROPERTIES INSTALL_RPATH "$ORIGIN/")
-    set_target_properties(obs-browser-page PROPERTIES INSTALL_RPATH "$ORIGIN/")
-endif()
-
-# ----------------------------------------------------------------------------
-
-if (WIN32)
-	math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
-	add_custom_command(TARGET obs-browser POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_directory
-		"${CEF_ROOT_DIR}/Resources"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-	)
-
-	target_sources(obs-browser-page
-		PRIVATE obs-browser-page.manifest
-	)
-
-	add_custom_command(TARGET obs-browser POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy
-		"${CEF_ROOT_DIR}/Release/chrome_elf.dll"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-		COMMAND ${CMAKE_COMMAND} -E copy
-		"${CEF_ROOT_DIR}/Release/libcef.dll"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-		COMMAND ${CMAKE_COMMAND} -E copy
-		"${CEF_ROOT_DIR}/Release/libEGL.dll"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-		COMMAND ${CMAKE_COMMAND} -E copy
-		"${CEF_ROOT_DIR}/Release/libGLESv2.dll"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-		COMMAND ${CMAKE_COMMAND} -E copy
-		"${CEF_ROOT_DIR}/Release/snapshot_blob.bin"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-		COMMAND ${CMAKE_COMMAND} -E copy
-		"${CEF_ROOT_DIR}/Release/v8_context_snapshot.bin"
-		"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-	)
-	if(EXISTS "${CEF_ROOT_DIR}/Release/natives_blob.bin")
-		add_custom_command(TARGET obs-browser POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy
-			"${CEF_ROOT_DIR}/Release/natives_blob.bin"
-			"${CMAKE_BINARY_DIR}/rundir/$<CONFIGURATION>/obs-plugins/${BITS}bit/"
-		)
-	endif()
+if(NOT ENABLE_BROWSER OR NOT ENABLE_UI)
+  message(STATUS "OBS:  DISABLED   obs-browser")
+  message(
+    WARNING
+      "Browser source support is not enabled by default - please switch ENABLE_BROWSER to ON and specify CEF_ROOT_DIR to enable this functionality."
+  )
+  return()
 endif()
 
-if (UNIX AND NOT APPLE)
-	install(DIRECTORY "${CEF_ROOT_DIR}/Resources/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
-	install(DIRECTORY "${CEF_ROOT_DIR}/Release/" DESTINATION "${OBS_PLUGIN_DESTINATION}")
+if(OS_WINDOWS)
+  option(ENABLE_BROWSER_LEGACY
+         "Use legacy CEF version 3770 for browser source plugin" OFF)
 endif()
 
-install_obs_plugin_with_data(obs-browser data)
-if(BROWSER_LEGACY OR NOT APPLE)
-install_obs_plugin(obs-browser-page)
+if(OS_MACOS OR OS_WINDOWS)
+  option(ENABLE_BROWSER_SHARED_TEXTURE
+         "Enable shared texture support for browser source plugin" ON)
 endif()
+
+option(ENABLE_BROWSER_PANELS "Enable Qt web browser panel support" ON)
+option(ENABLE_BROWSER_QT_LOOP
+       "Enable running CEF on the main UI thread alongside Qt" ${OS_MACOS})
+
+if(NOT QT_VERSION)
+  set(QT_VERSION
+      "5"
+      CACHE STRING "OBS Qt version [5, 6]" FORCE)
+  set_property(CACHE QT_VERSION PROPERTY STRINGS 5 6)
+endif()
+
+mark_as_advanced(ENABLE_BROWSER_LEGACY ENABLE_BROWSER_SHARED_TEXTURE
+                 ENABLE_BROWSER_PANELS ENABLE_BROWSER_QT_LOOP)
+
+find_package(CEF REQUIRED)
+
+if(NOT TARGET CEF::Wrapper)
+  message(
+    FATAL_ERROR
+      "OBS:    -        Unable to find CEF Libraries - set CEF_ROOT_DIR or configure with ENABLE_BROWSER=OFF"
+  )
+endif()
+
+add_library(obs-browser MODULE)
+add_library(OBS::browser ALIAS obs-browser)
+
+if(ENABLE_BROWSER_LEGACY)
+  target_compile_definitions(obs-browser PRIVATE ENABLE_BROWSER_LEGACY)
+endif()
+
+if(ENABLE_BROWSER_SHARED_TEXTURE)
+  target_compile_definitions(obs-browser PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
+endif()
+
+if(ENABLE_BROWSER_QT_LOOP)
+  target_compile_definitions(obs-browser PRIVATE ENABLE_BROWSER_QT_LOOP)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in
+               ${CMAKE_BINARY_DIR}/config/browser-config.h)
+
+target_sources(
+  obs-browser
+  PRIVATE obs-browser-plugin.cpp
+          obs-browser-source.cpp
+          obs-browser-source.hpp
+          obs-browser-source-audio.cpp
+          browser-app.cpp
+          browser-app.hpp
+          browser-client.cpp
+          browser-client.hpp
+          browser-scheme.cpp
+          browser-scheme.hpp
+          browser-version.h
+          cef-headers.hpp
+          deps/json11/json11.cpp
+          deps/json11/json11.hpp
+          deps/base64/base64.cpp
+          deps/base64/base64.hpp
+          deps/wide-string.cpp
+          deps/wide-string.hpp
+          deps/obs-websocket-api/obs-websocket-api.h
+          ${CMAKE_BINARY_DIR}/config/browser-config.h)
+
+target_include_directories(obs-browser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps
+                                               ${CMAKE_BINARY_DIR}/config)
+
+target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api)
+
+target_compile_features(obs-browser PRIVATE cxx_std_17)
+
+if(ENABLE_BROWSER_PANELS OR ENABLE_BROWSER_QT_LOOP)
+  find_qt(VERSION ${QT_VERSION} COMPONENTS Widgets)
+
+  set_target_properties(
+    obs-browser
+    PROPERTIES AUTOMOC ON
+               AUTOUIC ON
+               AUTORCC ON)
+
+  target_link_libraries(obs-browser PRIVATE Qt::Widgets)
+endif()
+
+if(NOT OS_MACOS OR ENABLE_BROWSER_LEGACY)
+  add_executable(obs-browser-page)
+
+  target_sources(
+    obs-browser-page
+    PRIVATE cef-headers.hpp obs-browser-page/obs-browser-page-main.cpp
+            browser-app.cpp browser-app.hpp deps/json11/json11.cpp
+            deps/json11/json11.hpp)
+
+  target_link_libraries(obs-browser-page PRIVATE CEF::Library)
+
+  target_include_directories(
+    obs-browser-page
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/deps
+            ${CMAKE_CURRENT_SOURCE_DIR}/obs-browser-page)
+
+  target_compile_features(obs-browser-page PRIVATE cxx_std_17)
+
+  if(OS_WINDOWS)
+    target_link_libraries(obs-browser-page PRIVATE optimized CEF::Wrapper)
+
+    if(TARGET CEF::Wrapper_Debug)
+      target_link_libraries(obs-browser-page PRIVATE debug CEF::Wrapper_Debug)
+    endif()
+
+    target_sources(obs-browser-page PRIVATE obs-browser-page.manifest)
+  else()
+    target_link_libraries(obs-browser-page PRIVATE CEF::Wrapper)
+  endif()
+
+  if(ENABLE_BROWSER_LEGACY)
+    target_compile_definitions(obs-browser-page PRIVATE ENABLE_BROWSER_LEGACY)
+  endif()
+
+  if(ENABLE_BROWSER_SHARED_TEXTURE)
+    target_compile_definitions(obs-browser-page
+                               PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
+  endif()
+
+  if(ENABLE_BROWSER_QT_LOOP)
+    target_compile_definitions(obs-browser-page PRIVATE ENABLE_BROWSER_QT_LOOP)
+  endif()
+
+  set_target_properties(obs-browser-page PROPERTIES FOLDER
+                                                    "plugins/obs-browser")
+
+  setup_plugin_target(obs-browser-page)
+endif()
+
+if(OS_WINDOWS)
+  if(MSVC)
+    target_compile_options(obs-browser PRIVATE $<IF:$<CONFIG:DEBUG>,/MTd,/MT>)
+
+    target_compile_options(obs-browser-page
+                           PRIVATE $<IF:$<CONFIG:DEBUG>,/MTd,/MT>)
+  endif()
+
+  target_link_libraries(obs-browser PRIVATE optimized CEF::Wrapper CEF::Library
+                                            d3d11 dxgi)
+
+  if(TARGET CEF::Wrapper_Debug)
+    target_link_libraries(obs-browser PRIVATE debug CEF::Wrapper_Debug)
+  endif()
+
+  target_link_options(obs-browser PRIVATE "LINKER:/IGNORE:4099")
+
+  target_link_options(obs-browser-page PRIVATE "LINKER:/IGNORE:4099"
+                      "LINKER:/SUBSYSTEM:WINDOWS")
+
+  list(APPEND obs-browser_LIBRARIES d3d11 dxgi)
+
+elseif(OS_MACOS)
+  find_library(COREFOUNDATION CoreFoundation)
+  find_library(APPKIT AppKit)
+  mark_as_advanced(COREFOUNDATION APPKIT)
+
+  target_link_libraries(obs-browser PRIVATE ${COREFOUNDATION} ${APPKIT}
+                                            CEF::Wrapper)
+
+  target_sources(obs-browser PRIVATE macutil.mm)
+
+  set(CEF_HELPER_TARGET "obs-browser-helper")
+  set(CEF_HELPER_OUTPUT_NAME "OBS Helper")
+  set(CEF_HELPER_APP_SUFFIXES
+      "::" " (GPU):_gpu:.gpu" " (Plugin):_plugin:.plugin"
+      " (Renderer):_renderer:.renderer")
+
+  foreach(_SUFFIXES ${CEF_HELPER_APP_SUFFIXES})
+    string(REPLACE ":" ";" _SUFFIXES ${_SUFFIXES})
+    list(GET _SUFFIXES 0 _NAME_SUFFIX)
+    list(GET _SUFFIXES 1 _TARGET_SUFFIX)
+    list(GET _SUFFIXES 2 _PLIST_SUFFIX)
+
+    set(_HELPER_TARGET "${CEF_HELPER_TARGET}${_TARGET_SUFFIX}")
+    set(_HELPER_OUTPUT_NAME "${CEF_HELPER_OUTPUT_NAME}${_NAME_SUFFIX}")
+
+    set(_HELPER_INFO_PLIST
+        "${CMAKE_CURRENT_BINARY_DIR}/helper-info${_PLIST_SUFFIX}.plist")
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/helper-info.plist" _PLIST_CONTENTS)
+    string(REPLACE "\${EXECUTABLE_NAME}" "${_HELPER_OUTPUT_NAME}"
+                   _PLIST_CONTENTS ${_PLIST_CONTENTS})
+    string(REPLACE "\${PRODUCT_NAME}" "${_HELPER_OUTPUT_NAME}" _PLIST_CONTENTS
+                   ${_PLIST_CONTENTS})
+    string(REPLACE "\${BUNDLE_ID_SUFFIX}" "${_PLIST_SUFFIX}" _PLIST_CONTENTS
+                   ${_PLIST_CONTENTS})
+    string(REPLACE "\${MINIMUM_VERSION}" "${CMAKE_OSX_DEPLOYMENT_TARGET}"
+                   _PLIST_CONTENTS ${_PLIST_CONTENTS})
+    string(REPLACE "\${CURRENT_YEAR}" "${CURRENT_YEAR}" _PLIST_CONTENTS
+                   ${_PLIST_CONTENTS})
+    file(WRITE ${_HELPER_INFO_PLIST} ${_PLIST_CONTENTS})
+
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER
+        "${MACOSX_BUNDLE_GUI_IDENTIFIER}.helper${_PLIST_SUFFIX}")
+
+    add_executable(${_HELPER_TARGET} MACOSX_BUNDLE)
+    add_executable(OBS::browser-helper${_TARGET_SUFFIX} ALIAS ${_HELPER_TARGET})
+    target_sources(
+      ${_HELPER_TARGET}
+      PRIVATE browser-app.cpp browser-app.hpp
+              obs-browser-page/obs-browser-page-main.cpp cef-headers.hpp
+              deps/json11/json11.cpp deps/json11/json11.hpp)
+
+    target_link_libraries(${_HELPER_TARGET} PRIVATE CEF::Wrapper)
+
+    target_include_directories(
+      ${_HELPER_TARGET}
+      PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/deps
+              ${CMAKE_CURRENT_SOURCE_DIR}/obs-browser-page)
+
+    target_compile_features(${_HELPER_TARGET} PRIVATE cxx_std_17)
+
+    if(ENABLE_BROWSER_SHARED_TEXTURE)
+      target_compile_definitions(${_HELPER_TARGET}
+                                 PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
+    endif()
+
+    set_target_properties(
+      ${_HELPER_TARGET}
+      PROPERTIES
+        MACOSX_BUNDLE_INFO_PLIST ${_HELPER_INFO_PLIST}
+        OUTPUT_NAME ${_HELPER_OUTPUT_NAME}
+        FOLDER "plugins/obs-browser/helpers/"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER
+        "com.obsproject.obs-studio.helper${_PLIST_SUFFIX}"
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${OBS_BUNDLE_CODESIGN_IDENTITY}"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
+        "${CMAKE_SOURCE_DIR}/cmake/bundle/macOS/entitlements-helper${_PLIST_SUFFIX}.plist"
+    )
+  endforeach()
+
+elseif(OS_POSIX)
+  find_package(X11 REQUIRED)
+
+  target_link_libraries(obs-browser PRIVATE CEF::Wrapper CEF::Library X11::X11)
+
+  get_target_property(_CEF_DIRECTORY CEF::Library INTERFACE_LINK_DIRECTORIES)
+
+  set_target_properties(obs-browser PROPERTIES BUILD_RPATH "$ORIGIN/")
+
+  set_target_properties(obs-browser-page PROPERTIES BUILD_RPATH "$ORIGIN/")
+
+  set_target_properties(obs-browser PROPERTIES INSTALL_RPATH "$ORIGIN/")
+  set_target_properties(obs-browser-page PROPERTIES INSTALL_RPATH "$ORIGIN/")
+endif()
+
+if(ENABLE_BROWSER_PANELS)
+  add_library(obs-browser-panels INTERFACE)
+  add_library(OBS::browser-panels ALIAS obs-browser-panels)
+  target_sources(
+    obs-browser-panels
+    INTERFACE panel/browser-panel.cpp panel/browser-panel.hpp
+              panel/browser-panel-client.cpp panel/browser-panel-client.hpp
+              panel/browser-panel-internal.hpp)
+
+  target_include_directories(
+    obs-browser-panels INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+                                 ${CMAKE_CURRENT_SOURCE_DIR}/panel)
+
+  target_link_libraries(obs-browser-panels INTERFACE CEF::Wrapper)
+
+  if(OS_MACOS)
+    target_link_libraries(obs-browser-panels INTERFACE objc)
+  endif()
+
+  target_link_libraries(obs-browser PRIVATE obs-browser-panels)
+
+  target_compile_definitions(obs-browser-panels INTERFACE BROWSER_AVAILABLE)
+
+  if(ENABLE_BROWSER_QT_LOOP)
+    target_compile_definitions(obs-browser-panels
+                               INTERFACE ENABLE_BROWSER_QT_LOOP)
+  endif()
+endif()
+
+set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser" PREFIX
+                                                                          "")
+
+setup_plugin_target(obs-browser)

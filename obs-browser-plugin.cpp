@@ -45,7 +45,7 @@
 #include <d3d11.h>
 #endif
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 #include <QApplication>
 #include <QThread>
 #endif
@@ -73,7 +73,7 @@ bool hwaccel = false;
 
 /* ========================================================================= */
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 extern MessageObject messageObject;
 #endif
 
@@ -84,7 +84,7 @@ public:
 	inline BrowserTask(std::function<void()> task_) : task(task_) {}
 	virtual void Execute() override
 	{
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 		/* you have to put the tasks on the Qt event queue after this
 		 * call otherwise the CEF message pump may stop functioning
 		 * correctly, it's only supposed to take 10ms max */
@@ -121,7 +121,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "width", 800);
 	obs_data_set_default_int(settings, "height", 600);
 	obs_data_set_default_int(settings, "fps", 30);
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	obs_data_set_default_bool(settings, "fps_custom", false);
 #else
 	obs_data_set_default_bool(settings, "fps_custom", true);
@@ -192,7 +192,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		props, "fps_custom", obs_module_text("CustomFrameRate"));
 	obs_property_set_modified_callback(fps_set, is_fps_custom);
 
-#ifndef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifndef ENABLE_BROWSER_SHARED_TEXTURE
 	obs_property_set_enabled(fps_set, false);
 #endif
 
@@ -335,7 +335,7 @@ static void BrowserInit(void)
 	CefString(&settings.product_version) = prod_ver.str();
 #endif
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 	settings.external_message_pump = true;
 	settings.multi_threaded_message_loop = false;
 #endif
@@ -365,7 +365,7 @@ static void BrowserInit(void)
 	CefString(&settings.locale) = obs_get_locale();
 	CefString(&settings.accept_language_list) = accepted_languages;
 	CefString(&settings.cache_path) = conf_path_abs;
-#if !defined(__APPLE__) || defined(BROWSER_LEGACY)
+#if !defined(__APPLE__) || defined(ENABLE_BROWSER_LEGACY)
 	char *abs_path = os_get_abs_path_ptr(path.c_str());
 	CefString(&settings.browser_subprocess_path) = abs_path;
 	bfree(abs_path);
@@ -373,7 +373,7 @@ static void BrowserInit(void)
 
 	bool tex_sharing_avail = false;
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	if (hwaccel) {
 		obs_enter_graphics();
 		hwaccel = tex_sharing_avail = gs_shared_texture_available();
@@ -407,7 +407,7 @@ static void BrowserInit(void)
 
 static void BrowserShutdown(void)
 {
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 	while (messageObject.ExecuteNextBrowserTask())
 		;
 	CefDoMessageLoopWork();
@@ -416,7 +416,7 @@ static void BrowserShutdown(void)
 	app = nullptr;
 }
 
-#ifndef USE_QT_LOOP
+#ifndef ENABLE_BROWSER_QT_LOOP
 static void BrowserManagerThread(void)
 {
 	BrowserInit();
@@ -428,7 +428,7 @@ static void BrowserManagerThread(void)
 extern "C" EXPORT void obs_browser_initialize(void)
 {
 	if (!os_atomic_set_bool(&manager_initialized, true)) {
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 		BrowserInit();
 #else
 		manager_thread = thread(BrowserManagerThread);
@@ -642,7 +642,7 @@ static inline void EnumAdapterCount()
 }
 #endif
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 #ifdef _WIN32
 static const wchar_t *blacklisted_devices[] = {
 	L"Intel", L"Microsoft", L"Radeon HD 8850M", L"Radeon HD 7660", nullptr};
@@ -696,7 +696,7 @@ static void check_hwaccel_support(void)
 
 bool obs_module_load(void)
 {
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 	qRegisterMetaType<MessageTask>("MessageTask");
 #endif
 
@@ -707,7 +707,7 @@ bool obs_module_load(void)
 	CefEnableHighDPISupport();
 	EnumAdapterCount();
 #else
-#if defined(__APPLE__) && !defined(BROWSER_LEGACY)
+#if defined(__APPLE__) && !defined(ENABLE_BROWSER_LEGACY)
 	/* Load CEF at runtime as required on macOS */
 	CefScopedLibraryLoader library_loader;
 	if (!library_loader.LoadInMain())
@@ -723,7 +723,7 @@ bool obs_module_load(void)
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	obs_data_t *private_data = obs_get_private_data();
 	hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
 
@@ -770,7 +770,7 @@ void obs_module_post_load(void)
 
 void obs_module_unload(void)
 {
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 	BrowserShutdown();
 #else
 	if (manager_thread.joinable()) {

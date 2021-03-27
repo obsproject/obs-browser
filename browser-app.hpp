@@ -25,7 +25,7 @@
 
 typedef std::function<void(CefRefPtr<CefBrowser>)> BrowserFunc;
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 #include <QObject>
 #include <QTimer>
 #include <mutex>
@@ -109,7 +109,7 @@ public:
 			     CefRefPtr<CefV8Value> &retval,
 			     CefString &exception) override;
 
-#ifdef USE_QT_LOOP
+#ifdef ENABLE_BROWSER_QT_LOOP
 	virtual void OnScheduleMessagePumpWork(int64 delay_ms) override;
 	QTimer frameTimer;
 #endif
