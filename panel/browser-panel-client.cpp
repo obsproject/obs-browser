@@ -205,7 +205,9 @@ void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
 	if (model->IsVisible(MENU_ID_BACK) &&
 	    (!model->IsVisible(MENU_ID_RELOAD) &&
 	     !model->IsVisible(MENU_ID_RELOAD_NOCACHE))) {
-		model->InsertItemAt(2, MENU_ID_RELOAD_NOCACHE, "&Reload");
+		model->InsertItemAt(
+			2, MENU_ID_RELOAD_NOCACHE,
+			CefString(QObject::tr("RefreshBrowser").toStdString()));
 	}
 	if (model->IsVisible(MENU_ID_PRINT)) {
 		model->Remove(MENU_ID_PRINT);
