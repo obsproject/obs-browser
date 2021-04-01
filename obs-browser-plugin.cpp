@@ -305,6 +305,15 @@ static void BrowserInit(void)
 	settings.multi_threaded_message_loop = false;
 #endif
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+	// Override locale path from OBS binary path to plugin binary path
+	string locales = obs_get_module_binary_path(obs_current_module());
+	locales = locales.substr(0, locales.find_last_of('/') + 1);
+	locales += "locales";
+	BPtr<char> abs_locales = os_get_abs_path_ptr(locales.c_str());
+	CefString(&settings.locales_dir_path) = abs_locales;
+#endif
+
 	std::string obs_locale = obs_get_locale();
 	std::string accepted_languages;
 	if (obs_locale != "en-US") {
