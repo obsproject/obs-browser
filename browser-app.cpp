@@ -81,7 +81,6 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 		CefString type = command_line->GetSwitchValue("type");
 
 		if (!enableGPU && type.empty()) {
-			command_line->AppendSwitch("disable-gpu");
 			command_line->AppendSwitch("disable-gpu-compositing");
 		}
 	}
