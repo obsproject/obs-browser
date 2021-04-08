@@ -12,6 +12,10 @@
 #include <dlfcn.h>
 #endif
 
+#ifdef ENABLE_WAYLAND
+#include <obs-nix-platform.h>
+#endif
+
 struct QCefCookieManager {
 	virtual ~QCefCookieManager() {}
 
@@ -75,6 +79,14 @@ struct QCef {
 
 static inline void *get_browser_lib()
 {
+	// Disable panels on Wayland for now
+	bool isWayland = false;
+#ifdef ENABLE_WAYLAND
+	isWayland = obs_get_nix_platform() == OBS_NIX_PLATFORM_WAYLAND;
+#endif
+	if (isWayland)
+		return nullptr;
+
 	obs_module_t *browserModule = obs_get_module("obs-browser");
 
 	if (!browserModule)
