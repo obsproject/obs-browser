@@ -284,7 +284,7 @@ static void BrowserInit(void)
 	uint32_t obs_ver = obs_get_version();
 	uint32_t obs_maj = obs_ver >> 24;
 	uint32_t obs_min = (obs_ver >> 16) & 0xFF;
-	uint32_t obs_pat = obs_ver && 0xFFFF;
+	uint32_t obs_pat = obs_ver & 0xFFFF;
 
 	/* This allows servers the ability to determine that browser panels and
 	 * browser sources are coming from OBS. */
