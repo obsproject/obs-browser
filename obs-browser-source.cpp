@@ -159,11 +159,8 @@ bool BrowserSource::CreateBrowser()
 #else
 		bool hwaccel = false;
 #endif
-
-		CefRefPtr<BrowserClient> browserClient = new BrowserClient(
-			this, hwaccel && tex_sharing_avail, reroute_audio);
-
-		CefWindowInfo windowInfo;
+	CefRefPtr<BrowserClient> browserClient = new BrowserClient(this, hwaccel && tex_sharing_avail, reroute_audio);
+	CefWindowInfo windowInfo;
 #if CHROME_VERSION_BUILD < 3071
 		windowInfo.transparent_painting_enabled = true;
 #endif
@@ -200,7 +197,8 @@ bool BrowserSource::CreateBrowser()
 #if CHROME_VERSION_BUILD >= 3770
 			CefRefPtr<CefDictionaryValue>(),
 #endif
-			nullptr);
+            nullptr);
+    
 		if (cefBrowser) {
 			blog(LOG_INFO, "CreateBrowserSync - success");
 		} else {
@@ -448,6 +446,7 @@ void BrowserSource::Update(obs_data_t *settings)
 {
 	if (settings) {
 		bool n_is_local;
+		bool n_is_media_flag;
 		int n_width;
 		int n_height;
 		bool n_fps_custom;
@@ -458,6 +457,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		std::string n_url;
 		std::string n_css;
 
+		n_is_media_flag = obs_data_get_bool(settings, "is_media_flag");
 		n_is_local = obs_data_get_bool(settings, "is_local_file");
 		n_width = (int)obs_data_get_int(settings, "width");
 		n_height = (int)obs_data_get_int(settings, "height");
@@ -510,15 +510,15 @@ void BrowserSource::Update(obs_data_t *settings)
 			n_is_local = true;
 		}
 #endif
-
 		if (n_is_local == is_local && n_width == width &&
 		    n_height == height && n_fps_custom == fps_custom &&
 		    n_fps == fps && n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart && n_css == css && n_url == url &&
-		    n_reroute == reroute_audio) {
+		    n_reroute == reroute_audio && n_is_media_flag == is_media_flag) {
 			return;
 		}
 
+		is_media_flag = n_is_media_flag;
 		is_local = n_is_local;
 		width = n_width;
 		height = n_height;
