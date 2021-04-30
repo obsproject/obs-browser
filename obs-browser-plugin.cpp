@@ -370,7 +370,7 @@ static void BrowserShutdown(void)
 #ifndef USE_UI_LOOP
 static void BrowserManagerThread(obs_data_t *settings)
 {
-	BrowserInit(settings;
+	BrowserInit(settings);
 	CefRunMessageLoop();
 	BrowserShutdown();
 }
