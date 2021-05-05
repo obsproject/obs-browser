@@ -82,7 +82,7 @@ void BrowserApp::OnBeforeChildProcessLaunch(
     std::lock_guard<std::mutex> guard(flag_mutex);
     if (this->media_flag != -1) {
         if (this->media_flag) {
-            command_line->AppendSwitch("enable-media-stream");
+            command_line->AppendSwitchWithValue("enable-media-stream", "1");
         }
         this->media_flag = -1;
     }
@@ -90,7 +90,7 @@ void BrowserApp::OnBeforeChildProcessLaunch(
         bool flag = media_flags.front();
         media_flags.pop();
         if (flag) {
-            command_line->AppendSwitch("enable-media-stream");
+            command_line->AppendSwitchWithValue("enable-media-stream", "1");
         }
     }
 }
@@ -130,6 +130,20 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 
 	command_line->AppendSwitchWithValue("autoplay-policy",
 					    "no-user-gesture-required");
+
+	std::lock_guard<std::mutex> guard(flag_mutex);
+	if (this->media_flag != -1) {
+			if (this->media_flag) {
+					command_line->AppendSwitchWithValue("enable-media-stream", "1");
+			}
+			this->media_flag = -1;
+	} else if (this->media_flags.size()) {
+			bool flag = media_flags.front();
+			media_flags.pop();
+			if (flag) {
+				command_line->AppendSwitchWithValue("enable-media-stream", "1");
+			}
+	}
 }
 
 void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
