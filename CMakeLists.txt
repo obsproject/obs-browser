@@ -22,7 +22,7 @@ else()
     option(SHARED_TEXTURE_SUPPORT_ENABLED "Enable shared texture support for the browser plugin" OFF)
 endif()
 
-option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" ON)
+option(BROWSER_PANEL_SUPPORT_ENABLED "Enables Qt web browser panel support" OFF)
 
 if(NOT APPLE)
 	option(USE_UI_LOOP "Runs CEF on the main UI thread instead of in its own thread" OFF)

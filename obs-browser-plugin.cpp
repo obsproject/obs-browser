@@ -120,8 +120,6 @@ margin: 0px auto; \
 overflow: hidden; \
 }";
 
-static CefRefPtr<BrowserApp> app;
-
 static void browser_source_get_defaults(obs_data_t *settings)
 {
 	obs_data_set_default_string(settings, "url",
