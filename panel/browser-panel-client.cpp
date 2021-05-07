@@ -3,6 +3,9 @@
 
 #include <QUrl>
 #include <QDesktopServices>
+#include <QApplication>
+#include <QMenu>
+#include <QThread>
 
 #include <obs-module.h>
 #ifdef _WIN32
@@ -26,6 +29,11 @@ CefRefPtr<CefRequestHandler> QCefBrowserClient::GetRequestHandler()
 }
 
 CefRefPtr<CefLifeSpanHandler> QCefBrowserClient::GetLifeSpanHandler()
+{
+	return this;
+}
+
+CefRefPtr<CefContextMenuHandler> QCefBrowserClient::GetContextMenuHandler()
 {
 	return this;
 }
@@ -105,6 +113,7 @@ void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 				    const CefString &errorText,
 				    const CefString &failedUrl)
 {
+	UNUSED_PARAMETER(browser);
 	if (errorCode == ERR_ABORTED)
 		return;
 
@@ -155,6 +164,8 @@ bool QCefBrowserClient::OnBeforePopup(
 #ifdef _WIN32
 		HWND hwnd = (HWND)widget->effectiveWinId();
 		windowInfo.parent_window = hwnd;
+#else
+		UNUSED_PARAMETER(windowInfo);
 #endif
 		return false;
 	}
@@ -186,6 +197,76 @@ bool QCefBrowserClient::OnBeforePopup(
 	return true;
 }
 
+void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
+					    CefRefPtr<CefFrame>,
+					    CefRefPtr<CefContextMenuParams>,
+					    CefRefPtr<CefMenuModel> model)
+{
+	if (model->IsVisible(MENU_ID_BACK) &&
+	    (!model->IsVisible(MENU_ID_RELOAD) &&
+	     !model->IsVisible(MENU_ID_RELOAD_NOCACHE))) {
+		model->InsertItemAt(
+			2, MENU_ID_RELOAD_NOCACHE,
+			QObject::tr("RefreshBrowser").toUtf8().constData());
+	}
+	if (model->IsVisible(MENU_ID_PRINT)) {
+		model->Remove(MENU_ID_PRINT);
+	}
+}
+
+#if defined(_WIN32)
+bool QCefBrowserClient::RunContextMenu(
+	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+	CefRefPtr<CefContextMenuParams>, CefRefPtr<CefMenuModel> model,
+	CefRefPtr<CefRunContextMenuCallback> callback)
+{
+	std::vector<std::tuple<std::string, int, bool, int>> menu_items;
+	menu_items.reserve(model->GetCount());
+	for (int i = 0; i < model->GetCount(); i++) {
+		menu_items.push_back(
+			{model->GetLabelAt(i), model->GetCommandIdAt(i),
+			 model->IsEnabledAt(i), model->GetTypeAt(i)});
+	}
+
+	QMetaObject::invokeMethod(
+		QCoreApplication::instance()->thread(),
+		[menu_items, callback]() {
+			QMenu contextMenu;
+			std::string name;
+			int command_id;
+			bool enabled;
+			int type_id;
+
+			for (int i = 0; i < menu_items.size(); i++) {
+				std::tie(name, command_id, enabled, type_id) =
+					menu_items[i];
+				switch (type_id) {
+				case MENUITEMTYPE_COMMAND: {
+					QAction *item =
+						new QAction(name.c_str());
+					item->setEnabled(enabled);
+					item->setProperty("cmd_id", command_id);
+					contextMenu.addAction(item);
+				} break;
+				case MENUITEMTYPE_SEPARATOR:
+					contextMenu.addSeparator();
+					break;
+				}
+			}
+
+			QAction *action = contextMenu.exec(QCursor::pos());
+			if (action) {
+				QVariant cmdId = action->property("cmd_id");
+				callback.get()->Continue(cmdId.toInt(),
+							 EVENTFLAG_NONE);
+			} else {
+				callback.get()->Cancel();
+			}
+		});
+	return true;
+}
+#endif
+
 void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
 				  CefRefPtr<CefFrame> frame, int)
 {
@@ -206,6 +287,9 @@ bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 		browser->ReloadIgnoreCache();
 		return true;
 	}
+#else
+	UNUSED_PARAMETER(browser);
+	UNUSED_PARAMETER(event);
 #endif
 	return false;
 }

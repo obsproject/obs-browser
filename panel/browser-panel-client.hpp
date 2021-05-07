@@ -9,6 +9,7 @@ class QCefBrowserClient : public CefClient,
 			  public CefDisplayHandler,
 			  public CefRequestHandler,
 			  public CefLifeSpanHandler,
+			  public CefContextMenuHandler,
 			  public CefLoadHandler,
 			  public CefKeyboardHandler {
 
@@ -28,6 +29,8 @@ public:
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
 	virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override;
+	virtual CefRefPtr<CefContextMenuHandler>
+	GetContextMenuHandler() override;
 
 	/* CefDisplayHandler */
 	virtual void OnTitleChange(CefRefPtr<CefBrowser> browser,
@@ -64,6 +67,21 @@ public:
 		CefRefPtr<CefDictionaryValue> &extra_info,
 #endif
 		bool *no_javascript_access) override;
+
+	/* CefContextMenuHandler */
+	virtual void
+	OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
+			    CefRefPtr<CefFrame> frame,
+			    CefRefPtr<CefContextMenuParams> params,
+			    CefRefPtr<CefMenuModel> model) override;
+
+#if defined(_WIN32)
+	virtual bool
+	RunContextMenu(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+		       CefRefPtr<CefContextMenuParams> params,
+		       CefRefPtr<CefMenuModel> model,
+		       CefRefPtr<CefRunContextMenuCallback> callback) override;
+#endif
 
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,

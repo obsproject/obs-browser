@@ -36,7 +36,7 @@ class BrowserClient : public CefClient,
 #endif
 		      public CefLoadHandler {
 
-#ifdef EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 #if USE_TEXTURE_COPY
 	gs_texture_t *texture = nullptr;
 #endif
@@ -130,7 +130,7 @@ public:
 			     PaintElementType type, const RectList &dirtyRects,
 			     const void *buffer, int width,
 			     int height) override;
-#ifdef EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
 					PaintElementType type,
 					const RectList &dirtyRects,

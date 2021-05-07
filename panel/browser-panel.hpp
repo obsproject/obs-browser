@@ -1,11 +1,20 @@
 #pragma once
 
+#include <obs-module.h>
 #include <util/platform.h>
 #include <util/util.hpp>
 #include <QWidget>
 
 #include <functional>
 #include <string>
+
+#if defined(__APPLE__)
+#include <dlfcn.h>
+#endif
+
+#ifdef ENABLE_WAYLAND
+#include <obs-nix-platform.h>
+#endif
 
 struct QCefCookieManager {
 	virtual ~QCefCookieManager() {}
@@ -36,6 +45,7 @@ public:
 	virtual void setStartupScript(const std::string &script) = 0;
 	virtual void allowAllPopups(bool allow) = 0;
 	virtual void closeBrowser() = 0;
+	virtual void reloadPage() = 0;
 
 signals:
 	void titleChanged(const QString &title);
@@ -67,21 +77,35 @@ struct QCef {
 					 QObject *obj) = 0;
 };
 
+static inline void *get_browser_lib()
+{
+	// Disable panels on Wayland for now
+	bool isWayland = false;
+#ifdef ENABLE_WAYLAND
+	isWayland = obs_get_nix_platform() == OBS_NIX_PLATFORM_WAYLAND;
+#endif
+	if (isWayland)
+		return nullptr;
+
+	obs_module_t *browserModule = obs_get_module("obs-browser");
+
+	if (!browserModule)
+		return nullptr;
+
+	return obs_get_module_lib(browserModule);
+}
+
 static inline QCef *obs_browser_init_panel(void)
 {
-#ifdef _WIN32
-	void *lib = os_dlopen("obs-browser");
-#else
-	void *lib = os_dlopen("../obs-plugins/obs-browser");
-#endif
+	void *lib = get_browser_lib();
 	QCef *(*create_qcef)(void) = nullptr;
 
-	if (!lib) {
+	if (!lib)
 		return nullptr;
-	}
 
 	create_qcef =
 		(decltype(create_qcef))os_dlsym(lib, "obs_browser_create_qcef");
+
 	if (!create_qcef)
 		return nullptr;
 
@@ -90,19 +114,15 @@ static inline QCef *obs_browser_init_panel(void)
 
 static inline int obs_browser_qcef_version(void)
 {
-#ifdef _WIN32
-	void *lib = os_dlopen("obs-browser");
-#else
-	void *lib = os_dlopen("../obs-plugins/obs-browser");
-#endif
+	void *lib = get_browser_lib();
 	int (*qcef_version)(void) = nullptr;
 
-	if (!lib) {
+	if (!lib)
 		return 0;
-	}
 
 	qcef_version = (decltype(qcef_version))os_dlsym(
 		lib, "obs_browser_qcef_version_export");
+
 	if (!qcef_version)
 		return 0;
 

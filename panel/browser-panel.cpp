@@ -11,10 +11,18 @@
 #include <QThread>
 #endif
 
+#ifdef __APPLE__
+#include <objc/objc.h>
+#endif
+
 #include <obs-module.h>
 #include <util/threading.h>
 #include <util/base.h>
 #include <thread>
+
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include <X11/Xlib.h>
+#endif
 
 extern bool QueueCEFTask(std::function<void()> task);
 extern "C" void obs_browser_initialize(void);
@@ -31,6 +39,10 @@ CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
 {
 	return cm;
 }
+#endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#define SUPPORTS_FRACTIONAL_SCALING
 #endif
 
 class CookieCheck : public CefCookieVisitor {
@@ -76,6 +88,9 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 			throw "Browser thread not initialized";
 
 		BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
+		if (os_mkdirs(rpath.Get()) == MKDIR_ERROR)
+			throw "Failed to create cookie directory";
+
 		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
 
 #if CHROME_VERSION_BUILD < 3770
@@ -161,6 +176,11 @@ QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_,
 	setAttribute(Qt::WA_NativeWindow);
 
 	setFocusPolicy(Qt::ClickFocus);
+
+#ifndef __APPLE__
+	window = new QWindow();
+	window->setFlags(Qt::FramelessWindowHint);
+#endif
 }
 
 QCefWidgetInternal::~QCefWidgetInternal()
@@ -185,7 +205,6 @@ void QCefWidgetInternal::closeBrowser()
 			bc->widget = nullptr;
 		};
 
-#ifdef _WIN32
 		/* So you're probably wondering what's going on here.  If you
 		 * call CefBrowserHost::CloseBrowser, and it fails to unload
 		 * the web page *before* WM_NCDESTROY is called on the browser
@@ -202,11 +221,17 @@ void QCefWidgetInternal::closeBrowser()
 		 * So, instead, before closing the browser, we need to decouple
 		 * the browser from the widget.  To do this, we hide it, then
 		 * remove its parent. */
+#ifdef _WIN32
 		HWND hwnd = (HWND)cefBrowser->GetHost()->GetWindowHandle();
 		if (hwnd) {
 			ShowWindow(hwnd, SW_HIDE);
 			SetParent(hwnd, nullptr);
 		}
+#elif __APPLE__
+		// felt hacky, might delete later
+		id view = (id)cefBrowser->GetHost()->GetWindowHandle();
+		((void (*)(id, SEL))objc_msgSend)(
+			view, sel_getUid("removeFromSuperview"));
 #endif
 
 		destroyBrowser(browser);
@@ -216,64 +241,119 @@ void QCefWidgetInternal::closeBrowser()
 
 void QCefWidgetInternal::Init()
 {
-	WId id = winId();
+#ifndef __APPLE__
+	WId handle = window->winId();
+	QSize size = this->size();
+#ifdef SUPPORTS_FRACTIONAL_SCALING
+	size *= devicePixelRatioF();
+#else
+	size *= devicePixelRatio();
+#endif
+	bool success = QueueCEFTask(
+		[this, handle, size]()
+#else
+	WId handle = winId();
+	bool success = QueueCEFTask(
+		[this, handle]()
+#endif
+		{
+			CefWindowInfo windowInfo;
 
-	bool success = QueueCEFTask([this, id]() {
-		CefWindowInfo windowInfo;
+			/* Make sure Init isn't called more than once. */
+			if (cefBrowser)
+				return;
 
-		/* Make sure Init isn't called more than once. */
-		if (cefBrowser)
-			return;
+#ifdef __APPLE__
+			QSize size = this->size();
 
-		QSize size = this->size();
+			windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0,
+					      size.width(), size.height());
+#else
 #ifdef _WIN32
-		size *= devicePixelRatio();
-		RECT rc = {0, 0, size.width(), size.height()};
-		windowInfo.SetAsChild((HWND)id, rc);
-#elif __APPLE__
-		windowInfo.SetAsChild((CefWindowHandle)id, 0, 0, size.width(),
-				      size.height());
+			RECT rc = {0, 0, size.width(), size.height()};
+#else
+			CefRect rc = {0, 0, size.width(), size.height()};
+#endif
+			windowInfo.SetAsChild((CefWindowHandle)handle, rc);
 #endif
 
-		CefRefPtr<QCefBrowserClient> browserClient =
-			new QCefBrowserClient(this, script, allowAllPopups_);
+			CefRefPtr<QCefBrowserClient> browserClient =
+				new QCefBrowserClient(this, script,
+						      allowAllPopups_);
 
-		CefBrowserSettings cefBrowserSettings;
-		cefBrowser = CefBrowserHost::CreateBrowserSync(
-			windowInfo, browserClient, url, cefBrowserSettings,
+			CefBrowserSettings cefBrowserSettings;
+			cefBrowser = CefBrowserHost::CreateBrowserSync(
+				windowInfo, browserClient, url,
+				cefBrowserSettings,
 #if CHROME_VERSION_BUILD >= 3770
-			CefRefPtr<CefDictionaryValue>(),
+				CefRefPtr<CefDictionaryValue>(),
 #endif
-			rqc);
-#ifdef _WIN32
+				rqc);
+		});
+
+	if (success) {
+		timer.stop();
+#ifndef __APPLE__
+		if (!container) {
+			container =
+				QWidget::createWindowContainer(window, this);
+			container->show();
+		}
+
 		Resize();
 #endif
-	});
-
-	if (success)
-		timer.stop();
+	}
 }
 
 void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 {
 	QWidget::resizeEvent(event);
+#ifndef __APPLE__
 	Resize();
 }
 
 void QCefWidgetInternal::Resize()
 {
-#ifdef _WIN32
+#ifdef SUPPORTS_FRACTIONAL_SCALING
+	QSize size = this->size() * devicePixelRatioF();
+#else
 	QSize size = this->size() * devicePixelRatio();
+#endif
 
-	QueueCEFTask([this, size]() {
+	bool success = QueueCEFTask([this, size]() {
 		if (!cefBrowser)
 			return;
-		HWND hwnd = cefBrowser->GetHost()->GetWindowHandle();
-		SetWindowPos(hwnd, nullptr, 0, 0, size.width(), size.height(),
+
+		CefWindowHandle handle =
+			cefBrowser->GetHost()->GetWindowHandle();
+
+		if (!handle)
+			return;
+
+#ifdef _WIN32
+		SetWindowPos((HWND)handle, nullptr, 0, 0, size.width(),
+			     size.height(),
 			     SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-		SendMessage(hwnd, WM_SIZE, 0,
+		SendMessage((HWND)handle, WM_SIZE, 0,
 			    MAKELPARAM(size.width(), size.height()));
+#else
+		Display *xDisplay = cef_get_xdisplay();
+
+		if (!xDisplay)
+			return;
+
+		XWindowChanges changes = {0};
+		changes.x = 0;
+		changes.y = 0;
+		changes.width = size.width();
+		changes.height = size.height();
+		XConfigureWindow(xDisplay, (Window)handle,
+				 CWX | CWY | CWHeight | CWWidth, &changes);
+#endif
 	});
+
+	if (success && container)
+		container->resize(size.width(), size.height());
 #endif
 }
 
@@ -300,6 +380,12 @@ void QCefWidgetInternal::setURL(const std::string &url_)
 	if (cefBrowser) {
 		cefBrowser->GetMainFrame()->LoadURL(url);
 	}
+}
+
+void QCefWidgetInternal::reloadPage()
+{
+	if (cefBrowser)
+		cefBrowser->ReloadIgnoreCache();
 }
 
 void QCefWidgetInternal::setStartupScript(const std::string &script_)

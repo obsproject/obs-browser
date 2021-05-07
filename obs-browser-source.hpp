@@ -19,21 +19,18 @@
 #pragma once
 
 #include <obs-module.h>
-#include <obs.hpp>
 
 #include "cef-headers.hpp"
 #include "browser-config.h"
 #include "browser-app.hpp"
-
-#include <unordered_map>
 #include <functional>
-#include <vector>
 #include <string>
-#include <mutex>
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
-extern bool hwaccel;
-#endif
+#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
+#include <obs.hpp>
+#include <unordered_map>
+#include <vector>
+#include <mutex>
 
 struct AudioStream {
 	OBSSource source;
@@ -41,6 +38,9 @@ struct AudioStream {
 	int channels;
 	int sample_rate;
 };
+#endif
+
+extern bool hwaccel;
 
 struct BrowserSource {
 	BrowserSource **p_prev_next = nullptr;
@@ -65,7 +65,7 @@ struct BrowserSource {
 	bool is_media_flag = false;
 	bool first_update = true;
 	bool reroute_audio = true;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	bool reset_frame = false;
 #endif
 	bool is_showing = false;
@@ -84,7 +84,6 @@ struct BrowserSource {
 
 	bool CreateBrowser();
 	void DestroyBrowser(bool async = false);
-	void ClearAudioStreams();
 	void ExecuteOnBrowser(BrowserFunc func, bool async = false);
 
 	/* ---------------------------- */
@@ -95,9 +94,15 @@ struct BrowserSource {
 	void Update(obs_data_t *settings = nullptr);
 	void Tick();
 	void Render();
+#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
+	void ClearAudioStreams();
 	void EnumAudioStreams(obs_source_enum_proc_t cb, void *param);
 	bool AudioMix(uint64_t *ts_out, struct audio_output_data *audio_output,
 		      size_t channels, size_t sample_rate);
+	std::mutex audio_sources_mutex;
+	std::vector<obs_source_t *> audio_sources;
+	std::unordered_map<int, AudioStream> audio_streams;
+#endif
 	void SendMouseClick(const struct obs_mouse_event *event, int32_t type,
 			    bool mouse_up, uint32_t click_count);
 	void SendMouseMove(const struct obs_mouse_event *event,
@@ -110,12 +115,7 @@ struct BrowserSource {
 	void SetActive(bool active);
 	void Refresh();
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	inline void SignalBeginFrame();
 #endif
-
-	std::mutex audio_sources_mutex;
-	std::vector<obs_source_t *> audio_sources;
-
-	std::unordered_map<int, AudioStream> audio_streams;
 };

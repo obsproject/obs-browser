@@ -66,6 +66,19 @@ if(WIN32)
 		list(APPEND CEF_LIBRARIES
 				debug ${CEFWRAPPER_LIBRARY_DEBUG})
 	endif()
+elseif(APPLE)
+	if(BROWSER_LEGACY)
+		if(${CMAKE_VERSION} VERSION_GREATER "3.19.0" AND XCODE)
+			string(REPLACE "Chromium Embedded Framework" "\"Chromium Embedded Framework\"" CEF_LIBRARY_FIXED ${CEF_LIBRARY})
+		else()
+			set(CEF_LIBRARY_FIXED ${CEF_LIBRARY})
+		endif()
+	else()
+		set(CEF_LIBRARY_FIXED "")
+	endif()
+	set(CEF_LIBRARIES
+			${CEF_LIBRARY_FIXED}
+			${CEFWRAPPER_LIBRARY})
 else()
 	set(CEF_LIBRARIES
 			${CEF_LIBRARY}
