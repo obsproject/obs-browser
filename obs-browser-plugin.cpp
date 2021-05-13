@@ -283,10 +283,11 @@ static CefRefPtr<BrowserApp> app;
 
 static void BrowserInit(obs_data_t *settings_obs)
 {
-    
+	blog(LOG_INFO, "BrowserInit - 0");
 #if defined(__APPLE__) && defined(USE_UI_LOOP)
 	ExecuteSyncTask([settings_obs]() {
 #endif
+		blog(LOG_INFO, "BrowserInit - 1");
 		string path = obs_get_module_binary_path(obs_current_module());
 		path = path.substr(0, path.find_last_of('/') + 1);
 		path += "//obs-browser-page";
@@ -298,6 +299,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 		* CEF */
 		struct obs_cmdline_args cmdline_args = obs_get_cmdline_args();
 		CefMainArgs args(cmdline_args.argc, cmdline_args.argv);
+		blog(LOG_INFO, "BrowserInit - 2");
 #endif
 
 	CefSettings settings;
@@ -310,6 +312,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 	uint32_t obs_min = (obs_ver >> 16) & 0xFF;
 	uint32_t obs_pat = obs_ver & 0xFFFF;
 
+	blog(LOG_INFO, "BrowserInit - 3");
 	/* This allows servers the ability to determine that browser panels and
 	 * browser sources are coming from OBS. */
 	std::stringstream prod_ver;
@@ -324,6 +327,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 
 	CefString(&settings.product_version) = prod_ver.str();
 
+	blog(LOG_INFO, "BrowserInit - 4");
 #ifdef USE_UI_LOOP
 	settings.external_message_pump = true;
 	settings.multi_threaded_message_loop = false;
@@ -338,6 +342,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 	CefString(&settings.locales_dir_path) = abs_locales;
 #endif
 
+	blog(LOG_INFO, "BrowserInit - 5");
 	std::string obs_locale = obs_get_locale();
 	std::string accepted_languages;
 	if (obs_locale != "en-US") {
@@ -362,6 +367,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 
 	bool tex_sharing_avail = false;
 
+	blog(LOG_INFO, "BrowserInit - 6");
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	if (hwaccel) {
 		obs_enter_graphics();
@@ -370,7 +376,8 @@ static void BrowserInit(obs_data_t *settings_obs)
 	}
 #endif
 
-	app = new BrowserApp(tex_sharing_avail);
+	blog(LOG_INFO, "BrowserInit - 7");
+	app = new BrowserApp(false);
 
 #ifdef _WIN32
 	CefExecuteProcess(args, app, nullptr);
@@ -383,7 +390,9 @@ static void BrowserInit(obs_data_t *settings_obs)
 	uintptr_t zeroed_memory_lol[32] = {};
 	CefInitialize(args, settings, app, zeroed_memory_lol);
 #else
+	blog(LOG_INFO, "BrowserInit - 8");
 	CefInitialize(args, settings, app, nullptr);
+	blog(LOG_INFO, "BrowserInit - 9");
 #endif
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 		/* Register http://absolute/ scheme handler for older
@@ -432,6 +441,7 @@ extern "C" EXPORT void obs_browser_initialize(obs_data_t* settings)
 #ifdef USE_UI_LOOP
 		blog(LOG_INFO, "obs_browser_initialize, using UI_LOOP, call BrowserInit");
 		BrowserInit(settings);
+		blog(LOG_INFO, "obs_browser_initialize - end");
 #else
 		blog(LOG_INFO, "obs_browser_initialize, NOT using UI_LOOP");
 		auto binded_fn = bind(BrowserManagerThread, settings);

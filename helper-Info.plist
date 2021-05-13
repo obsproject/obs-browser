@@ -5,11 +5,11 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>${EXECUTABLE_NAME}</string>
+    <string>Streamlabs OBS</string>
     <key>CFBundleExecutable</key>
-    <string>${EXECUTABLE_NAME}</string>
+    <string>Streamlabs OBS</string>
     <key>CFBundleIdentifier</key>
-    <string>com.obsproject.obs-studio.helper${BUNDLE_ID_SUFFIX}</string>
+    <string>com.streamlabs.slobs.helper${BUNDLE_ID_SUFFIX}</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
