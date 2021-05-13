@@ -303,7 +303,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 #endif
 
 	CefSettings settings;
-	settings.log_severity = LOGSEVERITY_DISABLE;
+	settings.log_severity = LOGSEVERITY_VERBOSE;
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
 
