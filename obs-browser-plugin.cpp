@@ -377,7 +377,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 #endif
 
 	blog(LOG_INFO, "BrowserInit - 7");
-	app = new BrowserApp(false);
+	app = new BrowserApp(hwaccel);
 
 #ifdef _WIN32
 	CefExecuteProcess(args, app, nullptr);
