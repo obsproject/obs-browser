@@ -5,15 +5,15 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Streamlabs OBS</string>
+    <string>obs64</string>
     <key>CFBundleExecutable</key>
-    <string>Streamlabs OBS</string>
+    <string>obs64</string>
     <key>CFBundleIdentifier</key>
     <string>com.streamlabs.slobs.helper${BUNDLE_ID_SUFFIX}</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Streamlabs OBS</string>
+    <string>obs64</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>

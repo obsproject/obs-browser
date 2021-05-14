@@ -190,7 +190,7 @@ if (APPLE AND NOT BROWSER_LEGACY)
 		)
 
 	set(CEF_HELPER_TARGET "obs-browser-page")
-	set(CEF_HELPER_OUTPUT_NAME "Streamlabs OBS Helper")
+	set(CEF_HELPER_OUTPUT_NAME "obs64 Helper")
 	set(CEF_HELPER_APP_SUFFIXES
 		"::"
 		" (GPU):_gpu:.gpu"
