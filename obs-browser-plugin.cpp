@@ -342,6 +342,21 @@ static void BrowserInit(obs_data_t *settings_obs)
 	CefString(&settings.locales_dir_path) = abs_locales;
 #endif
 
+	blog(LOG_INFO, "CEF_LIBRARY %s", CEF_LIBRARY);
+	std::string binPath = getExecutablePath();
+	binPath = binPath.substr(0, binPath.find_last_of('/'));
+	binPath += "/Frameworks/Chromium\ Embedded\ Framework.framework";
+	blog(LOG_INFO, "binPath: %s", binPath.c_str());
+
+#ifdef BROWSER_DEPLOY
+		std::string binPath = getExecutablePath();
+		binPath = binPath.substr(0, binPath.find_last_of('/'));
+		binPath += "/Frameworks/Chromium\ Embedded\ Framework.framework";
+		CefString(&settings.framework_dir_path) = binPath;
+#else
+		CefString(&settings.framework_dir_path) = CEF_LIBRARY;
+#endif
+
 	blog(LOG_INFO, "BrowserInit - 5");
 	std::string obs_locale = obs_get_locale();
 	std::string accepted_languages;
