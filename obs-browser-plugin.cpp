@@ -285,7 +285,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 {
 	blog(LOG_INFO, "BrowserInit - 0");
 #if defined(__APPLE__) && defined(USE_UI_LOOP)
-	ExecuteSyncTask([settings_obs]() {
+	ExecuteTask([settings_obs]() {
 #endif
 		blog(LOG_INFO, "BrowserInit - 1");
 		string path = obs_get_module_binary_path(obs_current_module());
