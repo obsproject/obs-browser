@@ -119,20 +119,14 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("pluginVersion", pluginVersion,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
-	CefRefPtr<CefV8Value> getCurrentScene =
-		CefV8Value::CreateFunction("getCurrentScene", this);
-	obsStudioObj->SetValue("getCurrentScene", getCurrentScene,
-			       V8_PROPERTY_ATTRIBUTE_NONE);
+	std::vector<std::string> functions = {"getCurrentScene", "getStatus",
+					      "saveReplayBuffer"};
 
-	CefRefPtr<CefV8Value> getStatus =
-		CefV8Value::CreateFunction("getStatus", this);
-	obsStudioObj->SetValue("getStatus", getStatus,
-			       V8_PROPERTY_ATTRIBUTE_NONE);
-
-	CefRefPtr<CefV8Value> saveReplayBuffer =
-		CefV8Value::CreateFunction("saveReplayBuffer", this);
-	obsStudioObj->SetValue("saveReplayBuffer", saveReplayBuffer,
-			       V8_PROPERTY_ATTRIBUTE_NONE);
+	for (std::string name : functions) {
+		CefRefPtr<CefV8Value> func =
+			CefV8Value::CreateFunction(name, this);
+		obsStudioObj->SetValue(name, func, V8_PROPERTY_ATTRIBUTE_NONE);
+	}
 
 #if !ENABLE_WASHIDDEN
 	int id = browser->GetIdentifier();
