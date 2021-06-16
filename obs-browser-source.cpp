@@ -309,7 +309,7 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 #ifdef __linux__
 	uint32_t native_vkey = KeyboardCodeFromXKeysym(event->native_vkey);
 	uint32_t modifiers = event->native_modifiers;
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__APPLE__)
 	uint32_t native_vkey = event->native_vkey;
 	uint32_t modifiers = event->modifiers;
 #else
@@ -323,7 +323,7 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 			CefKeyEvent e;
 			e.windows_key_code = native_vkey;
 #ifdef __APPLE__
-			e.native_key_code = native_scancode;
+			e.native_key_code = native_vkey;
 #endif
 
 			e.type = key_up ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
@@ -345,7 +345,7 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 					KeyboardCodeFromXKeysym(e.character);
 #elif defined(_WIN32)
 				e.windows_key_code = e.character;
-#else
+#elif !defined(__APPLE__)
 				e.native_key_code = native_scancode;
 #endif
 				cefBrowser->GetHost()->SendKeyEvent(e);
