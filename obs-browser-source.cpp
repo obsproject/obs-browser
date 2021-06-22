@@ -550,20 +550,27 @@ void BrowserSource::Render()
 
 	if (texture) {
 #ifdef __APPLE__
-		gs_effect_t *effect = obs_get_base_effect(
-			(hwaccel) ? OBS_EFFECT_DEFAULT_RECT
-				  : OBS_EFFECT_PREMULTIPLIED_ALPHA);
-#else
 		gs_effect_t *effect =
-			obs_get_base_effect(OBS_EFFECT_PREMULTIPLIED_ALPHA);
+			obs_get_base_effect((hwaccel) ? OBS_EFFECT_DEFAULT_RECT
+						      : OBS_EFFECT_DEFAULT);
+#else
+		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 #endif
 
-		const bool current =
-			gs_is_srgb_format(gs_texture_get_color_format(texture));
-		const bool previous = gs_set_linear_srgb(current);
-		while (gs_effect_loop(effect, "Draw"))
-			obs_source_draw(texture, 0, 0, 0, 0, flip);
-		gs_set_linear_srgb(previous);
+		const bool previous = gs_framebuffer_srgb_enabled();
+		gs_enable_framebuffer_srgb(true);
+
+		gs_eparam_t *const image =
+			gs_effect_get_param_by_name(effect, "image");
+		gs_effect_set_texture(image, texture);
+
+		const uint32_t flip_flag = flip ? GS_FLIP_V : 0;
+
+		while (gs_effect_loop(effect,
+				      "DrawSrgbDecompressPremultiplied"))
+			gs_draw_sprite(texture, flip_flag, 0, 0);
+
+		gs_enable_framebuffer_srgb(previous);
 	}
 
 #if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
