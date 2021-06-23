@@ -342,6 +342,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 	CefString(&settings.locales_dir_path) = abs_locales;
 #endif
 
+#if defined(__APPLE__)
 	blog(LOG_INFO, "CEF_LIBRARY %s", CEF_LIBRARY);
 
 
@@ -350,7 +351,7 @@ static void BrowserInit(obs_data_t *settings_obs)
 	binPath += "/Frameworks/Chromium\ Embedded\ Framework.framework";
 	CefString(&settings.framework_dir_path) = binPath;
 	blog(LOG_INFO, "binPath: %s", binPath.c_str());
-
+#endif
 	blog(LOG_INFO, "BrowserInit - 5");
 	std::string obs_locale = obs_get_locale();
 	std::string accepted_languages;
