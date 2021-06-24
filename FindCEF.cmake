@@ -33,13 +33,13 @@ else()
 	find_library(CEF_LIBRARY
 		NAMES cef libcef cef.lib libcef.o "Chromium Embedded Framework"
 		PATHS ${CEF_ROOT_DIR} ${CEF_ROOT_DIR}/Release)
-	find_library(CEFWRAPPER_LIBRARY
-		NAMES cef_dll_wrapper libcef_dll_wrapper
-		PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Release
-			${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Release
-			${CEF_ROOT_DIR}/build/libcef_dll
-			${CEF_ROOT_DIR}/build/libcef_dll_wrapper)
+
 	if(WIN32)
+		find_library(CEFWRAPPER_LIBRARY_RELEASE
+			NAMES cef_dll_wrapper libcef_dll_wrapper
+			PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Release
+			${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Release)
+
 		find_library(CEFWRAPPER_LIBRARY_DEBUG
 			NAMES cef_dll_wrapper libcef_dll_wrapper
 			PATHS ${CEF_ROOT_DIR}/build/libcef_dll/Debug ${CEF_ROOT_DIR}/build/libcef_dll_wrapper/Debug)
@@ -52,19 +52,23 @@ if(NOT CEF_LIBRARY)
 	return()
 endif()
 
-if(NOT CEFWRAPPER_LIBRARY)
+if((NOT CEFWRAPPER_LIBRARY_RELEASE) AND (NOT CEFWRAPPER_LIBRARY_DEBUG))
 	message(WARNING "Could not find the CEF wrapper library" )
 	set(CEF_FOUND FALSE)
 	return()
 endif()
 
 if(WIN32)
-	set(CEF_LIBRARIES
-			${CEF_LIBRARY}
-			optimized ${CEFWRAPPER_LIBRARY})
-	if (CEFWRAPPER_LIBRARY_DEBUG)
+	set(CEF_LIBRARIES ${CEF_LIBRARY})
+	if (CEFWRAPPER_LIBRARY_RELEASE)
+		set(CEFWRAPPER_LIBRARY ${CEFWRAPPER_LIBRARY_RELEASE})
 		list(APPEND CEF_LIBRARIES
-				debug ${CEFWRAPPER_LIBRARY_DEBUG})
+			optimized ${CEFWRAPPER_LIBRARY_RELEASE})
+	endif()
+	if (CEFWRAPPER_LIBRARY_DEBUG)
+		set(CEFWRAPPER_LIBRARY ${CEFWRAPPER_LIBRARY_DEBUG})
+		list(APPEND CEF_LIBRARIES
+			debug ${CEFWRAPPER_LIBRARY_DEBUG})
 	endif()
 elseif(APPLE)
 	if(BROWSER_LEGACY)
@@ -87,5 +91,5 @@ endif()
 
 find_package_handle_standard_args(CEF DEFAULT_MSG CEF_LIBRARY
 	CEFWRAPPER_LIBRARY CEF_INCLUDE_DIR)
-mark_as_advanced(CEF_LIBRARY CEF_WRAPPER_LIBRARY CEF_LIBRARIES
+mark_as_advanced(CEF_LIBRARY CEFWRAPPER_LIBRARY CEF_LIBRARIES
 	CEF_INCLUDE_DIR)

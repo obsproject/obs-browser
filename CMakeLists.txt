@@ -297,13 +297,13 @@ if (WIN32)
 	)
 
 	install(FILES
-		"${CEF_ROOT_DIR}/Debug/chrome_elf.dll"
-		"${CEF_ROOT_DIR}/Debug/libcef.dll"
-		"${CEF_ROOT_DIR}/Debug/libEGL.dll"
-		"${CEF_ROOT_DIR}/Debug/libGLESv2.dll"
-		"${CEF_ROOT_DIR}/Debug/natives_blob.bin"
-		"${CEF_ROOT_DIR}/Debug/snapshot_blob.bin"
-		"${CEF_ROOT_DIR}/Debug/v8_context_snapshot.bin"
+		"${CEF_ROOT_DIR}/Release/chrome_elf.dll"
+		"${CEF_ROOT_DIR}/Release/libcef.dll"
+		"${CEF_ROOT_DIR}/Release/libEGL.dll"
+		"${CEF_ROOT_DIR}/Release/libGLESv2.dll"
+		"${CEF_ROOT_DIR}/Release/natives_blob.bin"
+		"${CEF_ROOT_DIR}/Release/snapshot_blob.bin"
+		"${CEF_ROOT_DIR}/Release/v8_context_snapshot.bin"
 		DESTINATION "${OBS_PLUGIN_DESTINATION}"
 		CONFIGURATIONS Debug
 	)
