@@ -150,7 +150,7 @@ bool BrowserSource::CreateBrowser()
 #if defined(USE_UI_LOOP) && defined(__APPLE__)
 	ExecuteTask([this]() {
 #endif
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if SHARED_TEXTURE_SUPPORT_ENABLED
 		if (hwaccel) {
 			obs_enter_graphics();
 			tex_sharing_avail = gs_shared_texture_available();
@@ -168,13 +168,14 @@ bool BrowserSource::CreateBrowser()
 		windowInfo.height = height;
 		windowInfo.windowless_rendering_enabled = true;
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 		windowInfo.shared_texture_enabled = hwaccel;
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef _WIN32
 		if (!fps_custom) {
 			windowInfo.external_begin_frame_enabled = true;
 			cefBrowserSettings.windowless_frame_rate = 0;
@@ -182,8 +183,16 @@ bool BrowserSource::CreateBrowser()
 			cefBrowserSettings.windowless_frame_rate = fps;
 		}
 #else
+		double video_fps = obs_get_active_fps();
+		cefBrowserSettings.windowless_frame_rate =
+			(fps_custom) ? fps : video_fps;
+#endif
+#else
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
+
+		cefBrowserSettings.default_font_size = 16;
+		cefBrowserSettings.default_fixed_font_size = 16;
 
 #if ENABLE_LOCAL_FILE_URL_SCHEME
 		if (is_local) {
@@ -240,7 +249,7 @@ void BrowserSource::DestroyBrowser(bool async)
 
 	cefBrowser = nullptr;
 }
-
+#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
 void BrowserSource::ClearAudioStreams()
 {
 #ifdef WIN32
@@ -253,7 +262,7 @@ void BrowserSource::ClearAudioStreams()
 		audio_sources.clear();
 	});
 }
-
+#endif
 void BrowserSource::SendMouseClick(const struct obs_mouse_event *event,
 				   int32_t type, bool mouse_up,
 				   uint32_t click_count)
@@ -325,21 +334,26 @@ void BrowserSource::SendFocus(bool focus)
 
 void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 {
-	uint32_t modifiers = event->modifiers;
 	std::string text = event->text;
 #ifdef __linux__
 	uint32_t native_vkey = KeyboardCodeFromXKeysym(event->native_vkey);
+	uint32_t modifiers = event->native_modifiers;
+#elif defined(_WIN32)
+	uint32_t native_vkey = event->native_vkey;
+	uint32_t modifiers = event->modifiers;
 #else
 	uint32_t native_vkey = event->native_vkey;
-#endif
 	uint32_t native_scancode = event->native_scancode;
-	uint32_t native_modifiers = event->native_modifiers;
+	uint32_t modifiers = event->native_modifiers;
+#endif
 
 	ExecuteOnBrowser(
 		[=](CefRefPtr<CefBrowser> cefBrowser) {
 			CefKeyEvent e;
 			e.windows_key_code = native_vkey;
+#ifdef __APPLE__
 			e.native_key_code = native_scancode;
+#endif
 
 			e.type = key_up ? KEYEVENT_KEYUP : KEYEVENT_RAWKEYDOWN;
 
@@ -350,7 +364,7 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 			}
 
 			//e.native_key_code = native_vkey;
-			e.modifiers = native_modifiers;
+			e.modifiers = modifiers;
 
 			cefBrowser->GetHost()->SendKeyEvent(e);
 			if (!text.empty() && !key_up) {
@@ -358,10 +372,11 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 #ifdef __linux__
 				e.windows_key_code =
 					KeyboardCodeFromXKeysym(e.character);
-#else
+#elif defined(_WIN32)
 				e.windows_key_code = e.character;
-#endif
+#else
 				e.native_key_code = native_scancode;
+#endif
 				cefBrowser->GetHost()->SendKeyEvent(e);
 			}
 		},
@@ -392,7 +407,7 @@ void BrowserSource::SetShowing(bool showing)
 			true);
 		Json json = Json::object{{"visible", showing}};
 		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 		if (showing && !fps_custom) {
 			reset_frame = false;
 		}
@@ -426,8 +441,8 @@ void BrowserSource::Refresh()
 		},
 		true);
 }
-
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef _WIN32
 inline void BrowserSource::SignalBeginFrame()
 {
 	if (reset_frame) {
@@ -440,6 +455,7 @@ inline void BrowserSource::SignalBeginFrame()
 		reset_frame = false;
 	}
 }
+#endif
 #endif
 
 void BrowserSource::Update(obs_data_t *settings)
@@ -535,7 +551,9 @@ void BrowserSource::Update(obs_data_t *settings)
 
 	DestroyBrowser(true);
 	DestroyTextures();
+#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
 	ClearAudioStreams();
+#endif
 	if (!shutdown_on_invisible || obs_source_showing(source))
 		create_browser = true;
 
@@ -546,7 +564,7 @@ void BrowserSource::Tick()
 {
 	if (create_browser && CreateBrowser())
 		create_browser = false;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	if (!fps_custom)
 		reset_frame = true;
 #endif
@@ -557,18 +575,29 @@ extern void ProcessCef();
 void BrowserSource::Render()
 {
 	bool flip = false;
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	flip = hwaccel;
 #endif
 
 	if (texture) {
+#ifdef __APPLE__
+		gs_effect_t *effect = obs_get_base_effect(
+			(hwaccel) ? OBS_EFFECT_DEFAULT_RECT
+				  : OBS_EFFECT_PREMULTIPLIED_ALPHA);
+#else
 		gs_effect_t *effect =
 			obs_get_base_effect(OBS_EFFECT_PREMULTIPLIED_ALPHA);
+#endif
+
+		const bool current =
+			gs_is_srgb_format(gs_texture_get_color_format(texture));
+		const bool previous = gs_set_linear_srgb(current);
 		while (gs_effect_loop(effect, "Draw"))
 			obs_source_draw(texture, 0, 0, 0, 0, flip);
+		gs_set_linear_srgb(previous);
 	}
 
-#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	SignalBeginFrame();
 #elif defined(USE_UI_LOOP) && defined(WIN32)
 	ProcessCef();
