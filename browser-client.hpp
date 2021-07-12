@@ -21,6 +21,7 @@
 #include <graphics/graphics.h>
 #include "cef-headers.hpp"
 #include "browser-config.h"
+#include "obs-browser-source.hpp"
 
 #define USE_TEXTURE_COPY 0
 
@@ -48,6 +49,7 @@ class BrowserClient : public CefClient,
 #endif
 	bool sharing_available = false;
 	bool reroute_audio = true;
+	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
 
 public:
 	BrowserSource *bs;
@@ -61,9 +63,11 @@ public:
 	int frames_per_buffer;
 #endif
 	inline BrowserClient(BrowserSource *bs_, bool sharing_avail,
-			     bool reroute_audio_)
+			     bool reroute_audio_,
+			     ControlLevel webpage_control_level_)
 		: sharing_available(sharing_avail),
 		  reroute_audio(reroute_audio_),
+		  webpage_control_level(webpage_control_level_),
 		  bs(bs_)
 	{
 	}

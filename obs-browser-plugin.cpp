@@ -127,6 +127,8 @@ static void browser_source_get_defaults(obs_data_t *settings)
 #endif
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
+	obs_data_set_default_int(settings, "webpage_control_level",
+				 (int)DEFAULT_CONTROL_LEVEL);
 	obs_data_set_default_string(settings, "css", default_css);
 	obs_data_set_default_bool(settings, "reroute_audio", false);
 }
@@ -204,6 +206,30 @@ static obs_properties_t *browser_source_get_properties(void *data)
 				obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
 				obs_module_text("RefreshBrowserActive"));
+
+	obs_property_t *controlLevel = obs_properties_add_list(
+		props, "webpage_control_level",
+		obs_module_text("WebpageControlLevel"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_INT);
+
+	obs_property_list_add_int(
+		controlLevel, obs_module_text("WebpageControlLevel.Level.None"),
+		(int)ControlLevel::None);
+	obs_property_list_add_int(
+		controlLevel,
+		obs_module_text("WebpageControlLevel.Level.ReadOnly"),
+		(int)ControlLevel::ReadOnly);
+	obs_property_list_add_int(
+		controlLevel,
+		obs_module_text("WebpageControlLevel.Level.Basic"),
+		(int)ControlLevel::Basic);
+	obs_property_list_add_int(
+		controlLevel,
+		obs_module_text("WebpageControlLevel.Level.Advanced"),
+		(int)ControlLevel::Advanced);
+	obs_property_list_add_int(
+		controlLevel, obs_module_text("WebpageControlLevel.Level.All"),
+		(int)ControlLevel::All);
 
 	obs_properties_add_button(
 		props, "refreshnocache", obs_module_text("RefreshNoCache"),

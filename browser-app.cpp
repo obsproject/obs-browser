@@ -104,6 +104,13 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 #endif
 }
 
+std::vector<std::string> exposedFunctions = {
+	"getControlLevel",   "getCurrentScene",  "getStatus",
+	"startRecording",    "stopRecording",    "startStreaming",
+	"stopStreaming",     "pauseRecording",   "unpauseRecording",
+	"startReplayBuffer", "stopReplayBuffer", "saveReplayBuffer",
+	"startVirtualcam",   "stopVirtualcam"};
+
 void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 				  CefRefPtr<CefFrame>,
 				  CefRefPtr<CefV8Context> context)
@@ -119,10 +126,7 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("pluginVersion", pluginVersion,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
-	std::vector<std::string> functions = {"getCurrentScene", "getStatus",
-					      "saveReplayBuffer"};
-
-	for (std::string name : functions) {
+	for (std::string name : exposedFunctions) {
 		CefRefPtr<CefV8Value> func =
 			CefV8Value::CreateFunction(name, this);
 		obsStudioObj->SetValue(name, func, V8_PROPERTY_ATTRIBUTE_NONE);
@@ -349,12 +353,19 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 	return true;
 }
 
+bool IsValidFunction(std::string function)
+{
+	std::vector<std::string>::iterator iterator;
+	iterator = std::find(exposedFunctions.begin(), exposedFunctions.end(),
+			     function);
+	return iterator != exposedFunctions.end();
+}
+
 bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
-	if (name == "getCurrentScene" || name == "getStatus" ||
-	    name == "saveReplayBuffer") {
+	if (IsValidFunction(name.ToString())) {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
