@@ -109,34 +109,70 @@ bool BrowserClient::OnProcessMessageReceived(
 		return false;
 	}
 
-	if (name == "getCurrentScene") {
-		OBSSource current_scene = obs_frontend_get_current_scene();
-		obs_source_release(current_scene);
+	// Fall-through switch, so that higher levels also have lower-level rights
+	switch (webpage_control_level) {
+	case ControlLevel::All:
+		if (name == "startRecording") {
+			obs_frontend_recording_start();
+		} else if (name == "stopRecording") {
+			obs_frontend_recording_stop();
+		} else if (name == "startStreaming") {
+			obs_frontend_streaming_start();
+		} else if (name == "stopStreaming") {
+			obs_frontend_streaming_stop();
+		} else if (name == "pauseRecording") {
+			obs_frontend_recording_pause(true);
+		} else if (name == "unpauseRecording") {
+			obs_frontend_recording_pause(false);
+		} else if (name == "startVirtualcam") {
+			obs_frontend_start_virtualcam();
+		} else if (name == "stopVirtualcam") {
+			obs_frontend_stop_virtualcam();
+		}
+	case ControlLevel::Advanced:
+		if (name == "startReplayBuffer") {
+			obs_frontend_replay_buffer_start();
+		} else if (name == "stopReplayBuffer") {
+			obs_frontend_replay_buffer_stop();
+		}
+	case ControlLevel::Basic:
+		if (name == "saveReplayBuffer") {
+			obs_frontend_replay_buffer_save();
+		}
+	case ControlLevel::ReadOnly:
+		if (name == "getCurrentScene") {
+			OBSSource current_scene =
+				obs_frontend_get_current_scene();
+			obs_source_release(current_scene);
 
-		if (!current_scene)
-			return false;
+			if (!current_scene)
+				return false;
 
-		const char *name = obs_source_get_name(current_scene);
-		if (!name)
-			return false;
+			const char *name = obs_source_get_name(current_scene);
+			if (!name)
+				return false;
 
-		json = Json::object{
-			{"name", name},
-			{"width", (int)obs_source_get_width(current_scene)},
-			{"height", (int)obs_source_get_height(current_scene)}};
-
-	} else if (name == "getStatus") {
-		json = Json::object{
-			{"recording", obs_frontend_recording_active()},
-			{"streaming", obs_frontend_streaming_active()},
-			{"recordingPaused", obs_frontend_recording_paused()},
-			{"replaybuffer", obs_frontend_replay_buffer_active()},
-			{"virtualcam", obs_frontend_virtualcam_active()}};
-
-	} else if (name == "saveReplayBuffer") {
-		obs_frontend_replay_buffer_save();
-	} else {
-		return false;
+			json = Json::object{
+				{"name", name},
+				{"width",
+				 (int)obs_source_get_width(current_scene)},
+				{"height",
+				 (int)obs_source_get_height(current_scene)}};
+		} else if (name == "getStatus") {
+			json = Json::object{
+				{"recording", obs_frontend_recording_active()},
+				{"streaming", obs_frontend_streaming_active()},
+				{"recordingPaused",
+				 obs_frontend_recording_paused()},
+				{"replaybuffer",
+				 obs_frontend_replay_buffer_active()},
+				{"virtualcam",
+				 obs_frontend_virtualcam_active()}};
+		}
+	case ControlLevel::None:
+		if (name == "getControlLevel") {
+			json = Json((int)webpage_control_level);
+		}
 	}
 
 	CefRefPtr<CefProcessMessage> msg =
