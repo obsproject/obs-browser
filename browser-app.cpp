@@ -50,16 +50,9 @@ CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
 
 void BrowserApp::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar)
 {
-#if CHROME_VERSION_BUILD >= 3683
 	registrar->AddCustomScheme("http",
 				   CEF_SCHEME_OPTION_STANDARD |
 					   CEF_SCHEME_OPTION_CORS_ENABLED);
-#elif CHROME_VERSION_BUILD >= 3029
-	registrar->AddCustomScheme("http", true, false, false, false, true,
-				   false);
-#else
-	registrar->AddCustomScheme("http", true, false, false, false, true);
-#endif
 }
 
 void BrowserApp::OnBeforeChildProcessLaunch(
@@ -128,12 +121,10 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 		obsStudioObj->SetValue(name, func, V8_PROPERTY_ATTRIBUTE_NONE);
 	}
 
-#if !ENABLE_WASHIDDEN
 	int id = browser->GetIdentifier();
 	if (browserVis.find(id) != browserVis.end()) {
 		SetDocumentVisibility(browser, browserVis[id]);
 	}
-#endif
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -155,7 +146,6 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 	context->Exit();
 }
 
-#if !ENABLE_WASHIDDEN
 void BrowserApp::SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
 					    CefRefPtr<CefFrame> frame,
 					    bool isVisible)
@@ -239,12 +229,9 @@ void BrowserApp::SetDocumentVisibility(CefRefPtr<CefBrowser> browser,
 		SetFrameDocumentVisibility(browser, frame, isVisible);
 	}
 }
-#endif
 
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-#if CHROME_VERSION_BUILD >= 3770
 					  CefRefPtr<CefFrame> frame,
-#endif
 					  CefProcessId source_process,
 					  CefRefPtr<CefProcessMessage> message)
 {
@@ -259,9 +246,7 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
 		ExecuteJSFunction(browser, "onVisibilityChange", arguments);
 
-#if !ENABLE_WASHIDDEN
 		SetDocumentVisibility(browser, args->GetBool(0));
-#endif
 
 	} else if (message->GetName() == "Active") {
 		CefV8ValueList arguments;

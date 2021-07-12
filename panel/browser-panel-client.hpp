@@ -63,9 +63,7 @@ public:
 		bool user_gesture, const CefPopupFeatures &popupFeatures,
 		CefWindowInfo &windowInfo, CefRefPtr<CefClient> &client,
 		CefBrowserSettings &settings,
-#if CHROME_VERSION_BUILD >= 3770
 		CefRefPtr<CefDictionaryValue> &extra_info,
-#endif
 		bool *no_javascript_access) override;
 
 	/* CefContextMenuHandler */

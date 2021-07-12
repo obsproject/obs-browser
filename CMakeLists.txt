@@ -111,7 +111,6 @@ set(obs-browser_SOURCES
 	obs-browser-source.cpp
 	obs-browser-source-audio.cpp
 	obs-browser-plugin.cpp
-	browser-scheme.cpp
 	browser-client.cpp
 	browser-app.cpp
 	deps/json11/json11.cpp
@@ -120,7 +119,6 @@ set(obs-browser_SOURCES
 	)
 set(obs-browser_HEADERS
 	obs-browser-source.hpp
-	browser-scheme.hpp
 	browser-client.hpp
 	browser-app.hpp
 	browser-version.h
