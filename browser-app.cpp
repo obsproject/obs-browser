@@ -119,8 +119,12 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 	obsStudioObj->SetValue("pluginVersion", pluginVersion,
 			       V8_PROPERTY_ATTRIBUTE_NONE);
 
-	std::vector<std::string> functions = {"getCurrentScene", "getStatus",
-					      "saveReplayBuffer"};
+	std::vector<std::string> functions = {
+		"getControlLevel",   "getCurrentScene",  "getStatus",
+		"startRecording",    "stopRecording",    "startStreaming",
+		"stopStreaming",     "pauseRecording",   "unpauseRecording",
+		"startReplayBuffer", "stopReplayBuffer", "saveReplayBuffer",
+		"startVirtualcam",   "stopVirtualcam"};
 
 	for (std::string name : functions) {
 		CefRefPtr<CefV8Value> func =
@@ -353,8 +357,13 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
-	if (name == "getCurrentScene" || name == "getStatus" ||
-	    name == "saveReplayBuffer") {
+	if (name == "getControlLevel" || name == "getCurrentScene" ||
+	    name == "getStatus" || name == "startRecording" ||
+	    name == "stopRecording" || name == "startStreaming" ||
+	    name == "stopStreaming" || name == "pauseRecording" ||
+	    name == "unpauseRecording" || name == "startReplayBuffer" ||
+	    name == "stopReplayBuffer" || name == "startVirtualcam" ||
+	    name == "stopVirtualcam" || name == "saveReplayBuffer") {
 		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
