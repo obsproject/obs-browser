@@ -100,9 +100,7 @@ public:
 				      CefRefPtr<CefV8Context> context) override;
 	virtual bool
 	OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-#if CHROME_VERSION_BUILD >= 3770
 				 CefRefPtr<CefFrame> frame,
-#endif
 				 CefProcessId source_process,
 				 CefRefPtr<CefProcessMessage> message) override;
 	virtual bool Execute(const CefString &name,
@@ -116,7 +114,6 @@ public:
 	QTimer frameTimer;
 #endif
 
-#if !ENABLE_WASHIDDEN
 	std::unordered_map<int, bool> browserVis;
 
 	void SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
@@ -124,7 +121,6 @@ public:
 					bool isVisible);
 	void SetDocumentVisibility(CefRefPtr<CefBrowser> browser,
 				   bool isVisible);
-#endif
 
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 };

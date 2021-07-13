@@ -40,19 +40,8 @@
 #include "include/wrapper/cef_library_loader.h"
 #endif
 
-#if CHROME_VERSION_BUILD < 3507
-#define ENABLE_WASHIDDEN 1
-#else
-#define ENABLE_WASHIDDEN 0
-#endif
-
-#if CHROME_VERSION_BUILD >= 3770
 #define SendBrowserProcessMessage(browser, pid, msg) \
 	browser->GetMainFrame()->SendProcessMessage(pid, msg);
-#else
-#define SendBrowserProcessMessage(browser, pid, msg) \
-	browser->SendProcessMessage(pid, msg);
-#endif
 
 #ifdef _MSC_VER
 #pragma warning(pop)

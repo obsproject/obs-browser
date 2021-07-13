@@ -29,7 +29,6 @@
 #include <mutex>
 
 #include "obs-browser-source.hpp"
-#include "browser-scheme.hpp"
 #include "browser-app.hpp"
 #include "browser-version.h"
 #include "browser-config.h"
@@ -365,12 +364,6 @@ static void BrowserInit(void)
 #else
 	CefInitialize(args, settings, app, nullptr);
 #endif
-#if !ENABLE_LOCAL_FILE_URL_SCHEME
-	/* Register http://absolute/ scheme handler for older
-	 * CEF builds which do not support file:// URLs */
-	CefRegisterSchemeHandlerFactory("http", "absolute",
-					new BrowserSchemeHandlerFactory());
-#endif
 	os_event_signal(cef_started_event);
 }
 
@@ -410,10 +403,7 @@ void RegisterBrowserSource()
 	struct obs_source_info info = {};
 	info.id = "browser_source";
 	info.type = OBS_SOURCE_TYPE_INPUT;
-	info.output_flags = OBS_SOURCE_VIDEO |
-#if CHROME_VERSION_BUILD >= 3683
-			    OBS_SOURCE_AUDIO |
-#endif
+	info.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_AUDIO |
 			    OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
 			    OBS_SOURCE_DO_NOT_DUPLICATE | OBS_SOURCE_SRGB;
 	info.get_properties = browser_source_get_properties;
@@ -699,11 +689,6 @@ bool obs_module_load(void)
 		check_hwaccel_support();
 	}
 	obs_data_release(private_data);
-#endif
-
-#if defined(__APPLE__) && CHROME_VERSION_BUILD < 4183
-	// Make sure CEF malloc hijacking happens early in the process
-	obs_browser_initialize();
 #endif
 
 	return true;
