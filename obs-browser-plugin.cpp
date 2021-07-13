@@ -131,6 +131,27 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "reroute_audio", false);
 }
 
+static void browser_source_get_defaults_v2(obs_data_t *settings)
+{
+	struct obs_video_info ovi;
+	obs_get_video_info(&ovi);
+
+	obs_data_set_default_string(settings, "url",
+				    "https://obsproject.com/browser-source");
+	obs_data_set_default_int(settings, "width", ovi.base_width);
+	obs_data_set_default_int(settings, "height", ovi.base_height);
+	obs_data_set_default_int(settings, "fps", 30);
+#if EXPERIMENTAL_SHARED_TEXTURE_SUPPORT_ENABLED
+	obs_data_set_default_bool(settings, "fps_custom", false);
+#else
+	obs_data_set_default_bool(settings, "fps_custom", true);
+#endif
+	obs_data_set_default_bool(settings, "shutdown", false);
+	obs_data_set_default_bool(settings, "restart_when_active", false);
+	obs_data_set_default_string(settings, "css", default_css);
+	obs_data_set_default_bool(settings, "reroute_audio", false);
+}
+
 static bool is_local_file_modified(obs_properties_t *props, obs_property_t *,
 				   obs_data_t *settings)
 {
@@ -408,7 +429,7 @@ extern "C" EXPORT void obs_browser_initialize(void)
 void RegisterBrowserSource()
 {
 	struct obs_source_info info = {};
-	info.id = "browser_source";
+	info.id = "browser_source_v2";
 	info.type = OBS_SOURCE_TYPE_INPUT;
 	info.output_flags = OBS_SOURCE_VIDEO |
 #if CHROME_VERSION_BUILD >= 3683
@@ -417,7 +438,7 @@ void RegisterBrowserSource()
 			    OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
 			    OBS_SOURCE_DO_NOT_DUPLICATE | OBS_SOURCE_SRGB;
 	info.get_properties = browser_source_get_properties;
-	info.get_defaults = browser_source_get_defaults;
+	info.get_defaults = browser_source_get_defaults_v2;
 	info.icon_type = OBS_ICON_TYPE_BROWSER;
 
 	info.get_name = [](void *) { return obs_module_text("BrowserSource"); };
@@ -495,6 +516,11 @@ void RegisterBrowserSource()
 		static_cast<BrowserSource *>(data)->SetActive(false);
 	};
 
+	obs_register_source(&info);
+
+	info.id = "browser_source";
+	info.output_flags |= OBS_SOURCE_CAP_OBSOLETE;
+	info.get_defaults = browser_source_get_defaults;
 	obs_register_source(&info);
 }
 
