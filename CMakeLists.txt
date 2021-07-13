@@ -31,7 +31,7 @@ else()
 endif()
 
 if(UNIX AND NOT APPLE)
-	find_package(X11 REQUIRED)
+	find_package(X11 QUIET)
 	if(NOT X11_FOUND)
 		message(FATAL_ERROR "X11 Not found -- install a X11 environment or set BUILD_BROWSER=OFF.")
 	endif()
