@@ -72,6 +72,20 @@ void DispatchJSEvent(std::string eventName, std::string jsonString,
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
 {
+
+	/* Register Refresh hotkey */
+	auto refreshFunction = [](void *data, obs_hotkey_id, obs_hotkey_t *,
+				  bool pressed) {
+		if (pressed) {
+			BrowserSource *bs = (BrowserSource *)data;
+			bs->Refresh();
+		}
+	};
+
+	obs_hotkey_register_source(source, "ObsBrowser.Refresh",
+				   obs_module_text("RefreshNoCache"),
+				   refreshFunction, (void *)this);
+
 	/* defer update */
 	obs_source_update(source, nullptr);
 
