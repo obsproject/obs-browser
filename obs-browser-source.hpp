@@ -40,6 +40,16 @@ struct AudioStream {
 };
 #endif
 
+enum ControlLevel {
+	LEVEL_NONE,
+	LEVEL_READ_ONLY,
+	LEVEL_BASIC,
+	LEVEL_ADVANCED,
+	LEVEL_ALL,
+	LEVEL_INVALID
+};
+inline constexpr ControlLevel DEFAULT_CONTROL_LEVEL = LEVEL_READ_ONLY;
+
 extern bool hwaccel;
 
 struct BrowserSource {
@@ -64,6 +74,7 @@ struct BrowserSource {
 	bool is_local = false;
 	bool first_update = true;
 	bool reroute_audio = true;
+	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
 #if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	bool reset_frame = false;
 #endif
