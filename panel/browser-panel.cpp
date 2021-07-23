@@ -235,6 +235,74 @@ void QCefWidgetInternal::closeBrowser()
 	}
 }
 
+#ifdef __linux__
+static bool XWindowHasAtom(Display *display, Window w, Atom a)
+{
+	Atom type;
+	int format;
+	unsigned long nItems;
+	unsigned long bytesAfter;
+	unsigned char *data = NULL;
+
+	if (XGetWindowProperty(display, w, a, 0, LONG_MAX, False,
+			       AnyPropertyType, &type, &format, &nItems,
+			       &bytesAfter, &data) != Success)
+		return false;
+
+	if (data)
+		XFree(data);
+
+	return type != None;
+}
+
+void QCefWidgetInternal::unsetToplevelXdndProxy()
+{
+	if (!cefBrowser)
+		return;
+
+	CefWindowHandle browserHandle =
+		cefBrowser->GetHost()->GetWindowHandle();
+	Display *xDisplay = cef_get_xdisplay();
+	Window toplevel, root, parent, *children;
+	unsigned int nChildren;
+	bool found = false;
+
+	toplevel = browserHandle;
+
+	// Find the toplevel
+	Atom netWmPidAtom = XInternAtom(xDisplay, "_NET_WM_PID", False);
+	do {
+		if (XQueryTree(xDisplay, toplevel, &root, &parent, &children,
+			       &nChildren) == 0)
+			return;
+
+		if (children)
+			XFree(children);
+
+		if (root == parent ||
+		    !XWindowHasAtom(xDisplay, parent, netWmPidAtom)) {
+			found = true;
+			break;
+		}
+		toplevel = parent;
+	} while (true);
+
+	if (!found)
+		return;
+
+	// Check if the XdndProxy property is set
+	Atom xDndProxyAtom = XInternAtom(xDisplay, "XdndProxy", False);
+	if (needsDeleteXdndProxy &&
+	    !XWindowHasAtom(xDisplay, toplevel, xDndProxyAtom)) {
+		QueueCEFTask([this]() { unsetToplevelXdndProxy(); });
+		return;
+	}
+
+	XDeleteProperty(xDisplay, toplevel, xDndProxyAtom);
+	needsDeleteXdndProxy = false;
+}
+#endif
+
 void QCefWidgetInternal::Init()
 {
 #ifndef __APPLE__
@@ -281,6 +349,10 @@ void QCefWidgetInternal::Init()
 				CefRefPtr<CefDictionaryValue>(),
 #endif
 				rqc);
+
+#ifdef __linux__
+			QueueCEFTask([this]() { unsetToplevelXdndProxy(); });
+#endif
 		});
 
 	if (success) {
