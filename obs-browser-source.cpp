@@ -179,9 +179,12 @@ bool BrowserSource::CreateBrowser()
 
 #if ENABLE_LOCAL_FILE_URL_SCHEME
 		if (is_local) {
+#if CEF_VERSION_MAJOR < 91
 			/* Disable web security for file:// URLs to allow
-			 * local content access to remote APIs */
+			 * local content access to remote APIs
+			 * This flag was removed from CEF >= 91 */
 			cefBrowserSettings.web_security = STATE_DISABLED;
+#endif
 		}
 #endif
 
