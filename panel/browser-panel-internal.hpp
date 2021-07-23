@@ -73,6 +73,12 @@ public:
 
 	void Resize();
 
+#ifdef __linux__
+private:
+	bool needsDeleteXdndProxy = true;
+	void unsetToplevelXdndProxy();
+#endif
+
 public slots:
 	void Init();
 };
