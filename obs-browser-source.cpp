@@ -177,12 +177,15 @@ bool BrowserSource::CreateBrowser()
 		cefBrowserSettings.default_font_size = 16;
 		cefBrowserSettings.default_fixed_font_size = 16;
 
+#if CHROME_VERSION_BUILD < 4430
 #if ENABLE_LOCAL_FILE_URL_SCHEME
 		if (is_local) {
 			/* Disable web security for file:// URLs to allow
-			 * local content access to remote APIs */
+			 * local content access to remote APIs
+			 * This flag was removed from CEF >= 91 */
 			cefBrowserSettings.web_security = STATE_DISABLED;
 		}
+#endif
 #endif
 
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
