@@ -255,6 +255,13 @@ static bool XWindowHasAtom(Display *display, Window w, Atom a)
 	return type != None;
 }
 
+/* On Linux / X11, CEF sets the XdndProxy of the toplevel window
+ * it's attached to, so that it can read drag events. When this
+ * toplevel happens to be OBS Studio's main window (e.g. when a
+ * browser panel is docked into to the main window), setting the
+ * XdndProxy atom ends up breaking DnD of sources and scenes. Thus,
+ * we have to manually unset this atom.
+ */
 void QCefWidgetInternal::unsetToplevelXdndProxy()
 {
 	if (!cefBrowser)
