@@ -36,6 +36,7 @@
 #include <include/cef_version.h>
 #include <include/cef_render_process_handler.h>
 #include <include/cef_request_context_handler.h>
+#include <include/cef_jsdialog_handler.h>
 #if defined(__APPLE__) && !defined(BROWSER_LEGACY)
 #include "include/wrapper/cef_library_loader.h"
 #endif

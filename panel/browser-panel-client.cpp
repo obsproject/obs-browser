@@ -6,6 +6,10 @@
 #include <QApplication>
 #include <QMenu>
 #include <QThread>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QRegularExpression>
+#include <QLabel>
 
 #include <obs-module.h>
 #ifdef _WIN32
@@ -42,6 +46,11 @@ CefRefPtr<CefContextMenuHandler> QCefBrowserClient::GetContextMenuHandler()
 }
 
 CefRefPtr<CefKeyboardHandler> QCefBrowserClient::GetKeyboardHandler()
+{
+	return this;
+}
+
+CefRefPtr<CefJSDialogHandler> QCefBrowserClient::GetJSDialogHandler()
 {
 	return this;
 }
@@ -274,6 +283,89 @@ void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
 {
 	if (frame->IsMain() && !script.empty())
 		frame->ExecuteJavaScript(script, CefString(), 0);
+}
+
+bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
+				   CefJSDialogHandler::JSDialogType dialog_type,
+				   const CefString &message_text,
+				   const CefString &default_prompt_text,
+				   CefRefPtr<CefJSDialogCallback> callback,
+				   bool &)
+{
+	QString parentTitle = widget->parentWidget()->windowTitle();
+	std::string default_value = default_prompt_text;
+	QString msg_raw(message_text.ToString().c_str());
+	// Replace <br> with standard newline as we will render in plaintext
+	msg_raw.replace(QRegularExpression("<br\\s{0,1}\\/{0,1}>"), "\n");
+	QString submsg =
+		QString(obs_module_text("Dialog.ReceivedFrom")).arg(parentTitle);
+	QString msg = QString("%1\n\n\n%2").arg(msg_raw).arg(submsg);
+
+	if (dialog_type == JSDIALOGTYPE_PROMPT) {
+		auto msgbox = [msg, default_value, callback]() {
+			QInputDialog *dlg = new QInputDialog(nullptr);
+			dlg->setWindowFlag(Qt::WindowStaysOnTopHint, true);
+			dlg->setWindowFlag(Qt::WindowContextHelpButtonHint,
+					   false);
+			std::stringstream title;
+			title << obs_module_text("Dialog.Prompt") << ": "
+			      << obs_module_text("Dialog.BrowserDock");
+			dlg->setWindowTitle(title.str().c_str());
+			if (!default_value.empty())
+				dlg->setTextValue(default_value.c_str());
+
+			auto finished = [callback, dlg](int result) {
+				callback.get()->Continue(
+					result == QDialog::Accepted,
+					dlg->textValue().toUtf8().constData());
+			};
+
+			QWidget::connect(dlg, &QInputDialog::finished,
+					 finished);
+			dlg->open();
+			if (QLabel *lbl = dlg->findChild<QLabel *>()) {
+				// Force plaintext manually
+				lbl->setTextFormat(Qt::PlainText);
+			}
+			dlg->setLabelText(msg);
+		};
+		QMetaObject::invokeMethod(
+			QCoreApplication::instance()->thread(), msgbox);
+		return true;
+	}
+	auto msgbox = [msg, dialog_type, callback]() {
+		QMessageBox *dlg = new QMessageBox(nullptr);
+		dlg->setStandardButtons(QMessageBox::Ok);
+		dlg->setWindowFlag(Qt::WindowStaysOnTopHint, true);
+		dlg->setTextFormat(Qt::PlainText);
+		dlg->setText(msg);
+		std::stringstream title;
+		switch (dialog_type) {
+		case JSDIALOGTYPE_CONFIRM:
+			title << obs_module_text("Dialog.Confirm");
+			dlg->setIcon(QMessageBox::Question);
+			dlg->addButton(QMessageBox::Cancel);
+			break;
+		case JSDIALOGTYPE_ALERT:
+		default:
+			title << obs_module_text("Dialog.Alert");
+			dlg->setIcon(QMessageBox::Information);
+			break;
+		}
+		title << ": " << obs_module_text("Dialog.BrowserDock");
+		dlg->setWindowTitle(title.str().c_str());
+
+		auto finished = [callback](int result) {
+			callback.get()->Continue(result == QMessageBox::Ok, "");
+		};
+
+		QWidget::connect(dlg, &QMessageBox::finished, finished);
+
+		dlg->open();
+	};
+	QMetaObject::invokeMethod(QCoreApplication::instance()->thread(),
+				  msgbox);
+	return true;
 }
 
 bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
