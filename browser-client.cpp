@@ -23,6 +23,9 @@
 #include <obs-frontend-api.h>
 #include <obs.hpp>
 #include <util/platform.h>
+#include <QApplication>
+#include <QThread>
+#include <QToolTip>
 
 using namespace json11;
 
@@ -170,6 +173,16 @@ bool BrowserClient::GetViewRect(
 #else
 	return true;
 #endif
+}
+
+bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
+{
+	std::string str_text = text;
+	QMetaObject::invokeMethod(
+		QCoreApplication::instance()->thread(), [str_text]() {
+			QToolTip::showText(QCursor::pos(), str_text.c_str());
+		});
+	return true;
 }
 
 void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,

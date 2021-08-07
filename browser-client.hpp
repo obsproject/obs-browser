@@ -97,6 +97,8 @@ public:
 				      const CefString &message,
 				      const CefString &source,
 				      int line) override;
+	virtual bool OnTooltip(CefRefPtr<CefBrowser> browser,
+			       CefString &text) override;
 
 	/* CefLifeSpanHandler */
 	virtual bool
