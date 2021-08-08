@@ -11,6 +11,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include <X11/Xlib.h>
+#endif
 
 /* CefClient */
 CefRefPtr<CefLoadHandler> QCefBrowserClient::GetLoadHandler()
@@ -53,10 +56,12 @@ void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 		QMetaObject::invokeMethod(widget, "titleChanged",
 					  Q_ARG(QString, qt_title));
 	} else { /* handle popup title */
+		CefWindowHandle handl = browser->GetHost()->GetWindowHandle();
 #ifdef _WIN32
 		std::wstring str_title = title;
-		HWND hwnd = browser->GetHost()->GetWindowHandle();
-		SetWindowTextW(hwnd, str_title.c_str());
+		SetWindowTextW((HWND)handl, str_title.c_str());
+#elif defined(__linux__)
+		XStoreName(cef_get_xdisplay(), handl, title.ToString().c_str());
 #endif
 	}
 }
