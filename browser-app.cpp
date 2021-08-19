@@ -77,10 +77,9 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 	const CefString &, CefRefPtr<CefCommandLine> command_line)
 {
 	if (!shared_texture_available) {
-		bool enableGPU = command_line->HasSwitch("enable-gpu");
 		CefString type = command_line->GetSwitchValue("type");
 
-		if (!enableGPU && type.empty()) {
+		if (!gpuCompositing && type.empty()) {
 			command_line->AppendSwitch("disable-gpu-compositing");
 		}
 	}

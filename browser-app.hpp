@@ -75,12 +75,15 @@ class BrowserApp : public CefApp,
 	typedef std::map<int, CefRefPtr<CefV8Value>> CallbackMap;
 
 	bool shared_texture_available;
+	bool gpuCompositing;
 	CallbackMap callbackMap;
 	int callbackId;
 
 public:
-	inline BrowserApp(bool shared_texture_available_ = false)
-		: shared_texture_available(shared_texture_available_)
+	inline BrowserApp(bool shared_texture_available_ = false,
+			  bool gpuCompositing_ = true)
+		: shared_texture_available(shared_texture_available_),
+		  gpuCompositing(gpuCompositing_)
 	{
 	}
 

@@ -141,7 +141,7 @@ bool BrowserSource::CreateBrowser()
 #endif
 
 		CefRefPtr<BrowserClient> browserClient = new BrowserClient(
-			this, hwaccel && tex_sharing_avail, reroute_audio);
+			this, tex_sharing_avail, reroute_audio);
 
 		CefWindowInfo windowInfo;
 #if CHROME_VERSION_BUILD < 3071
@@ -152,7 +152,7 @@ bool BrowserSource::CreateBrowser()
 		windowInfo.windowless_rendering_enabled = true;
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-		windowInfo.shared_texture_enabled = hwaccel;
+		windowInfo.shared_texture_enabled = tex_sharing_avail;
 #endif
 
 		CefBrowserSettings cefBrowserSettings;
@@ -550,8 +550,9 @@ void BrowserSource::Render()
 
 	if (texture) {
 #ifdef __APPLE__
+		bool useDefaultRect = hwaccel;
 		gs_effect_t *effect =
-			obs_get_base_effect((hwaccel) ? OBS_EFFECT_DEFAULT_RECT
+			obs_get_base_effect((useDefaultRect) ? OBS_EFFECT_DEFAULT_RECT
 						      : OBS_EFFECT_DEFAULT);
 #else
 		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);

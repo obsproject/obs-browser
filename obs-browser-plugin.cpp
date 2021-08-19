@@ -69,6 +69,7 @@ static int adapterCount = 0;
 static std::wstring deviceId;
 
 bool hwaccel = false;
+bool gpuCompositing = true;
 
 /* ========================================================================= */
 
@@ -350,7 +351,7 @@ static void BrowserInit(void)
 	}
 #endif
 
-	app = new BrowserApp(tex_sharing_avail);
+	app = new BrowserApp(tex_sharing_avail, gpuCompositing);
 
 #ifdef _WIN32
 	CefExecuteProcess(args, app, nullptr);
@@ -693,7 +694,7 @@ bool obs_module_load(void)
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	obs_data_t *private_data = obs_get_private_data();
-	hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
+	gpuCompositing = hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
 
 	if (hwaccel) {
 		check_hwaccel_support();
