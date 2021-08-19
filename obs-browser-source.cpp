@@ -134,6 +134,13 @@ bool BrowserSource::CreateBrowser()
 		if (hwaccel) {
 			obs_enter_graphics();
 			tex_sharing_avail = gs_shared_texture_available();
+#if CHROME_VERSION_BUILD >= 4430 && defined(__APPLE__) && defined(__arm64__)
+			// CEF 4430 doesn't seem to work correctly when init'd with shared texture on arm64:
+			//  - we never see OnAcceleratedPaint called
+			//  - everything is black
+			// so we'll disable that for the time being
+			tex_sharing_avail = false;
+#endif
 			obs_leave_graphics();
 		}
 #else
@@ -177,10 +184,10 @@ bool BrowserSource::CreateBrowser()
 		cefBrowserSettings.default_font_size = 16;
 		cefBrowserSettings.default_fixed_font_size = 16;
 
-#if ENABLE_LOCAL_FILE_URL_SCHEME
+#if ENABLE_LOCAL_FILE_URL_SCHEME && CHROME_VERSION_BUILD < 4430
 		if (is_local) {
 			/* Disable web security for file:// URLs to allow
-			 * local content access to remote APIs */
+              * local content access to remote APIs */
 			cefBrowserSettings.web_security = STATE_DISABLED;
 		}
 #endif
@@ -551,9 +558,13 @@ void BrowserSource::Render()
 	if (texture) {
 #ifdef __APPLE__
 		bool useDefaultRect = hwaccel;
-		gs_effect_t *effect =
-			obs_get_base_effect((useDefaultRect) ? OBS_EFFECT_DEFAULT_RECT
-						      : OBS_EFFECT_DEFAULT);
+#if CHROME_VERSION_BUILD >= 4430 && defined(__APPLE__) && defined(__arm64__)
+		useDefaultRect = false;
+		flip = false;
+#endif
+		gs_effect_t *effect = obs_get_base_effect(
+			(useDefaultRect) ? OBS_EFFECT_DEFAULT_RECT
+					 : OBS_EFFECT_DEFAULT);
 #else
 		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 #endif

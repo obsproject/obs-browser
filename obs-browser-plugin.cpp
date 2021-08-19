@@ -299,7 +299,7 @@ static void BrowserInit(void)
 	prod_ver << std::to_string(obs_maj) << "." << std::to_string(obs_min)
 		 << "." << std::to_string(obs_pat);
 
-#if CHROME_VERSION_BUILD >= 4472
+#if CHROME_VERSION_BUILD >= 4430
 	CefString(&settings.user_agent_product) = prod_ver.str();
 #else
 	CefString(&settings.product_version) = prod_ver.str();
@@ -694,7 +694,8 @@ bool obs_module_load(void)
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	obs_data_t *private_data = obs_get_private_data();
-	gpuCompositing = hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
+	gpuCompositing = hwaccel =
+		obs_data_get_bool(private_data, "BrowserHWAccel");
 
 	if (hwaccel) {
 		check_hwaccel_support();
