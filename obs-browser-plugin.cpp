@@ -694,8 +694,8 @@ bool obs_module_load(void)
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	obs_data_t *private_data = obs_get_private_data();
-	gpuCompositing = hwaccel =
-		obs_data_get_bool(private_data, "BrowserHWAccel");
+	gpuCompositing = obs_data_get_bool(private_data, "BrowserHWAccel");
+	hwaccel = gpuCompositing;
 
 	if (hwaccel) {
 		check_hwaccel_support();
