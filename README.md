@@ -71,7 +71,7 @@ Permissions required: NONE
  * @param {function} callback
  * @returns {Level}
  */
-window.obsstudio.getStatus(function (level) {
+window.obsstudio.getControlLevel(function (level) {
     console.log(level)
 })
 ```
