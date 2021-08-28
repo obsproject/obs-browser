@@ -217,8 +217,12 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		(int)ControlLevel::None);
 	obs_property_list_add_int(
 		controlLevel,
-		obs_module_text("WebpageControlLevel.Level.ReadOnly"),
-		(int)ControlLevel::ReadOnly);
+		obs_module_text("WebpageControlLevel.Level.ReadObs"),
+		(int)ControlLevel::ReadObs);
+	obs_property_list_add_int(
+		controlLevel,
+		obs_module_text("WebpageControlLevel.Level.ReadUser"),
+		(int)ControlLevel::ReadUser);
 	obs_property_list_add_int(
 		controlLevel,
 		obs_module_text("WebpageControlLevel.Level.Basic"),

@@ -82,7 +82,7 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 Permissions required: NONE
 ```js
 /**
- * @typedef {number} Level - The level of permissions. 0 for NONE, 1 for READ_ONLY, 2 for BASIC, 3 for ADVANCED and 4 for ALL
+ * @typedef {number} Level - The level of permissions. 0 for NONE, 1 for READ_OBS (OBS data), 2 for READ_USER (User data), 3 for BASIC, 4 for ADVANCED and 5 for ALL
  */
 
 /**
@@ -98,31 +98,8 @@ window.obsstudio.getControlLevel(function (level) {
 })
 ```
 
-#### Get the current scene
-Permissions required: READ_ONLY
-```js
-/**
- * @typedef {Object} Scene
- * @property {string} name - name of the scene
- * @property {number} width - width of the scene
- * @property {number} height - height of the scene
- */
-
-/**
- * @callback SceneCallback
- * @param {Scene} scene
- */
-
-/**
- * @param {SceneCallback} cb - The callback that receives the current scene in OBS.
- */
-window.obsstudio.getCurrentScene(function(scene) {
-	console.log(scene)
-})
-```
-
 #### Get OBS output status
-Permissions required: READ_ONLY
+Permissions required: READ_OBS
 ```js
 /**
  * @typedef {Object} Status
@@ -143,6 +120,77 @@ Permissions required: READ_ONLY
  */
 window.obsstudio.getStatus(function (status) {
 	console.log(status)
+})
+```
+
+#### Get the current scene
+Permissions required: READ_USER
+```js
+/**
+ * @typedef {Object} Scene
+ * @property {string} name - name of the scene
+ * @property {number} width - width of the scene
+ * @property {number} height - height of the scene
+ */
+
+/**
+ * @callback SceneCallback
+ * @param {Scene} scene
+ */
+
+/**
+ * @param {SceneCallback} cb - The callback that receives the current scene in OBS.
+ */
+window.obsstudio.getCurrentScene(function(scene) {
+    console.log(scene)
+})
+```
+
+#### Get scenes
+Permissions required: READ_USER
+```js
+/**
+ * @callback ScenesCallback
+ * @param {string[]} scenes
+ */
+
+/**
+ * @param {ScenesCallback} cb - The callback that receives the scenes.
+ */
+window.obsstudio.getScenes(function (scenes) {
+    console.log(scenes)
+})
+```
+
+#### Get transitions
+Permissions required: READ_USER
+```js
+/**
+ * @callback TransitionsCallback
+ * @param {string[]} transitions
+ */
+
+/**
+ * @param {TransitionsCallback} cb - The callback that receives the transitions.
+ */
+window.obsstudio.getTransitions(function (transitions) {
+    console.log(transitions)
+})
+```
+
+#### Get current transition
+Permissions required: READ_USER
+```js
+/**
+ * @callback TransitionCallback
+ * @param {string} transition
+ */
+
+/**
+ * @param {TransitionCallback} cb - The callback that receives the transition currently set.
+ */
+window.obsstudio.getCurrentTransition(function (transition) {
+    console.log(transition)
 })
 ```
 
@@ -171,6 +219,24 @@ Permissions required: ADVANCED
  * Does not accept any parameters and does not return anything
  */
 window.obsstudio.stopReplayBuffer()
+```
+
+#### Change scene
+Permissions required: ADVANCED
+```js
+/**
+ * @param {string} name - Name of the scene
+ */
+window.obsstudio.setCurrentScene(name)
+```
+
+#### Set the current transition
+Permissions required: ADVANCED
+```js
+/**
+ * @param {string} name - Name of the transition
+ */
+window.obsstudio.setCurrentTransition(name)
 ```
 
 #### Start streaming

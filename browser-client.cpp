@@ -112,7 +112,7 @@ bool BrowserClient::OnProcessMessageReceived(
 	CefRefPtr<CefProcessMessage> message)
 {
 	const std::string &name = message->GetName();
-	CefRefPtr<CefListValue> arguments = message->GetArgumentList();
+	CefRefPtr<CefListValue> input_args = message->GetArgumentList();
 	Json json;
 
 	if (!bs) {
@@ -145,6 +145,40 @@ bool BrowserClient::OnProcessMessageReceived(
 			obs_frontend_replay_buffer_start();
 		} else if (name == "stopReplayBuffer") {
 			obs_frontend_replay_buffer_stop();
+		} else if (name == "setScene") {
+			const std::string scene_name =
+				input_args->GetString(1).ToString();
+			obs_source_t *source =
+				obs_get_source_by_name(scene_name.c_str());
+			if (!source) {
+				blog(LOG_WARNING,
+				     "Browser source '%s' tried to switch to scene '%s' which doesn't exist",
+				     obs_source_get_name(bs->source),
+				     scene_name.c_str());
+			} else if (!obs_source_is_scene(source)) {
+				blog(LOG_WARNING,
+				     "Browser source '%s' tried to switch to '%s' which isn't a scene",
+				     obs_source_get_name(bs->source),
+				     scene_name.c_str());
+				obs_source_release(source);
+			} else {
+				obs_frontend_set_current_scene(source);
+				obs_source_release(source);
+			}
+		} else if (name == "setTransition") {
+			const std::string transition_name =
+				input_args->GetString(1).ToString();
+			obs_source_t *transition = obs_get_transition_by_name(
+				transition_name.c_str());
+			if (transition) {
+				obs_frontend_set_current_transition(transition);
+				obs_source_release(transition);
+			} else {
+				blog(LOG_WARNING,
+				     "Browser source '%s' tried to change the current transition to '%s' which doesn't exist",
+				     obs_source_get_name(bs->source),
+				     transition_name.c_str());
+			}
 		}
 		[[fallthrough]];
 	case ControlLevel::Basic:
@@ -152,8 +186,19 @@ bool BrowserClient::OnProcessMessageReceived(
 			obs_frontend_replay_buffer_save();
 		}
 		[[fallthrough]];
-	case ControlLevel::ReadOnly:
-		if (name == "getCurrentScene") {
+	case ControlLevel::ReadUser:
+		if (name == "getScenes") {
+			struct obs_frontend_source_list list = {};
+			obs_frontend_get_scenes(&list);
+			std::vector<const char *> scenes_vector;
+			for (size_t i = 0; i < list.sources.num; i++) {
+				obs_source_t *source = list.sources.array[i];
+				scenes_vector.push_back(
+					obs_source_get_name(source));
+			}
+			json = scenes_vector;
+			obs_frontend_source_list_free(&list);
+		} else if (name == "getCurrentScene") {
 			OBSSource current_scene =
 				obs_frontend_get_current_scene();
 			obs_source_release(current_scene);
@@ -171,7 +216,26 @@ bool BrowserClient::OnProcessMessageReceived(
 				 (int)obs_source_get_width(current_scene)},
 				{"height",
 				 (int)obs_source_get_height(current_scene)}};
-		} else if (name == "getStatus") {
+		} else if (name == "getTransitions") {
+			struct obs_frontend_source_list list = {};
+			obs_frontend_get_transitions(&list);
+			std::vector<const char *> transitions_vector;
+			for (size_t i = 0; i < list.sources.num; i++) {
+				obs_source_t *source = list.sources.array[i];
+				transitions_vector.push_back(
+					obs_source_get_name(source));
+			}
+			json = transitions_vector;
+			obs_frontend_source_list_free(&list);
+		} else if (name == "getCurrentTransition") {
+			obs_source_t *source =
+				obs_frontend_get_current_transition();
+			json = obs_source_get_name(source);
+			obs_source_release(source);
+		}
+		[[fallthrough]];
+	case ControlLevel::ReadObs:
+		if (name == "getStatus") {
 			json = Json::object{
 				{"recording", obs_frontend_recording_active()},
 				{"streaming", obs_frontend_streaming_active()},
@@ -185,16 +249,16 @@ bool BrowserClient::OnProcessMessageReceived(
 		[[fallthrough]];
 	case ControlLevel::None:
 		if (name == "getControlLevel") {
-			json = Json((int)webpage_control_level);
+			json = (int)webpage_control_level;
 		}
 	}
 
 	CefRefPtr<CefProcessMessage> msg =
 		CefProcessMessage::Create("executeCallback");
 
-	CefRefPtr<CefListValue> args = msg->GetArgumentList();
-	args->SetInt(0, arguments->GetInt(0));
-	args->SetString(1, json.dump());
+	CefRefPtr<CefListValue> execute_args = msg->GetArgumentList();
+	execute_args->SetInt(0, input_args->GetInt(0));
+	execute_args->SetString(1, json.dump());
 
 	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 
