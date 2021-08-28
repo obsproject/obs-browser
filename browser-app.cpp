@@ -358,7 +358,7 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
 	if (IsValidFunction(name.ToString())) {
-		if (arguments.size() == 1 && arguments[0]->IsFunction()) {
+		if (arguments.size() >= 1 && arguments[0]->IsFunction()) {
 			callbackId++;
 			callbackMap[callbackId] = arguments[0];
 		}
@@ -367,6 +367,27 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			CefProcessMessage::Create(name);
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetInt(0, callbackId);
+
+		/* Pass on arguments */
+		for (u_long l = 0; l < arguments.size(); l++) {
+			u_long pos;
+			if (arguments[0]->IsFunction())
+				pos = l;
+			else
+				pos = l + 1;
+
+			if (arguments[l]->IsString())
+				args->SetString(pos,
+						arguments[l]->GetStringValue());
+			else if (arguments[l]->IsInt())
+				args->SetInt(pos, arguments[l]->GetIntValue());
+			else if (arguments[l]->IsBool())
+				args->SetBool(pos,
+					      arguments[l]->GetBoolValue());
+			else if (arguments[l]->IsDouble())
+				args->SetDouble(pos,
+						arguments[l]->GetDoubleValue());
+		}
 
 		CefRefPtr<CefBrowser> browser =
 			CefV8Context::GetCurrentContext()->GetBrowser();

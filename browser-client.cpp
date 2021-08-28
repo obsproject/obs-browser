@@ -112,6 +112,7 @@ bool BrowserClient::OnProcessMessageReceived(
 	CefRefPtr<CefProcessMessage> message)
 {
 	const std::string &name = message->GetName();
+	CefRefPtr<CefListValue> arguments = message->GetArgumentList();
 	Json json;
 
 	if (!bs) {
@@ -192,7 +193,7 @@ bool BrowserClient::OnProcessMessageReceived(
 		CefProcessMessage::Create("executeCallback");
 
 	CefRefPtr<CefListValue> args = msg->GetArgumentList();
-	args->SetInt(0, message->GetArgumentList()->GetInt(0));
+	args->SetInt(0, arguments->GetInt(0));
 	args->SetString(1, json.dump());
 
 	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
