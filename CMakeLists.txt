@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(obs-browser)
 
+include(FetchContent)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
@@ -9,6 +11,17 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
 option(BROWSER_LEGACY "Use legacy CEF version 3770" OFF)
+
+if(UNIX AND NOT APPLE AND NOT CEF_ROOT_DIR)
+	FetchContent_Declare(cef
+		URL           https://cdn-fastly.obsproject.com/downloads/cef_binary_4280_linux64.tar.bz2
+		URL_HASH      MD5=3e468e305f38127d0c3e06eed15a032c)
+	FetchContent_GetProperties(cef)
+	if(NOT cef_POPULATED)
+		FetchContent_Populate(cef)
+	endif()
+	set(CEF_ROOT_DIR "${cef_SOURCE_DIR}" CACHE PATH "" FORCE)
+endif()
 
 find_package(CEF QUIET)
 
