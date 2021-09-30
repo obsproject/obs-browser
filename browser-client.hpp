@@ -23,8 +23,6 @@
 #include "browser-config.h"
 #include "obs-browser-source.hpp"
 
-#define USE_TEXTURE_COPY 0
-
 struct BrowserSource;
 
 class BrowserClient : public CefClient,
@@ -38,9 +36,6 @@ class BrowserClient : public CefClient,
 		      public CefLoadHandler {
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#if USE_TEXTURE_COPY
-	gs_texture_t *texture = nullptr;
-#endif
 #ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
 #elif defined(__APPLE__)
@@ -71,8 +66,6 @@ public:
 		  bs(bs_)
 	{
 	}
-
-	virtual ~BrowserClient();
 
 	/* CefClient */
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override;
