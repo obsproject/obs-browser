@@ -64,6 +64,7 @@ struct BrowserSource {
 	std::string url;
 	std::string css;
 	gs_texture_t *texture = nullptr;
+	gs_texture_t *extra_texture = nullptr;
 	int width = 0;
 	int height = 0;
 	bool fps_custom = false;
@@ -83,6 +84,10 @@ struct BrowserSource {
 	{
 		if (texture) {
 			obs_enter_graphics();
+			if (extra_texture) {
+				gs_texture_destroy(extra_texture);
+				extra_texture = nullptr;
+			}
 			gs_texture_destroy(texture);
 			texture = nullptr;
 			obs_leave_graphics();

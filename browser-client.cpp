@@ -264,9 +264,31 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
 
 	if (shared_handle != last_handle) {
 		obs_enter_graphics();
-		gs_texture_destroy(bs->texture);
+
+		if (bs->texture) {
+			if (bs->extra_texture) {
+				gs_texture_destroy(bs->extra_texture);
+				bs->extra_texture = nullptr;
+			}
+			gs_texture_destroy(bs->texture);
+			bs->texture = nullptr;
+		}
+
 		bs->texture = gs_texture_open_shared(
 			(uint32_t)(uintptr_t)shared_handle);
+		if (bs->texture) {
+			const uint32_t cx = gs_texture_get_width(bs->texture);
+			const uint32_t cy = gs_texture_get_height(bs->texture);
+			const gs_color_format format =
+				gs_texture_get_color_format(bs->texture);
+			const gs_color_format linear_format =
+				gs_generalize_format(format);
+			if (linear_format != format) {
+				bs->extra_texture = gs_texture_create(
+					cx, cy, linear_format, 1, nullptr, 0);
+			}
+		}
+
 		obs_leave_graphics();
 
 		last_handle = shared_handle;
