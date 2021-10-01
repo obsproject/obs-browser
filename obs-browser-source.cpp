@@ -566,15 +566,19 @@ void BrowserSource::Render()
 		const bool previous = gs_framebuffer_srgb_enabled();
 		gs_enable_framebuffer_srgb(true);
 
+		gs_blend_state_push();
+		gs_blend_function(GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
+
 		gs_eparam_t *const image =
 			gs_effect_get_param_by_name(effect, "image");
 		gs_effect_set_texture(image, texture);
 
 		const uint32_t flip_flag = flip ? GS_FLIP_V : 0;
 
-		while (gs_effect_loop(effect,
-				      "DrawSrgbDecompressPremultiplied"))
+		while (gs_effect_loop(effect, "DrawSrgbDecompress"))
 			gs_draw_sprite(texture, flip_flag, 0, 0);
+
+		gs_blend_state_pop();
 
 		gs_enable_framebuffer_srgb(previous);
 	}
