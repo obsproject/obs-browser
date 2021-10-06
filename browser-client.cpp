@@ -93,7 +93,7 @@ bool BrowserClient::OnProcessMessageReceived(
 	if (!bs) {
 		return false;
 	}
-
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
 	// Fall-through switch, so that higher levels also have lower-level rights
 	switch (webpage_control_level) {
 	case ControlLevel::All:
@@ -200,14 +200,17 @@ bool BrowserClient::GetViewRect(
 bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
 	std::string str_text = text;
 	QMetaObject::invokeMethod(
 		QCoreApplication::instance()->thread(), [str_text]() {
 			QToolTip::showText(QCursor::pos(), str_text.c_str());
 		});
+#endif	
 	return true;
 #else
 	UNUSED_PARAMETER(text);
+	return false;
 #endif
 }
 
