@@ -22,9 +22,6 @@
 #include "json11/json11.hpp"
 #include <obs.hpp>
 #include <util/platform.h>
-#include <QApplication>
-#include <QThread>
-#include <QToolTip>
 
 using namespace json11;
 
