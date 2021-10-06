@@ -537,8 +537,8 @@ void BrowserSource::Update(obs_data_t *settings)
 		    n_height == height && n_fps_custom == fps_custom &&
 		    n_fps == fps && n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart && n_css == css && n_url == url &&
-		    n_reroute == reroute_audio && n_is_media_flag == is_media_flag &&
-		    n_webpage_control_level == webpage_control_level) {
+		    n_reroute == reroute_audio && (n_is_media_flag == is_media_flag ||
+		    n_webpage_control_level == webpage_control_level)) {
 			return;
 		}
 
