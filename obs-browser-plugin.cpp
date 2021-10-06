@@ -65,7 +65,7 @@ static thread manager_thread;
 static bool manager_initialized = false;
 os_event_t *cef_started_event = nullptr;
 
-#if defined(_WIN32) || defined(__APPLE__)
+#if defined(_WIN32)
 static int adapterCount = 0;
 #endif
 static std::wstring deviceId;
@@ -135,6 +135,8 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "shutdown", false);
 	obs_data_set_default_bool(settings, "is_media_flag", false);
 	obs_data_set_default_bool(settings, "restart_when_active", false);
+	obs_data_set_default_int(settings, "webpage_control_level",
+				 (int)DEFAULT_CONTROL_LEVEL);
 	obs_data_set_default_string(settings, "css", default_css);
 
 #ifdef __APPLE__
@@ -224,6 +226,30 @@ static obs_properties_t *browser_source_get_properties(void *data)
 				obs_module_text("ShutdownSourceNotVisible"));
 	obs_properties_add_bool(props, "restart_when_active",
 				obs_module_text("RefreshBrowserActive"));
+
+	obs_property_t *controlLevel = obs_properties_add_list(
+		props, "webpage_control_level",
+		obs_module_text("WebpageControlLevel"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_INT);
+
+	obs_property_list_add_int(
+		controlLevel, obs_module_text("WebpageControlLevel.Level.None"),
+		(int)ControlLevel::None);
+	obs_property_list_add_int(
+		controlLevel,
+		obs_module_text("WebpageControlLevel.Level.ReadOnly"),
+		(int)ControlLevel::ReadOnly);
+	obs_property_list_add_int(
+		controlLevel,
+		obs_module_text("WebpageControlLevel.Level.Basic"),
+		(int)ControlLevel::Basic);
+	obs_property_list_add_int(
+		controlLevel,
+		obs_module_text("WebpageControlLevel.Level.Advanced"),
+		(int)ControlLevel::Advanced);
+	obs_property_list_add_int(
+		controlLevel, obs_module_text("WebpageControlLevel.Level.All"),
+		(int)ControlLevel::All);
 
 	obs_properties_add_button(
 		props, "refreshnocache", obs_module_text("RefreshNoCache"),
@@ -325,7 +351,11 @@ static void BrowserInit(obs_data_t *settings_obs)
 	prod_ver << std::to_string(obs_maj) << "." << std::to_string(obs_min)
 		 << "." << std::to_string(obs_pat);
 
+#if CHROME_VERSION_BUILD >= 4472
+	CefString(&settings.user_agent_product) = prod_ver.str();
+#else
 	CefString(&settings.product_version) = prod_ver.str();
+#endif
 
 	blog(LOG_INFO, "BrowserInit - 4");
 #ifdef USE_UI_LOOP

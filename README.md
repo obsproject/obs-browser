@@ -60,8 +60,24 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 * obsVirtualcamStopped
 * obsExit
 
-### Get the current scene
 
+### Control OBS
+#### Get webpage control permissions
+Permissions required: NONE
+```js
+/**
+ * @type {number} level - The level of permissions. 0 for NONE, 1 for READ_ONLY, 2 for BASIC, 3 for ADVANCED and 4 for ALL
+ *
+ * @param {function} callback
+ * @returns {Level}
+ */
+window.obsstudio.getControlLevel(function (level) {
+    console.log(level)
+})
+```
+
+#### Get the current scene
+Permissions required: READ_ONLY
 ```js
 /**
  * @typedef {Object} Scene
@@ -79,8 +95,8 @@ window.obsstudio.getCurrentScene(function(scene) {
 })
 ```
 
-### Get OBS output status
-
+#### Get OBS output status
+Permissions required: READ_ONLY
 ```js
 /**
  * @typedef {Object} Status
@@ -100,14 +116,105 @@ window.obsstudio.getStatus(function (status) {
 })
 ```
 
-### Save OBS Replay Buffer
-
+#### Save the Replay Buffer
+Permissions required: BASIC
 ```js
 /**
  * Does not accept any parameters and does not return anything
  */
 window.obsstudio.saveReplayBuffer()
 ```
+
+#### Start the Replay Buffer
+Permissions required: ADVANCED
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.startReplayBuffer()
+```
+
+#### Stop the Replay Buffer
+Permissions required: ADVANCED
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.stopReplayBuffer()
+```
+
+#### Start streaming
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.startStreaming()
+```
+
+#### Stop streaming
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.stopStreaming()
+```
+
+#### Start recording
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.startRecording()
+```
+
+#### Stop recording
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.stopRecording()
+```
+
+#### Pause recording
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.pauseRecording()
+```
+
+#### Unpause recording
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.unpauseRecording()
+```
+
+#### Start the Virtual Camera
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.startVirtualcam()
+```
+
+#### Stop the Virtual Camera
+Permissions required: ALL
+```js
+/**
+ * Does not accept any parameters and does not return anything
+ */
+window.obsstudio.stopVirtualcam()
+```
+
 
 ### Register for visibility callbacks
 
@@ -122,7 +229,7 @@ window.obsstudio.saveReplayBuffer()
  * @param {boolean} visibility - True -> visible, False -> hidden
  */
 window.obsstudio.onVisibilityChange = function(visibility) {
-	
+
 };
 ```
 
@@ -139,7 +246,7 @@ window.obsstudio.onVisibilityChange = function(visibility) {
  * @param {bool} True -> active, False -> inactive
  */
 window.obsstudio.onActiveChange = function(active) {
-	
+
 };
 ```
 
