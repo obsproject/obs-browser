@@ -47,7 +47,7 @@ enum class ControlLevel : int {
 	Advanced,
 	All,
 };
-inline constexpr ControlLevel DEFAULT_CONTROL_LEVEL = ControlLevel::ReadOnly;
+inline constexpr ControlLevel DEFAULT_CONTROL_LEVEL = ControlLevel::None;
 
 extern bool hwaccel;
 

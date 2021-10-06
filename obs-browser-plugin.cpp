@@ -231,6 +231,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		props, "webpage_control_level",
 		obs_module_text("WebpageControlLevel"), OBS_COMBO_TYPE_LIST,
 		OBS_COMBO_FORMAT_INT);
+	obs_property_set_visible(controlLevel, false);
 
 	obs_property_list_add_int(
 		controlLevel, obs_module_text("WebpageControlLevel.Level.None"),
