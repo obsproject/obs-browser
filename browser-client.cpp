@@ -199,16 +199,18 @@ bool BrowserClient::GetViewRect(
 
 bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 #if BROWSER_FRONTEND_API_SUPPORT_ENABLED
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 	std::string str_text = text;
 	QMetaObject::invokeMethod(
 		QCoreApplication::instance()->thread(), [str_text]() {
 			QToolTip::showText(QCursor::pos(), str_text.c_str());
 		});
-#endif	
 	return true;
-#else
+	#define DISABLE_DEFAULT_TOOLTIP
+#endif
+#endif
+#if !defined(DISABLE_DEFAULT_TOOLTIP)
 	UNUSED_PARAMETER(text);
 	return false;
 #endif
