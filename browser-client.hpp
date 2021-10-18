@@ -21,8 +21,7 @@
 #include <graphics/graphics.h>
 #include "cef-headers.hpp"
 #include "browser-config.h"
-
-#define USE_TEXTURE_COPY 0
+#include "obs-browser-source.hpp"
 
 struct BrowserSource;
 
@@ -37,9 +36,6 @@ class BrowserClient : public CefClient,
 		      public CefLoadHandler {
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#if USE_TEXTURE_COPY
-	gs_texture_t *texture = nullptr;
-#endif
 #ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
 #elif defined(__APPLE__)
@@ -48,6 +44,7 @@ class BrowserClient : public CefClient,
 #endif
 	bool sharing_available = false;
 	bool reroute_audio = true;
+	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
 
 public:
 	BrowserSource *bs;
@@ -61,14 +58,14 @@ public:
 	int frames_per_buffer;
 #endif
 	inline BrowserClient(BrowserSource *bs_, bool sharing_avail,
-			     bool reroute_audio_)
+			     bool reroute_audio_,
+			     ControlLevel webpage_control_level_)
 		: sharing_available(sharing_avail),
 		  reroute_audio(reroute_audio_),
+		  webpage_control_level(webpage_control_level_),
 		  bs(bs_)
 	{
 	}
-
-	virtual ~BrowserClient();
 
 	/* CefClient */
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override;
@@ -97,6 +94,8 @@ public:
 				      const CefString &message,
 				      const CefString &source,
 				      int line) override;
+	virtual bool OnTooltip(CefRefPtr<CefBrowser> browser,
+			       CefString &text) override;
 
 	/* CefLifeSpanHandler */
 	virtual bool

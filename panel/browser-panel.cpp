@@ -3,13 +3,6 @@
 #include "cef-headers.hpp"
 #include "browser-app.hpp"
 
-#include <QWindow>
-#include <QApplication>
-
-#if defined(USE_UI_LOOP) && defined (WIN32)
-#include <QEventLoop>
-#include <QThread>
-#endif
 
 #ifdef __APPLE__
 #include <objc/objc.h>
@@ -39,10 +32,6 @@ CefRefPtr<CefCookieManager> QCefRequestContextHandler::GetCookieManager()
 {
 	return cm;
 }
-#endif
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
-#define SUPPORTS_FRACTIONAL_SCALING
 #endif
 
 class CookieCheck : public CefCookieVisitor {
@@ -239,16 +228,87 @@ void QCefWidgetInternal::closeBrowser()
 	}
 }
 
+#ifdef __linux__
+static bool XWindowHasAtom(Display *display, Window w, Atom a)
+{
+	Atom type;
+	int format;
+	unsigned long nItems;
+	unsigned long bytesAfter;
+	unsigned char *data = NULL;
+
+	if (XGetWindowProperty(display, w, a, 0, LONG_MAX, False,
+			       AnyPropertyType, &type, &format, &nItems,
+			       &bytesAfter, &data) != Success)
+		return false;
+
+	if (data)
+		XFree(data);
+
+	return type != None;
+}
+
+/* On Linux / X11, CEF sets the XdndProxy of the toplevel window
+ * it's attached to, so that it can read drag events. When this
+ * toplevel happens to be OBS Studio's main window (e.g. when a
+ * browser panel is docked into to the main window), setting the
+ * XdndProxy atom ends up breaking DnD of sources and scenes. Thus,
+ * we have to manually unset this atom.
+ */
+void QCefWidgetInternal::unsetToplevelXdndProxy()
+{
+	if (!cefBrowser)
+		return;
+
+	CefWindowHandle browserHandle =
+		cefBrowser->GetHost()->GetWindowHandle();
+	Display *xDisplay = cef_get_xdisplay();
+	Window toplevel, root, parent, *children;
+	unsigned int nChildren;
+	bool found = false;
+
+	toplevel = browserHandle;
+
+	// Find the toplevel
+	Atom netWmPidAtom = XInternAtom(xDisplay, "_NET_WM_PID", False);
+	do {
+		if (XQueryTree(xDisplay, toplevel, &root, &parent, &children,
+			       &nChildren) == 0)
+			return;
+
+		if (children)
+			XFree(children);
+
+		if (root == parent ||
+		    !XWindowHasAtom(xDisplay, parent, netWmPidAtom)) {
+			found = true;
+			break;
+		}
+		toplevel = parent;
+	} while (true);
+
+	if (!found)
+		return;
+
+	// Check if the XdndProxy property is set
+	Atom xDndProxyAtom = XInternAtom(xDisplay, "XdndProxy", False);
+	if (needsDeleteXdndProxy &&
+	    !XWindowHasAtom(xDisplay, toplevel, xDndProxyAtom)) {
+		QueueCEFTask([this]() { unsetToplevelXdndProxy(); });
+		return;
+	}
+
+	XDeleteProperty(xDisplay, toplevel, xDndProxyAtom);
+	needsDeleteXdndProxy = false;
+}
+#endif
+
 void QCefWidgetInternal::Init()
 {
 #ifndef __APPLE__
 	WId handle = window->winId();
 	QSize size = this->size();
-#ifdef SUPPORTS_FRACTIONAL_SCALING
 	size *= devicePixelRatioF();
-#else
-	size *= devicePixelRatio();
-#endif
 	bool success = QueueCEFTask(
 		[this, handle, size]()
 #else
@@ -289,6 +349,10 @@ void QCefWidgetInternal::Init()
 				CefRefPtr<CefDictionaryValue>(),
 #endif
 				rqc);
+
+#ifdef __linux__
+			QueueCEFTask([this]() { unsetToplevelXdndProxy(); });
+#endif
 		});
 
 	if (success) {
@@ -314,11 +378,7 @@ void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 
 void QCefWidgetInternal::Resize()
 {
-#ifdef SUPPORTS_FRACTIONAL_SCALING
 	QSize size = this->size() * devicePixelRatioF();
-#else
-	QSize size = this->size() * devicePixelRatio();
-#endif
 
 	bool success = QueueCEFTask([this, size]() {
 		if (!cefBrowser)

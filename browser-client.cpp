@@ -25,17 +25,6 @@
 
 using namespace json11;
 
-BrowserClient::~BrowserClient()
-{
-#if defined(SHARED_TEXTURE_SUPPORT_ENABLED) && USE_TEXTURE_COPY
-	if (sharing_available) {
-		obs_enter_graphics();
-		gs_texture_destroy(texture);
-		obs_leave_graphics();
-	}
-#endif
-}
-
 CefRefPtr<CefLoadHandler> BrowserClient::GetLoadHandler()
 {
 	return this;
@@ -104,37 +93,71 @@ bool BrowserClient::OnProcessMessageReceived(
 	if (!bs) {
 		return false;
 	}
-
 #if BROWSER_FRONTEND_API_SUPPORT_ENABLED
-	if (name == "getCurrentScene") {
-		OBSSource current_scene = obs_frontend_get_current_scene();
-		obs_source_release(current_scene);
+	// Fall-through switch, so that higher levels also have lower-level rights
+	switch (webpage_control_level) {
+	case ControlLevel::All:
+		if (name == "startRecording") {
+			obs_frontend_recording_start();
+		} else if (name == "stopRecording") {
+			obs_frontend_recording_stop();
+		} else if (name == "startStreaming") {
+			obs_frontend_streaming_start();
+		} else if (name == "stopStreaming") {
+			obs_frontend_streaming_stop();
+		} else if (name == "pauseRecording") {
+			obs_frontend_recording_pause(true);
+		} else if (name == "unpauseRecording") {
+			obs_frontend_recording_pause(false);
+		} else if (name == "startVirtualcam") {
+			obs_frontend_start_virtualcam();
+		} else if (name == "stopVirtualcam") {
+			obs_frontend_stop_virtualcam();
+		}
+	case ControlLevel::Advanced:
+		if (name == "startReplayBuffer") {
+			obs_frontend_replay_buffer_start();
+		} else if (name == "stopReplayBuffer") {
+			obs_frontend_replay_buffer_stop();
+		}
+	case ControlLevel::Basic:
+		if (name == "saveReplayBuffer") {
+			obs_frontend_replay_buffer_save();
+		}
+	case ControlLevel::ReadOnly:
+		if (name == "getCurrentScene") {
+			OBSSource current_scene =
+				obs_frontend_get_current_scene();
+			obs_source_release(current_scene);
 
-		if (!current_scene)
-			return false;
+			if (!current_scene)
+				return false;
 
-		const char *name = obs_source_get_name(current_scene);
-		if (!name)
-			return false;
+			const char *name = obs_source_get_name(current_scene);
+			if (!name)
+				return false;
 
-		json = Json::object{
-			{"name", name},
-			{"width", (int)obs_source_get_width(current_scene)},
-			{"height", (int)obs_source_get_height(current_scene)}};
-
-	}
-	else if (name == "getStatus") {
-		json = Json::object {
-			{"recording", obs_frontend_recording_active()},
-			{"streaming", obs_frontend_streaming_active()},
-			{"recordingPaused", obs_frontend_recording_paused()},
-			{"replaybuffer", obs_frontend_replay_buffer_active()},
-			{"virtualcam", obs_frontend_virtualcam_active()}};
-
-	} else if (name == "saveReplayBuffer") {
-		obs_frontend_replay_buffer_save();
-	} else {
-		return false;
+			json = Json::object{
+				{"name", name},
+				{"width",
+				 (int)obs_source_get_width(current_scene)},
+				{"height",
+				 (int)obs_source_get_height(current_scene)}};
+		} else if (name == "getStatus") {
+			json = Json::object{
+				{"recording", obs_frontend_recording_active()},
+				{"streaming", obs_frontend_streaming_active()},
+				{"recordingPaused",
+				 obs_frontend_recording_paused()},
+				{"replaybuffer",
+				 obs_frontend_replay_buffer_active()},
+				{"virtualcam",
+				 obs_frontend_virtualcam_active()}};
+		}
+	case ControlLevel::None:
+		if (name == "getControlLevel") {
+			json = Json((int)webpage_control_level);
+		}
 	}
 #endif
 
@@ -171,6 +194,25 @@ bool BrowserClient::GetViewRect(
 	return;
 #else
 	return true;
+#endif
+}
+
+bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
+{
+#if BROWSER_FRONTEND_API_SUPPORT_ENABLED
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+	std::string str_text = text;
+	QMetaObject::invokeMethod(
+		QCoreApplication::instance()->thread(), [str_text]() {
+			QToolTip::showText(QCursor::pos(), str_text.c_str());
+		});
+	return true;
+	#define DISABLE_DEFAULT_TOOLTIP
+#endif
+#endif
+#if !defined(DISABLE_DEFAULT_TOOLTIP)
+	UNUSED_PARAMETER(text);
+	return false;
 #endif
 }
 
@@ -224,38 +266,35 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType,
 
 	if (shared_handle != last_handle) {
 		obs_enter_graphics();
-#if USE_TEXTURE_COPY
-		gs_texture_destroy(texture);
-		texture = nullptr;
-#endif
-		gs_texture_destroy(bs->texture);
-		bs->texture = nullptr;
 
-#if USE_TEXTURE_COPY
-		texture = gs_texture_open_shared(
-			(uint32_t)(uintptr_t)shared_handle);
+		if (bs->texture) {
+			if (bs->extra_texture) {
+				gs_texture_destroy(bs->extra_texture);
+				bs->extra_texture = nullptr;
+			}
+			gs_texture_destroy(bs->texture);
+			bs->texture = nullptr;
+		}
 
-		uint32_t cx = gs_texture_get_width(texture);
-		uint32_t cy = gs_texture_get_height(texture);
-		gs_color_format format = gs_texture_get_color_format(texture);
-
-		bs->texture = gs_texture_create(cx, cy, format, 1, nullptr, 0);
-#else
 		bs->texture = gs_texture_open_shared(
 			(uint32_t)(uintptr_t)shared_handle);
-#endif
+		if (bs->texture) {
+			const uint32_t cx = gs_texture_get_width(bs->texture);
+			const uint32_t cy = gs_texture_get_height(bs->texture);
+			const gs_color_format format =
+				gs_texture_get_color_format(bs->texture);
+			const gs_color_format linear_format =
+				gs_generalize_format(format);
+			if (linear_format != format) {
+				bs->extra_texture = gs_texture_create(
+					cx, cy, linear_format, 1, nullptr, 0);
+			}
+		}
+
 		obs_leave_graphics();
 
 		last_handle = shared_handle;
 	}
-
-#if USE_TEXTURE_COPY
-	if (texture && bs->texture) {
-		obs_enter_graphics();
-		gs_copy_texture(bs->texture, texture);
-		obs_leave_graphics();
-	}
-#endif
 }
 #endif
 

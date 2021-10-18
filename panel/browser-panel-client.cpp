@@ -1,12 +1,6 @@
 #include "browser-panel-client.hpp"
 #include <util/dstr.h>
 
-#include <QUrl>
-#include <QDesktopServices>
-#include <QApplication>
-#include <QMenu>
-#include <QThread>
-
 #include <obs-module.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -278,18 +272,17 @@ bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 				      const CefKeyEvent &event, CefEventHandle,
 				      bool *)
 {
-#ifdef _WIN32
 	if (event.type != KEYEVENT_RAWKEYDOWN)
 		return false;
 
 	if (event.windows_key_code == 'R' &&
+#ifdef __APPLE__
+	    (event.modifiers & EVENTFLAG_COMMAND_DOWN) != 0) {
+#else
 	    (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
+#endif
 		browser->ReloadIgnoreCache();
 		return true;
 	}
-#else
-	UNUSED_PARAMETER(browser);
-	UNUSED_PARAMETER(event);
-#endif
 	return false;
 }
