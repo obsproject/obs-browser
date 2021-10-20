@@ -26,6 +26,9 @@
 #include <QApplication>
 #include <QThread>
 #include <QToolTip>
+#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4430
+#include <IOSurface/IOSurface.h>
+#endif
 
 using namespace json11;
 
@@ -58,6 +61,32 @@ CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
 {
 	return reroute_audio ? this : nullptr;
+}
+#endif
+
+#if CHROME_VERSION_BUILD >= 4638
+CefRefPtr<CefRequestHandler> BrowserClient::GetRequestHandler()
+{
+	return this;
+}
+
+CefRefPtr<CefResourceRequestHandler> BrowserClient::GetResourceRequestHandler(
+	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+	CefRefPtr<CefRequest> request, bool, bool, const CefString &, bool &)
+{
+	if (request->GetHeaderByName("origin") == "null") {
+		return this;
+	}
+
+	return nullptr;
+}
+
+CefResourceRequestHandler::ReturnValue
+BrowserClient::OnBeforeResourceLoad(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+				    CefRefPtr<CefRequest> request OBS_UNUSED,
+				    CefRefPtr<CefCallback>)
+{
+	return RV_CONTINUE;
 }
 #endif
 
@@ -281,8 +310,13 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 			bs->texture = nullptr;
 		}
 
+#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
+		bs->texture = gs_texture_create_from_iosurface(
+			(IOSurfaceRef)(uintptr_t)shared_handle);
+#else
 		bs->texture = gs_texture_open_shared(
 			(uint32_t)(uintptr_t)shared_handle);
+#endif
 		if (bs->texture) {
 			const uint32_t cx = gs_texture_get_width(bs->texture);
 			const uint32_t cy = gs_texture_get_height(bs->texture);

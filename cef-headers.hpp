@@ -47,8 +47,11 @@
 #endif
 
 #if CHROME_VERSION_BUILD >= 3770
-#define SendBrowserProcessMessage(browser, pid, msg) \
-	browser->GetMainFrame()->SendProcessMessage(pid, msg);
+#define SendBrowserProcessMessage(browser, pid, msg)             \
+	CefRefPtr<CefFrame> mainFrame = browser->GetMainFrame(); \
+	if (mainFrame) {                                         \
+		mainFrame->SendProcessMessage(pid, msg);         \
+	}
 #else
 #define SendBrowserProcessMessage(browser, pid, msg) \
 	browser->SendProcessMessage(pid, msg);

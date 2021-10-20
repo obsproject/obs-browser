@@ -195,10 +195,12 @@ void QCefWidgetInternal::closeBrowser()
 				reinterpret_cast<QCefBrowserClient *>(
 					client.get());
 
+			if (bc) {
+				bc->widget = nullptr;
+			}
+
 			cefBrowser->GetHost()->WasHidden(true);
 			cefBrowser->GetHost()->CloseBrowser(true);
-
-			bc->widget = nullptr;
 		};
 
 		/* So you're probably wondering what's going on here.  If you
@@ -231,6 +233,7 @@ void QCefWidgetInternal::closeBrowser()
 #endif
 
 		destroyBrowser(browser);
+		browser = nullptr;
 		cefBrowser = nullptr;
 	}
 }
@@ -332,7 +335,10 @@ void QCefWidgetInternal::Init()
 
 #ifdef __APPLE__
 			QSize size = this->size();
+#endif
 
+#if CHROME_VERSION_BUILD < 4430
+#ifdef __APPLE__
 			windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0,
 					      size.width(), size.height());
 #else
@@ -342,6 +348,11 @@ void QCefWidgetInternal::Init()
 			CefRect rc = {0, 0, size.width(), size.height()};
 #endif
 			windowInfo.SetAsChild((CefWindowHandle)handle, rc);
+#endif
+#else
+			windowInfo.SetAsChild((CefWindowHandle)handle,
+					      CefRect(0, 0, size.width(),
+						      size.height()));
 #endif
 
 			CefRefPtr<QCefBrowserClient> browserClient =

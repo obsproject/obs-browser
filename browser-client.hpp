@@ -28,14 +28,18 @@ struct BrowserSource;
 class BrowserClient : public CefClient,
 		      public CefDisplayHandler,
 		      public CefLifeSpanHandler,
+		      public CefRequestHandler,
+#if CHROME_VERSION_BUILD >= 4638
+		      public CefResourceRequestHandler,
 		      public CefContextMenuHandler,
+#endif
 		      public CefRenderHandler,
 #if CHROME_VERSION_BUILD >= 3683
 		      public CefAudioHandler,
 #endif
 		      public CefLoadHandler {
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 #ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
 #elif defined(__APPLE__)
@@ -72,6 +76,9 @@ public:
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override;
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
+#if CHROME_VERSION_BUILD >= 4638
+	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
+#endif
 	virtual CefRefPtr<CefContextMenuHandler>
 	GetContextMenuHandler() override;
 #if CHROME_VERSION_BUILD >= 3683
@@ -110,6 +117,21 @@ public:
 		      CefRefPtr<CefDictionaryValue> &extra_info,
 #endif
 		      bool *no_javascript_access) override;
+#if CHROME_VERSION_BUILD >= 4638
+	/* CefRequestHandler */
+	virtual CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
+		CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+		CefRefPtr<CefRequest> request, bool is_navigation,
+		bool is_download, const CefString &request_initiator,
+		bool &disable_default_handling) override;
+
+	/* CefResourceRequestHandler */
+	virtual CefResourceRequestHandler::ReturnValue
+	OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
+			     CefRefPtr<CefFrame> frame,
+			     CefRefPtr<CefRequest> request,
+			     CefRefPtr<CefCallback> callback) override;
+#endif
 
 	/* CefContextMenuHandler */
 	virtual void
@@ -129,7 +151,7 @@ public:
 			     PaintElementType type, const RectList &dirtyRects,
 			     const void *buffer, int width,
 			     int height) override;
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+#ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
 					PaintElementType type,
 					const RectList &dirtyRects,

@@ -69,6 +69,9 @@ struct BrowserSource {
 	int height = 0;
 	bool fps_custom = false;
 	int fps = 0;
+#ifdef __APPLE__
+	double canvas_fps = 0;
+#endif
 	bool restart = false;
 	bool shutdown_on_invisible = false;
 	bool is_local = false;
