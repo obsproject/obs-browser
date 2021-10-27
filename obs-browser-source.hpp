@@ -59,6 +59,7 @@ struct BrowserSource {
 
 	bool tex_sharing_avail = false;
 	bool create_browser = false;
+	std::recursive_mutex lockBrowser;
 	CefRefPtr<CefBrowser> cefBrowser;
 
 	std::string url;
@@ -135,4 +136,7 @@ struct BrowserSource {
 	defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	inline void SignalBeginFrame();
 #endif
+
+	void SetBrowser(CefRefPtr<CefBrowser> b);
+	CefRefPtr<CefBrowser> GetBrowser();
 };
