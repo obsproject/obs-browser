@@ -116,7 +116,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 		}
 		os_event_destroy(finishedEvent);
 	} else {
-		CefRefPtr<CefBrowser> browser = cefBrowser;
+		CefRefPtr<CefBrowser> browser = GetBrowser();
 		if (!!browser) {
 #ifdef USE_QT_LOOP
 			QueueBrowserTask(cefBrowser, func);
@@ -189,9 +189,12 @@ bool BrowserSource::CreateBrowser()
 			cefBrowserSettings.web_security = STATE_DISABLED;
 		}
 #endif
-		cefBrowser = CefBrowserHost::CreateBrowserSync(
+		auto browser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
 			CefRefPtr<CefDictionaryValue>(), nullptr);
+
+		SetBrowser(browser);
+
 		if (reroute_audio)
 			cefBrowser->GetHost()->SetAudioMuted(true);
 		if (obs_source_showing(source))
@@ -223,7 +226,7 @@ void BrowserSource::DestroyBrowser(bool async)
 		},
 		async);
 
-	cefBrowser = nullptr;
+	SetBrowser(nullptr);
 }
 #if CHROME_VERSION_BUILD < 4103
 void BrowserSource::ClearAudioStreams()
@@ -418,6 +421,19 @@ void BrowserSource::Refresh()
 		},
 		true);
 }
+
+void BrowserSource::SetBrowser(CefRefPtr<CefBrowser> b)
+{
+	std::lock_guard<std::recursive_mutex> auto_lock(lockBrowser);
+	cefBrowser = b;
+}
+
+CefRefPtr<CefBrowser> BrowserSource::GetBrowser()
+{
+	std::lock_guard<std::recursive_mutex> auto_lock(lockBrowser);
+	return cefBrowser;
+}
+
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 #ifdef BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED
 inline void BrowserSource::SignalBeginFrame()
