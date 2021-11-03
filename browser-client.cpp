@@ -118,16 +118,19 @@ bool BrowserClient::OnProcessMessageReceived(
 		} else if (name == "stopVirtualcam") {
 			obs_frontend_stop_virtualcam();
 		}
+		[[fallthrough]];
 	case ControlLevel::Advanced:
 		if (name == "startReplayBuffer") {
 			obs_frontend_replay_buffer_start();
 		} else if (name == "stopReplayBuffer") {
 			obs_frontend_replay_buffer_stop();
 		}
+		[[fallthrough]];
 	case ControlLevel::Basic:
 		if (name == "saveReplayBuffer") {
 			obs_frontend_replay_buffer_save();
 		}
+		[[fallthrough]];
 	case ControlLevel::ReadOnly:
 		if (name == "getCurrentScene") {
 			OBSSource current_scene =
@@ -158,6 +161,7 @@ bool BrowserClient::OnProcessMessageReceived(
 				{"virtualcam",
 				 obs_frontend_virtualcam_active()}};
 		}
+		[[fallthrough]];
 	case ControlLevel::None:
 		if (name == "getControlLevel") {
 			json = Json((int)webpage_control_level);
