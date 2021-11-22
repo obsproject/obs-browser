@@ -32,8 +32,8 @@ class BrowserClient : public CefClient,
 		      public CefRequestHandler,
 #if CHROME_VERSION_BUILD >= 4638
 		      public CefResourceRequestHandler,
-		      public CefContextMenuHandler,
 #endif
+		      public CefContextMenuHandler,
 		      public CefRenderHandler,
 #if CHROME_VERSION_BUILD >= 3683
 		      public CefAudioHandler,
