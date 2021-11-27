@@ -436,10 +436,7 @@ void RegisterBrowserSource()
 	struct obs_source_info info = {};
 	info.id = "browser_source";
 	info.type = OBS_SOURCE_TYPE_INPUT;
-	info.output_flags = OBS_SOURCE_VIDEO |
-#if CHROME_VERSION_BUILD >= 3683
-			    OBS_SOURCE_AUDIO |
-#endif
+	info.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_AUDIO |
 			    OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
 			    OBS_SOURCE_DO_NOT_DUPLICATE | OBS_SOURCE_SRGB;
 	info.get_properties = browser_source_get_properties;
@@ -470,7 +467,7 @@ void RegisterBrowserSource()
 	info.video_render = [](void *data, gs_effect_t *) {
 		static_cast<BrowserSource *>(data)->Render();
 	};
-#if CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 4103
+#if CHROME_VERSION_BUILD < 4103
 	info.audio_mix = [](void *data, uint64_t *ts_out,
 			    struct audio_output_data *audio_output,
 			    size_t channels, size_t sample_rate) {

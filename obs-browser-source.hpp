@@ -26,7 +26,7 @@
 #include <functional>
 #include <string>
 
-#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD < 4103
 #include <obs.hpp>
 #include <unordered_map>
 #include <vector>
@@ -110,7 +110,7 @@ struct BrowserSource {
 	void Update(obs_data_t *settings = nullptr);
 	void Tick();
 	void Render();
-#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD < 4103
 	void ClearAudioStreams();
 	void EnumAudioStreams(obs_source_enum_proc_t cb, void *param);
 	bool AudioMix(uint64_t *ts_out, struct audio_output_data *audio_output,

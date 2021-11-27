@@ -16,7 +16,7 @@
  ******************************************************************************/
 
 #include "obs-browser-source.hpp"
-#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD < 4103
 void BrowserSource::EnumAudioStreams(obs_source_enum_proc_t cb, void *param)
 {
 	std::lock_guard<std::mutex> lock(audio_sources_mutex);

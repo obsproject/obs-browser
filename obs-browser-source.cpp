@@ -145,9 +145,6 @@ bool BrowserSource::CreateBrowser()
 					  reroute_audio, webpage_control_level);
 
 		CefWindowInfo windowInfo;
-#if CHROME_VERSION_BUILD < 3071
-		windowInfo.transparent_painting_enabled = true;
-#endif
 #if CHROME_VERSION_BUILD < 4430
 		windowInfo.width = width;
 		windowInfo.height = height;
@@ -194,14 +191,9 @@ bool BrowserSource::CreateBrowser()
 #endif
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
-#if CHROME_VERSION_BUILD >= 3770
-			CefRefPtr<CefDictionaryValue>(),
-#endif
-			nullptr);
-#if CHROME_VERSION_BUILD >= 3683
+			CefRefPtr<CefDictionaryValue>(), nullptr);
 		if (reroute_audio)
 			cefBrowser->GetHost()->SetAudioMuted(true);
-#endif
 		if (obs_source_showing(source))
 			is_showing = true;
 
@@ -233,7 +225,7 @@ void BrowserSource::DestroyBrowser(bool async)
 
 	cefBrowser = nullptr;
 }
-#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD < 4103
 void BrowserSource::ClearAudioStreams()
 {
 	QueueCEFTask([this]() {
@@ -539,7 +531,7 @@ void BrowserSource::Update(obs_data_t *settings)
 
 	DestroyBrowser(true);
 	DestroyTextures();
-#if CHROME_VERSION_BUILD < 4103 && CHROME_VERSION_BUILD >= 3683
+#if CHROME_VERSION_BUILD < 4103
 	ClearAudioStreams();
 #endif
 	if (!shutdown_on_invisible || obs_source_showing(source))

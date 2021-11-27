@@ -50,16 +50,9 @@ CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
 
 void BrowserApp::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar)
 {
-#if CHROME_VERSION_BUILD >= 3683
 	registrar->AddCustomScheme("http",
 				   CEF_SCHEME_OPTION_STANDARD |
 					   CEF_SCHEME_OPTION_CORS_ENABLED);
-#elif CHROME_VERSION_BUILD >= 3029
-	registrar->AddCustomScheme("http", true, false, false, false, true,
-				   false);
-#else
-	registrar->AddCustomScheme("http", true, false, false, false, true);
-#endif
 }
 
 void BrowserApp::OnBeforeChildProcessLaunch(
@@ -247,9 +240,7 @@ void BrowserApp::SetDocumentVisibility(CefRefPtr<CefBrowser> browser,
 #endif
 
 bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-#if CHROME_VERSION_BUILD >= 3770
 					  CefRefPtr<CefFrame> frame,
-#endif
 					  CefProcessId source_process,
 					  CefRefPtr<CefProcessMessage> message)
 {
