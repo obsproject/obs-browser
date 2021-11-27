@@ -160,10 +160,7 @@ bool QCefBrowserClient::OnBeforePopup(
 	const CefString &, CefLifeSpanHandler::WindowOpenDisposition, bool,
 	const CefPopupFeatures &, CefWindowInfo &windowInfo,
 	CefRefPtr<CefClient> &, CefBrowserSettings &,
-#if CHROME_VERSION_BUILD >= 3770
-	CefRefPtr<CefDictionaryValue> &,
-#endif
-	bool *)
+	CefRefPtr<CefDictionaryValue> &, bool *)
 {
 	if (allowAllPopups) {
 #ifdef _WIN32

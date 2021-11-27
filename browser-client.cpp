@@ -57,12 +57,10 @@ CefRefPtr<CefContextMenuHandler> BrowserClient::GetContextMenuHandler()
 	return this;
 }
 
-#if CHROME_VERSION_BUILD >= 3683
 CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
 {
 	return reroute_audio ? this : nullptr;
 }
-#endif
 
 #if CHROME_VERSION_BUILD >= 4638
 CefRefPtr<CefRequestHandler> BrowserClient::GetRequestHandler()
@@ -94,10 +92,7 @@ bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 				  cef_window_open_disposition_t, bool,
 				  const CefPopupFeatures &, CefWindowInfo &,
 				  CefRefPtr<CefClient> &, CefBrowserSettings &,
-#if CHROME_VERSION_BUILD >= 3770
-				  CefRefPtr<CefDictionaryValue> &,
-#endif
-				  bool *)
+				  CefRefPtr<CefDictionaryValue> &, bool *)
 {
 	/* block popups */
 	return true;
@@ -113,11 +108,8 @@ void BrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
 }
 
 bool BrowserClient::OnProcessMessageReceived(
-	CefRefPtr<CefBrowser> browser,
-#if CHROME_VERSION_BUILD >= 3770
-	CefRefPtr<CefFrame>,
-#endif
-	CefProcessId, CefRefPtr<CefProcessMessage> message)
+	CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>, CefProcessId,
+	CefRefPtr<CefProcessMessage> message)
 {
 	const std::string &name = message->GetName();
 	Json json;
@@ -207,29 +199,16 @@ bool BrowserClient::OnProcessMessageReceived(
 
 	return true;
 }
-#if CHROME_VERSION_BUILD >= 3578
-void BrowserClient::GetViewRect(
-#else
-bool BrowserClient::GetViewRect(
-#endif
-	CefRefPtr<CefBrowser>, CefRect &rect)
+
+void BrowserClient::GetViewRect(CefRefPtr<CefBrowser>, CefRect &rect)
 {
 	if (!bs) {
-#if CHROME_VERSION_BUILD >= 3578
 		rect.Set(0, 0, 16, 16);
 		return;
-#else
-		return false;
-#endif
 	}
 
 	rect.Set(0, 0, bs->width < 1 ? 1 : bs->width,
 		 bs->height < 1 ? 1 : bs->height);
-#if CHROME_VERSION_BUILD >= 3578
-	return;
-#else
-	return true;
-#endif
 }
 
 bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
@@ -357,7 +336,6 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 }
 #endif
 
-#if CHROME_VERSION_BUILD >= 3683
 static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
 {
 	switch (cefLayout) {
@@ -384,7 +362,6 @@ static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
 		return SPEAKERS_UNKNOWN;
 	}
 }
-#endif
 
 #if CHROME_VERSION_BUILD >= 4103
 void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser,
@@ -470,7 +447,7 @@ bool BrowserClient::GetAudioParameters(CefRefPtr<CefBrowser> browser,
 	params.frames_per_buffer = kFramesPerBuffer;
 	return true;
 }
-#elif CHROME_VERSION_BUILD >= 3683 && CHROME_VERSION_BUILD < 4103
+#elif CHROME_VERSION_BUILD < 4103
 void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser, int id,
 					 int, ChannelLayout channel_layout,
 					 int sample_rate, int)
@@ -572,9 +549,7 @@ void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 }
 
 bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
-#if CHROME_VERSION_BUILD >= 3282
 				     cef_log_severity_t level,
-#endif
 				     const CefString &message,
 				     const CefString &source, int line)
 {
