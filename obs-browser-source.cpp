@@ -148,8 +148,13 @@ bool BrowserSource::CreateBrowser()
 #if CHROME_VERSION_BUILD < 3071
 		windowInfo.transparent_painting_enabled = true;
 #endif
+#if CHROME_VERSION_BUILD < 4430
 		windowInfo.width = width;
 		windowInfo.height = height;
+#else
+		windowInfo.bounds.width = width;
+		windowInfo.bounds.height = height;
+#endif
 		windowInfo.windowless_rendering_enabled = true;
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
@@ -159,7 +164,7 @@ bool BrowserSource::CreateBrowser()
 		CefBrowserSettings cefBrowserSettings;
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#ifdef _WIN32
+#ifdef BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED
 		if (!fps_custom) {
 			windowInfo.external_begin_frame_enabled = true;
 			cefBrowserSettings.windowless_frame_rate = 0;
@@ -167,9 +172,11 @@ bool BrowserSource::CreateBrowser()
 			cefBrowserSettings.windowless_frame_rate = fps;
 		}
 #else
-		double video_fps = obs_get_active_fps();
+		struct obs_video_info ovi;
+		obs_get_video_info(&ovi);
+		canvas_fps = (double)ovi.fps_num / (double)ovi.fps_den;
 		cefBrowserSettings.windowless_frame_rate =
-			(fps_custom) ? fps : video_fps;
+			(fps_custom) ? fps : canvas_fps;
 #endif
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
@@ -178,14 +185,13 @@ bool BrowserSource::CreateBrowser()
 		cefBrowserSettings.default_font_size = 16;
 		cefBrowserSettings.default_fixed_font_size = 16;
 
-#if ENABLE_LOCAL_FILE_URL_SCHEME
+#if ENABLE_LOCAL_FILE_URL_SCHEME && CHROME_VERSION_BUILD < 4430
 		if (is_local) {
 			/* Disable web security for file:// URLs to allow
 			 * local content access to remote APIs */
 			cefBrowserSettings.web_security = STATE_DISABLED;
 		}
 #endif
-
 		cefBrowser = CefBrowserHost::CreateBrowserSync(
 			windowInfo, browserClient, url, cefBrowserSettings,
 #if CHROME_VERSION_BUILD >= 3770
@@ -299,7 +305,11 @@ void BrowserSource::SendFocus(bool focus)
 {
 	ExecuteOnBrowser(
 		[=](CefRefPtr<CefBrowser> cefBrowser) {
+#if CHROME_VERSION_BUILD < 4430
 			cefBrowser->GetHost()->SendFocusEvent(focus);
+#else
+			cefBrowser->GetHost()->SetFocus(focus);
+#endif
 		},
 		true);
 }
@@ -379,7 +389,8 @@ void BrowserSource::SetShowing(bool showing)
 			true);
 		Json json = Json::object{{"visible", showing}};
 		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
+	defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 		if (showing && !fps_custom) {
 			reset_frame = false;
 		}
@@ -414,7 +425,7 @@ void BrowserSource::Refresh()
 		true);
 }
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#ifdef _WIN32
+#ifdef BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED
 inline void BrowserSource::SignalBeginFrame()
 {
 	if (reset_frame) {
@@ -539,9 +550,21 @@ void BrowserSource::Tick()
 {
 	if (create_browser && CreateBrowser())
 		create_browser = false;
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED)
 	if (!fps_custom)
 		reset_frame = true;
+#else
+	struct obs_video_info ovi;
+	obs_get_video_info(&ovi);
+	double video_fps = (double)ovi.fps_num / (double)ovi.fps_den;
+
+	if (!fps_custom) {
+		if (!!cefBrowser && canvas_fps != video_fps) {
+			Update();
+		}
+	}
+#endif
 #endif
 }
 
@@ -600,7 +623,8 @@ void BrowserSource::Render()
 		gs_enable_framebuffer_srgb(previous);
 	}
 
-#if defined(_WIN32) && defined(SHARED_TEXTURE_SUPPORT_ENABLED)
+#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
+	defined(SHARED_TEXTURE_SUPPORT_ENABLED)
 	SignalBeginFrame();
 #elif USE_QT_LOOP
 	ProcessCef();

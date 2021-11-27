@@ -19,6 +19,7 @@
 #pragma once
 
 #include <graphics/graphics.h>
+#include <util/threading.h>
 #include "cef-headers.hpp"
 #include "browser-config.h"
 #include "obs-browser-source.hpp"
@@ -28,6 +29,10 @@ struct BrowserSource;
 class BrowserClient : public CefClient,
 		      public CefDisplayHandler,
 		      public CefLifeSpanHandler,
+		      public CefRequestHandler,
+#if CHROME_VERSION_BUILD >= 4638
+		      public CefResourceRequestHandler,
+#endif
 		      public CefContextMenuHandler,
 		      public CefRenderHandler,
 #if CHROME_VERSION_BUILD >= 3683
@@ -38,6 +43,7 @@ class BrowserClient : public CefClient,
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 #ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
+	void *extra_handle = INVALID_HANDLE_VALUE;
 #elif defined(__APPLE__)
 	void *last_handle = nullptr;
 #endif
@@ -72,6 +78,9 @@ public:
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override;
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
+#if CHROME_VERSION_BUILD >= 4638
+	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
+#endif
 	virtual CefRefPtr<CefContextMenuHandler>
 	GetContextMenuHandler() override;
 #if CHROME_VERSION_BUILD >= 3683
@@ -102,7 +111,7 @@ public:
 	OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 		      const CefString &target_url,
 		      const CefString &target_frame_name,
-		      WindowOpenDisposition target_disposition,
+		      cef_window_open_disposition_t target_disposition,
 		      bool user_gesture, const CefPopupFeatures &popupFeatures,
 		      CefWindowInfo &windowInfo, CefRefPtr<CefClient> &client,
 		      CefBrowserSettings &settings,
@@ -110,6 +119,21 @@ public:
 		      CefRefPtr<CefDictionaryValue> &extra_info,
 #endif
 		      bool *no_javascript_access) override;
+#if CHROME_VERSION_BUILD >= 4638
+	/* CefRequestHandler */
+	virtual CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
+		CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+		CefRefPtr<CefRequest> request, bool is_navigation,
+		bool is_download, const CefString &request_initiator,
+		bool &disable_default_handling) override;
+
+	/* CefResourceRequestHandler */
+	virtual CefResourceRequestHandler::ReturnValue
+	OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
+			     CefRefPtr<CefFrame> frame,
+			     CefRefPtr<CefRequest> request,
+			     CefRefPtr<CefCallback> callback) override;
+#endif
 
 	/* CefContextMenuHandler */
 	virtual void

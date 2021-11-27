@@ -26,6 +26,9 @@
 #include <QApplication>
 #include <QThread>
 #include <QToolTip>
+#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4430
+#include <IOSurface/IOSurface.h>
+#endif
 
 using namespace json11;
 
@@ -61,9 +64,34 @@ CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
 }
 #endif
 
+#if CHROME_VERSION_BUILD >= 4638
+CefRefPtr<CefRequestHandler> BrowserClient::GetRequestHandler()
+{
+	return this;
+}
+
+CefRefPtr<CefResourceRequestHandler> BrowserClient::GetResourceRequestHandler(
+	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+	CefRefPtr<CefRequest> request, bool, bool, const CefString &, bool &)
+{
+	if (request->GetHeaderByName("origin") == "null") {
+		return this;
+	}
+
+	return nullptr;
+}
+
+CefResourceRequestHandler::ReturnValue BrowserClient::OnBeforeResourceLoad(
+	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, CefRefPtr<CefRequest>,
+	CefRefPtr<CefCallback>)
+{
+	return RV_CONTINUE;
+}
+#endif
+
 bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 				  const CefString &, const CefString &,
-				  WindowOpenDisposition, bool,
+				  cef_window_open_disposition_t, bool,
 				  const CefPopupFeatures &, CefWindowInfo &,
 				  CefRefPtr<CefClient> &, CefBrowserSettings &,
 #if CHROME_VERSION_BUILD >= 3770
@@ -273,37 +301,59 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		return;
 	}
 
-	if (shared_handle != last_handle) {
-		obs_enter_graphics();
+#ifndef _WIN32
+	if (shared_handle == last_handle)
+		return;
+#endif
 
-		if (bs->texture) {
-			if (bs->extra_texture) {
-				gs_texture_destroy(bs->extra_texture);
-				bs->extra_texture = nullptr;
-			}
-			gs_texture_destroy(bs->texture);
-			bs->texture = nullptr;
+	obs_enter_graphics();
+
+	if (bs->texture) {
+		if (bs->extra_texture) {
+			gs_texture_destroy(bs->extra_texture);
+			bs->extra_texture = nullptr;
 		}
-
-		bs->texture = gs_texture_open_shared(
-			(uint32_t)(uintptr_t)shared_handle);
-		if (bs->texture) {
-			const uint32_t cx = gs_texture_get_width(bs->texture);
-			const uint32_t cy = gs_texture_get_height(bs->texture);
-			const gs_color_format format =
-				gs_texture_get_color_format(bs->texture);
-			const gs_color_format linear_format =
-				gs_generalize_format(format);
-			if (linear_format != format) {
-				bs->extra_texture = gs_texture_create(
-					cx, cy, linear_format, 1, nullptr, 0);
-			}
-		}
-
-		obs_leave_graphics();
-
-		last_handle = shared_handle;
+#ifdef _WIN32
+		gs_texture_release_sync(bs->texture, 0);
+#endif
+		gs_texture_destroy(bs->texture);
+#ifdef _WIN32
+		CloseHandle(extra_handle);
+#endif
+		bs->texture = nullptr;
 	}
+
+#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
+	bs->texture = gs_texture_create_from_iosurface(
+		(IOSurfaceRef)(uintptr_t)shared_handle);
+#elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
+	DuplicateHandle(GetCurrentProcess(), (HANDLE)(uintptr_t)shared_handle,
+			GetCurrentProcess(), &extra_handle, 0, false,
+			DUPLICATE_SAME_ACCESS);
+
+	bs->texture =
+		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
+	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
+#else
+	bs->texture =
+		gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
+#endif
+
+	if (bs->texture) {
+		const uint32_t cx = gs_texture_get_width(bs->texture);
+		const uint32_t cy = gs_texture_get_height(bs->texture);
+		const gs_color_format format =
+			gs_texture_get_color_format(bs->texture);
+		const gs_color_format linear_format =
+			gs_generalize_format(format);
+		if (linear_format != format) {
+			bs->extra_texture = gs_texture_create(
+				cx, cy, linear_format, 1, nullptr, 0);
+		}
+	}
+	obs_leave_graphics();
+
+	last_handle = shared_handle;
 }
 #endif
 

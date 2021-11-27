@@ -55,7 +55,11 @@ BrowserSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser,
 		CefStreamReader::CreateForFile(path);
 #endif
 
-	return new CefStreamResourceHandler(CefGetMimeType(fileExtension),
-					    stream);
+	if (stream) {
+		return new CefStreamResourceHandler(
+			CefGetMimeType(fileExtension), stream);
+	} else {
+		return nullptr;
+	}
 }
 #endif
