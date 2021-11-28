@@ -202,6 +202,8 @@ bool BrowserSource::CreateBrowser()
 		if (reroute_audio)
 			cefBrowser->GetHost()->SetAudioMuted(true);
 #endif
+		if (obs_source_showing(source))
+			is_showing = true;
 
 		SendBrowserVisibility(cefBrowser, is_showing);
 	});
@@ -561,7 +563,9 @@ void BrowserSource::Tick()
 
 	if (!fps_custom) {
 		if (!!cefBrowser && canvas_fps != video_fps) {
-			Update();
+			cefBrowser->GetHost()->SetWindowlessFrameRate(
+				video_fps);
+			canvas_fps = video_fps;
 		}
 	}
 #endif
