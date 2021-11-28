@@ -40,7 +40,7 @@
 #include "include/wrapper/cef_library_loader.h"
 #endif
 
-#if CHROME_VERSION_BUILD < 3507
+#if CHROME_VERSION_BUILD < 3507 || CHROME_VERSION_BUILD >= 4430
 #define ENABLE_WASHIDDEN 1
 #else
 #define ENABLE_WASHIDDEN 0
