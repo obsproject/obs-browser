@@ -25,12 +25,12 @@
 #include "browser-app.hpp"
 #include <functional>
 #include <string>
+#include <mutex>
 
 #if CHROME_VERSION_BUILD < 4103
 #include <obs.hpp>
 #include <unordered_map>
 #include <vector>
-#include <mutex>
 
 struct AudioStream {
 	OBSSource source;
