@@ -14,20 +14,24 @@ obs-browser provides a global object that allows access to some OBS-specific fun
 
 ```js
 /**
- * @returns {number} OBS Browser plugin version
+ * @returns {string} OBS Browser plugin version
  */
 window.obsstudio.pluginVersion
-// => 1.24.0
+// => 2.17.0
 ```
 
 ### Register for event callbacks
 
 ```js
 /**
- * @typedef {Object} OBSEvent
- * @property {object} detail - data from event
+ * @callback EventListener
+ * @param {CustomEvent} event
  */
 
+/**
+ * @param {string} type
+ * @param {EventListener} listener
+ */
 window.addEventListener('obsSceneChanged', function(event) {
 	var t = document.createTextNode(event.detail.name)
 	document.body.appendChild(t)
@@ -66,10 +70,16 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 Permissions required: NONE
 ```js
 /**
- * @type {number} level - The level of permissions. 0 for NONE, 1 for READ_ONLY, 2 for BASIC, 3 for ADVANCED and 4 for ALL
- *
- * @param {function} callback
- * @returns {Level}
+ * @typedef {number} Level - The level of permissions. 0 for NONE, 1 for READ_ONLY, 2 for BASIC, 3 for ADVANCED and 4 for ALL
+ */
+
+/**
+ * @callback LevelCallback
+ * @param {Level} level
+ */
+
+/**
+ * @param {LevelCallback} cb - The callback that receives the current control level.
  */
 window.obsstudio.getControlLevel(function (level) {
     console.log(level)
@@ -87,8 +97,12 @@ Permissions required: READ_ONLY
  */
 
 /**
- * @param {function} callback
- * @returns {Scene}
+ * @callback SceneCallback
+ * @param {Scene} scene
+ */
+
+/**
+ * @param {SceneCallback} cb - The callback that receives the current scene in OBS.
  */
 window.obsstudio.getCurrentScene(function(scene) {
 	console.log(scene)
@@ -108,8 +122,12 @@ Permissions required: READ_ONLY
  */
 
 /**
- * @param {function} callback
- * @returns {Status}
+ * @callback StatusCallback
+ * @param {Status} status
+ */
+
+/**
+ * @param {StatusCallback} cb - The callback that receives the current output status of OBS.
  */
 window.obsstudio.getStatus(function (status) {
 	console.log(status)
