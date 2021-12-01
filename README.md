@@ -10,6 +10,18 @@ On Windows, this also adds support for Service Integration (linking third party 
 
 obs-browser provides a global object that allows access to some OBS-specific functionality from JavaScript. This can be used to create an overlay that adapts dynamically to changes in OBS.
 
+### TypeScript Type Definitions
+
+If you're using TypeScript, type definitions for the obs-browser bindings are available through npm and yarn.
+
+```sh
+# npm
+npm install --save-dev @types/obs-studio
+
+# yarn
+yarn add --dev @types/obs-studio
+```
+
 ### Get Browser Plugin Version
 
 ```js
