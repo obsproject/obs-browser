@@ -170,7 +170,6 @@ void QCefWidgetInternal::closeBrowser()
 				bc->widget = nullptr;
 			}
 
-			cefBrowser->GetHost()->WasHidden(true);
 			cefBrowser->GetHost()->CloseBrowser(true);
 		};
 
