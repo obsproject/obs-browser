@@ -287,6 +287,7 @@ bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
 	return true;
 #else
 	UNUSED_PARAMETER(text);
+	return false;
 #endif
 }
 
