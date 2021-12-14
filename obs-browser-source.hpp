@@ -77,6 +77,7 @@ struct BrowserSource {
 	bool is_local = false;
 	bool first_update = true;
 	bool reroute_audio = true;
+	volatile bool destroying = false;
 	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
 #if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
 	defined(SHARED_TEXTURE_SUPPORT_ENABLED)

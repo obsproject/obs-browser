@@ -32,6 +32,11 @@
 
 using namespace json11;
 
+inline bool BrowserClient::valid() const
+{
+	return !!bs && !os_atomic_load_bool(&bs->destroying);
+}
+
 CefRefPtr<CefLoadHandler> BrowserClient::GetLoadHandler()
 {
 	return this;
@@ -115,7 +120,7 @@ bool BrowserClient::OnProcessMessageReceived(
 	CefRefPtr<CefListValue> input_args = message->GetArgumentList();
 	Json json;
 
-	if (!bs) {
+	if (!valid()) {
 		return false;
 	}
 
@@ -267,7 +272,7 @@ bool BrowserClient::OnProcessMessageReceived(
 
 void BrowserClient::GetViewRect(CefRefPtr<CefBrowser>, CefRect &rect)
 {
-	if (!bs) {
+	if (!valid()) {
 		rect.Set(0, 0, 16, 16);
 		return;
 	}
@@ -306,7 +311,7 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 	}
 #endif
 
-	if (!bs) {
+	if (!valid()) {
 		return;
 	}
 
@@ -342,7 +347,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		return;
 	}
 
-	if (!bs) {
+	if (!valid()) {
 		return;
 	}
 
@@ -446,7 +451,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
 					int64_t pts)
 {
 	UNUSED_PARAMETER(browser);
-	if (!bs) {
+	if (!valid()) {
 		return;
 	}
 	struct obs_source_audio audio = {};
@@ -466,9 +471,6 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
 void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser)
 {
 	UNUSED_PARAMETER(browser);
-	if (!bs) {
-		return;
-	}
 }
 
 void BrowserClient::OnAudioStreamError(CefRefPtr<CefBrowser> browser,
@@ -476,9 +478,6 @@ void BrowserClient::OnAudioStreamError(CefRefPtr<CefBrowser> browser,
 {
 	UNUSED_PARAMETER(browser);
 	UNUSED_PARAMETER(message);
-	if (!bs) {
-		return;
-	}
 }
 
 static CefAudioHandler::ChannelLayout Convert2CEFSpeakerLayout(int channels)
@@ -519,7 +518,7 @@ void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser, int id,
 					 int sample_rate, int)
 {
 	UNUSED_PARAMETER(browser);
-	if (!bs) {
+	if (!valid()) {
 		return;
 	}
 
@@ -545,7 +544,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, int id,
 					int64_t pts)
 {
 	UNUSED_PARAMETER(browser);
-	if (!bs) {
+	if (!valid()) {
 		return;
 	}
 
@@ -568,7 +567,7 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, int id,
 void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser, int id)
 {
 	UNUSED_PARAMETER(browser);
-	if (!bs) {
+	if (!valid()) {
 		return;
 	}
 
@@ -596,7 +595,7 @@ void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser, int id)
 void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 			      int)
 {
-	if (!bs) {
+	if (!valid()) {
 		return;
 	}
 

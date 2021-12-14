@@ -50,6 +50,8 @@ class BrowserClient : public CefClient,
 	bool reroute_audio = true;
 	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
 
+	inline bool valid() const;
+
 public:
 	BrowserSource *bs;
 	CefRect popupRect;
