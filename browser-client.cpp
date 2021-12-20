@@ -34,7 +34,7 @@ using namespace json11;
 
 inline bool BrowserClient::valid() const
 {
-	return !!bs && !os_atomic_load_bool(&bs->destroying);
+	return !!bs && !bs->destroying;
 }
 
 CefRefPtr<CefLoadHandler> BrowserClient::GetLoadHandler()

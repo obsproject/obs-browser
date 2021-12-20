@@ -99,7 +99,7 @@ BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 
 BrowserSource::~BrowserSource()
 {
-	os_atomic_set_bool(&destroying, true);
+	destroying = true;
 
 	DestroyBrowser();
 	DestroyTextures();
