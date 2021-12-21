@@ -97,17 +97,40 @@ BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	first_browser = this;
 }
 
+static void ActuallyCloseBrowser(CefRefPtr<CefBrowser> cefBrowser)
+{
+	CefRefPtr<CefClient> client = cefBrowser->GetHost()->GetClient();
+	BrowserClient *bc = reinterpret_cast<BrowserClient *>(client.get());
+	if (bc) {
+		bc->bs = nullptr;
+	}
+
+	/*
+         * This stops rendering
+         * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
+         * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
+         */
+	cefBrowser->GetHost()->WasHidden(true);
+	cefBrowser->GetHost()->CloseBrowser(true);
+}
+
 BrowserSource::~BrowserSource()
 {
-	destroying = true;
+	if (cefBrowser)
+		ActuallyCloseBrowser(cefBrowser);
+}
 
-	DestroyBrowser();
+void BrowserSource::Destroy()
+{
+	destroying = true;
 	DestroyTextures();
 
 	lock_guard<mutex> lock(browser_list_mutex);
 	if (next)
 		next->p_prev_next = p_prev_next;
 	*p_prev_next = next;
+
+	QueueCEFTask([this]() { delete this; });
 }
 
 void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
@@ -220,28 +243,9 @@ bool BrowserSource::CreateBrowser()
 	});
 }
 
-void BrowserSource::DestroyBrowser(bool async)
+void BrowserSource::DestroyBrowser()
 {
-	ExecuteOnBrowser(
-		[](CefRefPtr<CefBrowser> cefBrowser) {
-			CefRefPtr<CefClient> client =
-				cefBrowser->GetHost()->GetClient();
-			BrowserClient *bc =
-				reinterpret_cast<BrowserClient *>(client.get());
-			if (bc) {
-				bc->bs = nullptr;
-			}
-
-			/*
-		 * This stops rendering
-		 * http://magpcss.org/ceforum/viewtopic.php?f=6&t=12079
-		 * https://bitbucket.org/chromiumembedded/cef/issues/1363/washidden-api-got-broken-on-branch-2062)
-		 */
-			cefBrowser->GetHost()->WasHidden(true);
-			cefBrowser->GetHost()->CloseBrowser(true);
-		},
-		async);
-
+	ExecuteOnBrowser(ActuallyCloseBrowser, true);
 	SetBrowser(nullptr);
 }
 #if CHROME_VERSION_BUILD < 4103
@@ -329,6 +333,9 @@ void BrowserSource::SendFocus(bool focus)
 
 void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 {
+	if (destroying)
+		return;
+
 	std::string text = event->text;
 #ifdef __linux__
 	uint32_t native_vkey = KeyboardCodeFromXKeysym(event->native_vkey);
@@ -380,13 +387,16 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 
 void BrowserSource::SetShowing(bool showing)
 {
+	if (destroying)
+		return;
+
 	is_showing = showing;
 
 	if (shutdown_on_invisible) {
 		if (showing) {
 			Update();
 		} else {
-			DestroyBrowser(true);
+			DestroyBrowser();
 		}
 	} else {
 		ExecuteOnBrowser(
@@ -561,7 +571,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		obs_source_set_audio_active(source, reroute_audio);
 	}
 
-	DestroyBrowser(true);
+	DestroyBrowser();
 	DestroyTextures();
 #if CHROME_VERSION_BUILD < 4103
 	ClearAudioStreams();

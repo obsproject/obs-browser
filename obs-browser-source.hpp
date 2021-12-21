@@ -87,28 +87,30 @@ struct BrowserSource {
 
 	inline void DestroyTextures()
 	{
+		obs_enter_graphics();
+		if (extra_texture) {
+			gs_texture_destroy(extra_texture);
+			extra_texture = nullptr;
+		}
 		if (texture) {
-			obs_enter_graphics();
-			if (extra_texture) {
-				gs_texture_destroy(extra_texture);
-				extra_texture = nullptr;
-			}
 			gs_texture_destroy(texture);
 			texture = nullptr;
-			obs_leave_graphics();
 		}
+		obs_leave_graphics();
 	}
 
 	/* ---------------------------- */
 
 	bool CreateBrowser();
-	void DestroyBrowser(bool async = false);
+	void DestroyBrowser();
 	void ExecuteOnBrowser(BrowserFunc func, bool async = false);
 
 	/* ---------------------------- */
 
 	BrowserSource(obs_data_t *settings, obs_source_t *source);
 	~BrowserSource();
+
+	void Destroy();
 
 	void Update(obs_data_t *settings = nullptr);
 	void Tick();

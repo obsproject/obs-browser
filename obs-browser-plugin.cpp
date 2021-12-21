@@ -453,7 +453,7 @@ void RegisterBrowserSource()
 		return new BrowserSource(settings, source);
 	};
 	info.destroy = [](void *data) {
-		delete static_cast<BrowserSource *>(data);
+		static_cast<BrowserSource *>(data)->Destroy();
 	};
 	info.missing_files = browser_source_missingfiles;
 	info.update = [](void *data, obs_data_t *settings) {
