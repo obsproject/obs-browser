@@ -150,7 +150,7 @@ bool BrowserClient::OnProcessMessageReceived(
 			obs_frontend_replay_buffer_start();
 		} else if (name == "stopReplayBuffer") {
 			obs_frontend_replay_buffer_stop();
-		} else if (name == "setScene") {
+		} else if (name == "setCurrentScene") {
 			const std::string scene_name =
 				input_args->GetString(1).ToString();
 			obs_source_t *source =
@@ -170,7 +170,7 @@ bool BrowserClient::OnProcessMessageReceived(
 				obs_frontend_set_current_scene(source);
 				obs_source_release(source);
 			}
-		} else if (name == "setTransition") {
+		} else if (name == "setCurrentTransition") {
 			const std::string transition_name =
 				input_args->GetString(1).ToString();
 			obs_source_t *transition = obs_get_transition_by_name(
