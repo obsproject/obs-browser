@@ -23,6 +23,7 @@
 #include "cef-headers.hpp"
 #include "browser-config.h"
 #include "browser-app.hpp"
+#include <atomic>
 #include <functional>
 #include <string>
 #include <mutex>
