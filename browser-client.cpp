@@ -173,8 +173,22 @@ bool BrowserClient::OnProcessMessageReceived(
 		} else if (name == "setCurrentTransition") {
 			const std::string transition_name =
 				input_args->GetString(1).ToString();
-			obs_source_t *transition = obs_get_transition_by_name(
-				transition_name.c_str());
+			obs_frontend_source_list transitions = {};
+			obs_frontend_get_transitions(&transitions);
+
+			obs_source_t *transition = nullptr;
+			for (size_t i = 0; i < transitions.sources.num; i++) {
+				obs_source_t *source =
+					transitions.sources.array[i];
+				if (obs_source_get_name(source) ==
+				    transition_name) {
+					transition = obs_source_get_ref(source);
+					break;
+				}
+			}
+
+			obs_frontend_source_list_free(&transitions);
+
 			if (transition) {
 				obs_frontend_set_current_transition(transition);
 				obs_source_release(transition);
