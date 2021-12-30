@@ -131,6 +131,7 @@ set(obs-browser_HEADERS
 	browser-version.h
 	deps/json11/json11.hpp
 	deps/base64/base64.hpp
+	deps/obs-websocket-api/obs-websocket-api.h
 	deps/wide-string.hpp
 	cef-headers.hpp
 	)

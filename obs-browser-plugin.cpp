@@ -35,6 +35,7 @@
 #include "browser-config.h"
 
 #include "json11/json11.hpp"
+#include "obs-websocket-api/obs-websocket-api.h"
 #include "cef-headers.hpp"
 
 #ifdef _WIN32
@@ -734,6 +735,33 @@ bool obs_module_load(void)
 #endif
 
 	return true;
+}
+
+void obs_module_post_load(void)
+{
+	auto vendor = obs_websocket_register_vendor("obs-browser");
+	if (!vendor)
+		return;
+
+	auto emit_event_request_cb = [](obs_data_t *request_data, obs_data_t *,
+					void *) {
+		const char *event_name =
+			obs_data_get_string(request_data, "event_name");
+		if (!event_name)
+			return;
+
+		OBSDataAutoRelease event_data =
+			obs_data_get_obj(request_data, "event_data");
+		const char *event_data_string =
+			event_data ? obs_data_get_json(event_data) : "{}";
+
+		DispatchJSEvent(event_name, event_data_string, nullptr);
+	};
+
+	if (!obs_websocket_vendor_register_request(
+		    vendor, "emit_event", emit_event_request_cb, nullptr))
+		blog(LOG_WARNING,
+		     "[obs-browser]: Failed to register obs-websocket request emit_event");
 }
 
 void obs_module_unload(void)
