@@ -75,6 +75,7 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 * obsVirtualcamStarted
 * obsVirtualcamStopped
 * obsExit
+* [Any custom event emitted via obs-websocket vendor requests]
 
 
 ### Control OBS
@@ -345,6 +346,14 @@ window.obsstudio.onActiveChange = function(active) {
 
 };
 ```
+
+### obs-websocket Vendor
+obs-browser includes integration with obs-websocket's Vendor requests. The vendor name to use is `obs-browser`, and available requests are:
+
+- `emit_event` - Takes `event_name` and ?`event_data` parameters. Emits a custom event to all browser sources. To subscribe to events, see [here](#register-for-event-callbacks)
+  - See [#340](https://github.com/obsproject/obs-browser/pull/340) for example usage.
+
+There are no available vendor events at this time.
 
 ## Building
 
