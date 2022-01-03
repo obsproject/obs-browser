@@ -177,6 +177,10 @@ if(SHARED_TEXTURE_SUPPORT_ENABLED)
     target_compile_definitions(obs-browser PRIVATE SHARED_TEXTURE_SUPPORT_ENABLED)
 endif()
 
+if(WIN32 AND (${CHROME_VERSION_BUILD} GREATER_EQUAL 4430))
+	target_compile_definitions(obs-browser PRIVATE _ITERATOR_DEBUG_LEVEL=0)
+endif()
+
 set_target_properties(obs-browser PROPERTIES FOLDER "plugins/obs-browser")
 
 # ----------------------------------------------------------------------------
@@ -304,6 +308,9 @@ if (WIN32)
 	target_sources(obs-browser-page
 		PRIVATE obs-browser-page.manifest
 	)
+	if (${CHROME_VERSION_BUILD} GREATER_EQUAL 4430)
+		target_compile_definitions(obs-browser-page PRIVATE _ITERATOR_DEBUG_LEVEL=0)
+	endif()
 
 	add_custom_command(TARGET obs-browser POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
