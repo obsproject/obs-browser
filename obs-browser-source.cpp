@@ -52,6 +52,7 @@ static void SendBrowserVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
 
 #if ENABLE_WASHIDDEN
 	if (isVisible) {
+		browser->GetHost()->WasResized();
 		browser->GetHost()->WasHidden(false);
 		browser->GetHost()->Invalidate(PET_VIEW);
 	} else {
