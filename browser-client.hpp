@@ -38,14 +38,6 @@ class BrowserClient : public CefClient,
 		      public CefAudioHandler,
 		      public CefLoadHandler {
 
-#ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#ifdef _WIN32
-	void *last_handle = INVALID_HANDLE_VALUE;
-	void *extra_handle = INVALID_HANDLE_VALUE;
-#elif defined(__APPLE__)
-	void *last_handle = nullptr;
-#endif
-#endif
 	bool sharing_available = false;
 	bool reroute_audio = true;
 	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;

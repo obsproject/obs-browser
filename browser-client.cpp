@@ -382,7 +382,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 #endif
 		gs_texture_destroy(bs->texture);
 #ifdef _WIN32
-		CloseHandle(extra_handle);
+		CloseHandle(bs->extra_handle);
 #endif
 		bs->texture = nullptr;
 	}
@@ -392,7 +392,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		(IOSurfaceRef)(uintptr_t)shared_handle);
 #elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
 	DuplicateHandle(GetCurrentProcess(), (HANDLE)(uintptr_t)shared_handle,
-			GetCurrentProcess(), &extra_handle, 0, false,
+			GetCurrentProcess(), &bs->extra_handle, 0, false,
 			DUPLICATE_SAME_ACCESS);
 
 	bs->texture =
@@ -417,7 +417,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	}
 	obs_leave_graphics();
 
-	last_handle = shared_handle;
+	bs->last_handle = shared_handle;
 }
 #endif
 
