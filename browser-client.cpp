@@ -366,7 +366,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	}
 
 #ifndef _WIN32
-	if (shared_handle == last_handle)
+	if (shared_handle == bs->last_handle)
 		return;
 #endif
 
