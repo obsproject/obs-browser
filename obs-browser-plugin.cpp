@@ -385,6 +385,10 @@ static void BrowserInit(void)
 
 #ifdef _WIN32
 	CefExecuteProcess(args, app, nullptr);
+#endif
+#if !defined(_WIN32) || (CHROME_VERSION_BUILD > 3770)
+	CefInitialize(args, settings, app, nullptr);
+#else
 	/* Massive (but amazing) hack to prevent chromium from modifying our
 	 * process tokens and permissions, which caused us problems with winrt,
 	 * used with window capture.  Note, the structure internally is just
@@ -393,8 +397,6 @@ static void BrowserInit(void)
 	 * to. */
 	uintptr_t zeroed_memory_lol[32] = {};
 	CefInitialize(args, settings, app, zeroed_memory_lol);
-#else
-	CefInitialize(args, settings, app, nullptr);
 #endif
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 	/* Register http://absolute/ scheme handler for older
