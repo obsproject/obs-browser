@@ -253,10 +253,9 @@ static void missing_file_callback(void *src, const char *new_path, void *data)
 
 	if (bs) {
 		obs_source_t *source = bs->source;
-		obs_data_t *settings = obs_source_get_settings(source);
+		OBSDataAutoRelease settings = obs_source_get_settings(source);
 		obs_data_set_string(settings, "local_file", new_path);
 		obs_source_update(source, settings);
-		obs_data_release(settings);
 	}
 
 	UNUSED_PARAMETER(data);
@@ -269,7 +268,7 @@ static obs_missing_files_t *browser_source_missingfiles(void *data)
 
 	if (bs) {
 		obs_source_t *source = bs->source;
-		obs_data_t *settings = obs_source_get_settings(source);
+		OBSDataAutoRelease settings = obs_source_get_settings(source);
 
 		bool enabled = obs_data_get_bool(settings, "is_local_file");
 		const char *path = obs_data_get_string(settings, "local_file");
@@ -285,8 +284,6 @@ static obs_missing_files_t *browser_source_missingfiles(void *data)
 				obs_missing_files_add_file(files, file);
 			}
 		}
-
-		obs_data_release(settings);
 	}
 
 	return files;
@@ -596,8 +593,7 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		DispatchJSEvent("obsVirtualcamStopped", "");
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED: {
-		OBSSource source = obs_frontend_get_current_scene();
-		obs_source_release(source);
+		OBSSourceAutoRelease source = obs_frontend_get_current_scene();
 
 		if (!source)
 			break;
@@ -734,13 +730,12 @@ bool obs_module_load(void)
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
-	obs_data_t *private_data = obs_get_private_data();
+	OBSDataAutoRelease private_data = obs_get_private_data();
 	hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
 
 	if (hwaccel) {
 		check_hwaccel_support();
 	}
-	obs_data_release(private_data);
 #endif
 
 #if defined(__APPLE__) && CHROME_VERSION_BUILD < 4183
