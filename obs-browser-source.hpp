@@ -34,7 +34,7 @@
 #include <vector>
 
 struct AudioStream {
-	OBSSource source;
+	OBSSourceAutoRelease source;
 	speaker_layout speakers;
 	int channels;
 	int sample_rate;
