@@ -397,7 +397,9 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 
 	bs->texture =
 		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
-	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
+	if (bs->texture)
+		gs_texture_acquire_sync(bs->texture, 1, INFINITE);
+
 #else
 	bs->texture =
 		gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
