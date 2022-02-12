@@ -10,6 +10,10 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
 option(BROWSER_LEGACY "Use legacy CEF version 3770" OFF)
 
+if(DEFINED ENV{CEF_ROOT_DIR})
+	set(CEF_ROOT_DIR $ENV{CEF_ROOT_DIR})
+endif()
+
 find_package(CEF QUIET)
 
 if(NOT CEF_FOUND)
