@@ -381,9 +381,6 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		gs_texture_release_sync(bs->texture, 0);
 #endif
 		gs_texture_destroy(bs->texture);
-#ifdef _WIN32
-		CloseHandle(bs->extra_handle);
-#endif
 		bs->texture = nullptr;
 	}
 
@@ -391,10 +388,6 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	bs->texture = gs_texture_create_from_iosurface(
 		(IOSurfaceRef)(uintptr_t)shared_handle);
 #elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
-	DuplicateHandle(GetCurrentProcess(), (HANDLE)(uintptr_t)shared_handle,
-			GetCurrentProcess(), &bs->extra_handle, 0, false,
-			DUPLICATE_SAME_ACCESS);
-
 	bs->texture =
 		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
 	if (bs->texture)

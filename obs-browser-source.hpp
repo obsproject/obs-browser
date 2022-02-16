@@ -72,7 +72,6 @@ struct BrowserSource {
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 #ifdef _WIN32
 	void *last_handle = INVALID_HANDLE_VALUE;
-	void *extra_handle = INVALID_HANDLE_VALUE;
 #elif defined(__APPLE__)
 	void *last_handle = nullptr;
 #endif

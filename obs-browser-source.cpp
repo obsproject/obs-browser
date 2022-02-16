@@ -432,9 +432,6 @@ void BrowserSource::SetShowing(bool showing)
 			gs_texture_release_sync(texture, 0);
 #endif
 			DestroyTextures();
-#ifdef _WIN32
-			CloseHandle(extra_handle);
-#endif
 		} else {
 			DestroyTextures();
 		}
