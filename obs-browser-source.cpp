@@ -671,8 +671,8 @@ void BrowserSource::Render()
 			gs_effect_get_param_by_name(effect, "image");
 
 		const char *tech;
-		gs_effect_set_texture(image, draw_texture);
-		tech = "DrawSrgbDecompress";
+		gs_effect_set_texture_srgb(image, draw_texture);
+		tech = "Draw";
 
 		const uint32_t flip_flag = flip ? GS_FLIP_V : 0;
 		while (gs_effect_loop(effect, tech))
