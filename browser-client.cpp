@@ -377,9 +377,6 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 			gs_texture_destroy(bs->extra_texture);
 			bs->extra_texture = nullptr;
 		}
-#ifdef _WIN32
-		gs_texture_release_sync(bs->texture, 0);
-#endif
 		gs_texture_destroy(bs->texture);
 		bs->texture = nullptr;
 	}
@@ -405,10 +402,21 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 			gs_texture_get_color_format(bs->texture);
 		const gs_color_format linear_format =
 			gs_generalize_format(format);
-		if (linear_format != format) {
+
+		if (!bs->extra_texture || cx != last_cx || cy != last_cy) {
+			if (bs->extra_texture)
+				gs_texture_destroy(bs->extra_texture);
 			bs->extra_texture = gs_texture_create(
 				cx, cy, linear_format, 1, nullptr, 0);
+
+			last_cx = cx;
+			last_cy = cy;
 		}
+
+#if defined(_WIN32) && CHROME_VERSION_BUILD > 4183
+		gs_copy_texture(bs->extra_texture, bs->texture);
+		gs_texture_release_sync(bs->texture, 0);
+#endif
 	}
 	obs_leave_graphics();
 
