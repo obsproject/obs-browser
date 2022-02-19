@@ -413,8 +413,9 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 			last_cy = cy;
 		}
 
-#if defined(_WIN32) && CHROME_VERSION_BUILD > 4183
 		gs_copy_texture(bs->extra_texture, bs->texture);
+
+#if defined(_WIN32) && CHROME_VERSION_BUILD > 4183
 		gs_texture_release_sync(bs->texture, 0);
 #endif
 	}
