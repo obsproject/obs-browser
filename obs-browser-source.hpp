@@ -67,14 +67,10 @@ struct BrowserSource {
 	std::string url;
 	std::string css;
 	gs_texture_t *texture = nullptr;
-	gs_texture_t *extra_texture = nullptr;
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-#ifdef _WIN32
-	void *last_handle = INVALID_HANDLE_VALUE;
-#elif defined(__APPLE__)
-	void *last_handle = nullptr;
-#endif
+	gs_texture_t *shared_textures[3] = {};
+	volatile long cur_texture = 0;
 #endif
 
 	int width = 0;
@@ -98,9 +94,11 @@ struct BrowserSource {
 	inline void DestroyTextures()
 	{
 		obs_enter_graphics();
-		if (extra_texture) {
-			gs_texture_destroy(extra_texture);
-			extra_texture = nullptr;
+		for (size_t i = 0; i < 3; i++) {
+			if (shared_textures[i]) {
+				gs_texture_destroy(shared_textures[i]);
+				shared_textures[i] = nullptr;
+			}
 		}
 		if (texture) {
 			gs_texture_destroy(texture);

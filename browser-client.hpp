@@ -134,10 +134,12 @@ public:
 			     const void *buffer, int width,
 			     int height) override;
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
-					PaintElementType type,
-					const RectList &dirtyRects,
-					void *shared_handle) override;
+	virtual void OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser,
+					 PaintElementType type,
+					 const RectList &dirtyRects,
+					 void *shared_handle[3],
+					 int cur_texture,
+					 bool textures_changed) override;
 #endif
 #if CHROME_VERSION_BUILD >= 4103
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,

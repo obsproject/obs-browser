@@ -73,7 +73,6 @@ void DispatchJSEvent(std::string eventName, std::string jsonString,
 BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_)
 	: source(source_)
 {
-
 	/* Register Refresh hotkey */
 	auto refreshFunction = [](void *data, obs_hotkey_id, obs_hotkey_t *,
 				  bool pressed) {
@@ -651,22 +650,10 @@ void BrowserSource::Render()
 #endif
 
 	if (texture) {
-#ifdef __APPLE__
-		gs_effect_t *effect =
-			obs_get_base_effect((hwaccel) ? OBS_EFFECT_DEFAULT_RECT
-						      : OBS_EFFECT_DEFAULT);
-#else
 		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-#endif
-
-		bool linear_sample = extra_texture == NULL;
-		gs_texture_t *draw_texture = texture;
-		if (!linear_sample &&
-		    !obs_source_get_texcoords_centered(source)) {
-			gs_copy_texture(extra_texture, texture);
-			draw_texture = extra_texture;
-
-			linear_sample = true;
+		if (hwaccel) {
+			long cur_tex = os_atomic_load_long(&cur_texture);
+			gs_copy_texture(texture, shared_textures[cur_tex]);
 		}
 
 		const bool previous = gs_framebuffer_srgb_enabled();
@@ -678,18 +665,11 @@ void BrowserSource::Render()
 		gs_eparam_t *const image =
 			gs_effect_get_param_by_name(effect, "image");
 
-		const char *tech;
-		if (linear_sample) {
-			gs_effect_set_texture_srgb(image, draw_texture);
-			tech = "Draw";
-		} else {
-			gs_effect_set_texture(image, draw_texture);
-			tech = "DrawSrgbDecompress";
-		}
+		gs_effect_set_texture_srgb(image, texture);
 
 		const uint32_t flip_flag = flip ? GS_FLIP_V : 0;
-		while (gs_effect_loop(effect, tech))
-			gs_draw_sprite(draw_texture, flip_flag, 0, 0);
+		while (gs_effect_loop(effect, "Draw"))
+			gs_draw_sprite(texture, flip_flag, 0, 0);
 
 		gs_blend_state_pop();
 

@@ -352,9 +352,11 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 }
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
-void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
-				       PaintElementType type, const RectList &,
-				       void *shared_handle)
+void BrowserClient::OnAcceleratedPaint2(CefRefPtr<CefBrowser>,
+				        PaintElementType type, const RectList &,
+				        void *shared_handles[3],
+					int cur_texture,
+					bool textures_changed)
 {
 	if (type != PET_VIEW) {
 		// TODO Overlay texture on top of bs->texture
@@ -365,54 +367,39 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		return;
 	}
 
-#ifndef _WIN32
-	if (shared_handle == bs->last_handle)
+	if (!textures_changed) {
+		os_atomic_set_long(&bs->cur_texture, cur_texture);
 		return;
-#endif
+	}
 
 	obs_enter_graphics();
+	bs->DestroyTextures();
 
-	if (bs->texture) {
-		if (bs->extra_texture) {
-			gs_texture_destroy(bs->extra_texture);
-			bs->extra_texture = nullptr;
-		}
-#ifdef _WIN32
-		gs_texture_release_sync(bs->texture, 0);
-#endif
-		gs_texture_destroy(bs->texture);
-		bs->texture = nullptr;
+	os_atomic_set_long(&bs->cur_texture, cur_texture);
+
+#if defined(__APPLE__)
+	for (int i = 0; i < 3; i++) {
+		bs->shared_textures[i] = gs_texture_create_from_iosurface(
+			(IOSurfaceRef)(uintptr_t)shared_handles[i]);
 	}
-
-#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
-	bs->texture = gs_texture_create_from_iosurface(
-		(IOSurfaceRef)(uintptr_t)shared_handle);
-#elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
-	bs->texture =
-		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
-	if (bs->texture)
-		gs_texture_acquire_sync(bs->texture, 1, INFINITE);
-
-#else
-	bs->texture =
-		gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
+#elif defined(_WIN32)
+	for (int i = 0; i < 3; i++) {
+		bs->shared_textures[i] =
+			gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handles[i]);
+	}
 #endif
-
-	if (bs->texture) {
-		const uint32_t cx = gs_texture_get_width(bs->texture);
-		const uint32_t cy = gs_texture_get_height(bs->texture);
+	if (bs->shared_textures[0]) {
+		const uint32_t cx = gs_texture_get_width(bs->shared_textures[0]);
+		const uint32_t cy = gs_texture_get_height(bs->shared_textures[0]);
 		const gs_color_format format =
-			gs_texture_get_color_format(bs->texture);
+			gs_texture_get_color_format(bs->shared_textures[0]);
 		const gs_color_format linear_format =
 			gs_generalize_format(format);
-		if (linear_format != format) {
-			bs->extra_texture = gs_texture_create(
-				cx, cy, linear_format, 1, nullptr, 0);
-		}
+		bs->texture = gs_texture_create(
+			cx, cy, linear_format, 1, nullptr, 0);
 	}
-	obs_leave_graphics();
 
-	bs->last_handle = shared_handle;
+	obs_leave_graphics();
 }
 #endif
 
