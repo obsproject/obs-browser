@@ -41,8 +41,6 @@ class BrowserClient : public CefClient,
 	bool sharing_available = false;
 	bool reroute_audio = true;
 	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
-	uint32_t last_cx = 0;
-	uint32_t last_cy = 0;
 
 	inline bool valid() const;
 
