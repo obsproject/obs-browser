@@ -378,7 +378,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 			bs->extra_texture = nullptr;
 		}
 #ifdef _WIN32
-		gs_texture_release_sync(bs->texture, 0);
+		//gs_texture_release_sync(bs->texture, 0);
 #endif
 		gs_texture_destroy(bs->texture);
 		bs->texture = nullptr;
@@ -390,8 +390,8 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 #elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
 	bs->texture =
 		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
-	if (bs->texture)
-		gs_texture_acquire_sync(bs->texture, 1, INFINITE);
+	//if (bs->texture)
+	//	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
 
 #else
 	bs->texture =
