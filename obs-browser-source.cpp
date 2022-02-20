@@ -424,18 +424,7 @@ void BrowserSource::SetShowing(bool showing)
 		if (showing)
 			return;
 
-		obs_enter_graphics();
-
-		if (hwaccel && texture) {
-#ifdef _WIN32
-			gs_texture_release_sync(texture, 0);
-#endif
-			DestroyTextures();
-		} else {
-			DestroyTextures();
-		}
-
-		obs_leave_graphics();
+		DestroyTextures(false);
 	}
 }
 
@@ -649,11 +638,23 @@ void BrowserSource::Render()
 	flip = hwaccel;
 #endif
 
+	if (!texture && hwaccel && shared_textures[0]) {
+		const uint32_t cx = gs_texture_get_width(shared_textures[0]);
+		const uint32_t cy = gs_texture_get_height(shared_textures[0]);
+		const gs_color_format format =
+			gs_texture_get_color_format(shared_textures[0]);
+		const gs_color_format linear_format =
+			gs_generalize_format(format);
+		texture = gs_texture_create(
+			cx, cy, linear_format, 1, nullptr, 0);
+	}
+
 	if (texture) {
 		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 		if (hwaccel) {
-			long cur_tex = os_atomic_load_long(&cur_texture);
-			gs_copy_texture(texture, shared_textures[cur_tex]);
+			long cur_tex = os_atomic_set_long(&cur_texture, -1);
+			if (cur_tex != -1)
+				gs_copy_texture(texture, shared_textures[cur_tex]);
 		}
 
 		const bool previous = gs_framebuffer_srgb_enabled();

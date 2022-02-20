@@ -70,7 +70,7 @@ struct BrowserSource {
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
 	gs_texture_t *shared_textures[3] = {};
-	volatile long cur_texture = 0;
+	volatile long cur_texture = -1;
 #endif
 
 	int width = 0;
@@ -91,13 +91,15 @@ struct BrowserSource {
 #endif
 	bool is_showing = false;
 
-	inline void DestroyTextures()
+	inline void DestroyTextures(bool all = true)
 	{
 		obs_enter_graphics();
-		for (size_t i = 0; i < 3; i++) {
-			if (shared_textures[i]) {
-				gs_texture_destroy(shared_textures[i]);
-				shared_textures[i] = nullptr;
+		if (all) {
+			for (size_t i = 0; i < 3; i++) {
+				if (shared_textures[i]) {
+					gs_texture_destroy(shared_textures[i]);
+					shared_textures[i] = nullptr;
+				}
 			}
 		}
 		if (texture) {

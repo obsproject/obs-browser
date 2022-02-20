@@ -388,17 +388,6 @@ void BrowserClient::OnAcceleratedPaint2(CefRefPtr<CefBrowser>,
 			gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handles[i]);
 	}
 #endif
-	if (bs->shared_textures[0]) {
-		const uint32_t cx = gs_texture_get_width(bs->shared_textures[0]);
-		const uint32_t cy = gs_texture_get_height(bs->shared_textures[0]);
-		const gs_color_format format =
-			gs_texture_get_color_format(bs->shared_textures[0]);
-		const gs_color_format linear_format =
-			gs_generalize_format(format);
-		bs->texture = gs_texture_create(
-			cx, cy, linear_format, 1, nullptr, 0);
-	}
-
 	obs_leave_graphics();
 }
 #endif
