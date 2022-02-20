@@ -352,6 +352,40 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
 }
 
 #ifdef SHARED_TEXTURE_SUPPORT_ENABLED
+void BrowserClient::UpdateExtraTexture()
+{
+	if (bs->texture) {
+		const uint32_t cx = gs_texture_get_width(bs->texture);
+		const uint32_t cy = gs_texture_get_height(bs->texture);
+		const gs_color_format format =
+			gs_texture_get_color_format(bs->texture);
+		const gs_color_format linear_format =
+			gs_generalize_format(format);
+
+		if (linear_format != format) {
+			if (!bs->extra_texture ||
+			    bs->last_format != linear_format ||
+			    bs->last_cx != cx || bs->last_cy != cy) {
+				if (bs->extra_texture) {
+					gs_texture_destroy(bs->extra_texture);
+					bs->extra_texture = nullptr;
+				}
+				bs->extra_texture = gs_texture_create(
+					cx, cy, linear_format, 1, nullptr, 0);
+				bs->last_cx = cx;
+				bs->last_cy = cy;
+				bs->last_format = linear_format;
+			}
+		} else if (bs->extra_texture) {
+			gs_texture_destroy(bs->extra_texture);
+			bs->extra_texture = nullptr;
+			bs->last_cx = 0;
+			bs->last_cy = 0;
+			bs->last_format = GS_UNKNOWN;
+		}
+	}
+}
+
 void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 				       PaintElementType type, const RectList &,
 				       void *shared_handle)
@@ -393,41 +427,50 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	bs->texture =
 		gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
 #endif
-
-	if (bs->texture) {
-		const uint32_t cx = gs_texture_get_width(bs->texture);
-		const uint32_t cy = gs_texture_get_height(bs->texture);
-		const gs_color_format format =
-			gs_texture_get_color_format(bs->texture);
-		const gs_color_format linear_format =
-			gs_generalize_format(format);
-
-		if (linear_format != format) {
-			if (!bs->extra_texture ||
-			    bs->last_format != linear_format ||
-			    bs->last_cx != cx || bs->last_cy != cy) {
-				if (bs->extra_texture) {
-					gs_texture_destroy(bs->extra_texture);
-					bs->extra_texture = nullptr;
-				}
-				bs->extra_texture = gs_texture_create(
-					cx, cy, linear_format, 1, nullptr, 0);
-				bs->last_cx = cx;
-				bs->last_cy = cy;
-				bs->last_format = linear_format;
-			}
-		} else if (bs->extra_texture) {
-			gs_texture_destroy(bs->extra_texture);
-			bs->extra_texture = nullptr;
-			bs->last_cx = 0;
-			bs->last_cy = 0;
-			bs->last_format = GS_UNKNOWN;
-		}
-	}
-
+	UpdateExtraTexture();
 	obs_leave_graphics();
 
 	bs->last_handle = shared_handle;
+}
+
+void BrowserClient::OnAcceleratedPaint2(CefRefPtr<CefBrowser>,
+				        PaintElementType type, const RectList &,
+				        void *shared_handle,
+					bool new_texture)
+{
+	if (type != PET_VIEW) {
+		// TODO Overlay texture on top of bs->texture
+		return;
+	}
+
+	if (!valid()) {
+		return;
+	}
+
+	if (!new_texture) {
+		return;
+	}
+
+	obs_enter_graphics();
+
+	if (bs->texture) {
+		gs_texture_destroy(bs->texture);
+		bs->texture = nullptr;
+	}
+
+#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
+	bs->texture = gs_texture_create_from_iosurface(
+		(IOSurfaceRef)(uintptr_t)shared_handle);
+#elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
+	bs->texture =
+		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
+
+#else
+	bs->texture =
+		gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
+#endif
+	UpdateExtraTexture();
+	obs_leave_graphics();
 }
 #endif
 
