@@ -433,6 +433,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	bs->last_handle = shared_handle;
 }
 
+#ifdef CEF_ON_ACCELERATED_PAINT2
 void BrowserClient::OnAcceleratedPaint2(CefRefPtr<CefBrowser>,
 					PaintElementType type, const RectList &,
 					void *shared_handle, bool new_texture)
@@ -471,6 +472,7 @@ void BrowserClient::OnAcceleratedPaint2(CefRefPtr<CefBrowser>,
 	UpdateExtraTexture();
 	obs_leave_graphics();
 }
+#endif
 #endif
 
 static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)

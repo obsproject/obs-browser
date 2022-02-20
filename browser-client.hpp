@@ -140,11 +140,13 @@ public:
 					PaintElementType type,
 					const RectList &dirtyRects,
 					void *shared_handle) override;
+#ifdef CEF_ON_ACCELERATED_PAINT2
 	virtual void OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser,
 					 PaintElementType type,
 					 const RectList &dirtyRects,
 					 void *shared_handle,
 					 bool new_texture) override;
+#endif
 #endif
 #if CHROME_VERSION_BUILD >= 4103
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
