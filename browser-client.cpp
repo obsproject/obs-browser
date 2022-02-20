@@ -373,10 +373,6 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	obs_enter_graphics();
 
 	if (bs->texture) {
-		if (bs->extra_texture) {
-			gs_texture_destroy(bs->extra_texture);
-			bs->extra_texture = nullptr;
-		}
 #ifdef _WIN32
 		//gs_texture_release_sync(bs->texture, 0);
 #endif
@@ -405,11 +401,30 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 			gs_texture_get_color_format(bs->texture);
 		const gs_color_format linear_format =
 			gs_generalize_format(format);
+
 		if (linear_format != format) {
-			bs->extra_texture = gs_texture_create(
-				cx, cy, linear_format, 1, nullptr, 0);
+			if (!bs->extra_texture ||
+			    bs->last_format != linear_format ||
+			    bs->last_cx != cx || bs->last_cy != cy) {
+				if (bs->extra_texture) {
+					gs_texture_destroy(bs->extra_texture);
+					bs->extra_texture = nullptr;
+				}
+				bs->extra_texture = gs_texture_create(
+					cx, cy, linear_format, 1, nullptr, 0);
+				bs->last_cx = cx;
+				bs->last_cy = cy;
+				bs->last_format = linear_format;
+			}
+		} else if (bs->extra_texture) {
+			gs_texture_destroy(bs->extra_texture);
+			bs->extra_texture = nullptr;
+			bs->last_cx = 0;
+			bs->last_cy = 0;
+			bs->last_format = GS_UNKNOWN;
 		}
 	}
+
 	obs_leave_graphics();
 
 	bs->last_handle = shared_handle;
