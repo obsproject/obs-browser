@@ -44,6 +44,8 @@ class BrowserClient : public CefClient,
 
 	inline bool valid() const;
 
+	void UpdateExtraTexture();
+
 public:
 	BrowserSource *bs;
 	CefRect popupRect;
@@ -138,6 +140,11 @@ public:
 					PaintElementType type,
 					const RectList &dirtyRects,
 					void *shared_handle) override;
+	virtual void OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser,
+					 PaintElementType type,
+					 const RectList &dirtyRects,
+					 void *shared_handle,
+					 bool new_texture) override;
 #endif
 #if CHROME_VERSION_BUILD >= 4103
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser,
