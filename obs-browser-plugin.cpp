@@ -321,10 +321,10 @@ static void BrowserInit(void)
 	 * browser sources are coming from OBS. */
 	std::stringstream prod_ver;
 	prod_ver << "Chrome/";
-	prod_ver << std::to_string(CHROME_VERSION_MAJOR) << "."
-		 << std::to_string(CHROME_VERSION_MINOR) << "."
-		 << std::to_string(CHROME_VERSION_BUILD) << "."
-		 << std::to_string(CHROME_VERSION_PATCH);
+	prod_ver << std::to_string(cef_version_info(4)) << "."
+		 << std::to_string(cef_version_info(5)) << "."
+		 << std::to_string(cef_version_info(6)) << "."
+		 << std::to_string(cef_version_info(7));
 	prod_ver << " OBS/";
 	prod_ver << std::to_string(obs_maj) << "." << std::to_string(obs_min)
 		 << "." << std::to_string(obs_pat);
