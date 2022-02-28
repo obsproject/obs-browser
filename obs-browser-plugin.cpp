@@ -696,11 +696,6 @@ static void check_hwaccel_support(void)
 
 bool obs_module_load(void)
 {
-	blog(LOG_INFO, "[obs-browser]: Version %s", OBS_BROWSER_VERSION_STRING);
-	blog(LOG_INFO,
-	     "[obs-browser]: CEF Version %i.%i.%i.%i (runtime), %s (compiled)",
-	     cef_version_info(4), cef_version_info(5), cef_version_info(6),
-	     cef_version_info(7), CEF_VERSION);
 #ifdef USE_QT_LOOP
 	qRegisterMetaType<MessageTask>("MessageTask");
 #endif
@@ -719,6 +714,12 @@ bool obs_module_load(void)
 		return false;
 #endif
 #endif
+	blog(LOG_INFO, "[obs-browser]: Version %s", OBS_BROWSER_VERSION_STRING);
+	blog(LOG_INFO,
+	     "[obs-browser]: CEF Version %i.%i.%i.%i (runtime), %s (compiled)",
+	     cef_version_info(4), cef_version_info(5), cef_version_info(6),
+	     cef_version_info(7), CEF_VERSION);
+
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 
