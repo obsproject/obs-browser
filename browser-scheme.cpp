@@ -56,8 +56,10 @@ BrowserSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser,
 #endif
 
 	if (stream) {
-		return new CefStreamResourceHandler(
-			CefGetMimeType(fileExtension), stream);
+		CefString mimeType = CefGetMimeType(fileExtension);
+		if (mimeType.empty())
+			mimeType = "application/octet-stream";
+		return new CefStreamResourceHandler(mimeType, stream);
 	} else {
 		return nullptr;
 	}
