@@ -236,6 +236,26 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		controlLevel, obs_module_text("WebpageControlLevel.Level.All"),
 		(int)ControlLevel::All);
 
+	obs_property_t *audio_input_source = obs_properties_add_list(
+		props, "audio_input_source", obs_module_text("AudioInput"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_list_add_string(audio_input_source,
+				     obs_module_text("AudioInput.None"),
+				     obs_module_text("AudioInput.None"));
+	obs_enum_sources(
+		[](void *data, obs_source *src) {
+			uint32_t flags = obs_source_get_output_flags(src);
+			if (!(flags & OBS_SOURCE_AUDIO) ||
+			    !obs_source_audio_active(src))
+				return true;
+
+			const auto p = reinterpret_cast<obs_property_t *>(data);
+			const auto name = obs_source_get_name(src);
+			obs_property_list_add_string(p, name, name);
+			return true;
+		},
+		audio_input_source);
+
 	obs_properties_add_button(
 		props, "refreshnocache", obs_module_text("RefreshNoCache"),
 		[](obs_properties_t *, obs_property_t *, void *data) {

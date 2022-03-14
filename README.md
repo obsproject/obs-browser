@@ -313,6 +313,10 @@ window.obsstudio.stopVirtualcam()
 ```
 
 
+### Get OBS Source Audio with getUserMedia
+obs-browser overrides `getUserMedia`. It returns an audio media stream from the source specified by the property if `{ audio: true }` is within the constraint.
+
+
 ### Register for visibility callbacks
 
 **This method is legacy. Register an event listener instead.**

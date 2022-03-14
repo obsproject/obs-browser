@@ -660,6 +660,86 @@ void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser, int id)
 }
 #endif
 
+void BrowserClient::OnLoadStart(CefRefPtr<CefBrowser>,
+				CefRefPtr<CefFrame> frame,
+				CefLoadHandler::TransitionType)
+{
+	if (!valid()) {
+		return;
+	}
+
+	if (frame->IsMain()) {
+		const int buffer_size = 2048;
+		std::string script = "const bufferSize = " +
+				     std::to_string(buffer_size) + "\n";
+		script += R"(
+const obsProcessorScript = `
+class obsProcessor extends AudioWorkletProcessor {
+    constructor() {
+        super()
+        this.data = {}
+        this.port.onmessage = (event) => {
+            for (const ch in event.data) {
+                let data = this.data[ch] || []
+                data = [...data, ...event.data[ch]].slice(-${bufferSize})
+                this.data[ch] = data
+            }
+        }
+    }
+
+    process(inputs, outputs, parameters) {
+        const output = outputs[0]
+        for (const ch in output) {
+            for (let i = 0; i < output[ch].length; i++) {
+                const v = (this.data[ch] || []).shift()
+                output[ch][i] = v || 0
+            }
+        }
+        return true
+    }
+}
+registerProcessor('obs-processor', obsProcessor)
+`
+
+let audioCtx = null
+let obsNode = null
+let init = false
+
+const _getUserMedia = navigator.mediaDevices.getUserMedia
+navigator.mediaDevices.getUserMedia = (constraints) => {
+    if (constraints.audio && obsNode) {
+        const destination = audioCtx.createMediaStreamDestination()
+        obsNode.connect(destination)
+        return new Promise((resolve) => resolve(destination.stream))
+    }
+    return _getUserMedia(constraints)
+}
+
+window.addEventListener('obsBrowserAudioInput', async (event) => {
+    const { sample_rate, channels, data } = event.detail
+
+    if (!audioCtx && !init) {
+        init = true
+
+        audioCtx = new AudioContext({ sampleRate: sample_rate })
+        await audioCtx.audioWorklet.addModule('data:text/javascript,' + encodeURI(obsProcessorScript))
+        obsNode = new AudioWorkletNode(audioCtx, 'obs-processor', {
+            numberOfInputs: 0,
+            numberOfOutputs: 1,
+            outputChannelCount: [channels]
+        })
+    }
+
+    if (obsNode) {
+        obsNode.port.postMessage(data)
+    }
+})
+)";
+
+		frame->ExecuteJavaScript(script, "", 0);
+	}
+}
+
 void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 			      int)
 {

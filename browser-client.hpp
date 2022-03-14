@@ -180,6 +180,9 @@ public:
 					  int frames_per_buffer) override;
 #endif
 	/* CefLoadHandler */
+	virtual void
+	OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+		    CefLoadHandler::TransitionType transition_type) override;
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
 			       CefRefPtr<CefFrame> frame,
 			       int httpStatusCode) override;

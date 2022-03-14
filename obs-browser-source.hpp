@@ -19,6 +19,7 @@
 #pragma once
 
 #include <obs-module.h>
+#include <obs.hpp>
 
 #include "cef-headers.hpp"
 #include "browser-config.h"
@@ -29,7 +30,6 @@
 #include <mutex>
 
 #if CHROME_VERSION_BUILD < 4103
-#include <obs.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -92,6 +92,7 @@ struct BrowserSource {
 	bool reroute_audio = true;
 	std::atomic<bool> destroying = false;
 	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
+	std::string audio_input_source_name;
 #if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
 	defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	bool reset_frame = false;

@@ -121,10 +121,18 @@ BrowserSource::~BrowserSource()
 		ActuallyCloseBrowser(cefBrowser);
 }
 
+void audio_capture(void *data, obs_source_t *source,
+		   const audio_data *audio_data, bool muted);
+
 void BrowserSource::Destroy()
 {
 	destroying = true;
 	DestroyTextures();
+
+	OBSSourceAutoRelease audio_source =
+		obs_get_source_by_name(audio_input_source_name.c_str());
+	obs_source_remove_audio_capture_callback(audio_source, audio_capture,
+						 this);
 
 	lock_guard<mutex> lock(browser_list_mutex);
 	if (next)
@@ -501,6 +509,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		bool n_restart;
 		bool n_reroute;
 		ControlLevel n_webpage_control_level;
+		std::string n_audio_input_source_name;
 		std::string n_url;
 		std::string n_css;
 
@@ -517,6 +526,8 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 		n_webpage_control_level = static_cast<ControlLevel>(
 			obs_data_get_int(settings, "webpage_control_level"));
+		n_audio_input_source_name =
+			obs_data_get_string(settings, "audio_input_source");
 
 		if (n_is_local && !n_url.empty()) {
 			n_url = CefURIEncode(n_url, false);
@@ -563,7 +574,8 @@ void BrowserSource::Update(obs_data_t *settings)
 		    n_fps == fps && n_shutdown == shutdown_on_invisible &&
 		    n_restart == restart && n_css == css && n_url == url &&
 		    n_reroute == reroute_audio &&
-		    n_webpage_control_level == webpage_control_level) {
+		    n_webpage_control_level == webpage_control_level &&
+		    n_audio_input_source_name == audio_input_source_name) {
 
 			if (n_width == width && n_height == height)
 				return;
@@ -586,6 +598,16 @@ void BrowserSource::Update(obs_data_t *settings)
 			return;
 		}
 
+		OBSSourceAutoRelease audio_source =
+			obs_get_source_by_name(audio_input_source_name.c_str());
+		obs_source_remove_audio_capture_callback(audio_source,
+							 audio_capture, this);
+
+		OBSSourceAutoRelease n_audio_source = obs_get_source_by_name(
+			n_audio_input_source_name.c_str());
+		obs_source_add_audio_capture_callback(n_audio_source,
+						      audio_capture, this);
+
 		is_local = n_is_local;
 		width = n_width;
 		height = n_height;
@@ -594,6 +616,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		shutdown_on_invisible = n_shutdown;
 		reroute_audio = n_reroute;
 		webpage_control_level = n_webpage_control_level;
+		audio_input_source_name = n_audio_input_source_name;
 		restart = n_restart;
 		css = n_css;
 		url = n_url;
@@ -738,4 +761,45 @@ void DispatchJSEvent(std::string eventName, std::string jsonString,
 		ExecuteOnAllBrowsers(jsEvent);
 	else
 		ExecuteOnBrowser(jsEvent, browser);
+}
+
+void audio_capture(void *param, obs_source_t *source,
+		   const audio_data *audio_data, bool muted)
+{
+	UNUSED_PARAMETER(source);
+
+	const auto bs = reinterpret_cast<BrowserSource *>(param);
+
+	const auto obs_audio = obs_get_audio();
+	const auto sample_rate = audio_output_get_sample_rate(obs_audio);
+	const auto channels = audio_output_get_channels(obs_audio);
+
+	std::ostringstream ss;
+	ss << "{";
+	ss << "\"sample_rate\":" << sample_rate << ",";
+	ss << "\"channels\":" << channels << ",";
+	ss << "\"data\":";
+	ss << "[";
+	for (size_t ch = 0; ch < channels; ch++) {
+		if (ch != 0) {
+			ss << ",";
+		}
+
+		const auto data =
+			reinterpret_cast<float *>(audio_data->data[ch]);
+
+		ss << "[";
+		for (size_t i = 0; i < audio_data->frames; i++) {
+			if (i != 0) {
+				ss << ",";
+			}
+
+			ss << (muted ? 0 : data[i]);
+		}
+		ss << "]";
+	}
+	ss << "]";
+	ss << "}";
+
+	DispatchJSEvent("obsBrowserAudioInput", ss.str(), bs);
 }
