@@ -40,6 +40,11 @@ CefRefPtr<CefLifeSpanHandler> QCefBrowserClient::GetLifeSpanHandler()
 	return this;
 }
 
+CefRefPtr<CefFocusHandler> QCefBrowserClient::GetFocusHandler()
+{
+	return this;
+}
+
 CefRefPtr<CefContextMenuHandler> QCefBrowserClient::GetContextMenuHandler()
 {
 	return this;
@@ -206,6 +211,21 @@ bool QCefBrowserClient::OnBeforePopup(
 	QUrl url = QUrl(str_url.c_str(), QUrl::TolerantMode);
 	QDesktopServices::openUrl(url);
 	return true;
+}
+
+bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>,
+				   CefFocusHandler::FocusSource source)
+{
+	/* Don't steal focus when the webpage navigates. This is especially
+	   obvious on startup when the user has many browser docks defined,
+	   as each one will steal focus one by one, resulting in poor UX.
+	 */
+	switch (source) {
+	case FOCUS_SOURCE_NAVIGATION:
+		return true;
+	default:
+		return false;
+	}
 }
 
 void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
