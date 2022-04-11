@@ -2,9 +2,9 @@
 
 obs-browser introduces a cross-platform Browser Source, powered by CEF ([Chromium Embedded Framework](https://bitbucket.org/chromiumembedded/cef/src/master/README.md)), to OBS Studio. A Browser Source allows the user to integrate web-based overlays into their scenes, with complete access to modern web APIs.
 
-On Windows, this also adds support for Service Integration (linking third party services) and Browser Docks (webpages loaded into the interface itself). macOS support for service integration & browser docks is in the works, and Linux support is planned.
+Additionally, obs-browser enables Service Integration (linking third party services) and Browser Docks (webpages loaded into the interface itself) on all supported platforms, except for Wayland (Linux).
 
-**This plugin is included by default** on official packages on Windows and macOS. While Linux is supported, the official ppa does not currently include the browser source [due to a conflict with GTK](https://github.com/obsproject/obs-browser/issues/219).
+**This plugin is included by default** on official packages on Windows, macOS, the Ubuntu PPA and the official [Flatpak](https://flathub.org/apps/details/com.obsproject.Studio) (most Linux distributions).
 
 ## JS Bindings
 
