@@ -162,10 +162,12 @@ if(NOT OS_MACOS OR ENABLE_BROWSER_LEGACY)
   target_compile_features(obs-browser-page PRIVATE cxx_std_17)
 
   if(OS_WINDOWS)
-    target_link_libraries(obs-browser-page PRIVATE optimized CEF::Wrapper)
 
     if(TARGET CEF::Wrapper_Debug)
+      target_link_libraries(obs-browser-page PRIVATE optimized CEF::Wrapper)
       target_link_libraries(obs-browser-page PRIVATE debug CEF::Wrapper_Debug)
+    else()
+      target_link_libraries(obs-browser-page PRIVATE CEF::Wrapper)
     endif()
 
     target_sources(obs-browser-page PRIVATE obs-browser-page.manifest)
@@ -200,11 +202,13 @@ if(OS_WINDOWS)
                            PRIVATE $<IF:$<CONFIG:DEBUG>,/MTd,/MT>)
   endif()
 
-  target_link_libraries(obs-browser PRIVATE optimized CEF::Wrapper CEF::Library
-                                            d3d11 dxgi)
+  target_link_libraries(obs-browser PRIVATE CEF::Library d3d11 dxgi)
 
   if(TARGET CEF::Wrapper_Debug)
+    target_link_libraries(obs-browser PRIVATE optimized CEF::Wrapper)
     target_link_libraries(obs-browser PRIVATE debug CEF::Wrapper_Debug)
+  else()
+    target_link_libraries(obs-browser PRIVATE CEF::Wrapper)
   endif()
 
   target_link_options(obs-browser PRIVATE "LINKER:/IGNORE:4099")
