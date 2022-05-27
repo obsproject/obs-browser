@@ -55,6 +55,9 @@ window.addEventListener('obsSceneChanged', function(event) {
 Descriptions for these events can be [found here](https://obsproject.com/docs/reference-frontend-api.html?highlight=paused#c.obs_frontend_event).
 
 * obsSceneChanged
+* obsSceneListChanged
+* obsTransitionChanged
+* obsTransitionListChanged
 * obsSourceVisibleChanged
 * obsSourceActiveChanged
 * obsStreamingStarting

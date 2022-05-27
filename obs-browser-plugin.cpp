@@ -604,6 +604,49 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		DispatchJSEvent("obsSceneChanged", json.dump());
 		break;
 	}
+	case OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED: {
+		struct obs_frontend_source_list list = {};
+		obs_frontend_get_scenes(&list);
+		std::vector<const char *> scenes_vector;
+		for (size_t i = 0; i < list.sources.num; i++) {
+			obs_source_t *source = list.sources.array[i];
+			scenes_vector.push_back(obs_source_get_name(source));
+		}
+		Json json = scenes_vector;
+		obs_frontend_source_list_free(&list);
+
+		DispatchJSEvent("obsSceneListChanged", json.dump());
+		break;
+	}
+	case OBS_FRONTEND_EVENT_TRANSITION_CHANGED: {
+		OBSSourceAutoRelease source =
+			obs_frontend_get_current_transition();
+
+		if (!source)
+			break;
+
+		const char *name = obs_source_get_name(source);
+		if (!name)
+			break;
+
+		DispatchJSEvent("obsTransitionChanged", name);
+		break;
+	}
+	case OBS_FRONTEND_EVENT_TRANSITION_LIST_CHANGED: {
+		struct obs_frontend_source_list list = {};
+		obs_frontend_get_transitions(&list);
+		std::vector<const char *> transitions_vector;
+		for (size_t i = 0; i < list.sources.num; i++) {
+			obs_source_t *source = list.sources.array[i];
+			transitions_vector.push_back(
+				obs_source_get_name(source));
+		}
+		Json json = transitions_vector;
+		obs_frontend_source_list_free(&list);
+
+		DispatchJSEvent("obsTransitionListChanged", json.dump());
+		break;
+	}
 	case OBS_FRONTEND_EVENT_EXIT:
 		DispatchJSEvent("obsExit", "");
 		break;
