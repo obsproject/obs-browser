@@ -137,7 +137,7 @@ struct BrowserSource {
 	bool AudioMix(uint64_t *ts_out, struct audio_output_data *audio_output,
 		      size_t channels, size_t sample_rate);
 	std::mutex audio_sources_mutex;
-	std::vector<obs_source_t *> audio_sources;
+	std::vector<OBSSource> audio_sources;
 	std::unordered_map<int, AudioStream> audio_streams;
 #endif
 	void SendMouseClick(const struct obs_mouse_event *event, int32_t type,
