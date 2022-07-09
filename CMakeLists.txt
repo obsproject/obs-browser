@@ -121,6 +121,8 @@ target_sources(
           deps/base64/base64.hpp
           deps/wide-string.cpp
           deps/wide-string.hpp
+          deps/signal-restore.cpp
+          deps/signal-restore.hpp
           deps/obs-websocket-api/obs-websocket-api.h
           ${CMAKE_BINARY_DIR}/config/browser-config.h)
 
