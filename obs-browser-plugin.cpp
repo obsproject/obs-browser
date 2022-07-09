@@ -43,6 +43,8 @@
 #include <dxgi.h>
 #include <dxgi1_2.h>
 #include <d3d11.h>
+#else
+#include "signal-restore.hpp"
 #endif
 
 #ifdef ENABLE_BROWSER_QT_LOOP
@@ -386,7 +388,12 @@ static void BrowserInit(void)
 #ifdef _WIN32
 	CefExecuteProcess(args, app, nullptr);
 #endif
-#if !defined(_WIN32) || (CHROME_VERSION_BUILD > 3770)
+
+#if !defined(_WIN32)
+	BackupSignalHandlers();
+	CefInitialize(args, settings, app, nullptr);
+	RestoreSignalHandlers();
+#elif (CHROME_VERSION_BUILD > 3770)
 	CefInitialize(args, settings, app, nullptr);
 #else
 	/* Massive (but amazing) hack to prevent chromium from modifying our
@@ -398,6 +405,7 @@ static void BrowserInit(void)
 	uintptr_t zeroed_memory_lol[32] = {};
 	CefInitialize(args, settings, app, zeroed_memory_lol);
 #endif
+
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 	/* Register http://absolute/ scheme handler for older
 	 * CEF builds which do not support file:// URLs */
