@@ -268,9 +268,10 @@ bool QCefBrowserClient::RunContextMenu(
 			bool enabled;
 			int type_id;
 
-			for (int i = 0; i < menu_items.size(); i++) {
+			for (const std::tuple<std::string, int, bool, int>
+				     &menu_item : menu_items) {
 				std::tie(name, command_id, enabled, type_id) =
-					menu_items[i];
+					menu_item;
 				switch (type_id) {
 				case MENUITEMTYPE_COMMAND: {
 					QAction *item =
