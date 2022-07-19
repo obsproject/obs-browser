@@ -31,10 +31,12 @@
 #include <QTimer>
 #endif
 
+#ifndef UNUSED_PARAMETER
 #define UNUSED_PARAMETER(x) \
 	{                   \
 		(void)x;    \
 	}
+#endif
 
 using namespace json11;
 
