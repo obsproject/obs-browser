@@ -18,7 +18,6 @@
 
 #include "browser-app.hpp"
 #include "browser-version.h"
-#include <util/base.h>
 #include <json11/json11.hpp>
 
 #ifdef _WIN32
@@ -26,10 +25,16 @@
 #endif
 
 #ifdef ENABLE_BROWSER_QT_LOOP
+#include <util/base.h>
 #include <util/platform.h>
 #include <util/threading.h>
 #include <QTimer>
 #endif
+
+#define UNUSED_PARAMETER(x) \
+	{                   \
+		(void)x;    \
+	}
 
 using namespace json11;
 
