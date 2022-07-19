@@ -154,7 +154,7 @@ if(NOT OS_MACOS OR ENABLE_BROWSER_LEGACY)
             browser-app.cpp browser-app.hpp deps/json11/json11.cpp
             deps/json11/json11.hpp)
 
-  target_link_libraries(obs-browser-page PRIVATE OBS::libobs CEF::Library)
+  target_link_libraries(obs-browser-page PRIVATE CEF::Library)
 
   target_include_directories(
     obs-browser-page
@@ -271,7 +271,7 @@ elseif(OS_MACOS)
               obs-browser-page/obs-browser-page-main.cpp cef-headers.hpp
               deps/json11/json11.cpp deps/json11/json11.hpp)
 
-    target_link_libraries(${_HELPER_TARGET} PRIVATE OBS::libobs CEF::Wrapper)
+    target_link_libraries(${_HELPER_TARGET} PRIVATE CEF::Wrapper)
 
     target_include_directories(
       ${_HELPER_TARGET}
