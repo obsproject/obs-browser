@@ -91,7 +91,7 @@ target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api)
 target_compile_features(obs-browser PRIVATE cxx_std_17)
 
 if(ENABLE_BROWSER_PANELS OR ENABLE_BROWSER_QT_LOOP)
-  find_qt(VERSION ${QT_VERSION} COMPONENTS Widgets)
+  find_qt(COMPONENTS Widgets)
 
   set_target_properties(
     obs-browser
