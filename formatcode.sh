@@ -19,8 +19,8 @@ if [[ $OS = "Linux" || $OS = "Darwin" ]] ; then
 fi
 
 # Discover clang-format
-if type clang-format-12 2> /dev/null ; then
-    CLANG_FORMAT=clang-format-12
+if type clang-format-13 2> /dev/null ; then
+    CLANG_FORMAT=clang-format-13
 elif type clang-format-10 2> /dev/null ; then
     CLANG_FORMAT=clang-format-10
 elif type clang-format-8 2> /dev/null ; then
