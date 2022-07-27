@@ -84,9 +84,10 @@ CefRefPtr<CefResourceRequestHandler> BrowserClient::GetResourceRequestHandler(
 	return nullptr;
 }
 
-CefResourceRequestHandler::ReturnValue BrowserClient::OnBeforeResourceLoad(
-	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, CefRefPtr<CefRequest>,
-	CefRefPtr<CefCallback>)
+CefResourceRequestHandler::ReturnValue
+BrowserClient::OnBeforeResourceLoad(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+				    CefRefPtr<CefRequest>,
+				    CefRefPtr<CefCallback>)
 {
 	return RV_CONTINUE;
 }
