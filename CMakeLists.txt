@@ -250,7 +250,6 @@ elseif(OS_MACOS)
         FOLDER "plugins/obs-browser/helpers/"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER
         "com.obsproject.obs-studio.helper${_PLIST_SUFFIX}"
-        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${OBS_BUNDLE_CODESIGN_IDENTITY}"
         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
         "${CMAKE_SOURCE_DIR}/cmake/bundle/macOS/entitlements-helper${_PLIST_SUFFIX}.plist"
     )
