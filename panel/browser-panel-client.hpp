@@ -89,6 +89,11 @@ public:
 		       CefRefPtr<CefRunContextMenuCallback> callback) override;
 #endif
 
+	virtual bool OnContextMenuCommand(
+		CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+		CefRefPtr<CefContextMenuParams> params, int command_id,
+		CefContextMenuHandler::EventFlags event_flags) override;
+
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
 			       CefRefPtr<CefFrame> frame,
