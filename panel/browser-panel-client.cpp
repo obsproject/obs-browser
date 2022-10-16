@@ -19,6 +19,8 @@
 #include <X11/Xlib.h>
 #endif
 
+#define MENU_ITEM_MUTE MENU_ID_CUSTOM_FIRST
+
 /* CefClient */
 CefRefPtr<CefLoadHandler> QCefBrowserClient::GetLoadHandler()
 {
@@ -228,7 +230,7 @@ bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>,
 	}
 }
 
-void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
+void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 					    CefRefPtr<CefFrame>,
 					    CefRefPtr<CefContextMenuParams>,
 					    CefRefPtr<CefMenuModel> model)
@@ -243,6 +245,9 @@ void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser>,
 	if (model->IsVisible(MENU_ID_PRINT)) {
 		model->Remove(MENU_ID_PRINT);
 	}
+	model->InsertCheckItemAt(model->GetCount(), MENU_ITEM_MUTE,
+				 QObject::tr("Mute").toUtf8().constData());
+	model->SetChecked(MENU_ITEM_MUTE, browser->GetHost()->IsAudioMuted());
 }
 
 #if defined(_WIN32)
@@ -251,12 +256,13 @@ bool QCefBrowserClient::RunContextMenu(
 	CefRefPtr<CefContextMenuParams>, CefRefPtr<CefMenuModel> model,
 	CefRefPtr<CefRunContextMenuCallback> callback)
 {
-	std::vector<std::tuple<std::string, int, bool, int>> menu_items;
+	std::vector<std::tuple<std::string, int, bool, int, bool>> menu_items;
 	menu_items.reserve(model->GetCount());
 	for (int i = 0; i < model->GetCount(); i++) {
 		menu_items.push_back(
 			{model->GetLabelAt(i), model->GetCommandIdAt(i),
-			 model->IsEnabledAt(i), model->GetTypeAt(i)});
+			 model->IsEnabledAt(i), model->GetTypeAt(i),
+			 model->IsCheckedAt(i)});
 	}
 
 	QMetaObject::invokeMethod(
@@ -267,16 +273,22 @@ bool QCefBrowserClient::RunContextMenu(
 			int command_id;
 			bool enabled;
 			int type_id;
+			bool check;
 
-			for (const std::tuple<std::string, int, bool, int>
+			for (const std::tuple<std::string, int, bool, int, bool>
 				     &menu_item : menu_items) {
-				std::tie(name, command_id, enabled, type_id) =
-					menu_item;
+				std::tie(name, command_id, enabled, type_id,
+					 check) = menu_item;
 				switch (type_id) {
+				case MENUITEMTYPE_CHECK:
 				case MENUITEMTYPE_COMMAND: {
 					QAction *item =
 						new QAction(name.c_str());
 					item->setEnabled(enabled);
+					if (type_id == MENUITEMTYPE_CHECK) {
+						item->setCheckable(true);
+						item->setChecked(check);
+					}
 					item->setProperty("cmd_id", command_id);
 					contextMenu.addAction(item);
 				} break;
@@ -298,6 +310,24 @@ bool QCefBrowserClient::RunContextMenu(
 	return true;
 }
 #endif
+
+bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser,
+					     CefRefPtr<CefFrame>,
+					     CefRefPtr<CefContextMenuParams>,
+					     int command_id,
+					     CefContextMenuHandler::EventFlags)
+{
+	if (command_id < MENU_ID_CUSTOM_FIRST)
+		return false;
+
+	switch (command_id) {
+	case MENU_ITEM_MUTE:
+		browser->GetHost()->SetAudioMuted(
+			!browser->GetHost()->IsAudioMuted());
+		return true;
+	}
+	return false;
+}
 
 void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
 				  CefRefPtr<CefFrame> frame, int)
