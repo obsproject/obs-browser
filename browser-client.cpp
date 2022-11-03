@@ -695,8 +695,12 @@ bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
 		return false;
 	}
 
-	blog(errorLevel, "[obs-browser: '%s'] %s: %s (%s:%d)",
-	     obs_source_get_name(bs->source), code, message.ToString().c_str(),
-	     source.ToString().c_str(), line);
+	const char *sourceName = "<unknown>";
+
+	if (bs && bs->source)
+		sourceName = obs_source_get_name(bs->source);
+
+	blog(errorLevel, "[obs-browser: '%s'] %s: %s (%s:%d)", sourceName, code,
+	     message.ToString().c_str(), source.ToString().c_str(), line);
 	return false;
 }
