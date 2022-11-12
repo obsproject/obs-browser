@@ -73,6 +73,9 @@ void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 		QMetaObject::invokeMethod(widget, "titleChanged",
 					  Q_ARG(QString, qt_title));
 	} else { /* handle popup title */
+		if (title.compare("DevTools") == 0)
+			return;
+
 		CefWindowHandle handl = browser->GetHost()->GetWindowHandle();
 #ifdef _WIN32
 		std::wstring str_title = title;
@@ -328,10 +331,14 @@ bool QCefBrowserClient::OnContextMenuCommand(
 	CefRefPtr<CefBrowserHost> host = browser->GetHost();
 	CefWindowInfo windowInfo;
 	QPointF pos;
+	QString title;
 	switch (command_id) {
 	case MENU_ITEM_DEVTOOLS:
 #if defined(_WIN32)
-		windowInfo.SetAsPopup(host->GetWindowHandle(), "");
+		title = QString(obs_module_text("DevTools"))
+				.arg(widget->parentWidget()->windowTitle());
+		windowInfo.SetAsPopup(host->GetWindowHandle(),
+				      title.toUtf8().constData());
 #endif
 		pos = widget->mapToGlobal(QPointF(0, 0));
 		windowInfo.bounds.x = pos.x();
