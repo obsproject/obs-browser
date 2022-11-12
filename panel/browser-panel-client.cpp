@@ -19,7 +19,8 @@
 #include <X11/Xlib.h>
 #endif
 
-#define MENU_ITEM_MUTE MENU_ID_CUSTOM_FIRST
+#define MENU_ITEM_DEVTOOLS MENU_ID_CUSTOM_FIRST
+#define MENU_ITEM_MUTE MENU_ID_CUSTOM_FIRST + 1
 
 /* CefClient */
 CefRefPtr<CefLoadHandler> QCefBrowserClient::GetLoadHandler()
@@ -245,6 +246,12 @@ void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 	if (model->IsVisible(MENU_ID_PRINT)) {
 		model->Remove(MENU_ID_PRINT);
 	}
+	if (model->IsVisible(MENU_ID_VIEW_SOURCE)) {
+		model->Remove(MENU_ID_VIEW_SOURCE);
+	}
+	model->AddSeparator();
+	model->InsertItemAt(model->GetCount(), MENU_ITEM_DEVTOOLS,
+			    obs_module_text("Inspect"));
 	model->InsertCheckItemAt(model->GetCount(), MENU_ITEM_MUTE,
 				 QObject::tr("Mute").toUtf8().constData());
 	model->SetChecked(MENU_ITEM_MUTE, browser->GetHost()->IsAudioMuted());
@@ -311,19 +318,32 @@ bool QCefBrowserClient::RunContextMenu(
 }
 #endif
 
-bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser,
-					     CefRefPtr<CefFrame>,
-					     CefRefPtr<CefContextMenuParams>,
-					     int command_id,
-					     CefContextMenuHandler::EventFlags)
+bool QCefBrowserClient::OnContextMenuCommand(
+	CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
+	CefRefPtr<CefContextMenuParams> params, int command_id,
+	CefContextMenuHandler::EventFlags)
 {
 	if (command_id < MENU_ID_CUSTOM_FIRST)
 		return false;
-
+	CefRefPtr<CefBrowserHost> host = browser->GetHost();
+	CefWindowInfo windowInfo;
+	QPointF pos;
 	switch (command_id) {
+	case MENU_ITEM_DEVTOOLS:
+#if defined(_WIN32)
+		windowInfo.SetAsPopup(host->GetWindowHandle(), "");
+#endif
+		pos = widget->mapToGlobal(QPointF(0, 0));
+		windowInfo.bounds.x = pos.x();
+		windowInfo.bounds.y = pos.y() + 30;
+		windowInfo.bounds.width = 900;
+		windowInfo.bounds.height = 700;
+		host->ShowDevTools(
+			windowInfo, host->GetClient(), CefBrowserSettings(),
+			{params.get()->GetXCoord(), params.get()->GetYCoord()});
+		return true;
 	case MENU_ITEM_MUTE:
-		browser->GetHost()->SetAudioMuted(
-			!browser->GetHost()->IsAudioMuted());
+		host->SetAudioMuted(!host->IsAudioMuted());
 		return true;
 	}
 	return false;
