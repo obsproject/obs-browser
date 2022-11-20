@@ -330,7 +330,7 @@ bool QCefBrowserClient::OnContextMenuCommand(
 		return false;
 	CefRefPtr<CefBrowserHost> host = browser->GetHost();
 	CefWindowInfo windowInfo;
-	QPointF pos;
+	QPoint pos;
 	QString title;
 	switch (command_id) {
 	case MENU_ITEM_DEVTOOLS:
@@ -340,7 +340,7 @@ bool QCefBrowserClient::OnContextMenuCommand(
 		windowInfo.SetAsPopup(host->GetWindowHandle(),
 				      title.toUtf8().constData());
 #endif
-		pos = widget->mapToGlobal(QPointF(0, 0));
+		pos = widget->mapToGlobal(QPoint(0, 0));
 		windowInfo.bounds.x = pos.x();
 		windowInfo.bounds.y = pos.y() + 30;
 		windowInfo.bounds.width = 900;
