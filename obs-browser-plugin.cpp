@@ -685,18 +685,6 @@ static void check_hwaccel_support(void)
 		}
 	}
 }
-#elif defined(__APPLE__)
-extern bool atLeast10_15(void);
-
-static void check_hwaccel_support(void)
-{
-	if (!atLeast10_15()) {
-		blog(LOG_INFO,
-		     "[obs-browser]: OS version older than 10.15 Disabling hwaccel");
-		hwaccel = false;
-	}
-	return;
-}
 #else
 static void check_hwaccel_support(void)
 {
