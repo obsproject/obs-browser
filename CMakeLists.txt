@@ -185,8 +185,6 @@ elseif(OS_MACOS)
   target_link_libraries(obs-browser PRIVATE ${COREFOUNDATION} ${APPKIT}
                                             CEF::Wrapper)
 
-  target_sources(obs-browser PRIVATE macutil.mm)
-
   set(CEF_HELPER_TARGET "obs-browser-helper")
   set(CEF_HELPER_OUTPUT_NAME "OBS Helper")
   set(CEF_HELPER_APP_SUFFIXES
