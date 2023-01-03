@@ -190,6 +190,9 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_int(props, "height", obs_module_text("Height"), 1,
 			       4096, 1);
 
+	obs_properties_add_bool(props, "reroute_audio",
+				obs_module_text("RerouteAudio"));
+
 	obs_property_t *fps_set = obs_properties_add_bool(
 		props, "fps_custom", obs_module_text("CustomFrameRate"));
 	obs_property_set_modified_callback(fps_set, is_fps_custom);
@@ -198,10 +201,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_property_set_enabled(fps_set, false);
 #endif
 
-	obs_properties_add_bool(props, "reroute_audio",
-				obs_module_text("RerouteAudio"));
-
 	obs_properties_add_int(props, "fps", obs_module_text("FPS"), 1, 60, 1);
+
 	obs_property_t *p = obs_properties_add_text(
 		props, "css", obs_module_text("CSS"), OBS_TEXT_MULTILINE);
 	obs_property_text_set_monospace(p, true);
