@@ -478,12 +478,16 @@ static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
 	case CEF_CHANNEL_LAYOUT_STEREO:
 		return SPEAKERS_STEREO; /**< Channels: FL, FR */
 	case CEF_CHANNEL_LAYOUT_2POINT1:
+	case CEF_CHANNEL_LAYOUT_2_1:
+	case CEF_CHANNEL_LAYOUT_SURROUND:
 		return SPEAKERS_2POINT1; /**< Channels: FL, FR, LFE */
 	case CEF_CHANNEL_LAYOUT_2_2:
 	case CEF_CHANNEL_LAYOUT_QUAD:
 	case CEF_CHANNEL_LAYOUT_4_0:
 		return SPEAKERS_4POINT0; /**< Channels: FL, FR, FC, RC */
 	case CEF_CHANNEL_LAYOUT_4_1:
+	case CEF_CHANNEL_LAYOUT_5_0:
+	case CEF_CHANNEL_LAYOUT_5_0_BACK:
 		return SPEAKERS_4POINT1; /**< Channels: FL, FR, FC, LFE, RC */
 	case CEF_CHANNEL_LAYOUT_5_1:
 	case CEF_CHANNEL_LAYOUT_5_1_BACK:
