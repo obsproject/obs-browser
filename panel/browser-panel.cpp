@@ -412,7 +412,8 @@ void QCefWidgetInternal::showEvent(QShowEvent *event)
 
 	if (!cefBrowser) {
 		obs_browser_initialize();
-		connect(&timer, SIGNAL(timeout()), this, SLOT(Init()));
+		connect(&timer, &QTimer::timeout, this,
+			&QCefWidgetInternal::Init);
 		timer.start(500);
 		Init();
 	}
