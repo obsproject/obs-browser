@@ -419,6 +419,9 @@ static void BrowserInit(void)
 
 static void BrowserShutdown(void)
 {
+#if !ENABLE_LOCAL_FILE_URL_SCHEME
+	CefClearSchemeHandlerFactories();
+#endif
 #ifdef ENABLE_BROWSER_QT_LOOP
 	while (messageObject.ExecuteNextBrowserTask())
 		;
