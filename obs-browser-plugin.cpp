@@ -387,6 +387,10 @@ static void BrowserInit(void)
 
 	app = new BrowserApp(tex_sharing_avail);
 
+	BPtr<char> pagesPath = obs_module_file("dev_tools_discovery.html");
+	BPtr<char> pagesFile = os_quick_read_utf8_file(pagesPath);
+	app->SetDevToolsFile(pagesFile);
+
 #ifdef _WIN32
 	CefExecuteProcess(args, app, nullptr);
 #endif

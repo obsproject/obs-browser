@@ -50,6 +50,17 @@ CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
 	return this;
 }
 
+CefRefPtr<CefResourceBundleHandler> BrowserApp::GetResourceBundleHandler()
+{
+	return this;
+}
+
+BrowserApp::~BrowserApp()
+{
+	if (devToolsFile != nullptr)
+		free(devToolsFile);
+}
+
 void BrowserApp::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar)
 {
 	registrar->AddCustomScheme("http",
@@ -405,6 +416,33 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 	}
 
 	return true;
+}
+
+bool BrowserApp::GetDataResource(int resource_id, void *&data,
+				 size_t &data_size)
+{
+	if (resource_id == IDR_CEF_DEVTOOLS_DISCOVERY_PAGE &&
+	    devToolsFile != nullptr) {
+		data = devToolsFile;
+		data_size = strlen(devToolsFile);
+		return true;
+	}
+	return false;
+}
+
+bool BrowserApp::GetLocalizedString(int, CefString &)
+{
+	return false;
+};
+
+bool BrowserApp::GetDataResourceForScale(int, ScaleFactor, void *&, size_t &)
+{
+	return false;
+};
+
+void BrowserApp::SetDevToolsFile(char *data)
+{
+	devToolsFile = strdup(data);
 }
 
 #ifdef ENABLE_BROWSER_QT_LOOP
