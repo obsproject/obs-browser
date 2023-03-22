@@ -1,0 +1,144 @@
+<html>
+
+<head>
+	<!-- Custom variant of dev_tools_discovery.html used internally by CEF -->
+	<title>OBS Browser Remote Debugging</title>
+	<style>
+		html {
+			font-family: Arial, Helvetica, sans-serif;
+		}
+
+		button#refresh {
+			vertical-align: text-bottom;
+		}
+
+		#items>li>button {
+			background: none;
+			border: none;
+			cursor: pointer;
+			padding-top: 0;
+			padding-bottom: 0;
+		}
+
+		a {
+			color: #585858;
+		}
+
+		a:visited {
+			color: #7e7070;
+		}
+
+		a:hover {
+			color: #000;
+			text-decoration: none;
+		}
+
+		.hidden {
+			display: none;
+		}
+	</style>
+
+	<script>
+		let children = {};
+		function onLoad() {
+			const list = document.getElementById('items');
+			while (list.firstChild) {
+				list.removeChild(list.firstChild);
+			}
+			const t = new Date().getTime();
+			fetch(`/json/list?t=${t}`)
+				.then(resp => resp.json())
+				.then(onFetch)
+				.catch(() => {
+					list.innerText = 'Failed to fetch list. Did OBS close?';
+				});
+			fetch(`/json/version?t=${t}`)
+				.then(resp => resp.json())
+				.then(onVersion);
+		}
+
+		function onFetch(resp) {
+			resp.sort((a, b) => {
+				const p = 'page';
+				if (a.type === p && b.type !== p)
+					return -1;
+				if (a.type !== p && b.type === p)
+					return 1;
+				return 0;
+			});
+			for (const el of resp) {
+				children[el.id] = [];
+			}
+			for (const el of resp) {
+				if (el.parentId) children[el.parentId].push(el);
+			}
+			generateList(resp);
+		}
+
+		function onVersion(resp) {
+			const v = document.getElementById('version');
+			const uA = resp['User-Agent'].split(' ');
+			const rV = uA.filter(r => r.startsWith('OBS/'));
+			v.innerText = rV[0].replace('/', ' ');
+		}
+
+		function generateList(resp) {
+			for (const el of resp) {
+				appendItem(el);
+			}
+		}
+
+		function makeLink(devtoolsFrontendUrl, url, title) {
+			let linkEl;
+			const listItem = document.createElement('li');
+			if (devtoolsFrontendUrl) {
+				linkEl = document.createElement('a');
+				linkEl.title = url;
+				linkEl.href = devtoolsFrontendUrl;
+				linkEl.target = '_blank';
+			} else {
+				linkEl = document.createElement('span');
+				linkEl.title = 'Already debugging';
+			}
+			const text = document.createElement('span');
+			text.innerText = title || '(untitled tab)';
+
+			linkEl.appendChild(text);
+			listItem.appendChild(linkEl);
+			return listItem;
+		}
+
+		function appendChildren(item, idChildren) {
+			const childList = document.createElement('ul');
+			for (const ch of idChildren) {
+				const framePath = new URL(ch.title);
+				const innerTitle = `${framePath.hostname}${framePath.pathname}`;
+				const itemChild = makeLink(ch.devtoolsFrontendUrl, ch.url, innerTitle);
+				childList.appendChild(itemChild);
+			}
+			item.appendChild(childList);
+		}
+
+		function appendItem(data) {
+			const { title, devtoolsFrontendUrl, id, parentId, type, url } = data;
+			if (type !== 'page') return;
+			const item = makeLink(devtoolsFrontendUrl, url, title);
+
+			if (children[id].length) appendChildren(item, children[id]);
+			document.getElementById('items').appendChild(item);
+		}
+	</script>
+</head>
+
+<body onload="onLoad()">
+	<h3 id="heading">
+		<span id="version"></span>
+		<span>Inspectable Browser Sources & Docks</span>
+		<button id="refresh" onclick="onLoad()" type="button">&#10227; Refresh</button>
+	</h3>
+	<ul id="items">
+
+	</ul>
+</body>
+
+</html>

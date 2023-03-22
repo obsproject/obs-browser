@@ -66,6 +66,7 @@ extern void QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc func);
 class BrowserApp : public CefApp,
 		   public CefRenderProcessHandler,
 		   public CefBrowserProcessHandler,
+		   public CefResourceBundleHandler,
 		   public CefV8Handler {
 
 	void ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
@@ -77,17 +78,21 @@ class BrowserApp : public CefApp,
 	bool shared_texture_available;
 	CallbackMap callbackMap;
 	int callbackId;
+	char *devToolsFile;
 
 public:
 	inline BrowserApp(bool shared_texture_available_ = false)
 		: shared_texture_available(shared_texture_available_)
 	{
 	}
+	~BrowserApp();
 
 	virtual CefRefPtr<CefRenderProcessHandler>
 	GetRenderProcessHandler() override;
 	virtual CefRefPtr<CefBrowserProcessHandler>
 	GetBrowserProcessHandler() override;
+	virtual CefRefPtr<CefResourceBundleHandler>
+	GetResourceBundleHandler() override;
 	virtual void OnBeforeChildProcessLaunch(
 		CefRefPtr<CefCommandLine> command_line) override;
 	virtual void OnRegisterCustomSchemes(
@@ -109,6 +114,16 @@ public:
 			     CefRefPtr<CefV8Value> &retval,
 			     CefString &exception) override;
 
+	/* CefResourceBundleHandler */
+	virtual bool GetDataResource(int resource_id, void *&data,
+				     size_t &data_size) override;
+	virtual bool GetLocalizedString(int message_id,
+					CefString &string) override;
+	virtual bool GetDataResourceForScale(int resource_id,
+					     ScaleFactor scale_factor,
+					     void *&data,
+					     size_t &data_size) override;
+
 #ifdef ENABLE_BROWSER_QT_LOOP
 	virtual void OnScheduleMessagePumpWork(int64 delay_ms) override;
 	QTimer frameTimer;
@@ -123,6 +138,7 @@ public:
 	void SetDocumentVisibility(CefRefPtr<CefBrowser> browser,
 				   bool isVisible);
 #endif
+	void SetDevToolsFile(char *data);
 
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 };
