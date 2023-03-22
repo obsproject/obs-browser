@@ -10,6 +10,7 @@
 #include <QInputDialog>
 #include <QRegularExpression>
 #include <QLabel>
+#include <QClipboard>
 
 #include <obs-module.h>
 #ifdef _WIN32
@@ -24,6 +25,7 @@
 #define MENU_ITEM_ZOOM_IN MENU_ID_CUSTOM_FIRST + 2
 #define MENU_ITEM_ZOOM_RESET MENU_ID_CUSTOM_FIRST + 3
 #define MENU_ITEM_ZOOM_OUT MENU_ID_CUSTOM_FIRST + 4
+#define MENU_ITEM_COPY_URL MENU_ID_CUSTOM_FIRST + 5
 
 /* CefClient */
 CefRefPtr<CefLoadHandler> QCefBrowserClient::GetLoadHandler()
@@ -262,6 +264,8 @@ void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 	}
 	model->AddItem(MENU_ITEM_ZOOM_OUT, obs_module_text("Zoom.Out"));
 	model->AddSeparator();
+	model->InsertItemAt(model->GetCount(), MENU_ITEM_COPY_URL,
+			    obs_module_text("CopyUrl"));
 	model->InsertItemAt(model->GetCount(), MENU_ITEM_DEVTOOLS,
 			    obs_module_text("Inspect"));
 	model->InsertCheckItemAt(model->GetCount(), MENU_ITEM_MUTE,
@@ -370,6 +374,22 @@ bool QCefBrowserClient::OnContextMenuCommand(
 	case MENU_ITEM_ZOOM_OUT:
 		widget->zoomPage(-1);
 		return true;
+	case MENU_ITEM_COPY_URL:
+		std::string url = browser->GetMainFrame()->GetURL().ToString();
+		auto saveClipboard = [url]() {
+			QClipboard *clipboard = QApplication::clipboard();
+
+			clipboard->setText(url.c_str(), QClipboard::Clipboard);
+
+			if (clipboard->supportsSelection()) {
+				clipboard->setText(url.c_str(),
+						   QClipboard::Selection);
+			}
+		};
+		QMetaObject::invokeMethod(
+			QCoreApplication::instance()->thread(), saveClipboard);
+		return true;
+		break;
 	}
 	return false;
 }
