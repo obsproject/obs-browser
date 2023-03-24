@@ -21,7 +21,6 @@
 #include <graphics/graphics.h>
 #include <util/threading.h>
 #include "cef-headers.hpp"
-#include "browser-config.h"
 #include "obs-browser-source.hpp"
 
 struct BrowserSource;

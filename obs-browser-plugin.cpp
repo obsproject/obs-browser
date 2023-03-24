@@ -32,7 +32,6 @@
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
 #include "browser-version.h"
-#include "browser-config.h"
 
 #include "json11/json11.hpp"
 #include "obs-websocket-api/obs-websocket-api.h"
