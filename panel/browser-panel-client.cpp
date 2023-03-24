@@ -79,11 +79,12 @@ void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 		if (title.compare("DevTools") == 0)
 			return;
 
+#if defined(_WIN32)
 		CefWindowHandle handl = browser->GetHost()->GetWindowHandle();
-#ifdef _WIN32
 		std::wstring str_title = title;
 		SetWindowTextW((HWND)handl, str_title.c_str());
 #elif defined(__linux__)
+		CefWindowHandle handl = browser->GetHost()->GetWindowHandle();
 		XStoreName(cef_get_xdisplay(), handl, title.ToString().c_str());
 #endif
 	}
