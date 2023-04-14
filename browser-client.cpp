@@ -677,6 +677,13 @@ void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 
 		frame->ExecuteJavaScript(script, "", 0);
 	}
+
+	if (bs->javascript_active && !bs->javascript.empty()) {
+		blog(LOG_INFO,
+		     "obs-browser: the user has javascript enabled on source %s.",
+		     obs_source_get_name(bs->source));
+		frame->ExecuteJavaScript(bs->javascript, "", 0);
+	}
 }
 
 bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
