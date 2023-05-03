@@ -12,6 +12,10 @@ target_compile_definitions(browser-panels INTERFACE BROWSER_AVAILABLE)
 target_sources(obs-browser PRIVATE panel/browser-panel-client.hpp panel/browser-panel-internal.hpp
                                    panel/browser-panel.cpp panel/browser-panel-client.cpp)
 
+if(OS_MACOS)
+  target_sources(obs-browser PRIVATE panel/browser-panel-macos.m)
+endif()
+
 target_link_libraries(obs-browser PRIVATE OBS::browser-panels Qt::Widgets)
 
 set_target_properties(

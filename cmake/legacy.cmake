@@ -244,6 +244,7 @@ if(ENABLE_BROWSER_PANELS)
   target_link_libraries(obs-browser-panels INTERFACE CEF::Wrapper)
 
   if(OS_MACOS)
+    target_sources(obs-browser PRIVATE panel/browser-panel-macos.m)
     target_link_libraries(obs-browser-panels INTERFACE objc)
   endif()
 

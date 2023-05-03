@@ -11,10 +11,6 @@
 #include <QThread>
 #endif
 
-#ifdef __APPLE__
-#include <objc/objc.h>
-#endif
-
 #include <obs-module.h>
 #include <util/threading.h>
 #include <util/base.h>
@@ -161,6 +157,10 @@ QCefWidgetInternal::~QCefWidgetInternal()
 	closeBrowser();
 }
 
+#ifdef __APPLE__
+extern "C" void RemoveNSViewFromSuperview(void *view);
+#endif
+
 void QCefWidgetInternal::closeBrowser()
 {
 	CefRefPtr<CefBrowser> browser = cefBrowser;
@@ -203,10 +203,8 @@ void QCefWidgetInternal::closeBrowser()
 		}
 #elif __APPLE__
 		// felt hacky, might delete later
-		void *view = (id)cefBrowser->GetHost()->GetWindowHandle();
-		if (*((bool *)view))
-			((void (*)(id, SEL))objc_msgSend)(
-				(id)view, sel_getUid("removeFromSuperview"));
+		void *view = cefBrowser->GetHost()->GetWindowHandle();
+		RemoveNSViewFromSuperview(view);
 #endif
 
 		destroyBrowser(browser);
