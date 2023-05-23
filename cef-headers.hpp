@@ -37,8 +37,6 @@
 #include <include/cef_render_process_handler.h>
 #include <include/cef_request_context_handler.h>
 #include <include/cef_jsdialog_handler.h>
-#include <include/cef_resource_bundle_handler.h>
-#include <include/cef_pack_resources.h>
 #if defined(__APPLE__)
 #include "include/wrapper/cef_library_loader.h"
 #endif
