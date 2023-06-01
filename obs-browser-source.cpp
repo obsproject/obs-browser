@@ -20,7 +20,7 @@
 #include "browser-client.hpp"
 #include "browser-scheme.hpp"
 #include "wide-string.hpp"
-#include "json11/json11.hpp"
+#include <nlohmann/json.hpp>
 #include <util/threading.h>
 #include <QApplication>
 #include <util/dstr.h>
@@ -38,7 +38,6 @@
 #endif
 
 using namespace std;
-using namespace json11;
 
 extern bool QueueCEFTask(std::function<void()> task);
 
@@ -427,7 +426,8 @@ void BrowserSource::SetShowing(bool showing)
 							  PID_RENDERER, msg);
 			},
 			true);
-		Json json = Json::object{{"visible", showing}};
+		nlohmann::json json;
+		json["visible"] = showing;
 		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
 #if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && \
 	defined(ENABLE_BROWSER_SHARED_TEXTURE)
@@ -463,7 +463,8 @@ void BrowserSource::SetActive(bool active)
 						  msg);
 		},
 		true);
-	Json json = Json::object{{"active", active}};
+	nlohmann::json json;
+	json["active"] = active;
 	DispatchJSEvent("obsSourceActiveChanged", json.dump(), this);
 }
 

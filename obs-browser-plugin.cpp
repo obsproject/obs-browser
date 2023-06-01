@@ -27,13 +27,13 @@
 #include <sstream>
 #include <thread>
 #include <mutex>
+#include <nlohmann/json.hpp>
 
 #include "obs-browser-source.hpp"
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
 #include "browser-version.h"
 
-#include "json11/json11.hpp"
 #include "obs-websocket-api/obs-websocket-api.h"
 #include "cef-headers.hpp"
 
@@ -59,7 +59,6 @@ MODULE_EXPORT const char *obs_module_description(void)
 }
 
 using namespace std;
-using namespace json11;
 
 static thread manager_thread;
 static bool manager_initialized = false;
@@ -610,10 +609,10 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		if (!name)
 			break;
 
-		Json json = Json::object{
-			{"name", name},
-			{"width", (int)obs_source_get_width(source)},
-			{"height", (int)obs_source_get_height(source)}};
+		nlohmann::json json = {{"name", name},
+				       {"width", obs_source_get_width(source)},
+				       {"height",
+					obs_source_get_height(source)}};
 
 		DispatchJSEvent("obsSceneChanged", json.dump());
 		break;
