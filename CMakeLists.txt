@@ -12,6 +12,7 @@ if(NOT ENABLE_BROWSER)
 endif()
 
 find_package(CEF REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 add_library(obs-browser MODULE)
 add_library(OBS::browser ALIAS obs-browser)
@@ -33,8 +34,6 @@ target_sources(
           browser-scheme.hpp
           browser-version.h
           cef-headers.hpp
-          deps/json11/json11.cpp
-          deps/json11/json11.hpp
           deps/base64/base64.cpp
           deps/base64/base64.hpp
           deps/wide-string.cpp
@@ -46,7 +45,7 @@ target_sources(
 target_include_directories(obs-browser PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
 target_compile_features(obs-browser PRIVATE cxx_std_17)
-target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api)
+target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api nlohmann_json::nlohmann_json)
 
 if(OS_WINDOWS)
   include(cmake/os-windows.cmake)

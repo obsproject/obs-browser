@@ -19,7 +19,7 @@
 #include "browser-client.hpp"
 #include "obs-browser-source.hpp"
 #include "base64/base64.hpp"
-#include "json11/json11.hpp"
+#include <nlohmann/json.hpp>
 #include <obs-frontend-api.h>
 #include <obs.hpp>
 #include <util/platform.h>
@@ -29,8 +29,6 @@
 #if defined(__APPLE__) && CHROME_VERSION_BUILD > 4430
 #include <IOSurface/IOSurface.h>
 #endif
-
-using namespace json11;
 
 inline bool BrowserClient::valid() const
 {
@@ -119,7 +117,7 @@ bool BrowserClient::OnProcessMessageReceived(
 {
 	const std::string &name = message->GetName();
 	CefRefPtr<CefListValue> input_args = message->GetArgumentList();
-	Json json;
+	nlohmann::json json;
 
 	if (!valid()) {
 		return false;
@@ -225,12 +223,10 @@ bool BrowserClient::OnProcessMessageReceived(
 			if (!name)
 				return false;
 
-			json = Json::object{
-				{"name", name},
-				{"width",
-				 (int)obs_source_get_width(current_scene)},
+			json = {{"name", name},
+				{"width", obs_source_get_width(current_scene)},
 				{"height",
-				 (int)obs_source_get_height(current_scene)}};
+				 obs_source_get_height(current_scene)}};
 		} else if (name == "getTransitions") {
 			struct obs_frontend_source_list list = {};
 			obs_frontend_get_transitions(&list);
@@ -250,8 +246,7 @@ bool BrowserClient::OnProcessMessageReceived(
 		[[fallthrough]];
 	case ControlLevel::ReadObs:
 		if (name == "getStatus") {
-			json = Json::object{
-				{"recording", obs_frontend_recording_active()},
+			json = {{"recording", obs_frontend_recording_active()},
 				{"streaming", obs_frontend_streaming_active()},
 				{"recordingPaused",
 				 obs_frontend_recording_paused()},
