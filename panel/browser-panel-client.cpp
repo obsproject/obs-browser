@@ -398,7 +398,12 @@ bool QCefBrowserClient::OnContextMenuCommand(
 void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
 				  CefRefPtr<CefFrame> frame, int)
 {
-	if (frame->IsMain() && !script.empty())
+	if (!frame->IsMain())
+		return;
+
+	if (widget && !widget->script.empty())
+		frame->ExecuteJavaScript(widget->script, CefString(), 0);
+	else if (!script.empty())
 		frame->ExecuteJavaScript(script, CefString(), 0);
 }
 
