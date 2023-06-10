@@ -292,17 +292,12 @@ void BrowserClient::GetViewRect(CefRefPtr<CefBrowser>, CefRect &rect)
 
 bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 	std::string str_text = text;
 	QMetaObject::invokeMethod(
 		QCoreApplication::instance()->thread(), [str_text]() {
 			QToolTip::showText(QCursor::pos(), str_text.c_str());
 		});
 	return true;
-#else
-	UNUSED_PARAMETER(text);
-	return false;
-#endif
 }
 
 void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type,
