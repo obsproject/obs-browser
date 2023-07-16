@@ -13,8 +13,6 @@ target_sources(
           obs-browser-page/obs-browser-page-main.cpp
           browser-app.cpp
           browser-app.hpp
-          deps/json11/json11.cpp
-          deps/json11/json11.hpp
           obs-browser-page.manifest)
 
 target_include_directories(obs-browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps"
@@ -23,7 +21,7 @@ target_include_directories(obs-browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DI
 target_compile_options(obs-browser-helper PRIVATE $<IF:$<CONFIG:DEBUG>,/MTd,/MT>)
 target_compile_definitions(obs-browser-helper PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
 
-target_link_libraries(obs-browser-helper PRIVATE CEF::Wrapper CEF::Library)
+target_link_libraries(obs-browser-helper PRIVATE CEF::Wrapper CEF::Library nlohmann_json::nlohmann_json)
 target_link_options(obs-browser-helper PRIVATE /IGNORE:4099 /SUBSYSTEM:WINDOWS)
 
 set(OBS_EXECUTABLE_DESTINATION "${OBS_PLUGIN_DESTINATION}")

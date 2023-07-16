@@ -32,7 +32,7 @@ foreach(helper IN LISTS helper_suffixes)
   add_executable(OBS::${target_name} ALIAS ${target_name})
 
   target_sources(${target_name} PRIVATE browser-app.cpp browser-app.hpp obs-browser-page/obs-browser-page-main.cpp
-                                        cef-headers.hpp deps/json11/json11.cpp deps/json11/json11.hpp)
+                                        cef-headers.hpp)
   target_compile_definitions(${target_name} PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
   if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0.3)
     target_compile_options(${target_name} PRIVATE -Wno-error=unqualified-std-cast-call)
@@ -41,7 +41,7 @@ foreach(helper IN LISTS helper_suffixes)
   target_include_directories(${target_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps"
                                                     "${CMAKE_CURRENT_SOURCE_DIR}/obs-browser-page")
 
-  target_link_libraries(${target_name} PRIVATE CEF::Wrapper)
+  target_link_libraries(${target_name} PRIVATE CEF::Wrapper nlohmann_json::nlohmann_json)
 
   set_target_properties(
     ${target_name}
