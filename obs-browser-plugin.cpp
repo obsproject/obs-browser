@@ -134,14 +134,18 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_bool(settings, "reroute_audio", false);
 }
 
-static bool is_local_file_modified(obs_properties_t *props, obs_property_t *,
-				   obs_data_t *settings)
+static bool content_type_modified(obs_properties_t *props, obs_property_t *,
+				  obs_data_t *settings)
 {
-	bool enabled = obs_data_get_bool(settings, "is_local_file");
+	ContentType content_type = static_cast<ContentType>(
+		obs_data_get_int(settings, "content_type"));
 	obs_property_t *url = obs_properties_get(props, "url");
 	obs_property_t *local_file = obs_properties_get(props, "local_file");
-	obs_property_set_visible(url, !enabled);
-	obs_property_set_visible(local_file, enabled);
+	obs_property_t *html = obs_properties_get(props, "html");
+	obs_property_set_visible(url, content_type == ContentType::URL);
+	obs_property_set_visible(local_file,
+				 content_type == ContentType::LocalFile);
+	obs_property_set_visible(html, content_type == ContentType::HTML);
 
 	return true;
 }
@@ -163,8 +167,15 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	DStr path;
 
 	obs_properties_set_flags(props, OBS_PROPERTIES_DEFER_UPDATE);
-	obs_property_t *prop = obs_properties_add_bool(
-		props, "is_local_file", obs_module_text("LocalFile"));
+	obs_property_t *prop = obs_properties_add_list(
+		props, "content_type", obs_module_text("ContentType"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(prop, obs_module_text("URL"),
+				  (int)ContentType::URL);
+	obs_property_list_add_int(prop, obs_module_text("LocalFile"),
+				  (int)ContentType::LocalFile);
+	obs_property_list_add_int(prop, obs_module_text("HTML"),
+				  (int)ContentType::HTML);
 
 	if (bs && !bs->url.empty()) {
 		const char *slash;
@@ -176,12 +187,15 @@ static obs_properties_t *browser_source_get_properties(void *data)
 			dstr_resize(path, slash - path->array + 1);
 	}
 
-	obs_property_set_modified_callback(prop, is_local_file_modified);
+	obs_property_set_modified_callback(prop, content_type_modified);
 	obs_properties_add_path(props, "local_file",
 				obs_module_text("LocalFile"), OBS_PATH_FILE,
 				"*.*", path->array);
 	obs_properties_add_text(props, "url", obs_module_text("URL"),
 				OBS_TEXT_DEFAULT);
+	prop = obs_properties_add_text(props, "html", obs_module_text("HTML"),
+				       OBS_TEXT_MULTILINE);
+	obs_property_text_set_monospace(prop, true);
 
 	obs_properties_add_int(props, "width", obs_module_text("Width"), 1,
 			       8192, 1);
@@ -265,24 +279,24 @@ static obs_missing_files_t *browser_source_missingfiles(void *data)
 	BrowserSource *bs = static_cast<BrowserSource *>(data);
 	obs_missing_files_t *files = obs_missing_files_create();
 
-	if (bs) {
-		obs_source_t *source = bs->source;
-		OBSDataAutoRelease settings = obs_source_get_settings(source);
+	if (!bs) {
+		return files;
+	}
 
-		bool enabled = obs_data_get_bool(settings, "is_local_file");
-		const char *path = obs_data_get_string(settings, "local_file");
+	obs_source_t *source = bs->source;
+	OBSDataAutoRelease settings = obs_source_get_settings(source);
 
-		if (enabled && strcmp(path, "") != 0) {
-			if (!os_file_exists(path)) {
-				obs_missing_file_t *file =
-					obs_missing_file_create(
-						path, missing_file_callback,
-						OBS_MISSING_FILE_SOURCE,
-						bs->source, NULL);
+	ContentType content_type = static_cast<ContentType>(
+		obs_data_get_int(settings, "content_type"));
+	const char *path = obs_data_get_string(settings, "local_file");
 
-				obs_missing_files_add_file(files, file);
-			}
-		}
+	if (content_type == ContentType::LocalFile && strcmp(path, "") != 0 &&
+	    !os_file_exists(path)) {
+		obs_missing_file_t *file = obs_missing_file_create(
+			path, missing_file_callback, OBS_MISSING_FILE_SOURCE,
+			bs->source, NULL);
+
+		obs_missing_files_add_file(files, file);
 	}
 
 	return files;

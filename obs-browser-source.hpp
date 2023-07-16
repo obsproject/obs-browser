@@ -50,6 +50,12 @@ enum class ControlLevel : int {
 };
 inline constexpr ControlLevel DEFAULT_CONTROL_LEVEL = ControlLevel::ReadObs;
 
+enum class ContentType : int {
+	URL,
+	LocalFile,
+	HTML,
+};
+
 extern bool hwaccel;
 
 struct BrowserSource {
@@ -64,6 +70,7 @@ struct BrowserSource {
 	CefRefPtr<CefBrowser> cefBrowser;
 
 	std::string url;
+	std::string html;
 	std::string css;
 	gs_texture_t *texture = nullptr;
 	gs_texture_t *extra_texture = nullptr;
@@ -86,7 +93,7 @@ struct BrowserSource {
 	double canvas_fps = 0;
 	bool restart = false;
 	bool shutdown_on_invisible = false;
-	bool is_local = false;
+	ContentType content_type = ContentType::URL;
 	bool first_update = true;
 	bool reroute_audio = true;
 	std::atomic<bool> destroying = false;

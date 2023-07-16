@@ -651,11 +651,20 @@ void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser, int id)
 void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 			      int)
 {
-	if (!valid()) {
+	if (!valid() || !frame->IsMain()) {
 		return;
 	}
+	if (bs->content_type == ContentType::HTML) {
+		std::string uriEncodedHTML =
+			CefURIEncode(bs->html, false).ToString();
 
-	if (frame->IsMain() && bs->css.length()) {
+		std::string script =
+			"document.body.innerHTML = decodeURIComponent(\"" +
+			uriEncodedHTML + "\");";
+
+		frame->ExecuteJavaScript(script, "", 0);
+	}
+	if (bs->css.length()) {
 		std::string uriEncodedCSS =
 			CefURIEncode(bs->css, false).ToString();
 

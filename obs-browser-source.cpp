@@ -509,7 +509,7 @@ inline void BrowserSource::SignalBeginFrame()
 void BrowserSource::Update(obs_data_t *settings)
 {
 	if (settings) {
-		bool n_is_local;
+		ContentType n_content_type;
 		int n_width;
 		int n_height;
 		bool n_fps_custom;
@@ -519,9 +519,15 @@ void BrowserSource::Update(obs_data_t *settings)
 		bool n_reroute;
 		ControlLevel n_webpage_control_level;
 		std::string n_url;
+		std::string n_html;
 		std::string n_css;
 
-		n_is_local = obs_data_get_bool(settings, "is_local_file");
+		if (obs_data_has_user_value(settings, "is_local_file")) {
+			obs_data_unset_user_value(settings, "is_local_file");
+			obs_data_set_int(settings, "content_type", 1);
+		}
+		n_content_type = static_cast<ContentType>(
+			obs_data_get_int(settings, "content_type"));
 		n_width = (int)obs_data_get_int(settings, "width");
 		n_height = (int)obs_data_get_int(settings, "height");
 		n_fps_custom = obs_data_get_bool(settings, "fps_custom");
@@ -529,13 +535,19 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_shutdown = obs_data_get_bool(settings, "shutdown");
 		n_restart = obs_data_get_bool(settings, "restart_when_active");
 		n_css = obs_data_get_string(settings, "css");
-		n_url = obs_data_get_string(settings,
-					    n_is_local ? "local_file" : "url");
+		if (n_content_type == ContentType::URL)
+			n_url = obs_data_get_string(settings, "url");
+		else if (n_content_type == ContentType::LocalFile)
+			n_url = obs_data_get_string(settings, "local_file");
+		else if (n_content_type == ContentType::HTML)
+			n_url = "about:blank";
+		n_html = obs_data_get_string(settings, "html");
 		n_reroute = obs_data_get_bool(settings, "reroute_audio");
 		n_webpage_control_level = static_cast<ControlLevel>(
 			obs_data_get_int(settings, "webpage_control_level"));
 
-		if (n_is_local && !n_url.empty()) {
+		if (n_content_type == ContentType::LocalFile &&
+		    !n_url.empty()) {
 			n_url = CefURIEncode(n_url, false);
 
 #ifdef _WIN32
@@ -576,11 +588,69 @@ void BrowserSource::Update(obs_data_t *settings)
 		}
 #endif
 
-		if (n_is_local == is_local && n_fps_custom == fps_custom &&
-		    n_fps == fps && n_shutdown == shutdown_on_invisible &&
-		    n_restart == restart && n_css == css && n_url == url &&
+		if (n_content_type == content_type &&
+		    n_fps_custom == fps_custom && n_fps == fps &&
+		    n_shutdown == shutdown_on_invisible &&
+		    n_restart == restart && n_url == url &&
 		    n_reroute == reroute_audio &&
 		    n_webpage_control_level == webpage_control_level) {
+
+			if (content_type == ContentType::HTML &&
+			    n_html != html) {
+				html = n_html;
+
+				ExecuteOnBrowser(
+					[=](CefRefPtr<CefBrowser> cefBrowser) {
+						std::string uriEncodedHTML =
+							CefURIEncode(html,
+								     false)
+								.ToString();
+
+						std::string script =
+							"document.body.innerHTML = decodeURIComponent(\"" +
+							uriEncodedHTML + "\");";
+
+						cefBrowser->GetMainFrame()
+							->ExecuteJavaScript(
+								script, "", 0);
+					},
+					true);
+			}
+
+			if (n_css != css) {
+				css = n_css;
+
+				ExecuteOnBrowser(
+					[=](CefRefPtr<CefBrowser> cefBrowser) {
+						std::string uriEncodedCSS =
+							CefURIEncode(css, false)
+								.ToString();
+
+						std::string script;
+						script += "if (obsCSS) {";
+						script +=
+							"obsCSS.innerHTML = decodeURIComponent(\"" +
+							uriEncodedCSS + "\");";
+						script += "}else{";
+						if (css.length()) {
+							script +=
+								"const obsCSS = document.createElement('style');";
+							script +=
+								"obsCSS.id = 'obsBrowserCustomStyle';";
+							script +=
+								"obsCSS.innerHTML = decodeURIComponent(\"" +
+								uriEncodedCSS +
+								"\");";
+							script +=
+								"document.querySelector('head').appendChild(obsCSS);";
+						}
+						script += "}";
+						cefBrowser->GetMainFrame()
+							->ExecuteJavaScript(
+								script, "", 0);
+					},
+					true);
+			}
 
 			if (n_width == width && n_height == height)
 				return;
@@ -603,7 +673,7 @@ void BrowserSource::Update(obs_data_t *settings)
 			return;
 		}
 
-		is_local = n_is_local;
+		content_type = n_content_type;
 		width = n_width;
 		height = n_height;
 		fps = n_fps;
@@ -614,6 +684,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		restart = n_restart;
 		css = n_css;
 		url = n_url;
+		html = n_html;
 
 		obs_source_set_audio_active(source, reroute_audio);
 	}
