@@ -595,7 +595,7 @@ extern "C" EXPORT QCef *obs_browser_create_qcef(void)
 	return new QCefInternal();
 }
 
-#define BROWSER_PANEL_VERSION 2
+#define BROWSER_PANEL_VERSION 3
 
 extern "C" EXPORT int obs_browser_qcef_version_export(void)
 {
