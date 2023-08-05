@@ -83,10 +83,12 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 		std::string disableFeatures =
 			command_line->GetSwitchValue("disable-features");
 		disableFeatures += ",HardwareMediaKeyHandling";
+		disableFeatures += ",WebBluetooth";
 		command_line->AppendSwitchWithValue("disable-features",
 						    disableFeatures);
 	} else {
 		command_line->AppendSwitchWithValue("disable-features",
+						    "WebBluetooth,"
 						    "HardwareMediaKeyHandling");
 	}
 
