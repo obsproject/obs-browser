@@ -99,6 +99,9 @@ BrowserSource::BrowserSource(obs_data_t *, obs_source_t *source_) : source(sourc
 	proc_handler_add(ph, "void javascript_event(string eventName, string jsonString)", jsEventFunction,
 			 (void *)this);
 
+	signal_handler_t *sh = obs_source_get_signal_handler(source);
+	signal_handler_add(sh, "void browser_signal(ptr source, string signal)");
+
 	/* defer update */
 	obs_source_update(source, nullptr);
 
