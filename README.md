@@ -315,6 +315,15 @@ Permissions required: ALL
 window.obsstudio.stopVirtualcam()
 ```
 
+#### Set the browser size
+Permissions required: BASIC
+```js
+/**
+ * @param {int} width - Width of the browser size
+ * @param {int} height - Height of the browser size
+ */
+window.obsstudio.setBrowserSize(width, height)
+```
 
 ### Register for visibility callbacks
 
