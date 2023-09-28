@@ -292,9 +292,9 @@ CefRefPtr<CefV8Value> CefValueToCefV8Value(CefRefPtr<CefValue> value)
 		CefRefPtr<CefListValue> list = value->GetList();
 		size_t size = list->GetSize();
 		result = CefV8Value::CreateArray((int)size);
-		for (int i = 0; i < size; i++) {
-			result->SetValue(
-				i, CefValueToCefV8Value(list->GetValue(i)));
+		for (size_t i = 0; i < size; i++) {
+			result->SetValue((int)i, CefValueToCefV8Value(
+							 list->GetValue(i)));
 		}
 	} break;
 	}
