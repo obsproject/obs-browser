@@ -1,15 +1,13 @@
-find_qt(COMPONENTS Widgets)
-
-find_library(COREFOUNDATION CoreFoundation)
-find_library(APPKIT AppKit)
-mark_as_advanced(COREFOUNDATION APPKIT)
+find_package(Qt6 REQUIRED Widgets)
 
 target_compile_definitions(obs-browser PRIVATE ENABLE_BROWSER_SHARED_TEXTURE ENABLE_BROWSER_QT_LOOP)
+
 if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0.3)
   target_compile_options(obs-browser PRIVATE -Wno-error=unqualified-std-cast-call)
 endif()
 
-target_link_libraries(obs-browser PRIVATE Qt::Widgets ${COREFOUNDATION} ${APPKIT} CEF::Wrapper)
+target_link_libraries(obs-browser PRIVATE Qt::Widgets CEF::Wrapper "$<LINK_LIBRARY:FRAMEWORK,CoreFoundation.framework>"
+                                          "$<LINK_LIBRARY:FRAMEWORK,AppKit.framework>")
 
 set(helper_basename browser-helper)
 set(helper_output_name "OBS Helper")
@@ -31,9 +29,12 @@ foreach(helper IN LISTS helper_suffixes)
   add_executable(${target_name} MACOSX_BUNDLE EXCLUDE_FROM_ALL)
   add_executable(OBS::${target_name} ALIAS ${target_name})
 
-  target_sources(${target_name} PRIVATE browser-app.cpp browser-app.hpp obs-browser-page/obs-browser-page-main.cpp
-                                        cef-headers.hpp)
+  target_sources(
+    ${target_name} PRIVATE # cmake-format: sortable
+                           browser-app.cpp browser-app.hpp cef-headers.hpp obs-browser-page/obs-browser-page-main.cpp)
+
   target_compile_definitions(${target_name} PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
+
   if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0.3)
     target_compile_options(${target_name} PRIVATE -Wno-error=unqualified-std-cast-call)
   endif()

@@ -22,10 +22,7 @@ mark_as_advanced(ENABLE_BROWSER_PANELS)
 
 target_sources(
   obs-browser
-  PRIVATE obs-browser-plugin.cpp
-          obs-browser-source.cpp
-          obs-browser-source.hpp
-          obs-browser-source-audio.cpp
+  PRIVATE # cmake-format: sortable
           browser-app.cpp
           browser-app.hpp
           browser-client.cpp
@@ -36,11 +33,15 @@ target_sources(
           cef-headers.hpp
           deps/base64/base64.cpp
           deps/base64/base64.hpp
-          deps/wide-string.cpp
-          deps/wide-string.hpp
+          deps/obs-websocket-api/obs-websocket-api.h
           deps/signal-restore.cpp
           deps/signal-restore.hpp
-          deps/obs-websocket-api/obs-websocket-api.h)
+          deps/wide-string.cpp
+          deps/wide-string.hpp
+          obs-browser-plugin.cpp
+          obs-browser-source-audio.cpp
+          obs-browser-source.cpp
+          obs-browser-source.hpp)
 
 target_include_directories(obs-browser PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
