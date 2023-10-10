@@ -6,8 +6,9 @@ set_target_properties(obs-browser PROPERTIES BUILD_RPATH "$ORIGIN/" INSTALL_RPAT
 add_executable(browser-helper)
 add_executable(OBS::browser-helper ALIAS browser-helper)
 
-target_sources(browser-helper PRIVATE cef-headers.hpp obs-browser-page/obs-browser-page-main.cpp browser-app.cpp
-                                      browser-app.hpp deps/json11/json11.cpp deps/json11/json11.hpp)
+target_sources(
+  browser-helper PRIVATE # cmake-format: sortable
+                         browser-app.cpp browser-app.hpp cef-headers.hpp obs-browser-page/obs-browser-page-main.cpp)
 
 target_include_directories(browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps"
                                                   "${CMAKE_CURRENT_SOURCE_DIR}/obs-browser-page")
@@ -15,6 +16,8 @@ target_include_directories(browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/d
 target_link_libraries(browser-helper PRIVATE CEF::Wrapper CEF::Library)
 
 set(OBS_EXECUTABLE_DESTINATION "${OBS_PLUGIN_DESTINATION}")
+
+# cmake-format: off
 set_target_properties_obs(
   browser-helper
   PROPERTIES FOLDER plugins/obs-browser
@@ -22,3 +25,4 @@ set_target_properties_obs(
              INSTALL_RPATH "$ORIGIN/"
              PREFIX ""
              OUTPUT_NAME obs-browser-page)
+# cmake-format: on

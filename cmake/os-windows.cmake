@@ -9,11 +9,9 @@ add_executable(OBS::browser-helper ALIAS obs-browser-helper)
 
 target_sources(
   obs-browser-helper
-  PRIVATE cef-headers.hpp
-          obs-browser-page/obs-browser-page-main.cpp
-          browser-app.cpp
-          browser-app.hpp
-          obs-browser-page.manifest)
+  PRIVATE # cmake-format: sortable
+          browser-app.cpp browser-app.hpp cef-headers.hpp obs-browser-page.manifest
+          obs-browser-page/obs-browser-page-main.cpp)
 
 target_include_directories(obs-browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps"
                                                       "${CMAKE_CURRENT_SOURCE_DIR}/obs-browser-page")

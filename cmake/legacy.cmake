@@ -137,12 +137,6 @@ if(NOT OS_MACOS OR ENABLE_BROWSER_LEGACY)
 endif()
 
 if(OS_WINDOWS)
-  if(MSVC)
-    target_compile_options(obs-browser PRIVATE $<IF:$<CONFIG:DEBUG>,/MTd,/MT>)
-
-    target_compile_options(obs-browser-page PRIVATE $<IF:$<CONFIG:DEBUG>,/MTd,/MT>)
-  endif()
-
   target_link_libraries(obs-browser PRIVATE CEF::Library d3d11 dxgi)
 
   if(TARGET CEF::Wrapper_Debug)
