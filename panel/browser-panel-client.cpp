@@ -405,6 +405,12 @@ void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
 		frame->ExecuteJavaScript(widget->script, CefString(), 0);
 	else if (!script.empty())
 		frame->ExecuteJavaScript(script, CefString(), 0);
+
+	std::string script2 = "window.close = () => ";
+	script2 += "console.log(";
+	script2 += "'OBS browser docks cannot be closed using JavaScript.'";
+	script2 += ");";
+	frame->ExecuteJavaScript(script2, "", 0);
 }
 
 bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
