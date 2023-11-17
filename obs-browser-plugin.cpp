@@ -549,55 +549,55 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 {
 	switch (event) {
 	case OBS_FRONTEND_EVENT_STREAMING_STARTING:
-		DispatchJSEvent("obsStreamingStarting", "");
+		DispatchJSEvent("obsStreamingStarting", "null");
 		break;
 	case OBS_FRONTEND_EVENT_STREAMING_STARTED:
-		DispatchJSEvent("obsStreamingStarted", "");
+		DispatchJSEvent("obsStreamingStarted", "null");
 		break;
 	case OBS_FRONTEND_EVENT_STREAMING_STOPPING:
-		DispatchJSEvent("obsStreamingStopping", "");
+		DispatchJSEvent("obsStreamingStopping", "null");
 		break;
 	case OBS_FRONTEND_EVENT_STREAMING_STOPPED:
-		DispatchJSEvent("obsStreamingStopped", "");
+		DispatchJSEvent("obsStreamingStopped", "null");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STARTING:
-		DispatchJSEvent("obsRecordingStarting", "");
+		DispatchJSEvent("obsRecordingStarting", "null");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STARTED:
-		DispatchJSEvent("obsRecordingStarted", "");
+		DispatchJSEvent("obsRecordingStarted", "null");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_PAUSED:
-		DispatchJSEvent("obsRecordingPaused", "");
+		DispatchJSEvent("obsRecordingPaused", "null");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_UNPAUSED:
-		DispatchJSEvent("obsRecordingUnpaused", "");
+		DispatchJSEvent("obsRecordingUnpaused", "null");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPING:
-		DispatchJSEvent("obsRecordingStopping", "");
+		DispatchJSEvent("obsRecordingStopping", "null");
 		break;
 	case OBS_FRONTEND_EVENT_RECORDING_STOPPED:
-		DispatchJSEvent("obsRecordingStopped", "");
+		DispatchJSEvent("obsRecordingStopped", "null");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING:
-		DispatchJSEvent("obsReplaybufferStarting", "");
+		DispatchJSEvent("obsReplaybufferStarting", "null");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED:
-		DispatchJSEvent("obsReplaybufferStarted", "");
+		DispatchJSEvent("obsReplaybufferStarted", "null");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED:
-		DispatchJSEvent("obsReplaybufferSaved", "");
+		DispatchJSEvent("obsReplaybufferSaved", "null");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPING:
-		DispatchJSEvent("obsReplaybufferStopping", "");
+		DispatchJSEvent("obsReplaybufferStopping", "null");
 		break;
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED:
-		DispatchJSEvent("obsReplaybufferStopped", "");
+		DispatchJSEvent("obsReplaybufferStopped", "null");
 		break;
 	case OBS_FRONTEND_EVENT_VIRTUALCAM_STARTED:
-		DispatchJSEvent("obsVirtualcamStarted", "");
+		DispatchJSEvent("obsVirtualcamStarted", "null");
 		break;
 	case OBS_FRONTEND_EVENT_VIRTUALCAM_STOPPED:
-		DispatchJSEvent("obsVirtualcamStopped", "");
+		DispatchJSEvent("obsVirtualcamStopped", "null");
 		break;
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED: {
 		OBSSourceAutoRelease source = obs_frontend_get_current_scene();
@@ -618,7 +618,7 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 		break;
 	}
 	case OBS_FRONTEND_EVENT_EXIT:
-		DispatchJSEvent("obsExit", "");
+		DispatchJSEvent("obsExit", "null");
 		break;
 	default:;
 	}
