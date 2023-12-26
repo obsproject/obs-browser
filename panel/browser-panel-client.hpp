@@ -95,6 +95,10 @@ public:
 		CefContextMenuHandler::EventFlags event_flags) override;
 
 	/* CefLoadHandler */
+	virtual void OnLoadStart(CefRefPtr<CefBrowser> browser,
+				 CefRefPtr<CefFrame> frame,
+				 TransitionType transition_type) override;
+
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser,
 			       CefRefPtr<CefFrame> frame,
 			       int httpStatusCode) override;
