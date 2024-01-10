@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16...3.25)
 
 option(ENABLE_BROWSER "Enable browser source plugin (required Chromium Embedded Framework)" OFF)
 
+include(cmake/obs-browser-api.cmake)
+
 if(NOT ENABLE_BROWSER)
   target_disable(obs-browser)
   target_disable_feature(obs-browser "Browser sources are not enabled by default (set CEF_ROOT_DIR and ENABLE_BROWSER)")
@@ -36,6 +38,8 @@ target_sources(
           deps/signal-restore.hpp
           deps/wide-string.cpp
           deps/wide-string.hpp
+          obs-browser-api-impl.cpp
+          obs-browser-api-impl.hpp
           obs-browser-plugin.cpp
           obs-browser-source-audio.cpp
           obs-browser-source.cpp
@@ -44,7 +48,7 @@ target_sources(
 target_include_directories(obs-browser PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
 target_compile_features(obs-browser PRIVATE cxx_std_17)
-target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api nlohmann_json::nlohmann_json)
+target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api OBS::browser-api nlohmann_json::nlohmann_json)
 
 if(OS_WINDOWS)
   include(cmake/os-windows.cmake)

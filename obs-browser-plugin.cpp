@@ -33,6 +33,7 @@
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
 #include "browser-version.h"
+#include "obs-browser-api-impl.hpp"
 
 #include "obs-websocket-api/obs-websocket-api.h"
 #include "cef-headers.hpp"
@@ -67,6 +68,7 @@ using namespace std;
 static thread manager_thread;
 static bool manager_initialized = false;
 os_event_t *cef_started_event = nullptr;
+static std::shared_ptr<BrowserApi> browserApi;
 
 #if defined(_WIN32)
 static int adapterCount = 0;
@@ -784,6 +786,8 @@ bool obs_module_load(void)
 	RegisterBrowserSource();
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 
+	browserApi = std::make_shared<BrowserApi>();
+
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	OBSDataAutoRelease private_data = obs_get_private_data();
 	hwaccel = obs_data_get_bool(private_data, "BrowserHWAccel");
@@ -830,6 +834,8 @@ void obs_module_post_load(void)
 
 void obs_module_unload(void)
 {
+	browserApi.reset();
+
 #ifdef ENABLE_BROWSER_QT_LOOP
 	BrowserShutdown();
 #else
