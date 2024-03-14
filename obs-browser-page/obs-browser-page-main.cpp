@@ -79,8 +79,10 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	std::thread shutdown_check;
 
 	CefMainArgs mainArgs(nullptr);
+#if CHROME_VERSION_BUILD < 5615
 	if (!SetHighDPIv2Scaling())
 		CefEnableHighDPISupport();
+#endif
 
 	CefRefPtr<CefCommandLine> command_line =
 		CefCommandLine::CreateCommandLine();
