@@ -3,6 +3,23 @@ project(obs-browser)
 option(ENABLE_BROWSER "Enable building OBS with browser source plugin (required Chromium Embedded Framework)"
        ${OS_LINUX})
 
+find_package(Qt6 REQUIRED Widgets)
+
+add_library(obs-browser-api INTERFACE)
+add_library(OBS::browser-api ALIAS obs-browser-api)
+
+target_sources(obs-browser-api PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/obs-browser-api.hpp>
+                                      $<INSTALL_INTERFACE:${OBS_INCLUDE_DESTINATION}/obs-browser-api.hpp>)
+
+target_link_libraries(obs-browser-api INTERFACE OBS::libobs Qt::Widgets)
+
+target_include_directories(obs-browser-api INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
+                                                     $<INSTALL_INTERFACE:${OBS_INCLUDE_DESTINATION}>)
+
+set_target_properties(obs-browser-api PROPERTIES PUBLIC_HEADER lib/obs-browser-api.hpp)
+
+export_target(obs-browser-api)
+
 if(NOT ENABLE_BROWSER OR NOT ENABLE_UI)
   message(STATUS "OBS:  DISABLED   obs-browser")
   message(
@@ -54,6 +71,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/browser-config.h.in ${CMAKE_BINARY_DI
 target_sources(
   obs-browser
   PRIVATE obs-browser-plugin.cpp
+          obs-browser-api-impl.cpp
+          obs-browser-api-impl.hpp
           obs-browser-source.cpp
           obs-browser-source.hpp
           obs-browser-source-audio.cpp
@@ -76,13 +95,11 @@ target_sources(
 
 target_include_directories(obs-browser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/deps ${CMAKE_BINARY_DIR}/config)
 
-target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api nlohmann_json::nlohmann_json)
+target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api OBS::browser-api nlohmann_json::nlohmann_json)
 
 target_compile_features(obs-browser PRIVATE cxx_std_17)
 
 if(ENABLE_BROWSER_PANELS OR ENABLE_BROWSER_QT_LOOP)
-  find_qt(COMPONENTS Widgets)
-
   set_target_properties(
     obs-browser
     PROPERTIES AUTOMOC ON
@@ -250,6 +267,8 @@ if(ENABLE_BROWSER_PANELS)
   target_link_libraries(obs-browser PRIVATE obs-browser-panels)
 
   target_compile_definitions(obs-browser-panels INTERFACE BROWSER_AVAILABLE)
+
+  target_sources(obs-browser PRIVATE obs-browser-api-impl-panel.cpp obs-browser-api-impl.cpp)
 
   if(ENABLE_BROWSER_QT_LOOP)
     target_compile_definitions(obs-browser-panels INTERFACE ENABLE_BROWSER_QT_LOOP)
