@@ -678,11 +678,11 @@ bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>,
 	const char *code = "Info";
 	switch (level) {
 	case LOGSEVERITY_ERROR:
-		errorLevel = LOG_WARNING;
+		errorLevel = LOG_DEBUG;
 		code = "Error";
 		break;
 	case LOGSEVERITY_FATAL:
-		errorLevel = LOG_ERROR;
+		errorLevel = LOG_INFO;
 		code = "Fatal";
 		break;
 	default:
