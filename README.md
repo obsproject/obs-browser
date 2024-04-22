@@ -315,6 +315,31 @@ Permissions required: ALL
 window.obsstudio.stopVirtualcam()
 ```
 
+#### Call Websocket request
+Permissions required: ALL
+```js
+/**
+ * @typedef {Object} WebsocketResponse
+ * @property {number} code - RequestStatus code
+ * @property {bool} result - is true if the request resulted in Success. False if otherwise.
+ * @property {string} responseData - JSON string containing response data
+ * @property {string} comment - may be provided by the server on errors to offer further details on why a request failed.
+ */
+
+/**
+ * @callback WebsocketRequestCallback
+ * @param {WebsocketResponse} response
+ */
+
+/**
+ * @param {WebsocketRequestCallback} cb
+ * @param {string} request_type - The request type to call
+ * @param {string} request_data - JSON string containing appropriate request data
+ */
+window.obsstudio.websocketRequest(function (response_data) {
+    console.log(JSON.stringify(response))
+}, request_type, request_data)
+```
 
 ### Register for visibility callbacks
 
