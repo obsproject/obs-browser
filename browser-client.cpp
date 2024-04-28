@@ -373,7 +373,11 @@ void BrowserClient::UpdateExtraTexture()
 
 void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 				       PaintElementType type, const RectList &,
+#if CHROME_VERSION_BUILD >= 6367
+				       const CefAcceleratedPaintInfo &info)
+#else
 				       void *shared_handle)
+#endif
 {
 	if (type != PET_VIEW) {
 		// TODO Overlay texture on top of bs->texture
@@ -384,7 +388,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		return;
 	}
 
-#ifndef _WIN32
+#if !defined(_WIN32) && CHROME_VERSION_BUILD < 6367
 	if (shared_handle == bs->last_handle)
 		return;
 #endif
@@ -399,12 +403,20 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		bs->texture = nullptr;
 	}
 
-#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
+#if defined(__APPLE__) && CHROME_VERSION_BUILD > 6367
+	bs->texture = gs_texture_create_from_iosurface(
+		(IOSurfaceRef)(uintptr_t)info.shared_texture_io_surface);
+#elif defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
 	bs->texture = gs_texture_create_from_iosurface(
 		(IOSurfaceRef)(uintptr_t)shared_handle);
 #elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
 	bs->texture =
+#if CHROME_VERSION_BUILD >= 6367
+		gs_texture_open_nt_shared(
+			(uint32_t)(uintptr_t)info.shared_texture_handle);
+#else
 		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
+#endif
 	//if (bs->texture)
 	//	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
 
@@ -415,7 +427,13 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	UpdateExtraTexture();
 	obs_leave_graphics();
 
+#if defined(__APPLE__) && CHROME_VERSION_BUILD >= 6367
+	bs->last_handle = info.shared_texture_io_surface;
+#elif CHROME_VERSION_BUILD >= 6367
+	bs->last_handle = info.shared_texture_handle;
+#else
 	bs->last_handle = shared_handle;
+#endif
 }
 
 #ifdef CEF_ON_ACCELERATED_PAINT2

@@ -135,10 +135,14 @@ public:
 			     const void *buffer, int width,
 			     int height) override;
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
-	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
-					PaintElementType type,
-					const RectList &dirtyRects,
-					void *shared_handle) override;
+	virtual void
+	OnAcceleratedPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
+			   const RectList &dirtyRects,
+#if CHROME_VERSION_BUILD >= 6367
+			   const CefAcceleratedPaintInfo &info) override;
+#else
+			   void *shared_handle) override;
+#endif
 #ifdef CEF_ON_ACCELERATED_PAINT2
 	virtual void OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser,
 					 PaintElementType type,
