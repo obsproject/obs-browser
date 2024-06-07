@@ -767,6 +767,9 @@ bool obs_module_load(void)
 	     cef_version_info(7), CEF_VERSION);
 
 	RegisterBrowserSource();
+	signal_handler_add(
+		obs_get_signal_handler(),
+		"void source_browser_signal(ptr source, string signal)");
 	obs_frontend_add_event_callback(handle_obs_frontend_event, nullptr);
 
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
