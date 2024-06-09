@@ -12,8 +12,8 @@ target_compile_definitions(browser-panels INTERFACE BROWSER_AVAILABLE)
 target_sources(
   obs-browser
   PRIVATE # cmake-format: sortable
-          panel/browser-panel-client.cpp panel/browser-panel-client.hpp panel/browser-panel-internal.hpp
-          panel/browser-panel.cpp)
+          obs-browser-api-impl-panel.cpp panel/browser-panel-client.cpp panel/browser-panel-client.hpp
+          panel/browser-panel-internal.hpp panel/browser-panel.cpp)
 
 target_link_libraries(obs-browser PRIVATE OBS::browser-panels Qt::Widgets)
 
