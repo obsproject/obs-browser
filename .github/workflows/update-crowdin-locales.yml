@@ -1,0 +1,24 @@
+name: Update Locales on Crowdin 🇺🇸
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "**/en-US.ini"
+jobs:
+  upload-language-files:
+    name: Update Locales on Crowdin 🇺🇸
+    if: github.repository_owner == 'obsproject'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: obsproject/obs-studio
+          fetch-depth: 50
+          submodules: recursive
+      - name: Update Locales on Crowdin 🇺🇸
+        uses: ./.github/actions/update-crowdin-locales
+        env:
+          CROWDIN_PAT: ${{ secrets.CROWDIN_SYNC_CROWDIN_PAT }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          SUBMODULE_NAME: obs-browser
