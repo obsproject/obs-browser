@@ -517,7 +517,11 @@ void ProcessCef()
 
 #define MAX_DELAY (1000 / 30)
 
+#if CHROME_VERSION_BUILD < 5938
 void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
+#else
+void BrowserApp::OnScheduleMessagePumpWork(int64_t delay_ms)
+#endif
 {
 	if (delay_ms < 0)
 		delay_ms = 0;
