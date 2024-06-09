@@ -658,7 +658,7 @@ extern void ProcessCef();
 void BrowserSource::Render()
 {
 	bool flip = false;
-#ifdef ENABLE_BROWSER_SHARED_TEXTURE
+#if defined(ENABLE_BROWSER_SHARED_TEXTURE) && CHROME_VERSION_BUILD < 6367
 	flip = hwaccel;
 #endif
 
