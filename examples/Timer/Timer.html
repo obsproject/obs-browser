@@ -1,0 +1,132 @@
+<html><head><style>
+body {
+    background-color: rgba(0, 0, 0, 0);
+	margin: 0px auto;
+	overflow: hidden;
+    padding: 0%;
+    text-align: center;
+    color: white;
+}
+
+.clock {
+    font-size: 8em;
+}
+
+.countup {
+    height: 80vh;
+    font-size: 35em;
+}
+</style></head><body>
+<div id="clock" class="clock" onload="showTime()"></div>
+<div id="countup" class="countup" onload="showCountup()"></div>
+<script>
+function showTime() {
+    var days = [
+        "Sunday",
+        "Monday",
+        "Tueday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+    ];
+    var months = [
+        "January",
+        "Feburary",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+    ];
+    var date = new Date();
+    var w = date.getDay(); // 0 - 7 Sun - Mon
+    var j = date.getMonth(); // 0 - 11 January - December
+    var i = date.getDate(); // 0 - 31
+    var h = date.getHours(); // 0 - 23
+    var m = date.getMinutes(); // 0 - 59
+    var s = date.getSeconds(); // 0 - 59
+    var session = "AM";
+
+    if (h == 0) {
+        h = 12;
+    }
+
+    if (h > 12) {
+        h = h - 12;
+        session = "PM";
+    }
+
+    h = h < 10 ? "0" + h : h;
+    m = m < 10 ? "0" + m : m;
+    s = s < 10 ? "0" + s : s;
+
+    var time =
+        days[w] +
+        " " +
+        months[j] +
+        " " +
+        i +
+        " " +
+        h +
+        ":" +
+        m +
+        ":" +
+        s +
+        " " +
+        session;
+    document.getElementById("clock").innerText = time;
+    document.getElementById("clock").textContent = time;
+    setTimeout(showTime, 1000);
+}
+showTime();
+
+var countup = document.getElementById("countup");
+var totalSeconds = -1;
+var id;
+
+function showCountup() {
+    ++totalSeconds;
+    countup.innerHTML =
+        parseInt(totalSeconds / 3600) +
+        ":" +
+        pad((parseInt(totalSeconds / 60) % 60)) +
+        ":" +
+        pad(totalSeconds % 60);	
+}
+
+function pad(val) {
+    var valString = val + "";
+    if (valString.length < 2) {
+        return "0" + valString;
+    } else {
+        return valString;
+    }
+}
+
+window.addEventListener("obsRecordingStarted", function (event) {
+    totalSeconds = -1;	
+    showCountup();
+    id = setInterval(showCountup, 1000);	
+});
+
+window.addEventListener("obsRecordingStopped", function (event) {
+    totalSeconds = -1;
+	clearInterval(id);
+});
+
+window.addEventListener("obsRecordingPaused", function (event) {
+    clearInterval(id);
+});
+
+window.addEventListener("obsRecordingUnpaused", function (event) {
+    --totalSeconds;
+	showCountup();
+	id = setInterval(showCountup, 1000);
+});
+</script></body></html>
