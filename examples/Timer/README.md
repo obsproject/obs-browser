@@ -1,8 +1,6 @@
 # OBS_Timer.html
 This is a customizable html template for use as an "Browser Source" in Open Broadcast Software.
 
-It makes use of the obs javascript bindings api listed here: https://github.com/obsproject/obs-browser
-
 How To Setup:
 
 ![1](https://github.com/DanielLester83/OBS_Timer.html/assets/56115710/bface5da-ed99-45cd-894d-f439be981e6d)
