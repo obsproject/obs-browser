@@ -131,7 +131,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "webpage_control_level",
 				 (int)DEFAULT_CONTROL_LEVEL);
 	obs_data_set_default_string(settings, "css", default_css);
-	obs_data_set_default_bool(settings, "reroute_audio", false);
+	obs_data_set_default_bool(settings, "reroute_audio", true);
 }
 
 static bool is_local_file_modified(obs_properties_t *props, obs_property_t *,
