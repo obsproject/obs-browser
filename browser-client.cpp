@@ -371,9 +371,16 @@ void BrowserClient::UpdateExtraTexture()
 	}
 }
 
+#if defined(_M_ARM64)
+void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
+				       PaintElementType type,
+				       const RectList &dirtyRects,
+				       const CefAcceleratedPaintInfo &info)
+#else
 void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 				       PaintElementType type, const RectList &,
 				       void *shared_handle)
+#endif
 {
 	if (type != PET_VIEW) {
 		// TODO Overlay texture on top of bs->texture
@@ -404,7 +411,12 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		(IOSurfaceRef)(uintptr_t)shared_handle);
 #elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
 	bs->texture =
+#if defined(_M_ARM64)
+		gs_texture_open_nt_shared(
+			(uint32_t)(uintptr_t)info.shared_texture_handle);
+#else
 		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
+#endif
 	//if (bs->texture)
 	//	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
 
@@ -415,7 +427,11 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	UpdateExtraTexture();
 	obs_leave_graphics();
 
+#if defined(_M_ARM64)
+	bs->last_handle = info.shared_texture_handle;
+#else
 	bs->last_handle = shared_handle;
+#endif
 }
 
 #ifdef CEF_ON_ACCELERATED_PAINT2
