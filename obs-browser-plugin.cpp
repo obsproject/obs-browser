@@ -750,7 +750,9 @@ bool obs_module_load(void)
 
 #ifdef _WIN32
 	/* CefEnableHighDPISupport doesn't do anything on OS other than Windows. Would also crash macOS at this point as CEF is not directly linked */
+#if !defined(_M_ARM64)
 	CefEnableHighDPISupport();
+#endif
 	EnumAdapterCount();
 #else
 #if defined(__APPLE__) && !defined(ENABLE_BROWSER_LEGACY)
