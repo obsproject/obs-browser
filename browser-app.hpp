@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <functional>
 #include "cef-headers.hpp"
+#include "browser-dummy-client.hpp"
 
 typedef std::function<void(CefRefPtr<CefBrowser>)> BrowserFunc;
 
@@ -85,6 +86,8 @@ public:
 
 	virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override;
 	virtual CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override;
+	virtual CefRefPtr<CefClient> GetDefaultClient() override;
+	virtual void OnContextInitialized() override;
 	virtual void OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line) override;
 	virtual void OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar) override;
 	virtual void OnBeforeCommandLineProcessing(const CefString &process_type,
@@ -105,6 +108,10 @@ public:
 #endif
 	QTimer frameTimer;
 #endif
+
+	CefRefPtr<BrowserDummyClient> dummy = nullptr;
+
+	BrowserDummyClient *GetDummy() const { return dummy.get(); };
 
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 };

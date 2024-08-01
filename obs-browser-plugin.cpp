@@ -293,6 +293,9 @@ static void BrowserInit(void)
 	CefString(&settings.log_file) = log_path_abs;
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
+#if CHROME_VERSION_BUILD > 6533 && CHROME_VERSION_BUILD <= 6613
+	settings.chrome_runtime = true;
+#endif
 
 	uint32_t obs_ver = obs_get_version();
 	uint32_t obs_maj = obs_ver >> 24;
@@ -341,6 +344,9 @@ static void BrowserInit(void)
 	settings.persist_user_preferences = 1;
 #endif
 	CefString(&settings.cache_path) = conf_path_abs;
+#if CHROME_VERSION_BUILD > 6533
+	CefString(&settings.root_cache_path) = conf_path_abs;
+#endif
 #if !defined(__APPLE__) || defined(ENABLE_BROWSER_LEGACY)
 	char *abs_path = os_get_abs_path_ptr(path.c_str());
 	CefString(&settings.browser_subprocess_path) = abs_path;
@@ -714,8 +720,122 @@ static void check_hwaccel_support(void)
 #endif
 #endif
 
+#if CHROME_VERSION_BUILD > 6533
+static void MigrateProfileConfigDir(std::string oldDir, std::string newDir, bool makeDirs)
+{
+	namespace fs = std::filesystem;
+
+	BPtr<char> configPath = obs_module_config_path(".");
+	fs::path rootPath{configPath.Get()};
+
+	fs::path oldPath = rootPath / fs::path(oldDir);
+	fs::path newPath = rootPath / fs::path(newDir);
+
+	if (!fs::exists(oldPath)) {
+		return;
+	}
+
+	try {
+		if (makeDirs && !fs::exists(newPath)) {
+			fs::create_directories(newPath);
+		}
+		const auto copyOptions = fs::copy_options::recursive;
+		fs::copy(oldPath, newPath, copyOptions);
+	} catch (const fs::filesystem_error &error) {
+		blog(LOG_WARNING, "[obs-browser]: Error migrating cookies for '%s': %s", oldPath.c_str(), error.what());
+	}
+}
+
+static void MigrateDefaultProfileSubdirs(std::string parent, bool makeDirs)
+{
+	constexpr std::array<std::string_view, 3> kMigrationDirectories{
+		"Local Storage",
+		"Session Storage",
+		"Network",
+	};
+	constexpr std::string_view kDefaultDirectoryPrefix{"Default/"};
+
+	for (std::string_view directory : kMigrationDirectories) {
+		std::string oldDirectory{parent};
+		oldDirectory.append(directory);
+		std::string newDirectory{parent};
+		newDirectory.append(kDefaultDirectoryPrefix);
+		newDirectory.append(directory);
+
+		MigrateProfileConfigDir(oldDirectory, newDirectory, makeDirs);
+	}
+}
+
+static void MigrateToChromeRuntime()
+{
+	namespace fs = std::filesystem;
+	BPtr<char> defaultConfigPath = obs_module_config_path("Default");
+	fs::path defaultPath{defaultConfigPath.Get()};
+	// User has already previously launched with Chrome Runtime
+	if (fs::exists(defaultPath)) {
+		blog(LOG_INFO, "[obs-browser]: Chrome Runtime Default profile detected. No migration necessary.");
+		return;
+	}
+
+	BPtr<char> localPrefsConfigPath = obs_module_config_path("LocalPrefs.json");
+	fs::path localPrefs{localPrefsConfigPath.Get()};
+	// User has never launched old OBS Browser before
+	if (!fs::exists(localPrefs)) {
+		blog(LOG_DEBUG, "[obs-browser]: Alloy Runtime preferences not found. No migration necessary.");
+		return;
+	}
+
+	blog(LOG_INFO, "[obs-browser]: Migrating files to Chrome Runtime...");
+
+	try {
+		fs::create_directories(defaultPath);
+	} catch (const fs::filesystem_error &error) {
+		blog(LOG_WARNING, "[obs-browser]: Error creating Default profile: %s", error.what());
+	}
+
+	MigrateDefaultProfileSubdirs("", false);
+
+	BPtr<char> newLocalPrefsConfigPath = obs_module_config_path("Local State");
+	fs::path newLocalPrefs{newLocalPrefsConfigPath.Get()};
+	try {
+		fs::copy(localPrefs, newLocalPrefs);
+	} catch (const fs::filesystem_error &error) {
+		blog(LOG_WARNING, "[obs-browser]: Error migrating preferences: %s", error.what());
+	}
+
+	constexpr std::string_view prefix = "obs_profile_cookies";
+
+	BPtr<char> serviceProfilesPath = obs_module_config_path(prefix.data());
+	fs::path serviceProfiles{serviceProfilesPath.Get()};
+	if (fs::exists(serviceProfiles)) {
+		// User has service integration cookies that also must be copied
+		for (auto const &dir_entry : std::filesystem::directory_iterator{serviceProfiles}) {
+			if (!dir_entry.is_directory()) {
+				continue;
+			}
+			std::string name{dir_entry.path().filename().string()};
+			std::string oldDir{prefix};
+			oldDir.append("/");
+			oldDir.append(name);
+
+			std::string newDir{prefix};
+			newDir.append("_");
+			newDir.append(name);
+			MigrateProfileConfigDir(oldDir, newDir, true);
+
+			blog(LOG_INFO, "[obs-browser]: Migrated cookies for %s.", name.c_str());
+		}
+	}
+
+	blog(LOG_INFO, "[obs-browser]: Migration of browser cookies and session completed.");
+}
+#endif
+
 bool obs_module_load(void)
 {
+#if CHROME_VERSION_BUILD > 6533
+	MigrateToChromeRuntime();
+#endif
 #ifdef ENABLE_BROWSER_QT_LOOP
 	qRegisterMetaType<MessageTask>("MessageTask");
 #endif

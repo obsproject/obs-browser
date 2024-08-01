@@ -48,9 +48,60 @@ CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
 	return this;
 }
 
+CefRefPtr<CefClient> BrowserApp::GetDefaultClient()
+{
+	return GetDummy();
+}
+
 void BrowserApp::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar)
 {
 	registrar->AddCustomScheme("http", CEF_SCHEME_OPTION_STANDARD | CEF_SCHEME_OPTION_CORS_ENABLED);
+}
+
+void BrowserApp::OnContextInitialized()
+{
+	// Without a default client, CefBrowser is unmanaged, allowing full-blown Chromium windows outside of our control.
+	// We don't actually want those, so define a dummy client which will automatically close any such windows.
+	dummy = new BrowserDummyClient();
+
+	CefRefPtr<CefRequestContext> requestContext = CefRequestContext::GetGlobalContext();
+	CefString errorMessage;
+	CefRefPtr<CefValue> optionValue = CefValue::Create();
+
+	constexpr std::array<std::string_view, 20> kBrowserFeaturesToDisable{
+		"autofill.credit_card_enabled",
+		"autofill.enabled",
+		"autofill.iban_enabled",
+		"autofill.payment_card_benefits",
+		"autofill.payment_cvc_storage",
+		"autofill.profile_enabled",
+		"autologin.enabled",
+		"browser_labs_enabled",
+		"credentials_enable_autosignin",
+		"credentials_enable_service",
+		"payments.can_make_payment_enabled",
+		"printing.enabled",
+		"search.suggest_enabled",
+		"shopping_list_enabled",
+		"side_panel.google_search_side_panel_enabled",
+		"side_search.enabled",
+		"signin.allowed",
+		"signin.allowed_on_next_startup",
+		"translate",
+		"url_keyed_anonymized_data_collection.enabled"};
+
+	constexpr std::array<std::string_view, 2> kBrowserFeaturesToEnable{"extensions.block_external_extensions",
+									   "extensions.disabled"};
+
+	optionValue->SetBool(false);
+	for (std::string_view feature : kBrowserFeaturesToDisable) {
+		requestContext->SetPreference(feature.data(), optionValue.get(), errorMessage);
+	}
+
+	optionValue->SetBool(true);
+	for (std::string_view feature : kBrowserFeaturesToEnable) {
+		requestContext->SetPreference(feature.data(), optionValue.get(), errorMessage);
+	}
 }
 
 void BrowserApp::OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line)
@@ -82,16 +133,35 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 		disableFeatures += ",EnableWindowsGamingInputDataFetcher";
 #endif
 		disableFeatures += ",WebBluetooth";
+		disableFeatures += ",MediaRouter";
+		disableFeatures += ",CalculateNativeWinOcclusion";
+		disableFeatures += ",LiveCaption";
+		// https://github.com/chromiumembedded/cef/issues/3966
+		disableFeatures += ",StorageNotificationService";
 		command_line->AppendSwitchWithValue("disable-features", disableFeatures);
 	} else {
 		command_line->AppendSwitchWithValue("disable-features", "WebBluetooth,"
 #ifdef _WIN32
 									"EnableWindowsGamingInputDataFetcher,"
 #endif
+									"MediaRouter,"
+									"CalculateNativeWinOcclusion,"
+									"LiveCaption,"
+									"StorageNotificationService,"
 									"HardwareMediaKeyHandling");
 	}
 
+	if (command_line->HasSwitch("disable-blink-features")) {
+		std::string disableBlinkFeatures = command_line->GetSwitchValue("disable-blink-features");
+		disableBlinkFeatures += ",DocumentPictureInPictureAPI";
+		command_line->AppendSwitchWithValue("disable-blink-features", disableBlinkFeatures);
+	} else {
+		command_line->AppendSwitchWithValue("disable-blink-features", "DocumentPictureInPictureAPI");
+	}
+
 	command_line->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
+	command_line->AppendSwitch("disable-extensions");
+	command_line->AppendSwitch("hide-crash-restore-bubble");
 #ifdef __APPLE__
 	command_line->AppendSwitch("use-mock-keychain");
 #elif !defined(_WIN32)

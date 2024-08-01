@@ -38,6 +38,13 @@ CefRefPtr<CefDisplayHandler> QCefBrowserClient::GetDisplayHandler()
 	return this;
 }
 
+#if CHROME_VERSION_BUILD >= 6533
+CefRefPtr<CefCommandHandler> QCefBrowserClient::GetCommandHandler()
+{
+	return this;
+}
+#endif
+
 CefRefPtr<CefRequestHandler> QCefBrowserClient::GetRequestHandler()
 {
 	return this;
@@ -68,10 +75,18 @@ CefRefPtr<CefJSDialogHandler> QCefBrowserClient::GetJSDialogHandler()
 	return this;
 }
 
+/* CefCommandHandler */
+#if CHROME_VERSION_BUILD >= 6533
+bool QCefBrowserClient::OnChromeCommand(CefRefPtr<CefBrowser>, int, cef_window_open_disposition_t)
+{
+	return true;
+}
+#endif
+
 /* CefDisplayHandler */
 void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString &title)
 {
-	if (widget && widget->cefBrowser->IsSame(browser)) {
+	if (widget && widget->cefBrowser && widget->cefBrowser->IsSame(browser)) {
 		std::string str_title = title;
 		QString qt_title = QString::fromUtf8(str_title.c_str());
 		QMetaObject::invokeMethod(widget, "titleChanged", Q_ARG(QString, qt_title));
