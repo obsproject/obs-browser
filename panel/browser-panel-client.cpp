@@ -348,7 +348,7 @@ bool QCefBrowserClient::OnContextMenuCommand(
 	QString title;
 	switch (command_id) {
 	case MENU_ITEM_DEVTOOLS:
-#if defined(_WIN32)
+#if defined(_WIN32) && CHROME_VERSION_BUILD < 6533
 		title = QString(obs_module_text("DevTools"))
 				.arg(widget->parentWidget()->windowTitle());
 		windowInfo.SetAsPopup(host->GetWindowHandle(),

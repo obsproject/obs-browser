@@ -366,7 +366,9 @@ static void BrowserInit(void)
 	BPtr<char> conf_path_abs = os_get_abs_path_ptr(conf_path);
 	CefString(&settings.locale) = obs_get_locale();
 	CefString(&settings.accept_language_list) = accepted_languages;
+#if CHROME_VERSION_BUILD <= 6533
 	settings.persist_user_preferences = 1;
+#endif
 	CefString(&settings.cache_path) = conf_path_abs;
 #if !defined(__APPLE__) || defined(ENABLE_BROWSER_LEGACY)
 	char *abs_path = os_get_abs_path_ptr(path.c_str());

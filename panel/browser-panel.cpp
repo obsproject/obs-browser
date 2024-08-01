@@ -84,7 +84,9 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
 
 		CefRequestContextSettings settings;
+#if CHROME_VERSION_BUILD <= 6533
 		settings.persist_user_preferences = 1;
+#endif
 		CefString(&settings.cache_path) = path.Get();
 		rc = CefRequestContext::CreateContext(
 			settings, CefRefPtr<CefRequestContextHandler>());
@@ -107,7 +109,9 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
 
 		CefRequestContextSettings settings;
+#if CHROME_VERSION_BUILD <= 6533
 		settings.persist_user_preferences = 1;
+#endif
 		CefString(&settings.cache_path) = storage_path;
 		rc = CefRequestContext::CreateContext(
 			settings, CefRefPtr<CefRequestContextHandler>());
@@ -312,6 +316,10 @@ void QCefWidgetInternal::Init()
 
 #ifdef __APPLE__
 			QSize size = this->size();
+#endif
+
+#if CHROME_VERSION_BUILD >= 6533
+			windowInfo.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
 #endif
 
 #if CHROME_VERSION_BUILD < 4430
