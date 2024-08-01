@@ -46,6 +46,10 @@
 #include "signal-restore.hpp"
 #endif
 
+#ifdef ENABLE_WAYLAND
+#include <obs-nix-platform.h>
+#endif
+
 #ifdef ENABLE_BROWSER_QT_LOOP
 #include <QApplication>
 #include <QThread>
@@ -386,7 +390,13 @@ static void BrowserInit(void)
 	}
 #endif
 
+#if defined(__APPLE__) || defined(_WIN32) || !defined(ENABLE_WAYLAND)
 	app = new BrowserApp(tex_sharing_avail);
+#else
+	app = new BrowserApp(tex_sharing_avail,
+			     obs_get_nix_platform() ==
+				     OBS_NIX_PLATFORM_WAYLAND);
+#endif
 
 #ifdef _WIN32
 	CefExecuteProcess(args, app, nullptr);

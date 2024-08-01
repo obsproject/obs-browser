@@ -77,10 +77,20 @@ class BrowserApp : public CefApp,
 	bool shared_texture_available;
 	CallbackMap callbackMap;
 	int callbackId;
+#if !defined(__APPLE__) && !defined(_WIN32)
+	bool wayland;
+#endif
 
 public:
+#if defined(__APPLE__) || defined(_WIN32)
 	inline BrowserApp(bool shared_texture_available_ = false)
 		: shared_texture_available(shared_texture_available_)
+#else
+	inline BrowserApp(bool shared_texture_available_ = false,
+			  bool wayland_ = false)
+		: shared_texture_available(shared_texture_available_),
+		  wayland(wayland_)
+#endif
 	{
 	}
 

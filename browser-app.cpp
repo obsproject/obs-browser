@@ -96,6 +96,9 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 					    "no-user-gesture-required");
 #ifdef __APPLE__
 	command_line->AppendSwitch("use-mock-keychain");
+#elif !defined(_WIN32)
+	command_line->AppendSwitchWithValue("ozone-platform",
+					    wayland ? "wayland" : "x11");
 #endif
 }
 
