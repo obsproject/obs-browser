@@ -187,6 +187,8 @@ static obs_properties_t *browser_source_get_properties(void *data)
 			       8192, 1);
 	obs_properties_add_int(props, "height", obs_module_text("Height"), 1,
 			       8192, 1);
+	obs_properties_add_int(props, "zoom", obs_module_text("Zoom"), -6, 9,
+			       1);
 
 	obs_properties_add_bool(props, "reroute_audio",
 				obs_module_text("RerouteAudio"));

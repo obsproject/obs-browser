@@ -512,6 +512,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		bool n_is_local;
 		int n_width;
 		int n_height;
+		int n_zoom;
 		bool n_fps_custom;
 		int n_fps;
 		bool n_shutdown;
@@ -524,6 +525,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		n_is_local = obs_data_get_bool(settings, "is_local_file");
 		n_width = (int)obs_data_get_int(settings, "width");
 		n_height = (int)obs_data_get_int(settings, "height");
+		n_zoom = (int)obs_data_get_int(settings, "zoom");
 		n_fps_custom = obs_data_get_bool(settings, "fps_custom");
 		n_fps = (int)obs_data_get_int(settings, "fps");
 		n_shutdown = obs_data_get_bool(settings, "shutdown");
@@ -582,11 +584,13 @@ void BrowserSource::Update(obs_data_t *settings)
 		    n_reroute == reroute_audio &&
 		    n_webpage_control_level == webpage_control_level) {
 
-			if (n_width == width && n_height == height)
+			if (n_width == width && n_height == height &&
+			    n_zoom == zoom)
 				return;
 
 			width = n_width;
 			height = n_height;
+			zoom = n_zoom;
 			ExecuteOnBrowser(
 				[=](CefRefPtr<CefBrowser> cefBrowser) {
 					const CefSize cefSize(width, height);
@@ -596,6 +600,8 @@ void BrowserSource::Update(obs_data_t *settings)
 						->OnAutoResize(cefBrowser,
 							       cefSize);
 					cefBrowser->GetHost()->WasResized();
+					cefBrowser->GetHost()->SetZoomLevel(
+						zoom);
 					cefBrowser->GetHost()->Invalidate(
 						PET_VIEW);
 				},
@@ -606,6 +612,7 @@ void BrowserSource::Update(obs_data_t *settings)
 		is_local = n_is_local;
 		width = n_width;
 		height = n_height;
+		zoom = n_zoom;
 		fps = n_fps;
 		fps_custom = n_fps_custom;
 		shutdown_on_invisible = n_shutdown;
