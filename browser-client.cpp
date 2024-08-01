@@ -679,8 +679,9 @@ void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 
 		std::string script;
 		script += "const obsCSS = document.createElement('style');";
-		script += "obsCSS.innerHTML = decodeURIComponent(\"" +
-			  uriEncodedCSS + "\");";
+		script += "obsCSS.appendChild(document.createTextNode("
+			  "decodeURIComponent(\"" +
+			  uriEncodedCSS + "\")));";
 		script += "document.querySelector('head').appendChild(obsCSS);";
 
 		frame->ExecuteJavaScript(script, "", 0);
