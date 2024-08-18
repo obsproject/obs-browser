@@ -181,6 +181,12 @@ void QCefWidgetInternal::closeBrowser()
 			}
 
 			cefBrowser->GetHost()->CloseBrowser(true);
+
+#if !defined(_WIN32) && !defined(__APPLE__) && CHROME_VERSION_BUILD >= 6533
+			while (cefBrowser && cefBrowser->IsValid()) {
+				os_sleep_ms(10);
+			}
+#endif
 		};
 
 		/* So you're probably wondering what's going on here.  If you
