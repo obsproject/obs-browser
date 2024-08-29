@@ -37,6 +37,10 @@
 #include <QThread>
 #endif
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include "drm-format.hpp"
+#endif
+
 using namespace std;
 
 extern bool QueueCEFTask(std::function<void()> task);
@@ -181,7 +185,11 @@ bool BrowserSource::CreateBrowser()
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
 		if (hwaccel) {
 			obs_enter_graphics();
+#if defined(__APPLE__) || defined(_WIN32)
 			tex_sharing_avail = gs_shared_texture_available();
+#else
+			tex_sharing_avail = obs_cef_all_drm_formats_supported();
+#endif
 			obs_leave_graphics();
 		}
 #else
