@@ -47,6 +47,10 @@
 #define ENABLE_WASHIDDEN 0
 #endif
 
+#if !defined(_WIN32) && !defined(__APPLE__) && CHROME_VERSION_BUILD > 6337
+#define ENABLE_BROWSER_SHARED_TEXTURE 1
+#endif
+
 #define SendBrowserProcessMessage(browser, pid, msg)             \
 	CefRefPtr<CefFrame> mainFrame = browser->GetMainFrame(); \
 	if (mainFrame) {                                         \
