@@ -10,7 +10,7 @@ if(NOT ENABLE_BROWSER)
 endif()
 
 find_package(CEF REQUIRED 95)
-find_package(nlohmann_json REQUIRED)
+find_package(nlohmann_json 3.11 REQUIRED)
 
 add_library(obs-browser MODULE)
 add_library(OBS::browser ALIAS obs-browser)
