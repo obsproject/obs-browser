@@ -31,6 +31,8 @@
 #endif
 
 #if !defined(_WIN32) && !defined(__APPLE__)
+#include <obs-nix-platform.h>
+
 #include "drm-format.hpp"
 #endif
 
@@ -398,6 +400,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 
 	struct obs_cef_video_format format =
 		obs_cef_format_from_cef_type(info.format);
+	uint64_t modifier = info.modifier;
 
 	if (format.gs_format == GS_UNKNOWN)
 		return;
@@ -410,6 +413,12 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		(uint64_t *)alloca(info.plane_count * sizeof(uint64_t));
 	int *fds = (int *)alloca(info.plane_count * sizeof(int));
 
+	/* NOTE: This a workaround under X11 where the modifier is always
+	   invalid where it can mean "no modifier" in Chromium's code. */
+	if (obs_get_nix_platform() == OBS_NIX_PLATFORM_X11_EGL &&
+	    modifier == DRM_FORMAT_MOD_INVALID)
+		modifier = DRM_FORMAT_MOD_LINEAR;
+
 	for (size_t i = 0; i < kAcceleratedPaintMaxPlanes; i++) {
 		auto *plane = &info.planes[i];
 
@@ -417,7 +426,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		offsets[i] = plane->offset;
 		fds[i] = plane->fd;
 
-		modifiers[i] = info.modifier;
+		modifiers[i] = modifier;
 	}
 #endif
 
@@ -460,7 +469,7 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	bs->texture = gs_texture_create_from_dmabuf(
 		bs->width, bs->height, format.drm_format, format.gs_format,
 		info.plane_count, fds, strides, offsets,
-		info.modifier != DRM_FORMAT_MOD_INVALID ? modifiers : NULL);
+		modifier != DRM_FORMAT_MOD_INVALID ? modifiers : NULL);
 #endif
 	UpdateExtraTexture();
 	obs_leave_graphics();
