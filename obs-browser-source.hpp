@@ -81,6 +81,7 @@ struct BrowserSource {
 
 	int width = 0;
 	int height = 0;
+	int zoom = 0;
 	bool fps_custom = false;
 	int fps = 0;
 	double canvas_fps = 0;

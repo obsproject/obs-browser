@@ -666,6 +666,12 @@ void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser, int id)
 }
 #endif
 
+void BrowserClient::OnLoadStart(CefRefPtr<CefBrowser> browser,
+				CefRefPtr<CefFrame>, TransitionType)
+{
+	browser->GetHost()->SetZoomLevel(bs->zoom);
+}
+
 void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 			      int)
 {
