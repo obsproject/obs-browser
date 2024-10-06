@@ -30,6 +30,12 @@
 #include <IOSurface/IOSurface.h>
 #endif
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include <obs-nix-platform.h>
+
+#include "drm-format.hpp"
+#endif
+
 inline bool BrowserClient::valid() const
 {
 	return !!bs && !bs->destroying;
@@ -388,6 +394,42 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 		return;
 	}
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+	if (info.plane_count == 0)
+		return;
+
+	struct obs_cef_video_format format =
+		obs_cef_format_from_cef_type(info.format);
+	uint64_t modifier = info.modifier;
+
+	if (format.gs_format == GS_UNKNOWN)
+		return;
+
+	uint32_t *strides =
+		(uint32_t *)alloca(info.plane_count * sizeof(uint32_t));
+	uint32_t *offsets =
+		(uint32_t *)alloca(info.plane_count * sizeof(uint32_t));
+	uint64_t *modifiers =
+		(uint64_t *)alloca(info.plane_count * sizeof(uint64_t));
+	int *fds = (int *)alloca(info.plane_count * sizeof(int));
+
+	/* NOTE: This a workaround under X11 where the modifier is always
+	   invalid where it can mean "no modifier" in Chromium's code. */
+	if (obs_get_nix_platform() == OBS_NIX_PLATFORM_X11_EGL &&
+	    modifier == DRM_FORMAT_MOD_INVALID)
+		modifier = DRM_FORMAT_MOD_LINEAR;
+
+	for (size_t i = 0; i < kAcceleratedPaintMaxPlanes; i++) {
+		auto *plane = &info.planes[i];
+
+		strides[i] = plane->stride;
+		offsets[i] = plane->offset;
+		fds[i] = plane->fd;
+
+		modifiers[i] = modifier;
+	}
+#endif
+
 #if !defined(_WIN32) && CHROME_VERSION_BUILD < 6367
 	if (shared_handle == bs->last_handle)
 		return;
@@ -420,18 +462,23 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>,
 	//if (bs->texture)
 	//	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
 
-#else
+#elif defined(__WIN32)
 	bs->texture =
 		gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
+#else
+	bs->texture = gs_texture_create_from_dmabuf(
+		bs->width, bs->height, format.drm_format, format.gs_format,
+		info.plane_count, fds, strides, offsets,
+		modifier != DRM_FORMAT_MOD_INVALID ? modifiers : NULL);
 #endif
 	UpdateExtraTexture();
 	obs_leave_graphics();
 
 #if defined(__APPLE__) && CHROME_VERSION_BUILD >= 6367
 	bs->last_handle = info.shared_texture_io_surface;
-#elif CHROME_VERSION_BUILD >= 6367
+#elif defined(_WIN32) && CHROME_VERSION_BUILD >= 6367
 	bs->last_handle = info.shared_texture_handle;
-#else
+#elif defined(__APPLE__) && defined(_WIN32)
 	bs->last_handle = shared_handle;
 #endif
 }
