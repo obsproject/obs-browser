@@ -19,6 +19,7 @@
 #include "browser-client.hpp"
 #include "obs-browser-source.hpp"
 #include "base64/base64.hpp"
+#include "..\obs-websocket\lib\obs-websocket-api.h"
 #include <nlohmann/json.hpp>
 #include <obs-frontend-api.h>
 #include <obs.hpp>
@@ -142,6 +143,28 @@ bool BrowserClient::OnProcessMessageReceived(
 			obs_frontend_start_virtualcam();
 		} else if (name == "stopVirtualcam") {
 			obs_frontend_stop_virtualcam();
+		} else if (name == "callWebsocketRequest") {
+			std::string request_type =
+				input_args->GetString(1).ToString();
+			std::string request_data_string =
+				input_args->GetString(2).ToString();
+			OBSDataAutoRelease request_data =
+				obs_data_create_from_json(
+					request_data_string.c_str());
+			struct obs_websocket_request_response *response =
+				obs_websocket_call_request(request_type.c_str(),
+							   request_data);
+			if (response) {
+				json = {{"code", response->status_code},
+					{"result",
+					 response->status_code == 100}};
+				if (response->response_data)
+					json["responseData"] =
+						response->response_data;
+				if (response->comment)
+					json["comment"] = response->comment;
+				obs_websocket_request_response_free(response);
+			}
 		}
 		[[fallthrough]];
 	case ControlLevel::Advanced:
