@@ -28,13 +28,13 @@
 #include <thread>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <obs-websocket-api.h>
 
 #include "obs-browser-source.hpp"
 #include "browser-scheme.hpp"
 #include "browser-app.hpp"
 #include "browser-version.h"
 
-#include "obs-websocket-api/obs-websocket-api.h"
 #include "cef-headers.hpp"
 
 #ifdef _WIN32
