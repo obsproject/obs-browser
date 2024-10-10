@@ -25,9 +25,7 @@ void BrowserSource::EnumAudioStreams(obs_source_enum_proc_t cb, void *param)
 	}
 }
 
-static inline void mix_audio(float *__restrict p_out,
-			     const float *__restrict p_in, size_t pos,
-			     size_t count)
+static inline void mix_audio(float *__restrict p_out, const float *__restrict p_in, size_t pos, size_t count)
 {
 	float *__restrict out = p_out;
 	const float *__restrict in = p_in + pos;
@@ -37,9 +35,8 @@ static inline void mix_audio(float *__restrict p_out,
 		*out++ += *in++;
 }
 
-bool BrowserSource::AudioMix(uint64_t *ts_out,
-			     struct audio_output_data *audio_output,
-			     size_t channels, size_t sample_rate)
+bool BrowserSource::AudioMix(uint64_t *ts_out, struct audio_output_data *audio_output, size_t channels,
+			     size_t sample_rate)
 {
 	uint64_t timestamp = 0;
 	struct obs_source_audio_mix child_audio;
@@ -70,8 +67,7 @@ bool BrowserSource::AudioMix(uint64_t *ts_out,
 			continue;
 		}
 
-		pos = (size_t)ns_to_audio_frames(sample_rate,
-						 source_ts - timestamp);
+		pos = (size_t)ns_to_audio_frames(sample_rate, source_ts - timestamp);
 		count = AUDIO_OUTPUT_FRAMES - pos;
 
 		obs_source_get_audio_mix(s, &child_audio);

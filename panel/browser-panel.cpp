@@ -33,8 +33,7 @@ std::mutex popup_whitelist_mutex;
 std::vector<PopupWhitelistInfo> popup_whitelist;
 std::vector<PopupWhitelistInfo> forced_popups;
 
-static int zoomLvls[] = {25,  33,  50,  67,  75,  80,  90,  100,
-			 110, 125, 150, 175, 200, 250, 300, 400};
+static int zoomLvls[] = {25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400};
 
 /* ------------------------------------------------------------------------- */
 
@@ -44,8 +43,7 @@ public:
 	std::string target;
 	bool cookie_found = false;
 
-	inline CookieCheck(QCefCookieManager::cookie_exists_cb callback_,
-			   const std::string target_)
+	inline CookieCheck(QCefCookieManager::cookie_exists_cb callback_, const std::string target_)
 		: callback(callback_), target(target_)
 	{
 	}
@@ -71,8 +69,7 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 	CefRefPtr<CefCookieManager> cm;
 	CefRefPtr<CefRequestContext> rc;
 
-	QCefCookieManagerInternal(const std::string &storage_path,
-				  bool persist_session_cookies)
+	QCefCookieManagerInternal(const std::string &storage_path, bool persist_session_cookies)
 	{
 		if (os_event_try(cef_started_event) != 0)
 			throw "Browser thread not initialized";
@@ -88,22 +85,19 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		settings.persist_user_preferences = 1;
 #endif
 		CefString(&settings.cache_path) = path.Get();
-		rc = CefRequestContext::CreateContext(
-			settings, CefRefPtr<CefRequestContextHandler>());
+		rc = CefRequestContext::CreateContext(settings, CefRefPtr<CefRequestContextHandler>());
 		if (rc)
 			cm = rc->GetCookieManager(nullptr);
 
 		UNUSED_PARAMETER(persist_session_cookies);
 	}
 
-	virtual bool DeleteCookies(const std::string &url,
-				   const std::string &name) override
+	virtual bool DeleteCookies(const std::string &url, const std::string &name) override
 	{
 		return !!cm ? cm->DeleteCookies(url, name, nullptr) : false;
 	}
 
-	virtual bool SetStoragePath(const std::string &storage_path,
-				    bool persist_session_cookies) override
+	virtual bool SetStoragePath(const std::string &storage_path, bool persist_session_cookies) override
 	{
 		BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
 		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
@@ -113,8 +107,7 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		settings.persist_user_preferences = 1;
 #endif
 		CefString(&settings.cache_path) = storage_path;
-		rc = CefRequestContext::CreateContext(
-			settings, CefRefPtr<CefRequestContextHandler>());
+		rc = CefRequestContext::CreateContext(settings, CefRefPtr<CefRequestContextHandler>());
 		if (rc)
 			cm = rc->GetCookieManager(nullptr);
 
@@ -122,13 +115,9 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		return true;
 	}
 
-	virtual bool FlushStore() override
-	{
-		return !!cm ? cm->FlushStore(nullptr) : false;
-	}
+	virtual bool FlushStore() override { return !!cm ? cm->FlushStore(nullptr) : false; }
 
-	virtual void CheckForCookie(const std::string &site,
-				    const std::string &cookie,
+	virtual void CheckForCookie(const std::string &site, const std::string &cookie,
 				    cookie_exists_cb callback) override
 	{
 		if (!cm)
@@ -141,8 +130,7 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 
 /* ------------------------------------------------------------------------- */
 
-QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_,
-				       CefRefPtr<CefRequestContext> rqc_)
+QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_, CefRefPtr<CefRequestContext> rqc_)
 	: QCefWidget(parent), url(url_), rqc(rqc_)
 {
 	setAttribute(Qt::WA_PaintOnScreen);
@@ -170,11 +158,8 @@ void QCefWidgetInternal::closeBrowser()
 	CefRefPtr<CefBrowser> browser = cefBrowser;
 	if (!!browser) {
 		auto destroyBrowser = [](CefRefPtr<CefBrowser> cefBrowser) {
-			CefRefPtr<CefClient> client =
-				cefBrowser->GetHost()->GetClient();
-			QCefBrowserClient *bc =
-				reinterpret_cast<QCefBrowserClient *>(
-					client.get());
+			CefRefPtr<CefClient> client = cefBrowser->GetHost()->GetClient();
+			QCefBrowserClient *bc = reinterpret_cast<QCefBrowserClient *>(client.get());
 
 			if (bc) {
 				bc->widget = nullptr;
@@ -215,8 +200,7 @@ void QCefWidgetInternal::closeBrowser()
 		// felt hacky, might delete later
 		void *view = (id)cefBrowser->GetHost()->GetWindowHandle();
 		if (*((bool *)view))
-			((void (*)(id, SEL))objc_msgSend)(
-				(id)view, sel_getUid("removeFromSuperview"));
+			((void (*)(id, SEL))objc_msgSend)((id)view, sel_getUid("removeFromSuperview"));
 #endif
 
 		destroyBrowser(browser);
@@ -234,9 +218,8 @@ static bool XWindowHasAtom(Display *display, Window w, Atom a)
 	unsigned long bytesAfter;
 	unsigned char *data = NULL;
 
-	if (XGetWindowProperty(display, w, a, 0, LONG_MAX, False,
-			       AnyPropertyType, &type, &format, &nItems,
-			       &bytesAfter, &data) != Success)
+	if (XGetWindowProperty(display, w, a, 0, LONG_MAX, False, AnyPropertyType, &type, &format, &nItems, &bytesAfter,
+			       &data) != Success)
 		return false;
 
 	if (data)
@@ -257,8 +240,7 @@ void QCefWidgetInternal::unsetToplevelXdndProxy()
 	if (!cefBrowser)
 		return;
 
-	CefWindowHandle browserHandle =
-		cefBrowser->GetHost()->GetWindowHandle();
+	CefWindowHandle browserHandle = cefBrowser->GetHost()->GetWindowHandle();
 	Display *xDisplay = cef_get_xdisplay();
 	Window toplevel, root, parent, *children;
 	unsigned int nChildren;
@@ -269,15 +251,13 @@ void QCefWidgetInternal::unsetToplevelXdndProxy()
 	// Find the toplevel
 	Atom netWmPidAtom = XInternAtom(xDisplay, "_NET_WM_PID", False);
 	do {
-		if (XQueryTree(xDisplay, toplevel, &root, &parent, &children,
-			       &nChildren) == 0)
+		if (XQueryTree(xDisplay, toplevel, &root, &parent, &children, &nChildren) == 0)
 			return;
 
 		if (children)
 			XFree(children);
 
-		if (root == parent ||
-		    !XWindowHasAtom(xDisplay, parent, netWmPidAtom)) {
+		if (root == parent || !XWindowHasAtom(xDisplay, parent, netWmPidAtom)) {
 			found = true;
 			break;
 		}
@@ -289,8 +269,7 @@ void QCefWidgetInternal::unsetToplevelXdndProxy()
 
 	// Check if the XdndProxy property is set
 	Atom xDndProxyAtom = XInternAtom(xDisplay, "XdndProxy", False);
-	if (needsDeleteXdndProxy &&
-	    !XWindowHasAtom(xDisplay, toplevel, xDndProxyAtom)) {
+	if (needsDeleteXdndProxy && !XWindowHasAtom(xDisplay, toplevel, xDndProxyAtom)) {
 		QueueCEFTask([this]() { unsetToplevelXdndProxy(); });
 		return;
 	}
@@ -330,8 +309,7 @@ void QCefWidgetInternal::Init()
 
 #if CHROME_VERSION_BUILD < 4430
 #ifdef __APPLE__
-			windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0,
-					      size.width(), size.height());
+			windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0, size.width(), size.height());
 #else
 #ifdef _WIN32
 			RECT rc = {0, 0, size.width(), size.height()};
@@ -341,20 +319,16 @@ void QCefWidgetInternal::Init()
 			windowInfo.SetAsChild((CefWindowHandle)handle, rc);
 #endif
 #else
-			windowInfo.SetAsChild((CefWindowHandle)handle,
-					      CefRect(0, 0, size.width(),
-						      size.height()));
+			windowInfo.SetAsChild((CefWindowHandle)handle, CefRect(0, 0, size.width(), size.height()));
 #endif
 
 			CefRefPtr<QCefBrowserClient> browserClient =
-				new QCefBrowserClient(this, script,
-						      allowAllPopups_);
+				new QCefBrowserClient(this, script, allowAllPopups_);
 
 			CefBrowserSettings cefBrowserSettings;
-			cefBrowser = CefBrowserHost::CreateBrowserSync(
-				windowInfo, browserClient, url,
-				cefBrowserSettings,
-				CefRefPtr<CefDictionaryValue>(), rqc);
+			cefBrowser = CefBrowserHost::CreateBrowserSync(windowInfo, browserClient, url,
+								       cefBrowserSettings,
+								       CefRefPtr<CefDictionaryValue>(), rqc);
 
 #ifdef __linux__
 			QueueCEFTask([this]() { unsetToplevelXdndProxy(); });
@@ -365,8 +339,7 @@ void QCefWidgetInternal::Init()
 		timer.stop();
 #ifndef __APPLE__
 		if (!container) {
-			container =
-				QWidget::createWindowContainer(window, this);
+			container = QWidget::createWindowContainer(window, this);
 			container->show();
 		}
 
@@ -390,18 +363,15 @@ void QCefWidgetInternal::Resize()
 		if (!cefBrowser)
 			return;
 
-		CefWindowHandle handle =
-			cefBrowser->GetHost()->GetWindowHandle();
+		CefWindowHandle handle = cefBrowser->GetHost()->GetWindowHandle();
 
 		if (!handle)
 			return;
 
 #ifdef _WIN32
-		SetWindowPos((HWND)handle, nullptr, 0, 0, size.width(),
-			     size.height(),
+		SetWindowPos((HWND)handle, nullptr, 0, 0, size.width(), size.height(),
 			     SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-		SendMessage((HWND)handle, WM_SIZE, 0,
-			    MAKELPARAM(size.width(), size.height()));
+		SendMessage((HWND)handle, WM_SIZE, 0, MAKELPARAM(size.width(), size.height()));
 #else
 		Display *xDisplay = cef_get_xdisplay();
 
@@ -413,8 +383,7 @@ void QCefWidgetInternal::Resize()
 		changes.y = 0;
 		changes.width = size.width();
 		changes.height = size.height();
-		XConfigureWindow(xDisplay, (Window)handle,
-				 CWX | CWY | CWHeight | CWWidth, &changes);
+		XConfigureWindow(xDisplay, (Window)handle, CWX | CWY | CWHeight | CWWidth, &changes);
 #if CHROME_VERSION_BUILD >= 4638
 		XSync(xDisplay, false);
 #endif
@@ -432,8 +401,7 @@ void QCefWidgetInternal::showEvent(QShowEvent *event)
 
 	if (!cefBrowser) {
 		obs_browser_initialize();
-		connect(&timer, &QTimer::timeout, this,
-			&QCefWidgetInternal::Init);
+		connect(&timer, &QTimer::timeout, this, &QCefWidgetInternal::Init);
 		timer.start(500);
 		Init();
 	}
@@ -528,21 +496,16 @@ struct QCefInternal : QCef {
 	virtual bool initialized(void) override;
 	virtual bool wait_for_browser_init(void) override;
 
-	virtual QCefWidget *
-	create_widget(QWidget *parent, const std::string &url,
-		      QCefCookieManager *cookie_manager) override;
+	virtual QCefWidget *create_widget(QWidget *parent, const std::string &url,
+					  QCefCookieManager *cookie_manager) override;
 
-	virtual QCefCookieManager *
-	create_cookie_manager(const std::string &storage_path,
-			      bool persist_session_cookies) override;
+	virtual QCefCookieManager *create_cookie_manager(const std::string &storage_path,
+							 bool persist_session_cookies) override;
 
-	virtual BPtr<char>
-	get_cookie_path(const std::string &storage_path) override;
+	virtual BPtr<char> get_cookie_path(const std::string &storage_path) override;
 
-	virtual void add_popup_whitelist_url(const std::string &url,
-					     QObject *obj) override;
-	virtual void add_force_popup_url(const std::string &url,
-					 QObject *obj) override;
+	virtual void add_popup_whitelist_url(const std::string &url, QObject *obj) override;
+	virtual void add_force_popup_url(const std::string &url, QObject *obj) override;
 };
 
 bool QCefInternal::init_browser(void)
@@ -564,22 +527,17 @@ bool QCefInternal::wait_for_browser_init(void)
 	return os_event_wait(cef_started_event) == 0;
 }
 
-QCefWidget *QCefInternal::create_widget(QWidget *parent, const std::string &url,
-					QCefCookieManager *cm)
+QCefWidget *QCefInternal::create_widget(QWidget *parent, const std::string &url, QCefCookieManager *cm)
 {
-	QCefCookieManagerInternal *cmi =
-		reinterpret_cast<QCefCookieManagerInternal *>(cm);
+	QCefCookieManagerInternal *cmi = reinterpret_cast<QCefCookieManagerInternal *>(cm);
 
 	return new QCefWidgetInternal(parent, url, cmi ? cmi->rc : nullptr);
 }
 
-QCefCookieManager *
-QCefInternal::create_cookie_manager(const std::string &storage_path,
-				    bool persist_session_cookies)
+QCefCookieManager *QCefInternal::create_cookie_manager(const std::string &storage_path, bool persist_session_cookies)
 {
 	try {
-		return new QCefCookieManagerInternal(storage_path,
-						     persist_session_cookies);
+		return new QCefCookieManagerInternal(storage_path, persist_session_cookies);
 	} catch (const char *error) {
 		blog(LOG_ERROR, "Failed to create cookie manager: %s", error);
 		return nullptr;

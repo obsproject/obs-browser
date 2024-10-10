@@ -69,14 +69,12 @@ CefRefPtr<CefJSDialogHandler> QCefBrowserClient::GetJSDialogHandler()
 }
 
 /* CefDisplayHandler */
-void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
-				      const CefString &title)
+void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString &title)
 {
 	if (widget && widget->cefBrowser->IsSame(browser)) {
 		std::string str_title = title;
 		QString qt_title = QString::fromUtf8(str_title.c_str());
-		QMetaObject::invokeMethod(widget, "titleChanged",
-					  Q_ARG(QString, qt_title));
+		QMetaObject::invokeMethod(widget, "titleChanged", Q_ARG(QString, qt_title));
 	} else { /* handle popup title */
 		if (title.compare("DevTools") == 0)
 			return;
@@ -93,10 +91,8 @@ void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser,
 }
 
 /* CefRequestHandler */
-bool QCefBrowserClient::OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
-				       CefRefPtr<CefFrame>,
-				       CefRefPtr<CefRequest> request, bool,
-				       bool)
+bool QCefBrowserClient::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
+				       CefRefPtr<CefRequest> request, bool, bool)
 {
 	std::string str_url = request->GetURL();
 
@@ -120,15 +116,13 @@ bool QCefBrowserClient::OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
 
 	if (widget) {
 		QString qt_url = QString::fromUtf8(str_url.c_str());
-		QMetaObject::invokeMethod(widget, "urlChanged",
-					  Q_ARG(QString, qt_url));
+		QMetaObject::invokeMethod(widget, "urlChanged", Q_ARG(QString, qt_url));
 	}
 	return false;
 }
 
-bool QCefBrowserClient::OnOpenURLFromTab(
-	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, const CefString &target_url,
-	CefRequestHandler::WindowOpenDisposition, bool)
+bool QCefBrowserClient::OnOpenURLFromTab(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, const CefString &target_url,
+					 CefRequestHandler::WindowOpenDisposition, bool)
 {
 	std::string str_url = target_url;
 
@@ -138,10 +132,8 @@ bool QCefBrowserClient::OnOpenURLFromTab(
 	return true;
 }
 
-void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser,
-				    CefRefPtr<CefFrame> frame,
-				    CefLoadHandler::ErrorCode errorCode,
-				    const CefString &errorText,
+void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+				    CefLoadHandler::ErrorCode errorCode, const CefString &errorText,
 				    const CefString &failedUrl)
 {
 	UNUSED_PARAMETER(browser);
@@ -157,23 +149,18 @@ void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 	dstr_replace(&html, "%%ERROR_URL%%", failedUrl.ToString().c_str());
 
 	dstr_replace(&html, "Error.Title", obs_module_text("Error.Title"));
-	dstr_replace(&html, "Error.Description",
-		     obs_module_text("Error.Description"));
+	dstr_replace(&html, "Error.Description", obs_module_text("Error.Description"));
 	dstr_replace(&html, "Error.Retry", obs_module_text("Error.Retry"));
 	const char *translError;
 	std::string errorKey = "ErrorCode." + errorText.ToString();
-	if (obs_module_get_string(errorKey.c_str(),
-				  (const char **)&translError)) {
+	if (obs_module_get_string(errorKey.c_str(), (const char **)&translError)) {
 		dstr_replace(&html, "%%ERROR_CODE%%", translError);
 	} else {
-		dstr_replace(&html, "%%ERROR_CODE%%",
-			     errorText.ToString().c_str());
+		dstr_replace(&html, "%%ERROR_CODE%%", errorText.ToString().c_str());
 	}
 
-	frame->LoadURL(
-		"data:text/html;base64," +
-		CefURIEncode(CefBase64Encode(html.array, html.len), false)
-			.ToString());
+	frame->LoadURL("data:text/html;base64," +
+		       CefURIEncode(CefBase64Encode(html.array, html.len), false).ToString());
 
 	dstr_free(&html);
 	bfree(path);
@@ -181,12 +168,10 @@ void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser,
 }
 
 /* CefLifeSpanHandler */
-bool QCefBrowserClient::OnBeforePopup(
-	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, const CefString &target_url,
-	const CefString &, CefLifeSpanHandler::WindowOpenDisposition, bool,
-	const CefPopupFeatures &, CefWindowInfo &windowInfo,
-	CefRefPtr<CefClient> &, CefBrowserSettings &,
-	CefRefPtr<CefDictionaryValue> &, bool *)
+bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, const CefString &target_url,
+				      const CefString &, CefLifeSpanHandler::WindowOpenDisposition, bool,
+				      const CefPopupFeatures &, CefWindowInfo &windowInfo, CefRefPtr<CefClient> &,
+				      CefBrowserSettings &, CefRefPtr<CefDictionaryValue> &, bool *)
 {
 	if (allowAllPopups) {
 #ifdef _WIN32
@@ -205,8 +190,7 @@ bool QCefBrowserClient::OnBeforePopup(
 		PopupWhitelistInfo &info = popup_whitelist[i - 1];
 
 		if (!info.obj) {
-			popup_whitelist.erase(popup_whitelist.begin() +
-					      (i - 1));
+			popup_whitelist.erase(popup_whitelist.begin() + (i - 1));
 			continue;
 		}
 
@@ -225,8 +209,7 @@ bool QCefBrowserClient::OnBeforePopup(
 	return true;
 }
 
-bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>,
-				   CefFocusHandler::FocusSource source)
+bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>, CefFocusHandler::FocusSource source)
 {
 	/* Don't steal focus when the webpage navigates. This is especially
 	   obvious on startup when the user has many browser docks defined,
@@ -240,17 +223,12 @@ bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>,
 	}
 }
 
-void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
-					    CefRefPtr<CefFrame>,
-					    CefRefPtr<CefContextMenuParams>,
-					    CefRefPtr<CefMenuModel> model)
+void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
+					    CefRefPtr<CefContextMenuParams>, CefRefPtr<CefMenuModel> model)
 {
 	if (model->IsVisible(MENU_ID_BACK) &&
-	    (!model->IsVisible(MENU_ID_RELOAD) &&
-	     !model->IsVisible(MENU_ID_RELOAD_NOCACHE))) {
-		model->InsertItemAt(
-			2, MENU_ID_RELOAD_NOCACHE,
-			QObject::tr("RefreshBrowser").toUtf8().constData());
+	    (!model->IsVisible(MENU_ID_RELOAD) && !model->IsVisible(MENU_ID_RELOAD_NOCACHE))) {
+		model->InsertItemAt(2, MENU_ID_RELOAD_NOCACHE, QObject::tr("RefreshBrowser").toUtf8().constData());
 	}
 	if (model->IsVisible(MENU_ID_PRINT)) {
 		model->Remove(MENU_ID_PRINT);
@@ -260,85 +238,70 @@ void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser,
 	}
 	model->AddItem(MENU_ITEM_ZOOM_IN, obs_module_text("Zoom.In"));
 	if (browser->GetHost()->GetZoomLevel() != 0) {
-		model->AddItem(MENU_ITEM_ZOOM_RESET,
-			       obs_module_text("Zoom.Reset"));
+		model->AddItem(MENU_ITEM_ZOOM_RESET, obs_module_text("Zoom.Reset"));
 	}
 	model->AddItem(MENU_ITEM_ZOOM_OUT, obs_module_text("Zoom.Out"));
 	model->AddSeparator();
-	model->InsertItemAt(model->GetCount(), MENU_ITEM_COPY_URL,
-			    obs_module_text("CopyUrl"));
-	model->InsertItemAt(model->GetCount(), MENU_ITEM_DEVTOOLS,
-			    obs_module_text("Inspect"));
-	model->InsertCheckItemAt(model->GetCount(), MENU_ITEM_MUTE,
-				 QObject::tr("Mute").toUtf8().constData());
+	model->InsertItemAt(model->GetCount(), MENU_ITEM_COPY_URL, obs_module_text("CopyUrl"));
+	model->InsertItemAt(model->GetCount(), MENU_ITEM_DEVTOOLS, obs_module_text("Inspect"));
+	model->InsertCheckItemAt(model->GetCount(), MENU_ITEM_MUTE, QObject::tr("Mute").toUtf8().constData());
 	model->SetChecked(MENU_ITEM_MUTE, browser->GetHost()->IsAudioMuted());
 }
 
 #if defined(_WIN32)
-bool QCefBrowserClient::RunContextMenu(
-	CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
-	CefRefPtr<CefContextMenuParams>, CefRefPtr<CefMenuModel> model,
-	CefRefPtr<CefRunContextMenuCallback> callback)
+bool QCefBrowserClient::RunContextMenu(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, CefRefPtr<CefContextMenuParams>,
+				       CefRefPtr<CefMenuModel> model, CefRefPtr<CefRunContextMenuCallback> callback)
 {
 	std::vector<std::tuple<std::string, int, bool, int, bool>> menu_items;
 	menu_items.reserve(model->GetCount());
 	for (int i = 0; i < model->GetCount(); i++) {
-		menu_items.push_back(
-			{model->GetLabelAt(i), model->GetCommandIdAt(i),
-			 model->IsEnabledAt(i), model->GetTypeAt(i),
-			 model->IsCheckedAt(i)});
+		menu_items.push_back({model->GetLabelAt(i), model->GetCommandIdAt(i), model->IsEnabledAt(i),
+				      model->GetTypeAt(i), model->IsCheckedAt(i)});
 	}
 
-	QMetaObject::invokeMethod(
-		QCoreApplication::instance()->thread(),
-		[menu_items, callback]() {
-			QMenu contextMenu;
-			std::string name;
-			int command_id;
-			bool enabled;
-			int type_id;
-			bool check;
+	QMetaObject::invokeMethod(QCoreApplication::instance()->thread(), [menu_items, callback]() {
+		QMenu contextMenu;
+		std::string name;
+		int command_id;
+		bool enabled;
+		int type_id;
+		bool check;
 
-			for (const std::tuple<std::string, int, bool, int, bool>
-				     &menu_item : menu_items) {
-				std::tie(name, command_id, enabled, type_id,
-					 check) = menu_item;
-				switch (type_id) {
-				case MENUITEMTYPE_CHECK:
-				case MENUITEMTYPE_COMMAND: {
-					QAction *item =
-						new QAction(name.c_str());
-					item->setEnabled(enabled);
-					if (type_id == MENUITEMTYPE_CHECK) {
-						item->setCheckable(true);
-						item->setChecked(check);
-					}
-					item->setProperty("cmd_id", command_id);
-					contextMenu.addAction(item);
-				} break;
-				case MENUITEMTYPE_SEPARATOR:
-					contextMenu.addSeparator();
-					break;
+		for (const std::tuple<std::string, int, bool, int, bool> &menu_item : menu_items) {
+			std::tie(name, command_id, enabled, type_id, check) = menu_item;
+			switch (type_id) {
+			case MENUITEMTYPE_CHECK:
+			case MENUITEMTYPE_COMMAND: {
+				QAction *item = new QAction(name.c_str());
+				item->setEnabled(enabled);
+				if (type_id == MENUITEMTYPE_CHECK) {
+					item->setCheckable(true);
+					item->setChecked(check);
 				}
+				item->setProperty("cmd_id", command_id);
+				contextMenu.addAction(item);
+			} break;
+			case MENUITEMTYPE_SEPARATOR:
+				contextMenu.addSeparator();
+				break;
 			}
+		}
 
-			QAction *action = contextMenu.exec(QCursor::pos());
-			if (action) {
-				QVariant cmdId = action->property("cmd_id");
-				callback.get()->Continue(cmdId.toInt(),
-							 EVENTFLAG_NONE);
-			} else {
-				callback.get()->Cancel();
-			}
-		});
+		QAction *action = contextMenu.exec(QCursor::pos());
+		if (action) {
+			QVariant cmdId = action->property("cmd_id");
+			callback.get()->Continue(cmdId.toInt(), EVENTFLAG_NONE);
+		} else {
+			callback.get()->Cancel();
+		}
+	});
 	return true;
 }
 #endif
 
-bool QCefBrowserClient::OnContextMenuCommand(
-	CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
-	CefRefPtr<CefContextMenuParams> params, int command_id,
-	CefContextMenuHandler::EventFlags)
+bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
+					     CefRefPtr<CefContextMenuParams> params, int command_id,
+					     CefContextMenuHandler::EventFlags)
 {
 	if (command_id < MENU_ID_CUSTOM_FIRST)
 		return false;
@@ -349,19 +312,16 @@ bool QCefBrowserClient::OnContextMenuCommand(
 	switch (command_id) {
 	case MENU_ITEM_DEVTOOLS:
 #if defined(_WIN32) && CHROME_VERSION_BUILD < 6533
-		title = QString(obs_module_text("DevTools"))
-				.arg(widget->parentWidget()->windowTitle());
-		windowInfo.SetAsPopup(host->GetWindowHandle(),
-				      title.toUtf8().constData());
+		title = QString(obs_module_text("DevTools")).arg(widget->parentWidget()->windowTitle());
+		windowInfo.SetAsPopup(host->GetWindowHandle(), title.toUtf8().constData());
 #endif
 		pos = widget->mapToGlobal(QPoint(0, 0));
 		windowInfo.bounds.x = pos.x();
 		windowInfo.bounds.y = pos.y() + 30;
 		windowInfo.bounds.width = 900;
 		windowInfo.bounds.height = 700;
-		host->ShowDevTools(
-			windowInfo, host->GetClient(), CefBrowserSettings(),
-			{params.get()->GetXCoord(), params.get()->GetYCoord()});
+		host->ShowDevTools(windowInfo, host->GetClient(), CefBrowserSettings(),
+				   {params.get()->GetXCoord(), params.get()->GetYCoord()});
 		return true;
 	case MENU_ITEM_MUTE:
 		host->SetAudioMuted(!host->IsAudioMuted());
@@ -383,20 +343,17 @@ bool QCefBrowserClient::OnContextMenuCommand(
 			clipboard->setText(url.c_str(), QClipboard::Clipboard);
 
 			if (clipboard->supportsSelection()) {
-				clipboard->setText(url.c_str(),
-						   QClipboard::Selection);
+				clipboard->setText(url.c_str(), QClipboard::Selection);
 			}
 		};
-		QMetaObject::invokeMethod(
-			QCoreApplication::instance()->thread(), saveClipboard);
+		QMetaObject::invokeMethod(QCoreApplication::instance()->thread(), saveClipboard);
 		return true;
 		break;
 	}
 	return false;
 }
 
-void QCefBrowserClient::OnLoadStart(CefRefPtr<CefBrowser>,
-				    CefRefPtr<CefFrame> frame, TransitionType)
+void QCefBrowserClient::OnLoadStart(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame, TransitionType)
 {
 	if (!frame->IsMain())
 		return;
@@ -408,8 +365,7 @@ void QCefBrowserClient::OnLoadStart(CefRefPtr<CefBrowser>,
 	frame->ExecuteJavaScript(script, "", 0);
 }
 
-void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
-				  CefRefPtr<CefFrame> frame, int)
+void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame, int)
 {
 	if (!frame->IsMain())
 		return;
@@ -421,10 +377,8 @@ void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>,
 }
 
 bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
-				   CefJSDialogHandler::JSDialogType dialog_type,
-				   const CefString &message_text,
-				   const CefString &default_prompt_text,
-				   CefRefPtr<CefJSDialogCallback> callback,
+				   CefJSDialogHandler::JSDialogType dialog_type, const CefString &message_text,
+				   const CefString &default_prompt_text, CefRefPtr<CefJSDialogCallback> callback,
 				   bool &)
 {
 	QString parentTitle = widget->parentWidget()->windowTitle();
@@ -432,31 +386,26 @@ bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
 	QString msg_raw(message_text.ToString().c_str());
 	// Replace <br> with standard newline as we will render in plaintext
 	msg_raw.replace(QRegularExpression("<br\\s{0,1}\\/{0,1}>"), "\n");
-	QString submsg =
-		QString(obs_module_text("Dialog.ReceivedFrom")).arg(parentTitle);
+	QString submsg = QString(obs_module_text("Dialog.ReceivedFrom")).arg(parentTitle);
 	QString msg = QString("%1\n\n\n%2").arg(msg_raw).arg(submsg);
 
 	if (dialog_type == JSDIALOGTYPE_PROMPT) {
 		auto msgbox = [msg, default_value, callback]() {
 			QInputDialog *dlg = new QInputDialog(nullptr);
 			dlg->setWindowFlag(Qt::WindowStaysOnTopHint, true);
-			dlg->setWindowFlag(Qt::WindowContextHelpButtonHint,
-					   false);
+			dlg->setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 			std::stringstream title;
-			title << obs_module_text("Dialog.Prompt") << ": "
-			      << obs_module_text("Dialog.BrowserDock");
+			title << obs_module_text("Dialog.Prompt") << ": " << obs_module_text("Dialog.BrowserDock");
 			dlg->setWindowTitle(title.str().c_str());
 			if (!default_value.empty())
 				dlg->setTextValue(default_value.c_str());
 
 			auto finished = [callback, dlg](int result) {
-				callback.get()->Continue(
-					result == QDialog::Accepted,
-					dlg->textValue().toUtf8().constData());
+				callback.get()->Continue(result == QDialog::Accepted,
+							 dlg->textValue().toUtf8().constData());
 			};
 
-			QWidget::connect(dlg, &QInputDialog::finished,
-					 finished);
+			QWidget::connect(dlg, &QInputDialog::finished, finished);
 			dlg->open();
 			if (QLabel *lbl = dlg->findChild<QLabel *>()) {
 				// Force plaintext manually
@@ -464,8 +413,7 @@ bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
 			}
 			dlg->setLabelText(msg);
 		};
-		QMetaObject::invokeMethod(
-			QCoreApplication::instance()->thread(), msgbox);
+		QMetaObject::invokeMethod(QCoreApplication::instance()->thread(), msgbox);
 		return true;
 	}
 	auto msgbox = [msg, dialog_type, callback]() {
@@ -490,22 +438,17 @@ bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
 		title << ": " << obs_module_text("Dialog.BrowserDock");
 		dlg->setWindowTitle(title.str().c_str());
 
-		auto finished = [callback](int result) {
-			callback.get()->Continue(result == QMessageBox::Ok, "");
-		};
+		auto finished = [callback](int result) { callback.get()->Continue(result == QMessageBox::Ok, ""); };
 
 		QWidget::connect(dlg, &QMessageBox::finished, finished);
 
 		dlg->open();
 	};
-	QMetaObject::invokeMethod(QCoreApplication::instance()->thread(),
-				  msgbox);
+	QMetaObject::invokeMethod(QCoreApplication::instance()->thread(), msgbox);
 	return true;
 }
 
-bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
-				      const CefKeyEvent &event, CefEventHandle,
-				      bool *)
+bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent &event, CefEventHandle, bool *)
 {
 	if (event.type != KEYEVENT_RAWKEYDOWN)
 		return false;
@@ -518,18 +461,15 @@ bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
 #endif
 		browser->ReloadIgnoreCache();
 		return true;
-	} else if ((event.windows_key_code == 189 ||
-		    event.windows_key_code == 109) &&
+	} else if ((event.windows_key_code == 189 || event.windows_key_code == 109) &&
 		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
 		// Zoom out
 		return widget->zoomPage(-1);
-	} else if ((event.windows_key_code == 187 ||
-		    event.windows_key_code == 107) &&
+	} else if ((event.windows_key_code == 187 || event.windows_key_code == 107) &&
 		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
 		// Zoom in
 		return widget->zoomPage(1);
-	} else if ((event.windows_key_code == 48 ||
-		    event.windows_key_code == 96) &&
+	} else if ((event.windows_key_code == 48 || event.windows_key_code == 96) &&
 		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
 		// Reset zoom
 		return widget->zoomPage(0);
