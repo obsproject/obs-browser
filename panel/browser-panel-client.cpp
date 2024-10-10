@@ -76,16 +76,20 @@ void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefSt
 		QString qt_title = QString::fromUtf8(str_title.c_str());
 		QMetaObject::invokeMethod(widget, "titleChanged", Q_ARG(QString, qt_title));
 	} else { /* handle popup title */
-		if (title.compare("DevTools") == 0)
-			return;
+		CefString newTitle = title;
+		if (title.compare("DevTools") == 0 && widget)
+			newTitle = QString(obs_module_text("DevTools"))
+					   .arg(widget->parentWidget()->windowTitle())
+					   .toUtf8()
+					   .constData();
 
 #if defined(_WIN32)
 		CefWindowHandle handl = browser->GetHost()->GetWindowHandle();
-		std::wstring str_title = title;
+		std::wstring str_title = newTitle;
 		SetWindowTextW((HWND)handl, str_title.c_str());
 #elif defined(__linux__)
 		CefWindowHandle handl = browser->GetHost()->GetWindowHandle();
-		XStoreName(cef_get_xdisplay(), handl, title.ToString().c_str());
+		XStoreName(cef_get_xdisplay(), handl, newTitle.ToString().c_str());
 #endif
 	}
 }
@@ -308,12 +312,10 @@ bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser, CefR
 	CefRefPtr<CefBrowserHost> host = browser->GetHost();
 	CefWindowInfo windowInfo;
 	QPoint pos;
-	QString title;
 	switch (command_id) {
 	case MENU_ITEM_DEVTOOLS:
 #if defined(_WIN32) && CHROME_VERSION_BUILD < 6533
-		title = QString(obs_module_text("DevTools")).arg(widget->parentWidget()->windowTitle());
-		windowInfo.SetAsPopup(host->GetWindowHandle(), title.toUtf8().constData());
+		windowInfo.SetAsPopup(host->GetWindowHandle(), "");
 #endif
 		pos = widget->mapToGlobal(QPoint(0, 0));
 		windowInfo.bounds.x = pos.x();
