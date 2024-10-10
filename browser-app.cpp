@@ -50,13 +50,10 @@ CefRefPtr<CefBrowserProcessHandler> BrowserApp::GetBrowserProcessHandler()
 
 void BrowserApp::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar)
 {
-	registrar->AddCustomScheme("http",
-				   CEF_SCHEME_OPTION_STANDARD |
-					   CEF_SCHEME_OPTION_CORS_ENABLED);
+	registrar->AddCustomScheme("http", CEF_SCHEME_OPTION_STANDARD | CEF_SCHEME_OPTION_CORS_ENABLED);
 }
 
-void BrowserApp::OnBeforeChildProcessLaunch(
-	CefRefPtr<CefCommandLine> command_line)
+void BrowserApp::OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line)
 {
 #ifdef _WIN32
 	std::string pid = std::to_string(GetCurrentProcessId());
@@ -66,8 +63,7 @@ void BrowserApp::OnBeforeChildProcessLaunch(
 #endif
 }
 
-void BrowserApp::OnBeforeCommandLineProcessing(
-	const CefString &, CefRefPtr<CefCommandLine> command_line)
+void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefCommandLine> command_line)
 {
 	if (!shared_texture_available) {
 		bool enableGPU = command_line->HasSwitch("enable-gpu");
@@ -80,56 +76,43 @@ void BrowserApp::OnBeforeCommandLineProcessing(
 
 	if (command_line->HasSwitch("disable-features")) {
 		// Don't override existing, as this can break OSR
-		std::string disableFeatures =
-			command_line->GetSwitchValue("disable-features");
+		std::string disableFeatures = command_line->GetSwitchValue("disable-features");
 		disableFeatures += ",HardwareMediaKeyHandling";
 		disableFeatures += ",WebBluetooth";
-		command_line->AppendSwitchWithValue("disable-features",
-						    disableFeatures);
+		command_line->AppendSwitchWithValue("disable-features", disableFeatures);
 	} else {
-		command_line->AppendSwitchWithValue("disable-features",
-						    "WebBluetooth,"
-						    "HardwareMediaKeyHandling");
+		command_line->AppendSwitchWithValue("disable-features", "WebBluetooth,"
+									"HardwareMediaKeyHandling");
 	}
 
-	command_line->AppendSwitchWithValue("autoplay-policy",
-					    "no-user-gesture-required");
+	command_line->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
 #ifdef __APPLE__
 	command_line->AppendSwitch("use-mock-keychain");
 #elif !defined(_WIN32)
-	command_line->AppendSwitchWithValue("ozone-platform",
-					    wayland ? "wayland" : "x11");
+	command_line->AppendSwitchWithValue("ozone-platform", wayland ? "wayland" : "x11");
 #endif
 }
 
-std::vector<std::string> exposedFunctions = {
-	"getControlLevel",     "getCurrentScene",  "getStatus",
-	"startRecording",      "stopRecording",    "startStreaming",
-	"stopStreaming",       "pauseRecording",   "unpauseRecording",
-	"startReplayBuffer",   "stopReplayBuffer", "saveReplayBuffer",
-	"startVirtualcam",     "stopVirtualcam",   "getScenes",
-	"setCurrentScene",     "getTransitions",   "getCurrentTransition",
-	"setCurrentTransition"};
+std::vector<std::string> exposedFunctions = {"getControlLevel",     "getCurrentScene",  "getStatus",
+					     "startRecording",      "stopRecording",    "startStreaming",
+					     "stopStreaming",       "pauseRecording",   "unpauseRecording",
+					     "startReplayBuffer",   "stopReplayBuffer", "saveReplayBuffer",
+					     "startVirtualcam",     "stopVirtualcam",   "getScenes",
+					     "setCurrentScene",     "getTransitions",   "getCurrentTransition",
+					     "setCurrentTransition"};
 
-void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
-				  CefRefPtr<CefFrame>,
-				  CefRefPtr<CefV8Context> context)
+void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>, CefRefPtr<CefV8Context> context)
 {
 	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
 
-	CefRefPtr<CefV8Value> obsStudioObj =
-		CefV8Value::CreateObject(nullptr, nullptr);
-	globalObj->SetValue("obsstudio", obsStudioObj,
-			    V8_PROPERTY_ATTRIBUTE_NONE);
+	CefRefPtr<CefV8Value> obsStudioObj = CefV8Value::CreateObject(nullptr, nullptr);
+	globalObj->SetValue("obsstudio", obsStudioObj, V8_PROPERTY_ATTRIBUTE_NONE);
 
-	CefRefPtr<CefV8Value> pluginVersion =
-		CefV8Value::CreateString(OBS_BROWSER_VERSION_STRING);
-	obsStudioObj->SetValue("pluginVersion", pluginVersion,
-			       V8_PROPERTY_ATTRIBUTE_NONE);
+	CefRefPtr<CefV8Value> pluginVersion = CefV8Value::CreateString(OBS_BROWSER_VERSION_STRING);
+	obsStudioObj->SetValue("pluginVersion", pluginVersion, V8_PROPERTY_ATTRIBUTE_NONE);
 
 	for (std::string name : exposedFunctions) {
-		CefRefPtr<CefV8Value> func =
-			CefV8Value::CreateFunction(name, this);
+		CefRefPtr<CefV8Value> func = CefV8Value::CreateFunction(name, this);
 		obsStudioObj->SetValue(name, func, V8_PROPERTY_ATTRIBUTE_NONE);
 	}
 
@@ -143,9 +126,7 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser,
 #endif
 }
 
-void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
-				   const char *functionName,
-				   CefV8ValueList arguments)
+void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser, const char *functionName, CefV8ValueList arguments)
 {
 	std::vector<CefString> names;
 	browser->GetFrameNames(names);
@@ -161,10 +142,8 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 		context->Enter();
 
 		CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
-		CefRefPtr<CefV8Value> obsStudioObj =
-			globalObj->GetValue("obsstudio");
-		CefRefPtr<CefV8Value> jsFunction =
-			obsStudioObj->GetValue(functionName);
+		CefRefPtr<CefV8Value> obsStudioObj = globalObj->GetValue("obsstudio");
+		CefRefPtr<CefV8Value> jsFunction = obsStudioObj->GetValue(functionName);
 
 		if (jsFunction && jsFunction->IsFunction())
 			jsFunction->ExecuteFunction(nullptr, arguments);
@@ -174,9 +153,7 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser,
 }
 
 #if !ENABLE_WASHIDDEN
-void BrowserApp::SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
-					    CefRefPtr<CefFrame> frame,
-					    bool isVisible)
+void BrowserApp::SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, bool isVisible)
 {
 	UNUSED_PARAMETER(browser);
 
@@ -189,15 +166,10 @@ void BrowserApp::SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
 	CefRefPtr<CefV8Value> documentObject = globalObj->GetValue("document");
 
 	if (!!documentObject) {
-		documentObject->SetValue("hidden",
-					 CefV8Value::CreateBool(!isVisible),
-					 V8_PROPERTY_ATTRIBUTE_READONLY);
+		documentObject->SetValue("hidden", CefV8Value::CreateBool(!isVisible), V8_PROPERTY_ATTRIBUTE_READONLY);
 
-		documentObject->SetValue(
-			"visibilityState",
-			CefV8Value::CreateString(isVisible ? "visible"
-							   : "hidden"),
-			V8_PROPERTY_ATTRIBUTE_READONLY);
+		documentObject->SetValue("visibilityState", CefV8Value::CreateString(isVisible ? "visible" : "hidden"),
+					 V8_PROPERTY_ATTRIBUTE_READONLY);
 
 		std::string script = "new CustomEvent('visibilitychange', {});";
 
@@ -206,28 +178,24 @@ void BrowserApp::SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser,
 
 		/* Create the CustomEvent object
 		 * We have to use eval to invoke the new operator */
-		bool success = context->Eval(script, frame->GetURL(), 0,
-					     returnValue, exception);
+		bool success = context->Eval(script, frame->GetURL(), 0, returnValue, exception);
 
 		if (success) {
 			CefV8ValueList arguments;
 			arguments.push_back(returnValue);
 
-			CefRefPtr<CefV8Value> dispatchEvent =
-				documentObject->GetValue("dispatchEvent");
+			CefRefPtr<CefV8Value> dispatchEvent = documentObject->GetValue("dispatchEvent");
 
 			/* Dispatch visibilitychange event on the document
 			 * object */
-			dispatchEvent->ExecuteFunction(documentObject,
-						       arguments);
+			dispatchEvent->ExecuteFunction(documentObject, arguments);
 		}
 	}
 
 	context->Exit();
 }
 
-void BrowserApp::SetDocumentVisibility(CefRefPtr<CefBrowser> browser,
-				       bool isVisible)
+void BrowserApp::SetDocumentVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
 {
 	/* This method might be called before OnContextCreated
 	 * call is made. We'll save the requested visibility
@@ -291,9 +259,7 @@ CefRefPtr<CefV8Value> CefValueToCefV8Value(CefRefPtr<CefValue> value)
 		dict->GetKeys(keys);
 		for (unsigned int i = 0; i < keys.size(); i++) {
 			CefString key = keys[i];
-			result->SetValue(
-				key, CefValueToCefV8Value(dict->GetValue(key)),
-				V8_PROPERTY_ATTRIBUTE_NONE);
+			result->SetValue(key, CefValueToCefV8Value(dict->GetValue(key)), V8_PROPERTY_ATTRIBUTE_NONE);
 		}
 	} break;
 	case VTYPE_LIST: {
@@ -301,18 +267,15 @@ CefRefPtr<CefV8Value> CefValueToCefV8Value(CefRefPtr<CefValue> value)
 		size_t size = list->GetSize();
 		result = CefV8Value::CreateArray((int)size);
 		for (size_t i = 0; i < size; i++) {
-			result->SetValue((int)i, CefValueToCefV8Value(
-							 list->GetValue(i)));
+			result->SetValue((int)i, CefValueToCefV8Value(list->GetValue(i)));
 		}
 	} break;
 	}
 	return result;
 }
 
-bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-					  CefRefPtr<CefFrame> frame,
-					  CefProcessId source_process,
-					  CefRefPtr<CefProcessMessage> message)
+bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+					  CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
 {
 	UNUSED_PARAMETER(frame);
 	DCHECK(source_process == PID_BROWSER);
@@ -336,8 +299,7 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		ExecuteJSFunction(browser, "onActiveChange", arguments);
 
 	} else if (message->GetName() == "DispatchJSEvent") {
-		nlohmann::json payloadJson = nlohmann::json::parse(
-			args->GetString(1).ToString(), nullptr, false);
+		nlohmann::json payloadJson = nlohmann::json::parse(args->GetString(1).ToString(), nullptr, false);
 
 		nlohmann::json wrapperJson;
 		if (args->GetSize() > 1)
@@ -371,22 +333,19 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 
 			/* Create the CustomEvent object
 			* We have to use eval to invoke the new operator */
-			context->Eval(script, browser->GetMainFrame()->GetURL(),
-				      0, returnValue, exception);
+			context->Eval(script, browser->GetMainFrame()->GetURL(), 0, returnValue, exception);
 
 			CefV8ValueList arguments;
 			arguments.push_back(returnValue);
 
-			CefRefPtr<CefV8Value> dispatchEvent =
-				globalObj->GetValue("dispatchEvent");
+			CefRefPtr<CefV8Value> dispatchEvent = globalObj->GetValue("dispatchEvent");
 			dispatchEvent->ExecuteFunction(nullptr, arguments);
 
 			context->Exit();
 		}
 
 	} else if (message->GetName() == "executeCallback") {
-		CefRefPtr<CefV8Context> context =
-			browser->GetMainFrame()->GetV8Context();
+		CefRefPtr<CefV8Context> context = browser->GetMainFrame()->GetV8Context();
 
 		context->Enter();
 
@@ -394,8 +353,7 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 		int callbackID = arguments->GetInt(0);
 		CefString jsonString = arguments->GetString(1);
 
-		CefRefPtr<CefValue> json =
-			CefParseJSON(arguments->GetString(1).ToString(), {});
+		CefRefPtr<CefValue> json = CefParseJSON(arguments->GetString(1).ToString(), {});
 
 		CefRefPtr<CefV8Value> callback = callbackMap[callbackID];
 		CefV8ValueList args;
@@ -421,13 +379,11 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 bool IsValidFunction(std::string function)
 {
 	std::vector<std::string>::iterator iterator;
-	iterator = std::find(exposedFunctions.begin(), exposedFunctions.end(),
-			     function);
+	iterator = std::find(exposedFunctions.begin(), exposedFunctions.end(), function);
 	return iterator != exposedFunctions.end();
 }
 
-bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
-			 const CefV8ValueList &arguments,
+bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>, const CefV8ValueList &arguments,
 			 CefRefPtr<CefV8Value> &, CefString &)
 {
 	if (IsValidFunction(name.ToString())) {
@@ -436,8 +392,7 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 			callbackMap[callbackId] = arguments[0];
 		}
 
-		CefRefPtr<CefProcessMessage> msg =
-			CefProcessMessage::Create(name);
+		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create(name);
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 		args->SetInt(0, callbackId);
 
@@ -450,20 +405,16 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>,
 				pos = l + 1;
 
 			if (arguments[l]->IsString())
-				args->SetString(pos,
-						arguments[l]->GetStringValue());
+				args->SetString(pos, arguments[l]->GetStringValue());
 			else if (arguments[l]->IsInt())
 				args->SetInt(pos, arguments[l]->GetIntValue());
 			else if (arguments[l]->IsBool())
-				args->SetBool(pos,
-					      arguments[l]->GetBoolValue());
+				args->SetBool(pos, arguments[l]->GetBoolValue());
 			else if (arguments[l]->IsDouble())
-				args->SetDouble(pos,
-						arguments[l]->GetDoubleValue());
+				args->SetDouble(pos, arguments[l]->GetDoubleValue());
 		}
 
-		CefRefPtr<CefBrowser> browser =
-			CefV8Context::GetCurrentContext()->GetBrowser();
+		CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
 		SendBrowserProcessMessage(browser, PID_BROWSER, msg);
 
 	} else {
@@ -483,8 +434,7 @@ void QueueBrowserTask(CefRefPtr<CefBrowser> browser, BrowserFunc func)
 	std::lock_guard<std::mutex> lock(messageObject.browserTaskMutex);
 	messageObject.browserTasks.emplace_back(browser, func);
 
-	QMetaObject::invokeMethod(&messageObject, "ExecuteNextBrowserTask",
-				  Qt::QueuedConnection);
+	QMetaObject::invokeMethod(&messageObject, "ExecuteNextBrowserTask", Qt::QueuedConnection);
 }
 
 bool MessageObject::ExecuteNextBrowserTask()
@@ -511,8 +461,7 @@ void MessageObject::ExecuteTask(MessageTask task)
 void MessageObject::DoCefMessageLoop(int ms)
 {
 	if (ms)
-		QTimer::singleShot((int)ms + 2,
-				   []() { CefDoMessageLoopWork(); });
+		QTimer::singleShot((int)ms + 2, []() { CefDoMessageLoopWork(); });
 	else
 		CefDoMessageLoopWork();
 }
@@ -524,8 +473,7 @@ void MessageObject::Process()
 
 void ProcessCef()
 {
-	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop",
-				  Qt::QueuedConnection, Q_ARG(int, (int)0));
+	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop", Qt::QueuedConnection, Q_ARG(int, (int)0));
 }
 
 #define MAX_DELAY (1000 / 30)
@@ -542,14 +490,11 @@ void BrowserApp::OnScheduleMessagePumpWork(int64_t delay_ms)
 		delay_ms = MAX_DELAY;
 
 	if (!frameTimer.isActive()) {
-		QObject::connect(&frameTimer, &QTimer::timeout, &messageObject,
-				 &MessageObject::Process);
+		QObject::connect(&frameTimer, &QTimer::timeout, &messageObject, &MessageObject::Process);
 		frameTimer.setSingleShot(false);
 		frameTimer.start(33);
 	}
 
-	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop",
-				  Qt::QueuedConnection,
-				  Q_ARG(int, (int)delay_ms));
+	QMetaObject::invokeMethod(&messageObject, "DoCefMessageLoop", Qt::QueuedConnection, Q_ARG(int, (int)delay_ms));
 }
 #endif

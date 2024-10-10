@@ -26,9 +26,8 @@
 template<typename T, size_t N> char (&ArraySizeHelper(T (&array)[N]))[N];
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
-const int signals_to_restore[] = {SIGHUP, SIGINT,  SIGQUIT, SIGILL,  SIGABRT,
-				  SIGFPE, SIGSEGV, SIGALRM, SIGTERM, SIGCHLD,
-				  SIGBUS, SIGTRAP, SIGPIPE};
+const int signals_to_restore[] = {SIGHUP,  SIGINT,  SIGQUIT, SIGILL, SIGABRT, SIGFPE, SIGSEGV,
+				  SIGALRM, SIGTERM, SIGCHLD, SIGBUS, SIGTRAP, SIGPIPE};
 struct sigaction signal_handlers[arraysize(signals_to_restore)];
 
 void BackupSignalHandlers()
