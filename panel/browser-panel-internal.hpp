@@ -12,10 +12,7 @@ struct PopupWhitelistInfo {
 	std::string url;
 	QPointer<QObject> obj;
 
-	inline PopupWhitelistInfo(const std::string &url_, QObject *obj_)
-		: url(url_), obj(obj_)
-	{
-	}
+	inline PopupWhitelistInfo(const std::string &url_, QObject *obj_) : url(url_), obj(obj_) {}
 };
 
 extern std::mutex popup_whitelist_mutex;
@@ -28,8 +25,7 @@ class QCefWidgetInternal : public QCefWidget {
 	Q_OBJECT
 
 public:
-	QCefWidgetInternal(QWidget *parent, const std::string &url,
-			   CefRefPtr<CefRequestContext> rqc);
+	QCefWidgetInternal(QWidget *parent, const std::string &url, CefRefPtr<CefRequestContext> rqc);
 	~QCefWidgetInternal();
 
 	CefRefPtr<CefBrowser> cefBrowser;
