@@ -44,7 +44,8 @@ public:
 	bool cookie_found = false;
 
 	inline CookieCheck(QCefCookieManager::cookie_exists_cb callback_, const std::string target_)
-		: callback(callback_), target(target_)
+		: callback(callback_),
+		  target(target_)
 	{
 	}
 
@@ -131,7 +132,9 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 /* ------------------------------------------------------------------------- */
 
 QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_, CefRefPtr<CefRequestContext> rqc_)
-	: QCefWidget(parent), url(url_), rqc(rqc_)
+	: QCefWidget(parent),
+	  url(url_),
+	  rqc(rqc_)
 {
 	setAttribute(Qt::WA_PaintOnScreen);
 	setAttribute(Qt::WA_StaticContents);
