@@ -440,7 +440,9 @@ bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
 		title << ": " << obs_module_text("Dialog.BrowserDock");
 		dlg->setWindowTitle(title.str().c_str());
 
-		auto finished = [callback](int result) { callback.get()->Continue(result == QMessageBox::Ok, ""); };
+		auto finished = [callback](int result) {
+			callback.get()->Continue(result == QMessageBox::Ok, "");
+		};
 
 		QWidget::connect(dlg, &QMessageBox::finished, finished);
 

@@ -435,18 +435,32 @@ void RegisterBrowserSource()
 	info.get_defaults = browser_source_get_defaults;
 	info.icon_type = OBS_ICON_TYPE_BROWSER;
 
-	info.get_name = [](void *) { return obs_module_text("BrowserSource"); };
+	info.get_name = [](void *) {
+		return obs_module_text("BrowserSource");
+	};
 	info.create = [](obs_data_t *settings, obs_source_t *source) -> void * {
 		obs_browser_initialize();
 		return new BrowserSource(settings, source);
 	};
-	info.destroy = [](void *data) { static_cast<BrowserSource *>(data)->Destroy(); };
+	info.destroy = [](void *data) {
+		static_cast<BrowserSource *>(data)->Destroy();
+	};
 	info.missing_files = browser_source_missingfiles;
-	info.update = [](void *data, obs_data_t *settings) { static_cast<BrowserSource *>(data)->Update(settings); };
-	info.get_width = [](void *data) { return (uint32_t) static_cast<BrowserSource *>(data)->width; };
-	info.get_height = [](void *data) { return (uint32_t) static_cast<BrowserSource *>(data)->height; };
-	info.video_tick = [](void *data, float) { static_cast<BrowserSource *>(data)->Tick(); };
-	info.video_render = [](void *data, gs_effect_t *) { static_cast<BrowserSource *>(data)->Render(); };
+	info.update = [](void *data, obs_data_t *settings) {
+		static_cast<BrowserSource *>(data)->Update(settings);
+	};
+	info.get_width = [](void *data) {
+		return (uint32_t) static_cast<BrowserSource *>(data)->width;
+	};
+	info.get_height = [](void *data) {
+		return (uint32_t) static_cast<BrowserSource *>(data)->height;
+	};
+	info.video_tick = [](void *data, float) {
+		static_cast<BrowserSource *>(data)->Tick();
+	};
+	info.video_render = [](void *data, gs_effect_t *) {
+		static_cast<BrowserSource *>(data)->Render();
+	};
 #if CHROME_VERSION_BUILD < 4103
 	info.audio_mix = [](void *data, uint64_t *ts_out, struct audio_output_data *audio_output, size_t channels,
 			    size_t sample_rate) {
@@ -466,19 +480,27 @@ void RegisterBrowserSource()
 	info.mouse_wheel = [](void *data, const struct obs_mouse_event *event, int x_delta, int y_delta) {
 		static_cast<BrowserSource *>(data)->SendMouseWheel(event, x_delta, y_delta);
 	};
-	info.focus = [](void *data, bool focus) { static_cast<BrowserSource *>(data)->SendFocus(focus); };
+	info.focus = [](void *data, bool focus) {
+		static_cast<BrowserSource *>(data)->SendFocus(focus);
+	};
 	info.key_click = [](void *data, const struct obs_key_event *event, bool key_up) {
 		static_cast<BrowserSource *>(data)->SendKeyClick(event, key_up);
 	};
-	info.show = [](void *data) { static_cast<BrowserSource *>(data)->SetShowing(true); };
-	info.hide = [](void *data) { static_cast<BrowserSource *>(data)->SetShowing(false); };
+	info.show = [](void *data) {
+		static_cast<BrowserSource *>(data)->SetShowing(true);
+	};
+	info.hide = [](void *data) {
+		static_cast<BrowserSource *>(data)->SetShowing(false);
+	};
 	info.activate = [](void *data) {
 		BrowserSource *bs = static_cast<BrowserSource *>(data);
 		if (bs->restart)
 			bs->Refresh();
 		bs->SetActive(true);
 	};
-	info.deactivate = [](void *data) { static_cast<BrowserSource *>(data)->SetActive(false); };
+	info.deactivate = [](void *data) {
+		static_cast<BrowserSource *>(data)->SetActive(false);
+	};
 
 	obs_register_source(&info);
 }

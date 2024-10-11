@@ -77,7 +77,8 @@ public:
 	inline BrowserApp(bool shared_texture_available_ = false) : shared_texture_available(shared_texture_available_)
 #else
 	inline BrowserApp(bool shared_texture_available_ = false, bool wayland_ = false)
-		: shared_texture_available(shared_texture_available_), wayland(wayland_)
+		: shared_texture_available(shared_texture_available_),
+		  wayland(wayland_)
 #endif
 	{
 	}

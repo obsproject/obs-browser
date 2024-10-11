@@ -17,7 +17,9 @@ class QCefBrowserClient : public CefClient,
 
 public:
 	inline QCefBrowserClient(QCefWidgetInternal *widget_, const std::string &script_, bool allowAllPopups_)
-		: widget(widget_), script(script_), allowAllPopups(allowAllPopups_)
+		: widget(widget_),
+		  script(script_),
+		  allowAllPopups(allowAllPopups_)
 	{
 	}
 
