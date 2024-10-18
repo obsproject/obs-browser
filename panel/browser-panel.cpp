@@ -160,21 +160,24 @@ void QCefWidgetInternal::closeBrowser()
 {
 	CefRefPtr<CefBrowser> browser = cefBrowser;
 	if (!!browser) {
-		auto destroyBrowser = [](CefRefPtr<CefBrowser> cefBrowser) {
+		auto destroyBrowser = [=](CefRefPtr<CefBrowser> cefBrowser) {
 			CefRefPtr<CefClient> client = cefBrowser->GetHost()->GetClient();
 			QCefBrowserClient *bc = reinterpret_cast<QCefBrowserClient *>(client.get());
-
-			if (bc) {
-				bc->widget = nullptr;
-			}
 
 			cefBrowser->GetHost()->CloseBrowser(true);
 
 #if !defined(_WIN32) && !defined(__APPLE__) && CHROME_VERSION_BUILD >= 6533
-			while (cefBrowser && cefBrowser->IsValid()) {
-				os_sleep_ms(10);
-			}
+			QEventLoop loop;
+
+			connect(this, &QCefWidgetInternal::readyToClose, &loop, &QEventLoop::quit);
+
+			QTimer::singleShot(1000, &loop, &QEventLoop::quit);
+
+			loop.exec();
 #endif
+			if (bc) {
+				bc->widget = nullptr;
+			}
 		};
 
 		/* So you're probably wondering what's going on here.  If you
@@ -396,6 +399,11 @@ void QCefWidgetInternal::Resize()
 	if (success && container)
 		container->resize(size.width(), size.height());
 #endif
+}
+
+void QCefWidgetInternal::CloseSafely()
+{
+	emit readyToClose();
 }
 
 void QCefWidgetInternal::showEvent(QShowEvent *event)
