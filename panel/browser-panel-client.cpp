@@ -213,6 +213,13 @@ bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>
 	return true;
 }
 
+void QCefBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser>)
+{
+	if (widget) {
+		emit widget->CloseSafely();
+	}
+}
+
 bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>, CefFocusHandler::FocusSource source)
 {
 	/* Don't steal focus when the webpage navigates. This is especially

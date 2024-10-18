@@ -51,6 +51,7 @@ public:
 	virtual bool zoomPage(int direction) override;
 	virtual void executeJavaScript(const std::string &script) override;
 
+	void CloseSafely();
 	void Resize();
 
 #ifdef __linux__
@@ -61,4 +62,7 @@ private:
 
 public slots:
 	void Init();
+
+signals:
+	void readyToClose();
 };
