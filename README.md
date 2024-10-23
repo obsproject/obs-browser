@@ -58,8 +58,6 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 * obsSceneListChanged
 * obsTransitionChanged
 * obsTransitionListChanged
-* obsSourceVisibleChanged
-* obsSourceActiveChanged
 * obsStreamingStarting
 * obsStreamingStarted
 * obsStreamingStopping
@@ -80,6 +78,10 @@ Descriptions for these events can be [found here](https://obsproject.com/docs/re
 * obsExit
 * [Any custom event emitted via obs-websocket vendor requests]
 
+The following events trigger when the browser source visibility or active status changes:
+
+* obsSourceVisibleChanged
+* obsSourceActiveChanged
 
 ### Control OBS
 #### Get webpage control permissions
