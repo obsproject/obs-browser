@@ -56,6 +56,7 @@
 #endif
 
 #if !defined(_WIN32) && !defined(__APPLE__)
+#include <glad/glad.h>
 #include "drm-format.hpp"
 #endif
 
@@ -704,6 +705,24 @@ static void check_hwaccel_support(void)
 			device++;
 		}
 	}
+}
+#elif __linux__
+static void check_hwaccel_support(void)
+{
+	/* NOTE: GL_VERSION returns a string that contains the driver vendor */
+	const char *glVersion = NULL;
+
+	obs_enter_graphics();
+	gladLoadGL();
+	glVersion = (const char *)glGetString(GL_VERSION);
+	obs_leave_graphics();
+
+	if (strstr(glVersion, "NVIDIA") != NULL) {
+		hwaccel = false;
+		blog(LOG_INFO,
+		     "[obs-browser]: Blacklisted driver detected, disabling browser source hardware acceleration.");
+	}
+	return;
 }
 #else
 static void check_hwaccel_support(void)
