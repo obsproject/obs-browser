@@ -216,7 +216,7 @@ bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>
 void QCefBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser>)
 {
 	if (widget) {
-		emit widget->CloseSafely();
+		widget->CloseSafely();
 	}
 }
 
