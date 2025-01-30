@@ -78,10 +78,16 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 		// Don't override existing, as this can break OSR
 		std::string disableFeatures = command_line->GetSwitchValue("disable-features");
 		disableFeatures += ",HardwareMediaKeyHandling";
+#ifdef _WIN32
+		disableFeatures += ",EnableWindowsGamingInputDataFetcher";
+#endif
 		disableFeatures += ",WebBluetooth";
 		command_line->AppendSwitchWithValue("disable-features", disableFeatures);
 	} else {
 		command_line->AppendSwitchWithValue("disable-features", "WebBluetooth,"
+#ifdef _WIN32
+									"EnableWindowsGamingInputDataFetcher,"
+#endif
 									"HardwareMediaKeyHandling");
 	}
 
