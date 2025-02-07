@@ -87,6 +87,9 @@ public:
 
 	/* CefLifeSpanHandler */
 	virtual bool OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+#if CHROME_VERSION_BUILD >= 6834
+				   int popup_id,
+#endif
 				   const CefString &target_url, const CefString &target_frame_name,
 				   cef_window_open_disposition_t target_disposition, bool user_gesture,
 				   const CefPopupFeatures &popupFeatures, CefWindowInfo &windowInfo,

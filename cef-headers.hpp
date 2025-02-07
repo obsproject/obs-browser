@@ -34,6 +34,9 @@
 #include <include/cef_parser.h>
 #include <include/cef_scheme.h>
 #include <include/cef_version.h>
+#if CHROME_VERSION_BUILD >= 6943
+#include <include/cef_version_info.h>
+#endif
 #include <include/cef_render_process_handler.h>
 #include <include/cef_request_context_handler.h>
 #include <include/cef_jsdialog_handler.h>

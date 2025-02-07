@@ -91,9 +91,13 @@ CefResourceRequestHandler::ReturnValue BrowserClient::OnBeforeResourceLoad(CefRe
 }
 #endif
 
-bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, const CefString &, const CefString &,
-				  cef_window_open_disposition_t, bool, const CefPopupFeatures &, CefWindowInfo &,
-				  CefRefPtr<CefClient> &, CefBrowserSettings &, CefRefPtr<CefDictionaryValue> &, bool *)
+bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+#if CHROME_VERSION_BUILD >= 6834
+				  int,
+#endif
+				  const CefString &, const CefString &, cef_window_open_disposition_t, bool,
+				  const CefPopupFeatures &, CefWindowInfo &, CefRefPtr<CefClient> &,
+				  CefBrowserSettings &, CefRefPtr<CefDictionaryValue> &, bool *)
 {
 	/* block popups */
 	return true;
