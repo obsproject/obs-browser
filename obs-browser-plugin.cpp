@@ -55,6 +55,11 @@
 #include <QThread>
 #endif
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include <glad/glad.h>
+#include "drm-format.hpp"
+#endif
+
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-browser", "en-US")
 MODULE_EXPORT const char *obs_module_description(void)
@@ -350,7 +355,11 @@ static void BrowserInit(void)
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	if (hwaccel) {
 		obs_enter_graphics();
+#if defined(__APPLE__) || defined(_WIN32)
 		hwaccel = tex_sharing_avail = gs_shared_texture_available();
+#else
+		hwaccel = tex_sharing_avail = obs_cef_all_drm_formats_supported();
+#endif
 		obs_leave_graphics();
 	}
 #endif
@@ -691,6 +700,24 @@ static void check_hwaccel_support(void)
 			device++;
 		}
 	}
+}
+#elif __linux__
+static void check_hwaccel_support(void)
+{
+	/* NOTE: GL_VERSION returns a string that contains the driver vendor */
+	const char *glVersion = NULL;
+
+	obs_enter_graphics();
+	gladLoadGL();
+	glVersion = (const char *)glGetString(GL_VERSION);
+	obs_leave_graphics();
+
+	if (strstr(glVersion, "NVIDIA") != NULL) {
+		hwaccel = false;
+		blog(LOG_INFO,
+		     "[obs-browser]: Blacklisted driver detected, disabling browser source hardware acceleration.");
+	}
+	return;
 }
 #else
 static void check_hwaccel_support(void)
