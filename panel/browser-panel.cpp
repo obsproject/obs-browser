@@ -166,7 +166,7 @@ void QCefWidgetInternal::closeBrowser()
 
 			cefBrowser->GetHost()->CloseBrowser(true);
 
-#if !defined(_WIN32) && !defined(__APPLE__) && CHROME_VERSION_BUILD >= 6533
+#if CHROME_VERSION_BUILD >= 6533
 			QEventLoop loop;
 
 			connect(this, &QCefWidgetInternal::readyToClose, &loop, &QEventLoop::quit);
