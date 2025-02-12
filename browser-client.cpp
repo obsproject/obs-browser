@@ -83,6 +83,14 @@ CefRefPtr<CefResourceRequestHandler> BrowserClient::GetResourceRequestHandler(Ce
 	return nullptr;
 }
 
+void BrowserClient::OnRenderProcessTerminated(CefRefPtr<CefBrowser>, TerminationStatus, int,
+					      const CefString &error_string)
+{
+	std::string str_text = error_string;
+	blog(LOG_ERROR, "[obs-browser: '%s'] Webpage has crashed unexpectedly! Reason: '%s'",
+	     obs_source_get_name(bs->source), str_text.c_str());
+}
+
 CefResourceRequestHandler::ReturnValue BrowserClient::OnBeforeResourceLoad(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 									   CefRefPtr<CefRequest>,
 									   CefRefPtr<CefCallback>)
