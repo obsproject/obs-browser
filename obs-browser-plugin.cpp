@@ -367,10 +367,10 @@ static void BrowserInit(void)
 
 #if !defined(_WIN32)
 	BackupSignalHandlers();
-	CefInitialize(args, settings, app, nullptr);
+	bool success = CefInitialize(args, settings, app, nullptr);
 	RestoreSignalHandlers();
 #elif (CHROME_VERSION_BUILD > 3770)
-	CefInitialize(args, settings, app, nullptr);
+	bool success = CefInitialize(args, settings, app, nullptr);
 #else
 	/* Massive (but amazing) hack to prevent chromium from modifying our
 	 * process tokens and permissions, which caused us problems with winrt,
@@ -379,8 +379,13 @@ static void BrowserInit(void)
 	 * we'll just switch back to the static library but I doubt we'll need
 	 * to. */
 	uintptr_t zeroed_memory_lol[32] = {};
-	CefInitialize(args, settings, app, zeroed_memory_lol);
+	bool success = CefInitialize(args, settings, app, zeroed_memory_lol);
 #endif
+
+	if (!success) {
+		blog(LOG_ERROR, "[obs-browser]: CEF failed to initialize. Exit code: %d", CefGetExitCode());
+		return;
+	}
 
 #if !ENABLE_LOCAL_FILE_URL_SCHEME
 	/* Register http://absolute/ scheme handler for older
