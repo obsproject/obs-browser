@@ -779,8 +779,8 @@ void obs_module_unload(void)
 	BrowserShutdown();
 #else
 	if (manager_thread.joinable()) {
-		while (!QueueCEFTask([]() { CefQuitMessageLoop(); }))
-			os_sleep_ms(5);
+		if (!QueueCEFTask([]() { CefQuitMessageLoop(); }))
+			blog(LOG_DEBUG, "[obs-browser]: Failed to post CefQuit task to loop");
 
 		manager_thread.join();
 	}
