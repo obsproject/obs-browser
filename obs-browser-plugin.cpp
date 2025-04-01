@@ -383,7 +383,11 @@ static void BrowserInit(void)
 #endif
 
 	if (!success) {
+#if CHROME_VERSION_BUILD >= 6367
 		blog(LOG_ERROR, "[obs-browser]: CEF failed to initialize. Exit code: %d", CefGetExitCode());
+#else
+		blog(LOG_ERROR, "[obs-browser]: CEF failed to initialize.");
+#endif
 		return;
 	}
 

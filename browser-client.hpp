@@ -98,8 +98,12 @@ public:
 	GetResourceRequestHandler(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 				  CefRefPtr<CefRequest> request, bool is_navigation, bool is_download,
 				  const CefString &request_initiator, bool &disable_default_handling) override;
-	virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status, int error_code,
-					       const CefString &error_string) override;
+	virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status
+#if CHROME_VERSION_BUILD >= 6367
+					       ,
+					       int error_code, const CefString &error_string
+#endif
+					       ) override;
 
 	/* CefResourceRequestHandler */
 	virtual CefResourceRequestHandler::ReturnValue OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,

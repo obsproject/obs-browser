@@ -83,13 +83,21 @@ CefRefPtr<CefResourceRequestHandler> BrowserClient::GetResourceRequestHandler(Ce
 	return nullptr;
 }
 
-void BrowserClient::OnRenderProcessTerminated(CefRefPtr<CefBrowser>, TerminationStatus, int,
-					      const CefString &error_string)
+void BrowserClient::OnRenderProcessTerminated(CefRefPtr<CefBrowser>, TerminationStatus
+#if CHROME_VERSION_BUILD >= 6367
+					      ,
+					      int, const CefString &error_string
+#endif
+)
 {
 	if (!valid())
 		return;
 
+#if CHROME_VERSION_BUILD >= 6367
 	std::string str_text = error_string;
+#else
+	std::string str_text = "<unknown>";
+#endif
 
 	const char *sourceName = "<unknown>";
 
