@@ -226,6 +226,14 @@ void QCefBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser>)
 
 bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>, CefFocusHandler::FocusSource source)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+	/* Workaround for browser docks flashing/hanging at startup with Qt 6.8.x, introduced
+	 * by commit https://code.qt.io/cgit/qt/qt5.git/commit/?id=bab1fecd556ea561c4a89686293116741acfa1b4.
+	 * Refer to https://bugreports.qt.io/browse/QTBUG-136165.
+	 */
+	UNUSED_PARAMETER(source);
+	return false;
+#else
 	/* Don't steal focus when the webpage navigates. This is especially
 	   obvious on startup when the user has many browser docks defined,
 	   as each one will steal focus one by one, resulting in poor UX.
@@ -236,6 +244,7 @@ bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>, CefFocusHandler::Focus
 	default:
 		return false;
 	}
+#endif
 }
 
 void QCefBrowserClient::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
