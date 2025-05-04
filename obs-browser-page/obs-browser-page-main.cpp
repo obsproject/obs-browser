@@ -74,6 +74,13 @@ static void shutdown_check_thread(DWORD parent_pid, DWORD main_thread_id)
 
 int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
+	PROCESS_POWER_THROTTLING_STATE PowerThrottling;
+	PowerThrottling.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+	PowerThrottling.ControlMask = PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+	PowerThrottling.StateMask = 0;
+
+	SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &PowerThrottling, sizeof(PowerThrottling));
+
 	std::thread shutdown_check;
 
 	CefMainArgs mainArgs(nullptr);
