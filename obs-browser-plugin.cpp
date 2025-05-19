@@ -722,11 +722,13 @@ static void check_hwaccel_support(void)
 	if (!glVersion)
 		return;
 
+	#ifndef DISABLE_BROWSER_BLACKLIST_HW_ACC
 	if (strstr(glVersion, "NVIDIA") != NULL) {
 		hwaccel = false;
 		blog(LOG_INFO,
 		     "[obs-browser]: Blacklisted driver detected, disabling browser source hardware acceleration.");
 	}
+	#endif
 	return;
 }
 #else
