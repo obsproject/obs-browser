@@ -2,7 +2,7 @@
 
 #define OBS_BROWSER_VERSION_MAJOR 2
 #define OBS_BROWSER_VERSION_MINOR 25
-#define OBS_BROWSER_VERSION_PATCH 0
+#define OBS_BROWSER_VERSION_PATCH 1
 
 #ifndef MAKE_SEMANTIC_VERSION
 #define MAKE_SEMANTIC_VERSION(major, minor, patch) ((major << 24) | (minor << 16) | patch)
