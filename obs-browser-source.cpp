@@ -633,7 +633,14 @@ void BrowserSource::Render()
 
 	if (texture) {
 #ifdef __APPLE__
-		gs_effect_t *effect = obs_get_base_effect((hwaccel) ? OBS_EFFECT_DEFAULT_RECT : OBS_EFFECT_DEFAULT);
+		int type = gs_get_device_type();
+		gs_effect_t *effect;
+
+		if (type == GS_DEVICE_OPENGL) {
+			effect = obs_get_base_effect((hwaccel) ? OBS_EFFECT_DEFAULT_RECT : OBS_EFFECT_DEFAULT);
+		} else {
+			effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+		}
 #else
 		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 #endif
