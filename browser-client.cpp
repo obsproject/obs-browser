@@ -450,9 +450,9 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 #elif defined(_WIN32)
 	bs->texture = gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
 #else
-	bs->texture = gs_texture_create_from_dmabuf(bs->width, bs->height, format.drm_format, format.gs_format,
-						    info.plane_count, fds, strides, offsets,
-						    modifier != DRM_FORMAT_MOD_INVALID ? modifiers : NULL);
+	bs->texture = gs_texture_create_from_dmabuf(info.extra.coded_size.width, info.extra.coded_size.height,
+						    format.drm_format, format.gs_format, info.plane_count, fds, strides,
+						    offsets, modifier != DRM_FORMAT_MOD_INVALID ? modifiers : NULL);
 #endif
 	UpdateExtraTexture();
 	obs_leave_graphics();
