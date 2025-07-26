@@ -102,6 +102,9 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	}
 
 #else
+#if defined(NO_STACK_PROTECTOR)
+NO_STACK_PROTECTOR
+#endif
 int main(int argc, char *argv[])
 {
 #if defined(__APPLE__) && !defined(ENABLE_BROWSER_LEGACY)
