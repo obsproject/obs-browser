@@ -217,11 +217,13 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_property_list_add_int(controlLevel, obs_module_text("WebpageControlLevel.Level.All"),
 				  (int)ControlLevel::All);
 
-	obs_properties_add_button(props, "refreshnocache", obs_module_text("RefreshNoCache"),
-				  [](obs_properties_t *, obs_property_t *, void *data) {
-					  static_cast<BrowserSource *>(data)->Refresh();
-					  return false;
-				  });
+	obs_properties_add_button2(
+		props, "refreshnocache", obs_module_text("RefreshNoCache"),
+		[](obs_properties_t *, obs_property_t *, void *data) {
+			static_cast<BrowserSource *>(data)->Refresh();
+			return false;
+		},
+		bs);
 	return props;
 }
 
