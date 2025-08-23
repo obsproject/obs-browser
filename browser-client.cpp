@@ -71,7 +71,6 @@ CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
 	return reroute_audio ? this : nullptr;
 }
 
-#if CHROME_VERSION_BUILD >= 4638
 CefRefPtr<CefRequestHandler> BrowserClient::GetRequestHandler()
 {
 	return this;
@@ -120,7 +119,6 @@ CefResourceRequestHandler::ReturnValue BrowserClient::OnBeforeResourceLoad(CefRe
 {
 	return RV_CONTINUE;
 }
-#endif
 
 bool BrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 #if CHROME_VERSION_BUILD >= 6834
