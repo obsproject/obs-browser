@@ -29,9 +29,7 @@ class BrowserClient : public CefClient,
 		      public CefDisplayHandler,
 		      public CefLifeSpanHandler,
 		      public CefRequestHandler,
-#if CHROME_VERSION_BUILD >= 4638
 		      public CefResourceRequestHandler,
-#endif
 		      public CefContextMenuHandler,
 		      public CefRenderHandler,
 		      public CefAudioHandler,
@@ -69,9 +67,7 @@ public:
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override;
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
-#if CHROME_VERSION_BUILD >= 4638
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
-#endif
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override;
 	virtual CefRefPtr<CefAudioHandler> GetAudioHandler() override;
 
@@ -94,7 +90,7 @@ public:
 				   const CefPopupFeatures &popupFeatures, CefWindowInfo &windowInfo,
 				   CefRefPtr<CefClient> &client, CefBrowserSettings &settings,
 				   CefRefPtr<CefDictionaryValue> &extra_info, bool *no_javascript_access) override;
-#if CHROME_VERSION_BUILD >= 4638
+
 	/* CefRequestHandler */
 	virtual CefRefPtr<CefResourceRequestHandler>
 	GetResourceRequestHandler(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
@@ -112,7 +108,6 @@ public:
 									    CefRefPtr<CefFrame> frame,
 									    CefRefPtr<CefRequest> request,
 									    CefRefPtr<CefCallback> callback) override;
-#endif
 
 	/* CefContextMenuHandler */
 	virtual void OnBeforeContextMenu(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
