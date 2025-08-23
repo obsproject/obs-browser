@@ -262,16 +262,7 @@ void BrowserSource::DestroyBrowser()
 	ExecuteOnBrowser(ActuallyCloseBrowser, true);
 	SetBrowser(nullptr);
 }
-#if CHROME_VERSION_BUILD < 4103
-void BrowserSource::ClearAudioStreams()
-{
-	QueueCEFTask([this]() {
-		audio_streams.clear();
-		std::lock_guard<std::mutex> lock(audio_sources_mutex);
-		audio_sources.clear();
-	});
-}
-#endif
+
 void BrowserSource::SendMouseClick(const struct obs_mouse_event *event, int32_t type, bool mouse_up,
 				   uint32_t click_count)
 {
@@ -590,9 +581,7 @@ void BrowserSource::Update(obs_data_t *settings)
 
 	DestroyBrowser();
 	DestroyTextures();
-#if CHROME_VERSION_BUILD < 4103
-	ClearAudioStreams();
-#endif
+
 	if (!shutdown_on_invisible || obs_source_showing(source))
 		create_browser = true;
 

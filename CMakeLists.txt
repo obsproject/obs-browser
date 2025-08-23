@@ -36,7 +36,6 @@ target_sources(
           deps/wide-string.cpp
           deps/wide-string.hpp
           obs-browser-plugin.cpp
-          obs-browser-source-audio.cpp
           obs-browser-source.cpp
           obs-browser-source.hpp)
 

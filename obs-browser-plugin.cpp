@@ -469,15 +469,6 @@ void RegisterBrowserSource()
 	info.video_render = [](void *data, gs_effect_t *) {
 		static_cast<BrowserSource *>(data)->Render();
 	};
-#if CHROME_VERSION_BUILD < 4103
-	info.audio_mix = [](void *data, uint64_t *ts_out, struct audio_output_data *audio_output, size_t channels,
-			    size_t sample_rate) {
-		return static_cast<BrowserSource *>(data)->AudioMix(ts_out, audio_output, channels, sample_rate);
-	};
-	info.enum_active_sources = [](void *data, obs_source_enum_proc_t cb, void *param) {
-		static_cast<BrowserSource *>(data)->EnumAudioStreams(cb, param);
-	};
-#endif
 	info.mouse_click = [](void *data, const struct obs_mouse_event *event, int32_t type, bool mouse_up,
 			      uint32_t click_count) {
 		static_cast<BrowserSource *>(data)->SendMouseClick(event, type, mouse_up, click_count);

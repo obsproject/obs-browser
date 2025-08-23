@@ -535,7 +535,6 @@ static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
 	}
 }
 
-#if CHROME_VERSION_BUILD >= 4103
 void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser, const CefAudioParameters &params_,
 					 int channels_)
 {
@@ -608,80 +607,6 @@ bool BrowserClient::GetAudioParameters(CefRefPtr<CefBrowser> browser, CefAudioPa
 	params.frames_per_buffer = kFramesPerBuffer;
 	return true;
 }
-#elif CHROME_VERSION_BUILD < 4103
-void BrowserClient::OnAudioStreamStarted(CefRefPtr<CefBrowser> browser, int id, int, ChannelLayout channel_layout,
-					 int sample_rate, int)
-{
-	UNUSED_PARAMETER(browser);
-	if (!valid()) {
-		return;
-	}
-
-	AudioStream &stream = bs->audio_streams[id];
-	if (!stream.source) {
-		stream.source = obs_source_create_private("audio_line", nullptr, nullptr);
-
-		obs_source_add_active_child(bs->source, stream.source);
-
-		std::lock_guard<std::mutex> lock(bs->audio_sources_mutex);
-		bs->audio_sources.push_back(stream.source);
-	}
-
-	stream.speakers = GetSpeakerLayout(channel_layout);
-	stream.channels = get_audio_channels(stream.speakers);
-	stream.sample_rate = sample_rate;
-}
-
-void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, int id, const float **data, int frames,
-					int64_t pts)
-{
-	UNUSED_PARAMETER(browser);
-	if (!valid()) {
-		return;
-	}
-
-	AudioStream &stream = bs->audio_streams[id];
-	struct obs_source_audio audio = {};
-
-	const uint8_t **pcm = (const uint8_t **)data;
-	for (int i = 0; i < stream.channels; i++)
-		audio.data[i] = pcm[i];
-
-	audio.samples_per_sec = stream.sample_rate;
-	audio.frames = frames;
-	audio.format = AUDIO_FORMAT_FLOAT_PLANAR;
-	audio.speakers = stream.speakers;
-	audio.timestamp = (uint64_t)pts * 1000000LLU;
-
-	obs_source_output_audio(stream.source, &audio);
-}
-
-void BrowserClient::OnAudioStreamStopped(CefRefPtr<CefBrowser> browser, int id)
-{
-	UNUSED_PARAMETER(browser);
-	if (!valid()) {
-		return;
-	}
-
-	auto pair = bs->audio_streams.find(id);
-	if (pair == bs->audio_streams.end()) {
-		return;
-	}
-
-	AudioStream &stream = pair->second;
-	{
-		std::lock_guard<std::mutex> lock(bs->audio_sources_mutex);
-		for (size_t i = 0; i < bs->audio_sources.size(); i++) {
-			obs_source_t *source = bs->audio_sources[i];
-			if (source == stream.source) {
-				bs->audio_sources.erase(bs->audio_sources.begin() + i);
-				break;
-			}
-		}
-	}
-	bs->audio_streams.erase(pair);
-}
-#endif
 
 void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame, int)
 {
