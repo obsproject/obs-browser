@@ -266,6 +266,8 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 				{"recordingPaused", obs_frontend_recording_paused()},
 				{"replaybuffer", obs_frontend_replay_buffer_active()},
 				{"virtualcam", obs_frontend_virtualcam_active()}};
+		} else if (name == "getItemTransform") {
+			json = GetItemTransformData();
 		}
 		[[fallthrough]];
 	case ControlLevel::None:
@@ -283,6 +285,77 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 	SendBrowserProcessMessage(browser, PID_RENDERER, msg);
 
 	return true;
+}
+
+nlohmann::json BrowserClient::GetItemTransformData()
+{
+	// Get the current scene
+	OBSSourceAutoRelease current_scene = obs_frontend_get_current_scene();
+	if (!current_scene) {
+		return nullptr;
+	}
+
+	// Find the scene item for this browser source
+	obs_scene_t *scene = obs_scene_from_source(current_scene);
+	if (!scene) {
+		return nullptr;
+	}
+
+	// Find the scene item
+	obs_sceneitem_t *scene_item = FindSceneItem(scene);
+	if (!scene_item) {
+		return nullptr;
+	}
+
+	// Get transform information
+	return BuildTransformJson(scene_item, current_scene);
+}
+
+obs_sceneitem_t *BrowserClient::FindSceneItem(obs_scene_t *scene)
+{
+	// Find the scene item by source name
+	const char *source_name = obs_source_get_name(bs->source);
+	obs_sceneitem_t *scene_item = obs_scene_find_source(scene, source_name);
+
+	return scene_item;
+}
+
+nlohmann::json BrowserClient::BuildTransformJson(obs_sceneitem_t *scene_item, obs_source_t *current_scene)
+{
+	// Get basic transform information
+	vec2 pos;
+	vec2 scale;
+	float rot;
+	obs_sceneitem_get_pos(scene_item, &pos);
+	obs_sceneitem_get_scale(scene_item, &scale);
+	rot = obs_sceneitem_get_rot(scene_item);
+
+	// Get alignment and bounds information
+	uint32_t alignment = obs_sceneitem_get_alignment(scene_item);
+	obs_bounds_type bounds_type = obs_sceneitem_get_bounds_type(scene_item);
+	uint32_t bounds_alignment = obs_sceneitem_get_bounds_alignment(scene_item);
+
+	// Get crop information
+	obs_sceneitem_crop crop;
+	obs_sceneitem_get_crop(scene_item, &crop);
+
+	// Get dimensions
+	uint32_t source_width = obs_source_get_width(bs->source);
+	uint32_t source_height = obs_source_get_height(bs->source);
+	uint32_t scene_width = obs_source_get_width(current_scene);
+	uint32_t scene_height = obs_source_get_height(current_scene);
+
+	return {{"position", {{"x", pos.x}, {"y", pos.y}}},
+		{"scale", {{"x", scale.x}, {"y", scale.y}}},
+		{"rotation", rot},
+		{"alignment", alignment},
+		{"boundsType", bounds_type},
+		{"boundsAlignment", bounds_alignment},
+		{"crop", {{"top", crop.top}, {"right", crop.right}, {"bottom", crop.bottom}, {"left", crop.left}}},
+		{"sourceWidth", source_width},
+		{"sourceHeight", source_height},
+		{"sceneWidth", scene_width},
+		{"sceneHeight", scene_height}};
 }
 
 void BrowserClient::GetViewRect(CefRefPtr<CefBrowser>, CefRect &rect)

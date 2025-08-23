@@ -22,6 +22,7 @@
 #include <util/threading.h>
 #include "cef-headers.hpp"
 #include "obs-browser-source.hpp"
+#include <nlohmann/json.hpp>
 
 struct BrowserSource;
 
@@ -160,6 +161,11 @@ public:
 #endif
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode) override;
+
+	/* Item Transform Helper Functions */
+	nlohmann::json GetItemTransformData();
+	obs_sceneitem_t *FindSceneItem(obs_scene_t *scene);
+	nlohmann::json BuildTransformJson(obs_sceneitem_t *scene_item, obs_source_t *current_scene);
 
 	IMPLEMENT_REFCOUNTING(BrowserClient);
 };

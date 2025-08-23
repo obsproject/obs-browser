@@ -127,6 +127,45 @@ window.obsstudio.getStatus(function (status) {
 })
 ```
 
+#### Get item transform
+Permissions required: READ_OBS
+```js
+/**
+ * @typedef {Object} ItemTransform
+ * @property {Object} position - Position of the item
+ * @property {number} position.x - X coordinate
+ * @property {number} position.y - Y coordinate
+ * @property {Object} scale - Scale of the item
+ * @property {number} scale.x - X scale factor
+ * @property {number} scale.y - Y scale factor
+ * @property {number} rotation - Rotation in degrees
+ * @property {number} alignment - Alignment flags
+ * @property {number} boundsType - Bounds type (0 = None, 1 = Stretch, 2 = Scale inner, 3 = Scale outer, 4 = Scale to width, 5 = Scale to height, 6 = Scale to fit, 7 = Scale to fill)
+ * @property {number} boundsAlignment - Bounds alignment flags
+ * @property {Object} crop - Crop settings
+ * @property {number} crop.top - Top crop in pixels
+ * @property {number} crop.right - Right crop in pixels
+ * @property {number} crop.bottom - Bottom crop in pixels
+ * @property {number} crop.left - Left crop in pixels
+ * @property {number} sourceWidth - Width of the source
+ * @property {number} sourceHeight - Height of the source
+ * @property {number} sceneWidth - Width of the scene
+ * @property {number} sceneHeight - Height of the scene
+ */
+
+/**
+ * @callback ItemTransformCallback
+ * @param {ItemTransform|null} transform - The transform information for the current browser source, or null if not found
+ */
+
+/**
+ * @param {ItemTransformCallback} cb - The callback that receives the transform information for the current browser source.
+ */
+window.obsstudio.getItemTransform(function (transform) {
+    console.log(transform);
+})
+```
+
 #### Get the current scene
 Permissions required: READ_USER
 ```js
