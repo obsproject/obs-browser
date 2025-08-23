@@ -306,11 +306,7 @@ static void BrowserInit(void)
 	prod_ver << " OBS/";
 	prod_ver << std::to_string(obs_maj) << "." << std::to_string(obs_min) << "." << std::to_string(obs_pat);
 
-#if CHROME_VERSION_BUILD >= 4472
 	CefString(&settings.user_agent_product) = prod_ver.str();
-#else
-	CefString(&settings.product_version) = prod_ver.str();
-#endif
 
 #ifdef ENABLE_BROWSER_QT_LOOP
 	settings.external_message_pump = true;
