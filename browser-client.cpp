@@ -36,6 +36,32 @@
 #include "drm-format.hpp"
 #endif
 
+struct scene_item_enum_data {
+	std::vector<nlohmann::json> *items;
+};
+
+static bool enum_scene_items(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
+{
+	scene_item_enum_data *data = static_cast<scene_item_enum_data *>(param);
+
+	obs_source_t *source = obs_sceneitem_get_source(item);
+	if (!source)
+		return true;
+
+	const char *source_name = obs_source_get_name(source);
+	if (!source_name)
+		return true;
+
+	nlohmann::json item_json = {{"id", obs_sceneitem_get_id(item)},
+				    {"name", source_name},
+				    {"visible", obs_sceneitem_visible(item)},
+				    {"locked", obs_sceneitem_locked(item)},
+				    {"type", obs_source_get_type(source)}};
+
+	data->items->push_back(item_json);
+	return true;
+}
+
 inline bool BrowserClient::valid() const
 {
 	return !!bs && !bs->destroying;
@@ -244,6 +270,107 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 			json = {{"name", name},
 				{"width", obs_source_get_width(current_scene)},
 				{"height", obs_source_get_height(current_scene)}};
+		} else if (name == "getSceneItemList") {
+			OBSSourceAutoRelease current_scene = obs_frontend_get_current_scene();
+
+			if (!current_scene)
+				return false;
+
+			// Convert source to scene object for enumeration
+			obs_scene_t *scene = obs_scene_from_source(current_scene);
+			if (!scene)
+				return false;
+
+			std::vector<nlohmann::json> scene_items;
+			scene_item_enum_data data = {&scene_items};
+
+			// Enumerate all items in the scene and collect their data
+			obs_scene_enum_items(scene, enum_scene_items, &data);
+
+			json = scene_items;
+		} else if (name == "getBrowserInputSettings") {
+			const std::string input_name = input_args->GetString(1).ToString();
+
+			// Retrieve the source by name from OBS
+			// Lookup by ID not needed. When a user duplicates a source with reference the settings are the same.
+			OBSSourceAutoRelease source = obs_get_source_by_name(input_name.c_str());
+			if (!source) {
+				return false;
+			}
+
+			// Validate that the source is actually a browser source
+			const char *source_id = obs_source_get_id(source);
+			if (!source_id || strcmp(source_id, "browser_source") != 0) {
+				return false;
+			}
+
+			// Get the source settings data
+			obs_data_t *settings = obs_source_get_settings(source);
+			if (!settings) {
+				return false;
+			}
+
+			// Extract browser source specific settings from the data
+			const char *url = obs_data_get_string(settings, "url");
+			int width = (int)obs_data_get_int(settings, "width");
+			int height = (int)obs_data_get_int(settings, "height");
+			bool shutdown = obs_data_get_bool(settings, "shutdown");
+			int webpage_control_level = (int)obs_data_get_int(settings, "webpage_control_level");
+
+			json = {{"inputKind", "browser_source"},
+				{"inputSettings",
+				 {{"height", height},
+				  {"shutdown", shutdown},
+				  {"url", url ? url : ""},
+				  {"webpage_control_level", webpage_control_level},
+				  {"width", width}}}};
+
+			// Release allocated memory
+			obs_data_release(settings);
+		} else if (name == "getSceneItemTransform") {
+			const std::string scene_name = input_args->GetString(1).ToString();
+			int64_t scene_item_id = input_args->GetInt(2);
+
+			OBSSourceAutoRelease source = obs_get_source_by_name(scene_name.c_str());
+			if (!source) {
+				return false;
+			}
+
+			// Verify that the source is actually a scene
+			if (!obs_source_is_scene(source)) {
+				return false;
+			}
+
+			// Convert source to scene object for item lookup
+			obs_scene_t *scene = obs_scene_from_source(source);
+			if (!scene) {
+				return false;
+			}
+
+			// Find the specific scene item by its unique ID
+			obs_sceneitem_t *item = obs_scene_find_sceneitem_by_id(scene, scene_item_id);
+			if (!item) {
+				return false;
+			}
+
+			// Retrieve transform and crop information from the scene item
+			struct obs_transform_info transform;
+			struct obs_sceneitem_crop crop;
+			obs_sceneitem_get_info2(item, &transform);
+			obs_sceneitem_get_crop(item, &crop);
+
+			json = {{"position", {{"x", transform.pos.x}, {"y", transform.pos.y}}},
+				{"rotation", transform.rot},
+				{"scale", {{"x", transform.scale.x}, {"y", transform.scale.y}}},
+				{"alignment", transform.alignment},
+				{"boundsType", transform.bounds_type},
+				{"boundsAlignment", transform.bounds_alignment},
+				{"bounds", {{"x", transform.bounds.x}, {"y", transform.bounds.y}}},
+				{"crop",
+				 {{"left", crop.left},
+				  {"top", crop.top},
+				  {"right", crop.right},
+				  {"bottom", crop.bottom}}}};
 		} else if (name == "getTransitions") {
 			struct obs_frontend_source_list list = {};
 			obs_frontend_get_transitions(&list);
