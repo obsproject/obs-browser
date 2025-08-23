@@ -377,17 +377,8 @@ static void BrowserInit(void)
 	BackupSignalHandlers();
 	bool success = CefInitialize(args, settings, app, nullptr);
 	RestoreSignalHandlers();
-#elif (CHROME_VERSION_BUILD > 3770)
-	bool success = CefInitialize(args, settings, app, nullptr);
 #else
-	/* Massive (but amazing) hack to prevent chromium from modifying our
-	 * process tokens and permissions, which caused us problems with winrt,
-	 * used with window capture.  Note, the structure internally is just
-	 * two pointers normally.  If it causes problems with future versions
-	 * we'll just switch back to the static library but I doubt we'll need
-	 * to. */
-	uintptr_t zeroed_memory_lol[32] = {};
-	bool success = CefInitialize(args, settings, app, zeroed_memory_lol);
+	bool success = CefInitialize(args, settings, app, nullptr);
 #endif
 
 	if (!success) {
