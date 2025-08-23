@@ -27,19 +27,6 @@
 #include <string>
 #include <mutex>
 
-#if CHROME_VERSION_BUILD < 4103
-#include <obs.hpp>
-#include <unordered_map>
-#include <vector>
-
-struct AudioStream {
-	OBSSourceAutoRelease source;
-	speaker_layout speakers;
-	int channels;
-	int sample_rate;
-};
-#endif
-
 enum class ControlLevel : int {
 	None,
 	ReadObs,
@@ -129,14 +116,7 @@ struct BrowserSource {
 	void Update(obs_data_t *settings = nullptr);
 	void Tick();
 	void Render();
-#if CHROME_VERSION_BUILD < 4103
-	void ClearAudioStreams();
-	void EnumAudioStreams(obs_source_enum_proc_t cb, void *param);
-	bool AudioMix(uint64_t *ts_out, struct audio_output_data *audio_output, size_t channels, size_t sample_rate);
-	std::mutex audio_sources_mutex;
-	std::vector<obs_source_t *> audio_sources;
-	std::unordered_map<int, AudioStream> audio_streams;
-#endif
+
 	void SendMouseClick(const struct obs_mouse_event *event, int32_t type, bool mouse_up, uint32_t click_count);
 	void SendMouseMove(const struct obs_mouse_event *event, bool mouse_leave);
 	void SendMouseWheel(const struct obs_mouse_event *event, int x_delta, int y_delta);
