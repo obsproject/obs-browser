@@ -20,7 +20,6 @@
 #include "wide-string.hpp"
 #include <include/wrapper/cef_stream_resource_handler.h>
 
-#if !ENABLE_LOCAL_FILE_URL_SCHEME
 CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
 								  const CefString &, CefRefPtr<CefRequest> request)
 {
@@ -57,4 +56,3 @@ CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(CefRefPtr<CefB
 		return nullptr;
 	}
 }
-#endif
