@@ -454,10 +454,10 @@ void RegisterBrowserSource()
 		static_cast<BrowserSource *>(data)->Update(settings);
 	};
 	info.get_width = [](void *data) {
-		return (uint32_t) static_cast<BrowserSource *>(data)->width;
+		return (uint32_t)static_cast<BrowserSource *>(data)->width;
 	};
 	info.get_height = [](void *data) {
-		return (uint32_t) static_cast<BrowserSource *>(data)->height;
+		return (uint32_t)static_cast<BrowserSource *>(data)->height;
 	};
 	info.video_tick = [](void *data, float) {
 		static_cast<BrowserSource *>(data)->Tick();
