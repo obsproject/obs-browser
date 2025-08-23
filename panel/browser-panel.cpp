@@ -313,20 +313,7 @@ void QCefWidgetInternal::Init()
 			windowInfo.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
 #endif
 
-#if CHROME_VERSION_BUILD < 4430
-#ifdef __APPLE__
-			windowInfo.SetAsChild((CefWindowHandle)handle, 0, 0, size.width(), size.height());
-#else
-#ifdef _WIN32
-			RECT rc = {0, 0, size.width(), size.height()};
-#else
-			CefRect rc = {0, 0, size.width(), size.height()};
-#endif
-			windowInfo.SetAsChild((CefWindowHandle)handle, rc);
-#endif
-#else
 			windowInfo.SetAsChild((CefWindowHandle)handle, CefRect(0, 0, size.width(), size.height()));
-#endif
 
 			CefRefPtr<QCefBrowserClient> browserClient =
 				new QCefBrowserClient(this, script, allowAllPopups_);

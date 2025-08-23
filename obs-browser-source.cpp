@@ -200,13 +200,8 @@ bool BrowserSource::CreateBrowser()
 			new BrowserClient(this, hwaccel && tex_sharing_avail, reroute_audio, webpage_control_level);
 
 		CefWindowInfo windowInfo;
-#if CHROME_VERSION_BUILD < 4430
-		windowInfo.width = width;
-		windowInfo.height = height;
-#else
 		windowInfo.bounds.width = width;
 		windowInfo.bounds.height = height;
-#endif
 		windowInfo.windowless_rendering_enabled = true;
 
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
@@ -236,13 +231,6 @@ bool BrowserSource::CreateBrowser()
 		cefBrowserSettings.default_font_size = 16;
 		cefBrowserSettings.default_fixed_font_size = 16;
 
-#if ENABLE_LOCAL_FILE_URL_SCHEME && CHROME_VERSION_BUILD < 4430
-		if (is_local) {
-			/* Disable web security for file:// URLs to allow
-			 * local content access to remote APIs */
-			cefBrowserSettings.web_security = STATE_DISABLED;
-		}
-#endif
 		auto browser = CefBrowserHost::CreateBrowserSync(windowInfo, browserClient, url, cefBrowserSettings,
 								 CefRefPtr<CefDictionaryValue>(), nullptr);
 
@@ -318,15 +306,7 @@ void BrowserSource::SendMouseWheel(const struct obs_mouse_event *event, int x_de
 
 void BrowserSource::SendFocus(bool focus)
 {
-	ExecuteOnBrowser(
-		[=](CefRefPtr<CefBrowser> cefBrowser) {
-#if CHROME_VERSION_BUILD < 4430
-			cefBrowser->GetHost()->SendFocusEvent(focus);
-#else
-			cefBrowser->GetHost()->SetFocus(focus);
-#endif
-		},
-		true);
+	ExecuteOnBrowser([=](CefRefPtr<CefBrowser> cefBrowser) { cefBrowser->GetHost()->SetFocus(focus); }, true);
 }
 
 void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
