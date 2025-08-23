@@ -490,28 +490,9 @@ void BrowserSource::Update(obs_data_t *settings)
 			while (n_url.find("%2F") != std::string::npos)
 				n_url.replace(n_url.find("%2F"), 3, "/");
 
-#if !ENABLE_LOCAL_FILE_URL_SCHEME
 			/* http://absolute/ based mapping for older CEF */
 			n_url = "http://absolute/" + n_url;
-#elif defined(_WIN32)
-			/* Widows-style local file URL:
-			 * file:///C:/file/path.webm */
-			n_url = "file:///" + n_url;
-#else
-			/* UNIX-style local file URL:
-			 * file:///home/user/file.webm */
-			n_url = "file://" + n_url;
-#endif
 		}
-
-#if ENABLE_LOCAL_FILE_URL_SCHEME
-		if (astrcmpi_n(n_url.c_str(), "http://absolute/", 16) == 0) {
-			/* Replace http://absolute/ URLs with file://
-			 * URLs if file:// URLs are enabled */
-			n_url = "file:///" + n_url.substr(16);
-			n_is_local = true;
-		}
-#endif
 
 		if (n_is_local == is_local && n_fps_custom == fps_custom && n_fps == fps &&
 		    n_shutdown == shutdown_on_invisible && n_restart == restart && n_css == css && n_url == url &&

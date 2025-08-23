@@ -386,19 +386,17 @@ static void BrowserInit(void)
 		return;
 	}
 
-#if !ENABLE_LOCAL_FILE_URL_SCHEME
 	/* Register http://absolute/ scheme handler for older
 	 * CEF builds which do not support file:// URLs */
 	CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
-#endif
+
 	os_event_signal(cef_started_event);
 }
 
 static void BrowserShutdown(void)
 {
-#if !ENABLE_LOCAL_FILE_URL_SCHEME
 	CefClearSchemeHandlerFactories();
-#endif
+
 #ifdef ENABLE_BROWSER_QT_LOOP
 	while (messageObject.ExecuteNextBrowserTask())
 		;
