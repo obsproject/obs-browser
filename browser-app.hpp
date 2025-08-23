@@ -106,12 +106,5 @@ public:
 	QTimer frameTimer;
 #endif
 
-#if !ENABLE_WASHIDDEN
-	std::unordered_map<int, bool> browserVis;
-
-	void SetFrameDocumentVisibility(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, bool isVisible);
-	void SetDocumentVisibility(CefRefPtr<CefBrowser> browser, bool isVisible);
-#endif
-
 	IMPLEMENT_REFCOUNTING(BrowserApp);
 };
