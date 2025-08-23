@@ -53,16 +53,6 @@ static void SendBrowserVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
 	if (!browser)
 		return;
 
-#if ENABLE_WASHIDDEN
-	if (isVisible) {
-		browser->GetHost()->WasResized();
-		browser->GetHost()->WasHidden(false);
-		browser->GetHost()->Invalidate(PET_VIEW);
-	} else {
-		browser->GetHost()->WasHidden(true);
-	}
-#endif
-
 	CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Visibility");
 	CefRefPtr<CefListValue> args = msg->GetArgumentList();
 	args->SetBool(0, isVisible);

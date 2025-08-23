@@ -44,12 +44,6 @@
 #include "include/wrapper/cef_library_loader.h"
 #endif
 
-#if CHROME_VERSION_BUILD >= 4430
-#define ENABLE_WASHIDDEN 1
-#else
-#define ENABLE_WASHIDDEN 0
-#endif
-
 #if !defined(_WIN32) && !defined(__APPLE__) && \
 	(CHROME_VERSION_BUILD >= 6943 || (CHROME_VERSION_BUILD > 6337 && defined(CEF_OSR_EXTRA_INFO)))
 #define ENABLE_BROWSER_SHARED_TEXTURE
