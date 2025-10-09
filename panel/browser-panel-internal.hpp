@@ -51,7 +51,7 @@ public:
 	virtual bool zoomPage(int direction) override;
 	virtual void executeJavaScript(const std::string &script) override;
 
-	void CloseSafely();
+	void finishCloseBrowser();
 	void Resize();
 
 #ifdef __linux__

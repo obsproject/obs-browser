@@ -35,6 +35,36 @@ std::vector<PopupWhitelistInfo> forced_popups;
 
 static int zoomLvls[] = {25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400};
 
+namespace {
+void detachBrowserWindow(CefRefPtr<CefBrowserHost> host)
+{
+#ifdef _WIN32
+	HWND hwnd = (HWND)host->GetWindowHandle();
+	if (hwnd) {
+		ShowWindow(hwnd, SW_HIDE);
+		SetParent(hwnd, nullptr);
+	}
+#elif __APPLE__
+	SEL retain = sel_getUid("retain");
+	SEL release = sel_getUid("release");
+	SEL removeFromSuperview = sel_getUid("removeFromSuperview");
+	void *(*msgSend)(id, SEL) = (void *(*)(id, SEL))objc_msgSend;
+
+	id view = static_cast<id>(host->GetWindowHandle());
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+	if (view && view->isa) {
+		msgSend(view, retain);
+		msgSend(view, removeFromSuperview);
+		msgSend(view, release);
+	}
+#pragma clang diagnostic pop
+#else
+	UNUSED_PARAMETER(host);
+#endif
+}
+} // namespace
+
 /* ------------------------------------------------------------------------- */
 
 class CookieCheck : public CefCookieVisitor {
@@ -158,61 +188,49 @@ QCefWidgetInternal::~QCefWidgetInternal()
 
 void QCefWidgetInternal::closeBrowser()
 {
-	CefRefPtr<CefBrowser> browser = cefBrowser;
-	if (!!browser) {
-		auto destroyBrowser = [=](CefRefPtr<CefBrowser> cefBrowser) {
-			CefRefPtr<CefClient> client = cefBrowser->GetHost()->GetClient();
-			QCefBrowserClient *bc = reinterpret_cast<QCefBrowserClient *>(client.get());
-
-			cefBrowser->GetHost()->CloseBrowser(true);
-
-#if CHROME_VERSION_BUILD >= 6533
-			QEventLoop loop;
-
-			connect(this, &QCefWidgetInternal::readyToClose, &loop, &QEventLoop::quit);
-
-			QTimer::singleShot(1000, &loop, &QEventLoop::quit);
-
-			loop.exec();
-#endif
-			if (bc) {
-				bc->widget = nullptr;
-			}
-		};
-
-		/* So you're probably wondering what's going on here.  If you
-		 * call CefBrowserHost::CloseBrowser, and it fails to unload
-		 * the web page *before* WM_NCDESTROY is called on the browser
-		 * HWND, it will call an internal CEF function
-		 * CefBrowserPlatformDelegateNativeWin::CloseHostWindow, which
-		 * will attempt to close the browser's main window itself.
-		 * Problem is, this closes the root window containing the
-		 * browser's HWND rather than the browser's specific HWND for
-		 * whatever mysterious reason.  If the browser is in a dock
-		 * widget, then the window it closes is, unfortunately, the
-		 * main program's window, causing the entire program to shut
-		 * down.
-		 *
-		 * So, instead, before closing the browser, we need to decouple
-		 * the browser from the widget.  To do this, we hide it, then
-		 * remove its parent. */
-#ifdef _WIN32
-		HWND hwnd = (HWND)cefBrowser->GetHost()->GetWindowHandle();
-		if (hwnd) {
-			ShowWindow(hwnd, SW_HIDE);
-			SetParent(hwnd, nullptr);
-		}
-#elif __APPLE__
-		// felt hacky, might delete later
-		void *view = (id)cefBrowser->GetHost()->GetWindowHandle();
-		if (*((bool *)view))
-			((void (*)(id, SEL))objc_msgSend)((id)view, sel_getUid("removeFromSuperview"));
-#endif
-
-		destroyBrowser(browser);
-		browser = nullptr;
-		cefBrowser = nullptr;
+	if (!cefBrowser) {
+		return;
 	}
+
+	CefRefPtr<CefBrowserHost> host{cefBrowser->GetHost()};
+
+	if (!host) {
+		return;
+	}
+
+	QEventLoop browserCloseLoop;
+
+	// Ensure that the native window used by CEF is not attached to the widget view hierarchy while the browser
+	// is closed.
+	//
+	// If the host window is not considered "destroyed" by the time CEF destroys the web contents of the associated
+	// browser object, it will close the host window itself. The "host" window in this case would be OBS Studio's
+	// main window however. So to ensure this cannot happen, the native window needs to be detached from the Qt
+	// view hierarchy so there is no associated host window to close.
+	auto preCloseBrowser = [&host]() {
+		detachBrowserWindow(host);
+	};
+
+	auto closeBrowser = [&host]() {
+		host->CloseBrowser(true);
+	};
+
+	connect(this, &QCefWidgetInternal::readyToClose, &browserCloseLoop, &QEventLoop::quit);
+
+	QTimer::singleShot(0, &browserCloseLoop, preCloseBrowser);
+	QTimer::singleShot(0, &browserCloseLoop, closeBrowser);
+	QTimer::singleShot(1000, &browserCloseLoop, &QEventLoop::quit);
+
+	browserCloseLoop.exec();
+
+	CefRefPtr<CefClient> client{host->GetClient()};
+
+	if (client) {
+		QCefBrowserClient *browserClient{static_cast<QCefBrowserClient *>(client.get())};
+		browserClient->widget = nullptr;
+	}
+
+	cefBrowser = nullptr;
 }
 
 #ifdef __linux__
@@ -388,7 +406,7 @@ void QCefWidgetInternal::Resize()
 #endif
 }
 
-void QCefWidgetInternal::CloseSafely()
+void QCefWidgetInternal::finishCloseBrowser()
 {
 	emit readyToClose();
 }
