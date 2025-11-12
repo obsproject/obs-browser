@@ -178,12 +178,42 @@ QCefWidgetInternal::QCefWidgetInternal(QWidget *parent, const std::string &url_,
 #ifndef __APPLE__
 	window = new QWindow();
 	window->setFlags(Qt::FramelessWindowHint);
+	window->setObjectName("QCefWidgetInternalWindow");
+	window->installEventFilter(this);
 #endif
 }
 
 QCefWidgetInternal::~QCefWidgetInternal()
 {
 	closeBrowser();
+}
+
+bool QCefWidgetInternal::eventFilter(QObject *object, QEvent *event)
+{
+#ifdef __APPLE__
+	UNUSED_PARAMETER(object);
+	UNUSED_PARAMETER(event);
+
+	return true;
+#else
+	// Return early event does not target the window wrapper or no browser instance is present
+	if (object != window || !cefBrowser) {
+		return true;
+	}
+
+	// Also return early if the event is not a "FocusIn" event, only necessary to check if the wrapper is targeted
+	if (event->type() != QEvent::FocusIn) {
+		return true;
+	}
+
+	CefRefPtr<CefBrowserHost> host{cefBrowser->GetHost()};
+
+	if (host) {
+		host->SetFocus(true);
+	}
+
+	return true;
+#endif
 }
 
 void QCefWidgetInternal::closeBrowser()
