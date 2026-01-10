@@ -189,6 +189,32 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 			} else {
 				obs_frontend_set_current_scene(source);
 			}
+		} else if (name == "setSourceVisible") {
+			const std::string scene_name = input_args->GetString(1).ToString();
+			const std::string source_name = input_args->GetString(2).ToString();
+			const std::string visible = input_args->GetBool(3);
+			OBSSourceAutoRelease *scene = obs_get_source_by_name(scene_name.c_str());
+			if (!scene) {
+				blog(LOG_WARNING,
+				     "Browser source '%s' tried to set the visibility of a scene item in scene '%s' which doesn't exist",
+				     obs_source_get_name(bs->source), scene_name.c_str());
+				break;
+			}
+			if (!obs_source_is_scene(scene)) {
+				blog(LOG_WARNING,
+				     "Browser source '%s' tried to set the visibility of a scene item in scene '%s' which isn't a scene",
+				     obs_source_get_name(bs->source), scene_name.c_str());
+				break;
+			}
+			obs_sceneitem_t *item =
+				obs_scene_find_source_recursive(obs_scene_from_source(scene), source_name.c_str());
+			if (!item) {
+				blog(LOG_WARNING,
+				     "Browser source '%s' tried to set the visibility of scene item '%s' which doesn't exist in scene '%s'",
+				     obs_source_get_name(bs->source), source_name.c_str(), scene_name.c_str());
+				break;
+			}
+			obs_sceneitem_set_visible(item, visible);
 		} else if (name == "setCurrentTransition") {
 			const std::string transition_name = input_args->GetString(1).ToString();
 			obs_frontend_source_list transitions = {};
@@ -242,6 +268,23 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 			json = {{"name", name},
 				{"width", obs_source_get_width(current_scene)},
 				{"height", obs_source_get_height(current_scene)}};
+		} else if (name == "getSourceVisible") {
+			const std::string scene_name = input_args->GetString(1).ToString();
+			const std::string source_name = input_args->GetString(2).ToString();
+			OBSSourceAutoRelease *scene = obs_get_source_by_name(scene_name.c_str());
+
+			if (!scene)
+				return false;
+
+			if (!obs_source_is_scene(scene))
+				return false;
+
+			obs_sceneitem_t *item =
+				obs_scene_find_source_recursive(obs_scene_from_source(scene), source_name.c_str());
+			if (!item)
+				return false;
+
+			json = obs_sceneitem_visible(item);
 		} else if (name == "getTransitions") {
 			struct obs_frontend_source_list list = {};
 			obs_frontend_get_transitions(&list);
