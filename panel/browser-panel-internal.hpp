@@ -24,6 +24,9 @@ extern std::vector<PopupWhitelistInfo> forced_popups;
 class QCefWidgetInternal : public QCefWidget {
 	Q_OBJECT
 
+private:
+	virtual bool eventFilter(QObject *object, QEvent *event) override;
+
 public:
 	QCefWidgetInternal(QWidget *parent, const std::string &url, CefRefPtr<CefRequestContext> rqc);
 	~QCefWidgetInternal();
