@@ -22,6 +22,9 @@ target_compile_definitions(obs-browser-helper PRIVATE ENABLE_BROWSER_SHARED_TEXT
 target_link_libraries(obs-browser-helper PRIVATE CEF::Wrapper CEF::Library nlohmann_json::nlohmann_json)
 target_link_options(obs-browser-helper PRIVATE /IGNORE:4099 /SUBSYSTEM:WINDOWS)
 
+target_link_libraries(obs-browser PRIVATE Ws2_32)
+target_sources(obs-browser PRIVATE deps/ip-string-windows.cpp)
+
 set(OBS_EXECUTABLE_DESTINATION "${OBS_PLUGIN_DESTINATION}")
 set_target_properties_obs(
   obs-browser-helper
