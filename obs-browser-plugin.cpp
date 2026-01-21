@@ -388,9 +388,8 @@ static void BrowserInit(void)
 		return;
 	}
 
-	/* Register http://absolute/ scheme handler for older
-	 * CEF builds which do not support file:// URLs */
-	CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
+	// Register custom scheme handler for local browser sources
+	CefRegisterSchemeHandlerFactory("obsbrowser", "file", new BrowserSchemeHandlerFactory());
 
 	os_event_signal(cef_started_event);
 }
