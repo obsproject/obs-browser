@@ -54,7 +54,7 @@ foreach(helper IN LISTS helper_suffixes)
                "${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos/entitlements-helper${helper_plist}.plist")
 endforeach()
 
-target_sources(obs-browser PRIVATE deps/ip-string.cpp)
+target_sources(obs-browser PRIVATE deps/ip-string-posix.cpp)
 
 set_target_properties(
   obs-browser

@@ -21,7 +21,7 @@ target_include_directories(browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/d
 
 target_link_libraries(browser-helper PRIVATE CEF::Wrapper CEF::Library)
 
-target_sources(obs-browser PRIVATE deps/ip-string.cpp)
+target_sources(obs-browser PRIVATE deps/ip-string-posix.cpp)
 
 set(OBS_EXECUTABLE_DESTINATION "${OBS_PLUGIN_DESTINATION}")
 
