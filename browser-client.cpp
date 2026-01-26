@@ -216,6 +216,21 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 	case ControlLevel::Basic:
 		if (name == "saveReplayBuffer") {
 			obs_frontend_replay_buffer_save();
+		} else if (name == "signal") {
+			struct calldata data;
+			calldata_init(&data);
+			calldata_set_ptr(&data, "source", bs->source);
+			if (input_args->GetType(1) == VTYPE_STRING) {
+				const std::string signal = input_args->GetString(1).ToString();
+				calldata_set_string(&data, "signal", signal.c_str());
+			}
+			signal_handler_t *gsh = obs_get_signal_handler();
+			if (gsh && !obs_obj_is_private(bs->source))
+				signal_handler_signal(gsh, "source_browser_signal", &data);
+			signal_handler_t *sh = obs_source_get_signal_handler(bs->source);
+			if (sh)
+				signal_handler_signal(sh, "browser_signal", &data);
+			calldata_free(&data);
 		}
 		[[fallthrough]];
 	case ControlLevel::ReadUser:
