@@ -42,8 +42,10 @@ CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(CefRefPtr<CefB
 	if (fileExtension.compare("woff2") == 0)
 		fileExtension = "woff";
 
-	std::string filePath = path.substr(path.find_first_not_of("/"));
-	std::string checkString = filePath.substr(0, filePath.find_first_of("/"));
+	std::string filePath = path.substr(1);
+
+	std::string checkString = path.substr(path.find_first_not_of("/"));
+	checkString = checkString.substr(0, checkString.find_first_of("/"));
 
 	// An IP address should never be a valid path for CreateForFile normally, but in some cases an OS
 	// can resolve one as such. As an extra safeguard, we prevent any IP addresses in the path.
