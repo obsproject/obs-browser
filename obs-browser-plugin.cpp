@@ -389,7 +389,7 @@ static void BrowserInit(void)
 	}
 
 	// Register custom scheme handler for local browser sources
-	CefRegisterSchemeHandlerFactory("obsbrowser", "file", new BrowserSchemeHandlerFactory());
+	CefRegisterSchemeHandlerFactory("http", "absolute", new BrowserSchemeHandlerFactory());
 
 	os_event_signal(cef_started_event);
 }

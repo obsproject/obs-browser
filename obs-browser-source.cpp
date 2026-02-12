@@ -499,7 +499,7 @@ void BrowserSource::Update(obs_data_t *settings)
 				n_url.replace(n_url.find("%2F"), 3, "/");
 
 			// Local files are routed through our custom scheme handler to give them acess to other local files
-			n_url = "obsbrowser://file/" + n_url;
+			n_url = "http://absolute/" + n_url;
 		}
 
 		if (n_is_local == is_local && n_fps_custom == fps_custom && n_fps == fps &&
