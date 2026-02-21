@@ -216,6 +216,25 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 	case ControlLevel::Basic:
 		if (name == "saveReplayBuffer") {
 			obs_frontend_replay_buffer_save();
+		} else if (name == "setBrowserSize") {
+			int width = input_args->GetInt(1);
+			int height = input_args->GetInt(2);
+			if (!width)
+				width = (int)round(input_args->GetDouble(1));
+			if (!height)
+				height = (int)round(input_args->GetDouble(2));
+			if (width > 0 && height > 0) {
+				OBSDataAutoRelease s = obs_source_get_settings(bs->source);
+				if (s && (obs_data_get_int(s, "width") != width ||
+					  obs_data_get_int(s, "height") != height)) {
+					obs_data_set_int(s, "width", width);
+					obs_data_set_int(s, "height", height);
+					obs_source_update(bs->source, s);
+				}
+			} else {
+				blog(LOG_WARNING, "Browser source '%s' tried to change its size to %ix%i",
+				     obs_source_get_name(bs->source), width, height);
+			}
 		}
 		[[fallthrough]];
 	case ControlLevel::ReadUser:
