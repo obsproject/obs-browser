@@ -171,7 +171,7 @@ void BrowserSource::ExecuteOnBrowser(BrowserFunc func, bool async)
 #ifdef ENABLE_BROWSER_QT_LOOP
 			QueueBrowserTask(cefBrowser, func);
 #else
-			QueueCEFTask([=]() { func(browser); });
+			QueueCEFTask([func, browser]() { func(browser); });
 #endif
 		}
 	}
@@ -257,7 +257,7 @@ void BrowserSource::SendMouseClick(const struct obs_mouse_event *event, int32_t 
 	int32_t y = event->y;
 
 	ExecuteOnBrowser(
-		[=](CefRefPtr<CefBrowser> cefBrowser) {
+		[modifiers, x, y, type, mouse_up, click_count](CefRefPtr<CefBrowser> cefBrowser) {
 			CefMouseEvent e;
 			e.modifiers = modifiers;
 			e.x = x;
@@ -275,7 +275,7 @@ void BrowserSource::SendMouseMove(const struct obs_mouse_event *event, bool mous
 	int32_t y = event->y;
 
 	ExecuteOnBrowser(
-		[=](CefRefPtr<CefBrowser> cefBrowser) {
+		[modifiers, x, y, mouse_leave](CefRefPtr<CefBrowser> cefBrowser) {
 			CefMouseEvent e;
 			e.modifiers = modifiers;
 			e.x = x;
@@ -292,7 +292,7 @@ void BrowserSource::SendMouseWheel(const struct obs_mouse_event *event, int x_de
 	int32_t y = event->y;
 
 	ExecuteOnBrowser(
-		[=](CefRefPtr<CefBrowser> cefBrowser) {
+		[modifiers, x, y, x_delta, y_delta](CefRefPtr<CefBrowser> cefBrowser) {
 			CefMouseEvent e;
 			e.modifiers = modifiers;
 			e.x = x;
@@ -304,7 +304,7 @@ void BrowserSource::SendMouseWheel(const struct obs_mouse_event *event, int x_de
 
 void BrowserSource::SendFocus(bool focus)
 {
-	ExecuteOnBrowser([=](CefRefPtr<CefBrowser> cefBrowser) { cefBrowser->GetHost()->SetFocus(focus); }, true);
+	ExecuteOnBrowser([focus](CefRefPtr<CefBrowser> cefBrowser) { cefBrowser->GetHost()->SetFocus(focus); }, true);
 }
 
 void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
@@ -326,7 +326,7 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 #endif
 
 	ExecuteOnBrowser(
-		[=](CefRefPtr<CefBrowser> cefBrowser) {
+		[native_vkey, key_up, text, modifiers](CefRefPtr<CefBrowser> cefBrowser) {
 			CefKeyEvent e;
 			e.windows_key_code = native_vkey;
 #ifdef __APPLE__
@@ -375,7 +375,7 @@ void BrowserSource::SetShowing(bool showing)
 		}
 	} else {
 		ExecuteOnBrowser(
-			[=](CefRefPtr<CefBrowser> cefBrowser) {
+			[showing](CefRefPtr<CefBrowser> cefBrowser) {
 				CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Visibility");
 				CefRefPtr<CefListValue> args = msg->GetArgumentList();
 				args->SetBool(0, showing);
@@ -409,7 +409,7 @@ void BrowserSource::SetShowing(bool showing)
 void BrowserSource::SetActive(bool active)
 {
 	ExecuteOnBrowser(
-		[=](CefRefPtr<CefBrowser> cefBrowser) {
+		[active](CefRefPtr<CefBrowser> cefBrowser) {
 			CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Active");
 			CefRefPtr<CefListValue> args = msg->GetArgumentList();
 			args->SetBool(0, active);
@@ -512,7 +512,7 @@ void BrowserSource::Update(obs_data_t *settings)
 			width = n_width;
 			height = n_height;
 			ExecuteOnBrowser(
-				[=](CefRefPtr<CefBrowser> cefBrowser) {
+				[this](CefRefPtr<CefBrowser> cefBrowser) {
 					const CefSize cefSize(width, height);
 					cefBrowser->GetHost()->GetClient()->GetDisplayHandler()->OnAutoResize(
 						cefBrowser, cefSize);
@@ -659,7 +659,7 @@ static void ExecuteOnAllBrowsers(BrowserFunc func)
 
 void DispatchJSEvent(std::string eventName, std::string jsonString, BrowserSource *browser)
 {
-	const auto jsEvent = [=](CefRefPtr<CefBrowser> cefBrowser) {
+	const auto jsEvent = [eventName, jsonString](CefRefPtr<CefBrowser> cefBrowser) {
 		CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("DispatchJSEvent");
 		CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
