@@ -20,6 +20,7 @@ target_include_directories(browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/d
                                                   "${CMAKE_CURRENT_SOURCE_DIR}/obs-browser-page")
 
 target_link_libraries(browser-helper PRIVATE CEF::Wrapper CEF::Library)
+target_compile_features(browser-helper PRIVATE cxx_std_20)
 
 target_sources(obs-browser PRIVATE deps/ip-string-posix.cpp)
 
