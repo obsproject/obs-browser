@@ -512,7 +512,7 @@ void BrowserSource::Update(obs_data_t *settings)
 			width = n_width;
 			height = n_height;
 			ExecuteOnBrowser(
-				[=](CefRefPtr<CefBrowser> cefBrowser) {
+				[=, this](CefRefPtr<CefBrowser> cefBrowser) {
 					const CefSize cefSize(width, height);
 					cefBrowser->GetHost()->GetClient()->GetDisplayHandler()->OnAutoResize(
 						cefBrowser, cefSize);
