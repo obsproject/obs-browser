@@ -35,6 +35,8 @@ foreach(helper IN LISTS helper_suffixes)
 
   target_compile_definitions(${target_name} PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
 
+  target_compile_features(${target_name} PRIVATE cxx_std_20)
+
   if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0.3)
     target_compile_options(${target_name} PRIVATE -Wno-error=unqualified-std-cast-call)
   endif()

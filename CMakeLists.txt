@@ -42,7 +42,7 @@ target_sources(
 
 target_include_directories(obs-browser PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
-target_compile_features(obs-browser PRIVATE cxx_std_17)
+target_compile_features(obs-browser PRIVATE cxx_std_20)
 target_link_libraries(obs-browser PRIVATE OBS::libobs OBS::frontend-api OBS::websocket-api nlohmann_json::nlohmann_json)
 
 if(OS_WINDOWS)
