@@ -43,6 +43,7 @@
 
 using namespace std;
 
+extern os_event_t *cef_started_event;
 extern bool QueueCEFTask(std::function<void()> task);
 
 static mutex browser_list_mutex;
@@ -549,6 +550,9 @@ void BrowserSource::Update(obs_data_t *settings)
 
 void BrowserSource::Tick()
 {
+	if (os_event_try(cef_started_event) != 0)
+		return;
+
 	if (create_browser && CreateBrowser())
 		create_browser = false;
 #if defined(ENABLE_BROWSER_SHARED_TEXTURE)
