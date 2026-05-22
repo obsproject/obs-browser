@@ -786,7 +786,34 @@ void obs_module_unload(void)
 		if (!QueueCEFTask([]() { CefQuitMessageLoop(); }))
 			blog(LOG_DEBUG, "[obs-browser]: Failed to post CefQuit task to loop");
 
+#ifdef _WIN32
+		/* On Windows, the main thread is an STA host. Other
+		 * apartments (e.g. CEF's CrBrowserMain) may hold
+		 * cross-apartment COM proxies that need the main thread
+		 * to dispatch their Release during CoUninitialize.
+		 * A plain join() blocks without pumping messages,
+		 * causing a deadlock. Pump messages while waiting. */
+		HANDLE hThread = (HANDLE)manager_thread.native_handle();
+		while (true) {
+			DWORD res = MsgWaitForMultipleObjects(
+				1, &hThread, FALSE, INFINITE, QS_ALLINPUT);
+			if (res == WAIT_OBJECT_0)
+				break; /* thread exited */
+			if (res == WAIT_OBJECT_0 + 1) {
+				MSG msg;
+				while (PeekMessage(&msg, NULL, 0, 0,
+						   PM_REMOVE)) {
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
+				}
+			} else {
+				break; /* error */
+			}
+		}
+		manager_thread.detach(); /* already exited, avoid double-wait in dtor */
+#else
 		manager_thread.join();
+#endif
 	}
 #endif
 
