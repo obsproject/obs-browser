@@ -4,6 +4,9 @@ target_compile_definitions(obs-browser PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
 target_link_libraries(obs-browser PRIVATE CEF::Wrapper CEF::Library d3d11 dxgi)
 target_link_options(obs-browser PRIVATE /IGNORE:4099)
 
+configure_file(cmake/windows/obs-module.rc.in obs-browser.rc)
+target_sources(obs-browser PRIVATE obs-browser.rc)
+
 add_executable(obs-browser-helper WIN32 EXCLUDE_FROM_ALL)
 add_executable(OBS::browser-helper ALIAS obs-browser-helper)
 
@@ -12,6 +15,9 @@ target_sources(
   PRIVATE # cmake-format: sortable
           browser-app.cpp browser-app.hpp cef-headers.hpp obs-browser-page.manifest
           obs-browser-page/obs-browser-page-main.cpp)
+
+configure_file(cmake/windows/obs-module-helper.rc.in obs-browser-page.rc)
+target_sources(obs-browser-helper PRIVATE obs-browser-page.rc)
 
 target_include_directories(obs-browser-helper PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps"
                                                       "${CMAKE_CURRENT_SOURCE_DIR}/obs-browser-page")
