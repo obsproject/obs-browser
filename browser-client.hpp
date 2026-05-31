@@ -27,6 +27,9 @@ struct BrowserSource;
 
 class BrowserClient : public CefClient,
 		      public CefDisplayHandler,
+#if CHROME_VERSION_BUILD >= 6533
+		      public CefPermissionHandler,
+#endif
 		      public CefLifeSpanHandler,
 		      public CefRequestHandler,
 		      public CefResourceRequestHandler,
@@ -66,6 +69,9 @@ public:
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override;
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override;
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
+#if CHROME_VERSION_BUILD >= 6533
+	virtual CefRefPtr<CefPermissionHandler> GetPermissionHandler() override;
+#endif
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override;
@@ -79,6 +85,13 @@ public:
 	virtual bool OnConsoleMessage(CefRefPtr<CefBrowser> browser, cef_log_severity_t level, const CefString &message,
 				      const CefString &source, int line) override;
 	virtual bool OnTooltip(CefRefPtr<CefBrowser> browser, CefString &text) override;
+
+	/* CefPermissionHandler */
+#if CHROME_VERSION_BUILD >= 6533
+	virtual bool OnShowPermissionPrompt(CefRefPtr<CefBrowser> browser, uint64_t prompt_id,
+					    const CefString &requesting_origin, uint32_t requested_permissions,
+					    CefRefPtr<CefPermissionPromptCallback> callback) override;
+#endif
 
 	/* CefLifeSpanHandler */
 	virtual bool OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,

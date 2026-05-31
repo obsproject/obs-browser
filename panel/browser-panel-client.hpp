@@ -9,6 +9,7 @@ class QCefBrowserClient : public CefClient,
 			  public CefDisplayHandler,
 #if CHROME_VERSION_BUILD >= 6533
 			  public CefCommandHandler,
+			  public CefPermissionHandler,
 #endif
 			  public CefRequestHandler,
 			  public CefLifeSpanHandler,
@@ -31,6 +32,7 @@ public:
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
 #if CHROME_VERSION_BUILD >= 6533
 	virtual CefRefPtr<CefCommandHandler> GetCommandHandler() override;
+	virtual CefRefPtr<CefPermissionHandler> GetPermissionHandler() override;
 #endif
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
@@ -43,6 +45,12 @@ public:
 #if CHROME_VERSION_BUILD >= 6533
 	virtual bool OnChromeCommand(CefRefPtr<CefBrowser> browser, int command_id,
 				     cef_window_open_disposition_t disposition) override;
+
+	/* CefPermissionHandler */
+	virtual bool OnShowPermissionPrompt(CefRefPtr<CefBrowser> browser, uint64_t prompt_id,
+					    const CefString &requesting_origin, uint32_t requested_permissions,
+					    CefRefPtr<CefPermissionPromptCallback> callback) override;
+
 #endif
 
 	/* CefDisplayHandler */
