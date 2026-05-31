@@ -43,6 +43,11 @@ CefRefPtr<CefCommandHandler> QCefBrowserClient::GetCommandHandler()
 {
 	return this;
 }
+
+CefRefPtr<CefPermissionHandler> QCefBrowserClient::GetPermissionHandler()
+{
+	return this;
+}
 #endif
 
 CefRefPtr<CefRequestHandler> QCefBrowserClient::GetRequestHandler()
@@ -80,6 +85,19 @@ CefRefPtr<CefJSDialogHandler> QCefBrowserClient::GetJSDialogHandler()
 bool QCefBrowserClient::OnChromeCommand(CefRefPtr<CefBrowser>, int, cef_window_open_disposition_t)
 {
 	return true;
+}
+
+/* CefPermissionHandler */
+bool QCefBrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser> browser, uint64_t, const CefString &,
+					       uint32_t requested_permissions,
+					       CefRefPtr<CefPermissionPromptCallback> callback)
+{
+	// Implicitly allow Localhost access to retain previous behavior for now
+	if ((requested_permissions & CEF_PERMISSION_TYPE_LOOPBACK_NETWORK) != 0) {
+		callback->Continue(CEF_PERMISSION_RESULT_ACCEPT);
+		return true;
+	}
+	return false;
 }
 #endif
 
