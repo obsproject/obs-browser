@@ -226,7 +226,7 @@ void QCefBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser>)
 
 bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>, CefFocusHandler::FocusSource source)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0) && QT_VERSION < QT_VERSION_CHECK(6, 11, 1)
 	/* Workaround for browser docks flashing/hanging at startup with Qt 6.8.x, introduced
 	 * by commit https://code.qt.io/cgit/qt/qt5.git/commit/?id=bab1fecd556ea561c4a89686293116741acfa1b4.
 	 * Refer to https://bugreports.qt.io/browse/QTBUG-136165.
