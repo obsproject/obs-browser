@@ -166,6 +166,99 @@ window.obsstudio.getScenes(function (scenes) {
 })
 ```
 
+#### Get scene item list
+Permissions required: READ_USER
+```js
+/**
+ * @typedef {Object} SceneItem
+ * @property {number} id - unique scene item ID
+ * @property {string} name - name of the source
+ * @property {boolean} visible - whether the item is visible
+ * @property {boolean} locked - whether the item is locked
+ * @property {string} type - the source type
+ */
+
+/**
+ * @callback SceneItemListCallback
+ * @param {SceneItem[]} sceneItems
+ */
+
+/**
+ * @param {SceneItemListCallback} cb - The callback that receives the list of scene items in the current scene.
+ */
+window.obsstudio.getSceneItemList(function(sceneItems) {
+    console.log(sceneItems)
+})
+```
+
+#### Get scene item transform
+Permissions required: READ_USER
+```js
+/**
+ * @typedef {Object} Transform
+ * @property {Object} position - position of the item
+ * @property {number} position.x - x coordinate
+ * @property {number} position.y - y coordinate
+ * @property {number} rotation - rotation in degrees
+ * @property {Object} scale - scale of the item
+ * @property {number} scale.x - x scale factor
+ * @property {number} scale.y - y scale factor
+ * @property {number} alignment - alignment flags
+ * @property {number} boundsType - bounds type
+ * @property {number} boundsAlignment - bounds alignment
+ * @property {Object} bounds - bounds of the item
+ * @property {number} bounds.x - bounds width
+ * @property {number} bounds.y - bounds height
+ * @property {Object} crop - crop settings
+ * @property {number} crop.left - left crop
+ * @property {number} crop.top - top crop
+ * @property {number} crop.right - right crop
+ * @property {number} crop.bottom - bottom crop
+ */
+
+/**
+ * @callback TransformCallback
+ * @param {Transform} transform
+ */
+
+/**
+ * @param {TransformCallback} cb - The callback that receives the transform data.
+ * @param {string} sceneName - Name of the scene
+ * @param {number} sceneItemId - ID of the scene item
+ */
+window.obsstudio.getSceneItemTransform(function(transform) {
+    console.log(transform)
+}, "SceneName", 123)
+```
+
+#### Get browser input settings
+Permissions required: READ_USER
+```js
+/**
+ * @typedef {Object} BrowserInputSettings
+ * @property {string} inputKind - always "browser_source"
+ * @property {Object} inputSettings - browser source settings
+ * @property {number} inputSettings.height - height of the browser source
+ * @property {boolean} inputSettings.shutdown - shutdown setting
+ * @property {string} inputSettings.url - URL of the browser source
+ * @property {number} inputSettings.webpage_control_level - control level
+ * @property {number} inputSettings.width - width of the browser source
+ */
+
+/**
+ * @callback BrowserInputSettingsCallback
+ * @param {BrowserInputSettings} settings
+ */
+
+/**
+ * @param {BrowserInputSettingsCallback} cb - The callback that receives the browser input settings.
+ * @param {string} inputName - Name of the browser source
+ */
+window.obsstudio.getBrowserInputSettings(function(settings) {
+    console.log(settings)
+}, "BrowserSourceName")
+```
+
 #### Get transitions
 Permissions required: READ_USER
 ```js
