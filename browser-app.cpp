@@ -38,6 +38,12 @@
 	}
 #endif
 
+#ifdef _WIN32
+constexpr bool kIsPlatformWindows = true;
+#else
+constexpr bool kIsPlatformWindows = false;
+#endif
+
 CefRefPtr<CefRenderProcessHandler> BrowserApp::GetRenderProcessHandler()
 {
 	return this;
@@ -125,30 +131,26 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 		}
 	}
 
+	// See https://github.com/chromiumembedded/cef/issues/3966 for 'StorageNotificationService' requirement.
+	constexpr std::string_view kDefaultDisabledFeatures{
+		"CalculateNativeWinOcclusion,HardwareMediaKeyHandling,LiveCaption,"
+		"MediaRouter,StorageNotificationService,WebBluetooth,"
+		"EnableWindowsGamingInputDataFetcher"};
+
+	std::string disableFeatures{};
+
+	if constexpr (kIsPlatformWindows) {
+		disableFeatures.append(kDefaultDisabledFeatures);
+	} else {
+		constexpr std::string_view kWindowsFeature{",EnableWindowsGamingInputDataFetcher"};
+		constexpr size_t kNonWindowsLength = kDefaultDisabledFeatures.size() - kWindowsFeature.size();
+		disableFeatures.append(kDefaultDisabledFeatures.substr(0, kNonWindowsLength));
+	}
+
 	if (command_line->HasSwitch("disable-features")) {
 		// Don't override existing, as this can break OSR
-		std::string disableFeatures = command_line->GetSwitchValue("disable-features");
-		disableFeatures += ",HardwareMediaKeyHandling";
-#ifdef _WIN32
-		disableFeatures += ",EnableWindowsGamingInputDataFetcher";
-#endif
-		disableFeatures += ",WebBluetooth";
-		disableFeatures += ",MediaRouter";
-		disableFeatures += ",CalculateNativeWinOcclusion";
-		disableFeatures += ",LiveCaption";
-		// https://github.com/chromiumembedded/cef/issues/3966
-		disableFeatures += ",StorageNotificationService";
-		command_line->AppendSwitchWithValue("disable-features", disableFeatures);
-	} else {
-		command_line->AppendSwitchWithValue("disable-features", "WebBluetooth,"
-#ifdef _WIN32
-									"EnableWindowsGamingInputDataFetcher,"
-#endif
-									"MediaRouter,"
-									"CalculateNativeWinOcclusion,"
-									"LiveCaption,"
-									"StorageNotificationService,"
-									"HardwareMediaKeyHandling");
+		disableFeatures.append(",");
+		disableFeatures.append(command_line->GetSwitchValue("disable-features"));
 	}
 
 	if (command_line->HasSwitch("disable-blink-features")) {
@@ -161,6 +163,7 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 
 	command_line->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
 	command_line->AppendSwitch("disable-extensions");
+	command_line->AppendSwitchWithValue("disable-features", disableFeatures);
 	command_line->AppendSwitch("hide-crash-restore-bubble");
 #ifdef __APPLE__
 	command_line->AppendSwitch("use-mock-keychain");
