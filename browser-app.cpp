@@ -97,6 +97,9 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 #elif !defined(_WIN32)
 	command_line->AppendSwitchWithValue("ozone-platform", wayland ? "wayland" : "x11");
 #endif
+
+	// If the GPU crashes too much, don't crash OBS as well - better to just have broken sources
+	command_line->AppendSwitch("disable-gpu-process-crash-limit");
 }
 
 std::vector<std::string> exposedFunctions = {"getControlLevel",     "getCurrentScene",  "getStatus",
