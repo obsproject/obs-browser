@@ -71,6 +71,11 @@ CefRefPtr<CefAudioHandler> BrowserClient::GetAudioHandler()
 	return reroute_audio ? this : nullptr;
 }
 
+CefRefPtr<CefPermissionHandler> BrowserClient::GetPermissionHandler()
+{
+	return this;
+}
+
 CefRefPtr<CefRequestHandler> BrowserClient::GetRequestHandler()
 {
 	return this;
@@ -652,4 +657,32 @@ bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>, cef_log_severity_t l
 	blog(errorLevel, "[obs-browser: '%s'] %s: %s (%s:%d)", sourceName, code, message.ToString().c_str(),
 	     source.ToString().c_str(), line);
 	return false;
+}
+
+bool BrowserClient::OnRequestMediaAccessPermission(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
+						   const CefString &requesting_origin, uint32_t requested_permissions,
+						   CefRefPtr<CefMediaAccessCallback> callback)
+{
+	const uint32_t desktop_bits = CEF_MEDIA_PERMISSION_DESKTOP_AUDIO_CAPTURE |
+				      CEF_MEDIA_PERMISSION_DESKTOP_VIDEO_CAPTURE;
+
+	if (requested_permissions & desktop_bits) {
+		callback->Cancel();
+		return true;
+	}
+
+	if (!allow_media_access) {
+		callback->Cancel();
+		return true;
+	}
+
+	const char *sourceName = "<unknown>";
+
+	if (bs && bs->source)
+		sourceName = obs_source_get_name(bs->source);
+
+	blog(LOG_INFO, "[obs-browser: '%s'] Granting media access to '%s'", sourceName,
+	     requesting_origin.ToString().c_str());
+	callback->Continue(requested_permissions);
+	return true;
 }

@@ -33,11 +33,13 @@ class BrowserClient : public CefClient,
 		      public CefContextMenuHandler,
 		      public CefRenderHandler,
 		      public CefAudioHandler,
-		      public CefLoadHandler {
+		      public CefLoadHandler,
+		      public CefPermissionHandler {
 
 	bool sharing_available = false;
 	bool reroute_audio = true;
 	ControlLevel webpage_control_level = DEFAULT_CONTROL_LEVEL;
+	bool allow_media_access = false;
 
 	inline bool valid() const;
 
@@ -54,10 +56,11 @@ public:
 	int frames_per_buffer;
 
 	inline BrowserClient(BrowserSource *bs_, bool sharing_avail, bool reroute_audio_,
-			     ControlLevel webpage_control_level_)
+			     ControlLevel webpage_control_level_, bool allow_media_access_)
 		: sharing_available(sharing_avail),
 		  reroute_audio(reroute_audio_),
 		  webpage_control_level(webpage_control_level_),
+		  allow_media_access(allow_media_access_),
 		  bs(bs_)
 	{
 	}
@@ -70,6 +73,7 @@ public:
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override;
 	virtual CefRefPtr<CefAudioHandler> GetAudioHandler() override;
+	virtual CefRefPtr<CefPermissionHandler> GetPermissionHandler() override;
 
 	virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 					      CefProcessId source_process,
@@ -145,6 +149,10 @@ public:
 
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode) override;
+
+	virtual bool OnRequestMediaAccessPermission(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+						    const CefString &requesting_origin, uint32_t requested_permissions,
+						    CefRefPtr<CefMediaAccessCallback> callback) override;
 
 	IMPLEMENT_REFCOUNTING(BrowserClient);
 };
