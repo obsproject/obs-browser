@@ -24,8 +24,6 @@ foreach(helper IN LISTS helper_suffixes)
   set(EXECUTABLE_NAME "${target_output_name}")
   set(BUNDLE_ID_SUFFIX ${helper_plist})
 
-  configure_file(cmake/macos/Info-helper.plist.in Info-Helper${helper_plist}.plist)
-
   add_executable(${target_name} MACOSX_BUNDLE EXCLUDE_FROM_ALL)
   add_executable(OBS::${target_name} ALIAS ${target_name})
 
@@ -44,14 +42,21 @@ foreach(helper IN LISTS helper_suffixes)
 
   target_link_libraries(${target_name} PRIVATE CEF::Wrapper nlohmann_json::nlohmann_json)
 
+  string(TIMESTAMP CURRENT_YEAR "%Y")
   set_target_properties(
     ${target_name}
-    PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info-Helper${helper_plist}.plist"
-               OUTPUT_NAME "${target_output_name}"
-               FOLDER plugins/obs-browser/Helpers
-               XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER com.obsproject.obs-studio.helper${helper_plist}
-               XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
-               "${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos/entitlements-helper${helper_plist}.plist")
+    PROPERTIES
+      OUTPUT_NAME "${target_output_name}"
+      FOLDER plugins/obs-browser/Helpers
+      XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER com.obsproject.obs-studio.helper${helper_plist}
+      XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${OBS_BUILD_NUMBER}
+      XCODE_ATTRIBUTE_MARKETING_VERSION ${OBS_VERSION_CANONICAL}
+      XCODE_ATTRIBUTE_GENERATE_INFOPLIST_FILE YES
+      XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName "${target_output_name}"
+      XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.video"
+      XCODE_ATTRIBUTE_INFOPLIST_KEY_NSHumanReadableCopyright "(c) 2012-${CURRENT_YEAR} Lain Bailey"
+      XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos/entitlements-helper${helper_plist}.plist"
+  )
 endforeach()
 
 target_sources(obs-browser PRIVATE deps/ip-string-posix.cpp)
