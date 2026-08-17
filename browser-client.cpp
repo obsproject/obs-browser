@@ -319,7 +319,8 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type, const 
 		return;
 	}
 
-	if (bs->width != width || bs->height != height) {
+	if (bs->texture && (gs_texture_get_width(bs->texture) != static_cast<uint32_t>(width) ||
+			    gs_texture_get_height(bs->texture) != static_cast<uint32_t>(height))) {
 		obs_enter_graphics();
 		bs->DestroyTextures();
 		obs_leave_graphics();
@@ -328,8 +329,6 @@ void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type, const 
 	if (!bs->texture && width && height) {
 		obs_enter_graphics();
 		bs->texture = gs_texture_create(width, height, GS_BGRA, 1, (const uint8_t **)&buffer, GS_DYNAMIC);
-		bs->width = width;
-		bs->height = height;
 		obs_leave_graphics();
 	} else {
 		obs_enter_graphics();

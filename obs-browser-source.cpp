@@ -48,6 +48,7 @@ extern bool QueueCEFTask(std::function<void()> task);
 
 static mutex browser_list_mutex;
 static BrowserSource *first_browser = nullptr;
+constexpr int kResizeTextureStableFrames = 3;
 
 static void SendBrowserVisibility(CefRefPtr<CefBrowser> browser, bool isVisible)
 {
@@ -510,6 +511,10 @@ void BrowserSource::Update(obs_data_t *settings)
 			if (n_width == width && n_height == height)
 				return;
 
+			// CEF may mutate the current shared surface before publishing
+			// one with the new dimensions. Keep an immutable frame for the
+			// resize transition so it cannot render outside the source bounds.
+			CaptureResizeTexture();
 			width = n_width;
 			height = n_height;
 			ExecuteOnBrowser(
@@ -548,6 +553,40 @@ void BrowserSource::Update(obs_data_t *settings)
 	first_update = false;
 }
 
+void BrowserSource::CaptureResizeTexture()
+{
+	obs_enter_graphics();
+
+	if (resize_render) {
+		gs_texrender_destroy(resize_render);
+		resize_render = nullptr;
+	}
+	resize_match_frames = 0;
+
+	if (texture) {
+		const uint32_t textureWidth = gs_texture_get_width(texture);
+		const uint32_t textureHeight = gs_texture_get_height(texture);
+		const gs_color_space preferredSpaces[] = {GS_CS_SRGB, GS_CS_SRGB_16F, GS_CS_709_EXTENDED};
+		const gs_color_space space =
+			obs_source_get_color_space(source, OBS_COUNTOF(preferredSpaces), preferredSpaces);
+		gs_texrender_t *snapshot = gs_texrender_create(gs_get_format_from_space(space), GS_ZS_NONE);
+
+		if (snapshot && gs_texrender_begin_with_color_space(snapshot, textureWidth, textureHeight, space)) {
+			vec4 clearColor{};
+			gs_clear(GS_CLEAR_COLOR, &clearColor, 0.0f, 0);
+			gs_ortho(0.0f, static_cast<float>(textureWidth), 0.0f, static_cast<float>(textureHeight),
+				 -100.0f, 100.0f);
+			Render();
+			gs_texrender_end(snapshot);
+			resize_render = snapshot;
+		} else if (snapshot) {
+			gs_texrender_destroy(snapshot);
+		}
+	}
+
+	obs_leave_graphics();
+}
+
 void BrowserSource::Tick()
 {
 	if (os_event_try(cef_started_event) != 0)
@@ -584,27 +623,40 @@ void BrowserSource::Render()
 #endif
 
 	if (texture) {
-#ifdef __APPLE__
-		int type = gs_get_device_type();
-		gs_effect_t *effect;
-
-		if (type == GS_DEVICE_OPENGL) {
-			effect = obs_get_base_effect((hwaccel) ? OBS_EFFECT_DEFAULT_RECT : OBS_EFFECT_DEFAULT);
-		} else {
-			effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+		const uint32_t textureWidth = gs_texture_get_width(texture);
+		const uint32_t textureHeight = gs_texture_get_height(texture);
+		const bool textureSizeMatches = textureWidth == static_cast<uint32_t>(width) &&
+						textureHeight == static_cast<uint32_t>(height);
+		gs_texture_t *resizeTexture = resize_render ? gs_texrender_get_texture(resize_render) : nullptr;
+		if (resizeTexture) {
+			resize_match_frames = textureSizeMatches ? resize_match_frames + 1 : 0;
+			// Paint surfaces can arrive out of order while CEF resizes. Only
+			// release the snapshot after the target size has remained stable.
+			if (resize_match_frames >= kResizeTextureStableFrames) {
+				gs_texrender_destroy(resize_render);
+				resize_render = nullptr;
+				resizeTexture = nullptr;
+				resize_match_frames = 0;
+			}
 		}
-#else
-		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-#endif
-
-		bool linear_sample = extra_texture == NULL;
-		gs_texture_t *draw_texture = texture;
-		if (!linear_sample && !obs_source_get_texcoords_centered(source)) {
+		const bool useResizeTexture = resizeTexture != nullptr;
+		bool linear_sample = useResizeTexture || extra_texture == NULL;
+		gs_texture_t *draw_texture = useResizeTexture ? resizeTexture : texture;
+		if (!useResizeTexture && !linear_sample && !obs_source_get_texcoords_centered(source)) {
 			gs_copy_texture(extra_texture, texture);
 			draw_texture = extra_texture;
 
 			linear_sample = true;
 		}
+
+#ifdef __APPLE__
+		const bool rectangleTexture = gs_get_device_type() == GS_DEVICE_OPENGL &&
+					      gs_texture_is_rect(draw_texture);
+		gs_effect_t *effect =
+			obs_get_base_effect(rectangleTexture ? OBS_EFFECT_DEFAULT_RECT : OBS_EFFECT_DEFAULT);
+#else
+		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+#endif
 
 		const bool previous = gs_framebuffer_srgb_enabled();
 		gs_enable_framebuffer_srgb(true);
@@ -625,7 +677,7 @@ void BrowserSource::Render()
 
 		const uint32_t flip_flag = flip ? GS_FLIP_V : 0;
 		while (gs_effect_loop(effect, tech))
-			gs_draw_sprite(draw_texture, flip_flag, 0, 0);
+			gs_draw_sprite(draw_texture, flip_flag, width, height);
 
 		gs_blend_state_pop();
 

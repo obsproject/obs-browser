@@ -54,6 +54,8 @@ struct BrowserSource {
 	std::string css;
 	gs_texture_t *texture = nullptr;
 	gs_texture_t *extra_texture = nullptr;
+	gs_texrender_t *resize_render = nullptr;
+	int resize_match_frames = 0;
 	uint32_t last_cx = 0;
 	uint32_t last_cy = 0;
 	gs_color_format last_format = GS_UNKNOWN;
@@ -86,6 +88,11 @@ struct BrowserSource {
 	inline void DestroyTextures()
 	{
 		obs_enter_graphics();
+		if (resize_render) {
+			gs_texrender_destroy(resize_render);
+			resize_render = nullptr;
+			resize_match_frames = 0;
+		}
 		if (extra_texture) {
 			gs_texture_destroy(extra_texture);
 			extra_texture = nullptr;
@@ -114,6 +121,7 @@ struct BrowserSource {
 	void Destroy();
 
 	void Update(obs_data_t *settings = nullptr);
+	void CaptureResizeTexture();
 	void Tick();
 	void Render();
 
