@@ -433,7 +433,7 @@ void RegisterBrowserSource()
 	info.id = "browser_source";
 	info.type = OBS_SOURCE_TYPE_INPUT;
 	info.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_AUDIO | OBS_SOURCE_CUSTOM_DRAW | OBS_SOURCE_INTERACTION |
-			    OBS_SOURCE_DO_NOT_DUPLICATE | OBS_SOURCE_SRGB;
+			    OBS_SOURCE_DO_NOT_DUPLICATE | OBS_SOURCE_SRGB | OBS_SOURCE_INITIAL_BLEND_METHOD_SRGB_OFF;
 	info.get_properties = browser_source_get_properties;
 	info.get_defaults = browser_source_get_defaults;
 	info.icon_type = OBS_ICON_TYPE_BROWSER;
