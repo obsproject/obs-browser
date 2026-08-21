@@ -224,6 +224,15 @@ static obs_properties_t *browser_source_get_properties(void *data)
 			return false;
 		},
 		bs);
+#if CHROME_VERSION_BUILD > 6533 || defined(__APPLE__) || defined(_WIN32)
+	obs_properties_add_button2(
+		props, "inspect", obs_module_text("Inspect"),
+		[](obs_properties_t *, obs_property_t *, void *data) {
+			static_cast<BrowserSource *>(data)->Inspect();
+			return false;
+		},
+		bs);
+#endif
 	return props;
 }
 
