@@ -369,6 +369,45 @@ void BrowserClient::UpdateExtraTexture()
 	}
 }
 
+#ifdef _WIN32
+/* CEF's shared texture is pooled and only valid inside this callback;
+ * copy it into a texture we own instead of sampling it later (#488).
+ * Keyed-mutex sync was disabled "for now" in eced8c7 (2022), and since
+ * the CEF M124 rework the pooled textures have no mutex at all. */
+void BrowserClient::CopyAcceleratedTexture(void *shared_handle)
+{
+	gs_texture_t *shared = gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
+	if (!shared)
+		return;
+
+	/* No-op today (no keyed mutex); bounded wait for future producers. */
+	const bool acquired = gs_texture_acquire_sync(shared, 1, 50) == 0;
+
+	const uint32_t cx = gs_texture_get_width(shared);
+	const uint32_t cy = gs_texture_get_height(shared);
+	const gs_color_format format = gs_texture_get_color_format(shared);
+
+	/* Reallocate only on size/format change. */
+	if (!bs->texture || gs_texture_get_width(bs->texture) != cx || gs_texture_get_height(bs->texture) != cy ||
+	    gs_texture_get_color_format(bs->texture) != format) {
+		if (bs->texture)
+			gs_texture_destroy(bs->texture);
+		bs->texture = gs_texture_create(cx, cy, format, 1, nullptr, 0);
+	}
+
+	if (bs->texture)
+		gs_copy_texture(bs->texture, shared);
+
+	if (acquired)
+		gs_texture_release_sync(shared, 0);
+
+	/* Submit before CEF reuses the pooled texture. */
+	gs_flush();
+
+	gs_texture_destroy(shared);
+}
+#endif
+
 void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType type, const RectList &,
 #if CHROME_VERSION_BUILD >= 6367
 				       const CefAcceleratedPaintInfo &info)
@@ -423,10 +462,15 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 
 	obs_enter_graphics();
 
-	if (bs->texture) {
 #ifdef _WIN32
-		//gs_texture_release_sync(bs->texture, 0);
+	/* Copy the pooled texture into our own; see CopyAcceleratedTexture(). */
+#if CHROME_VERSION_BUILD >= 6367
+	CopyAcceleratedTexture((void *)(uintptr_t)info.shared_texture_handle);
+#else
+	CopyAcceleratedTexture(shared_handle);
 #endif
+#else
+	if (bs->texture) {
 		gs_texture_destroy(bs->texture);
 		bs->texture = nullptr;
 	}
@@ -435,23 +479,13 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 	bs->texture = gs_texture_create_from_iosurface((IOSurfaceRef)(uintptr_t)info.shared_texture_io_surface);
 #elif defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
 	bs->texture = gs_texture_create_from_iosurface((IOSurfaceRef)(uintptr_t)shared_handle);
-#elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
-	bs->texture =
-#if CHROME_VERSION_BUILD >= 6367
-		gs_texture_open_nt_shared((uint32_t)(uintptr_t)info.shared_texture_handle);
-#else
-		gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
-#endif
-	//if (bs->texture)
-	//	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
-
-#elif defined(_WIN32)
-	bs->texture = gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
 #else
 	bs->texture = gs_texture_create_from_dmabuf(info.extra.coded_size.width, info.extra.coded_size.height,
 						    format.drm_format, format.gs_format, info.plane_count, fds, strides,
 						    offsets, modifier != DRM_FORMAT_MOD_INVALID ? modifiers : NULL);
 #endif
+#endif
+
 	UpdateExtraTexture();
 	obs_leave_graphics();
 

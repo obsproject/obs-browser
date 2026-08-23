@@ -42,6 +42,9 @@ class BrowserClient : public CefClient,
 	inline bool valid() const;
 
 	void UpdateExtraTexture();
+#if defined(ENABLE_BROWSER_SHARED_TEXTURE) && defined(_WIN32)
+	void CopyAcceleratedTexture(void *shared_handle);
+#endif
 
 public:
 	BrowserSource *bs;
