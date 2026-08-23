@@ -136,6 +136,7 @@ static void browser_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "webpage_control_level", (int)DEFAULT_CONTROL_LEVEL);
 	obs_data_set_default_string(settings, "css", default_css);
 	obs_data_set_default_bool(settings, "reroute_audio", false);
+	obs_data_set_default_bool(settings, "allow_media_access", false);
 }
 
 static bool is_local_file_modified(obs_properties_t *props, obs_property_t *, obs_data_t *settings)
@@ -185,6 +186,10 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	obs_properties_add_int(props, "height", obs_module_text("Height"), 1, 8192, 1);
 
 	obs_properties_add_bool(props, "reroute_audio", obs_module_text("RerouteAudio"));
+
+	obs_property_t *media_access =
+		obs_properties_add_bool(props, "allow_media_access", obs_module_text("AllowMediaAccess"));
+	obs_property_set_long_description(media_access, obs_module_text("AllowMediaAccess.ToolTip"));
 
 	obs_property_t *fps_set = obs_properties_add_bool(props, "fps_custom", obs_module_text("CustomFrameRate"));
 	obs_property_set_modified_callback(fps_set, is_fps_custom);
