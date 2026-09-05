@@ -71,6 +71,8 @@ CefRefPtr<CefJSDialogHandler> QCefBrowserClient::GetJSDialogHandler()
 /* CefDisplayHandler */
 void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString &title)
 {
+	std::lock_guard<std::recursive_mutex> widgetLock(widgetMutex);
+
 	if (widget && widget->cefBrowser->IsSame(browser)) {
 		std::string str_title = title;
 		QString qt_title = QString::fromUtf8(str_title.c_str());
@@ -117,6 +119,8 @@ bool QCefBrowserClient::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<
 			return true;
 		}
 	}
+
+	std::lock_guard<std::recursive_mutex> widgetLock(widgetMutex);
 
 	if (widget) {
 		QString qt_url = QString::fromUtf8(str_url.c_str());
@@ -181,10 +185,12 @@ bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>
 				      CefWindowInfo &windowInfo, CefRefPtr<CefClient> &, CefBrowserSettings &,
 				      CefRefPtr<CefDictionaryValue> &, bool *)
 {
+	std::lock_guard<std::recursive_mutex> widgetLock(widgetMutex);
+
 	if (allowAllPopups) {
 #ifdef _WIN32
-		HWND hwnd = (HWND)widget->effectiveWinId();
-		windowInfo.parent_window = hwnd;
+		if (widget)
+			windowInfo.parent_window = (HWND)widget->effectiveWinId();
 #else
 		UNUSED_PARAMETER(windowInfo);
 #endif
@@ -204,8 +210,8 @@ bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>
 
 		if (astrcmpi(info.url.c_str(), str_url.c_str()) == 0) {
 #ifdef _WIN32
-			HWND hwnd = (HWND)widget->effectiveWinId();
-			windowInfo.parent_window = hwnd;
+			if (widget)
+				windowInfo.parent_window = (HWND)widget->effectiveWinId();
 #endif
 			return false;
 		}
@@ -219,6 +225,8 @@ bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>
 
 void QCefBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser>)
 {
+	std::lock_guard<std::recursive_mutex> widgetLock(widgetMutex);
+
 	if (widget) {
 		widget->finishCloseBrowser();
 	}
@@ -332,11 +340,16 @@ bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser, CefR
 	CefRefPtr<CefBrowserHost> host = browser->GetHost();
 	CefWindowInfo windowInfo;
 	QPoint pos;
+
+	std::lock_guard<std::recursive_mutex> widgetLock(widgetMutex);
+
 	switch (command_id) {
 	case MENU_ITEM_DEVTOOLS:
 #if defined(_WIN32) && CHROME_VERSION_BUILD < 6533
 		windowInfo.SetAsPopup(host->GetWindowHandle(), "");
 #endif
+		if (!widget)
+			return true;
 		pos = widget->mapToGlobal(QPoint(0, 0));
 		windowInfo.bounds.x = pos.x();
 		windowInfo.bounds.y = pos.y() + 30;
@@ -349,13 +362,16 @@ bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser, CefR
 		host->SetAudioMuted(!host->IsAudioMuted());
 		return true;
 	case MENU_ITEM_ZOOM_IN:
-		widget->zoomPage(1);
+		if (widget)
+			widget->zoomPage(1);
 		return true;
 	case MENU_ITEM_ZOOM_RESET:
-		widget->zoomPage(0);
+		if (widget)
+			widget->zoomPage(0);
 		return true;
 	case MENU_ITEM_ZOOM_OUT:
-		widget->zoomPage(-1);
+		if (widget)
+			widget->zoomPage(-1);
 		return true;
 	case MENU_ITEM_COPY_URL:
 		std::string url = browser->GetMainFrame()->GetURL().ToString();
@@ -392,6 +408,8 @@ void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> fra
 	if (!frame->IsMain())
 		return;
 
+	std::lock_guard<std::recursive_mutex> widgetLock(widgetMutex);
+
 	if (widget && !widget->script.empty())
 		frame->ExecuteJavaScript(widget->script, CefString(), 0);
 	else if (!script.empty())
@@ -403,6 +421,15 @@ bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
 				   const CefString &default_prompt_text, CefRefPtr<CefJSDialogCallback> callback,
 				   bool &)
 {
+	std::lock_guard<std::recursive_mutex> widgetLock(widgetMutex);
+
+	if (!widget) {
+		/* The browser is on its way out, so there is nothing to parent a
+		 * dialog to. Cancel it rather than let CEF put up its own. */
+		callback->Continue(false, CefString());
+		return true;
+	}
+
 	QString parentTitle = widget->parentWidget()->windowTitle();
 	std::string default_value = default_prompt_text;
 	QString msg_raw(message_text.ToString().c_str());
@@ -488,15 +515,18 @@ bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser, const CefKe
 	} else if ((event.windows_key_code == 189 || event.windows_key_code == 109) &&
 		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
 		// Zoom out
-		return widget->zoomPage(-1);
+		if (widget)
+			return widget->zoomPage(-1);
 	} else if ((event.windows_key_code == 187 || event.windows_key_code == 107) &&
 		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
 		// Zoom in
-		return widget->zoomPage(1);
+		if (widget)
+			return widget->zoomPage(1);
 	} else if ((event.windows_key_code == 48 || event.windows_key_code == 96) &&
 		   (event.modifiers & EVENTFLAG_CONTROL_DOWN) != 0) {
 		// Reset zoom
-		return widget->zoomPage(0);
+		if (widget)
+			return widget->zoomPage(0);
 	}
 	return false;
 }

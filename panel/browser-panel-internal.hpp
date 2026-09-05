@@ -8,6 +8,8 @@
 #include <vector>
 #include <mutex>
 
+class QCefBrowserClient;
+
 struct PopupWhitelistInfo {
 	std::string url;
 	QPointer<QObject> obj;
@@ -29,6 +31,13 @@ public:
 	~QCefWidgetInternal();
 
 	CefRefPtr<CefBrowser> cefBrowser;
+
+	/* Held from the moment a browser is requested rather than from the moment
+	 * one exists, so the widget can always detach itself from the client.
+	 * Reaching the client through cefBrowser->GetHost()->GetClient() only works
+	 * once the browser has been created, and that is precisely the window in
+	 * which the widget can be destroyed with the back-pointer still set. */
+	CefRefPtr<QCefBrowserClient> browserClient;
 	std::string url;
 	std::string script;
 	CefRefPtr<CefRequestContext> rqc;
