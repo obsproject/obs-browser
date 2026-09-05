@@ -4,6 +4,7 @@
 #include "browser-app.hpp"
 
 #include <QWindow>
+#include <QScopeGuard>
 #include <QApplication>
 
 #ifdef ENABLE_BROWSER_QT_LOOP
@@ -188,6 +189,23 @@ QCefWidgetInternal::~QCefWidgetInternal()
 
 void QCefWidgetInternal::closeBrowser()
 {
+	/* The client is refcounted and outlives this widget -- CEF holds references
+	 * to it from threads we do not control -- and every one of its callbacks
+	 * dereferences the widget back-pointer. Clearing that pointer is therefore
+	 * the one thing that has to happen on every path out of here, including the
+	 * two early returns below. Before this, a widget destroyed while its browser
+	 * was still being created returned at the !cefBrowser check and left the
+	 * client pointing at freed memory.
+	 *
+	 * It runs at scope exit rather than up front because the close handshake
+	 * below still needs OnBeforeClose to reach finishCloseBrowser(). */
+	const auto detach = qScopeGuard([this]() {
+		if (browserClient) {
+			browserClient->detachWidget();
+			browserClient = nullptr;
+		}
+	});
+
 	if (!cefBrowser) {
 		return;
 	}
@@ -222,13 +240,6 @@ void QCefWidgetInternal::closeBrowser()
 	QTimer::singleShot(1000, &browserCloseLoop, &QEventLoop::quit);
 
 	browserCloseLoop.exec();
-
-	CefRefPtr<CefClient> client{host->GetClient()};
-
-	if (client) {
-		QCefBrowserClient *browserClient{static_cast<QCefBrowserClient *>(client.get())};
-		browserClient->widget = nullptr;
-	}
 
 	cefBrowser = nullptr;
 }
@@ -305,58 +316,72 @@ void QCefWidgetInternal::unsetToplevelXdndProxy()
 
 void QCefWidgetInternal::Init()
 {
+	/* Make sure Init isn't called more than once. Guarding here rather than
+	 * inside the task also removes the reliance on two queued tasks running in
+	 * order to see each other's result. */
+	if (browserClient) {
+		timer.stop();
+		return;
+	}
+
 #ifndef __APPLE__
 	WId handle = window->winId();
-	QSize size = this->size();
-	size *= devicePixelRatioF();
-	bool success = QueueCEFTask(
-		[this, handle, size]()
+	QSize size = this->size() * devicePixelRatioF();
 #else
 	WId handle = winId();
-	bool success = QueueCEFTask(
-		[this, handle]()
+	/* Read on this thread rather than inside the task: QWidget::size() is not
+	 * safe to call from a CEF thread. */
+	QSize size = this->size();
 #endif
-		{
-			CefWindowInfo windowInfo;
 
-			/* Make sure Init isn't called more than once. */
-			if (cefBrowser)
-				return;
+	/* Constructed here, on the Qt thread, so the widget holds a reference to
+	 * the client from the moment it asks for a browser rather than from the
+	 * moment one exists. Nothing about constructing it needs the CEF thread;
+	 * only CreateBrowserSync does. */
+	browserClient = new QCefBrowserClient(this, script, allowAllPopups_);
 
-#ifdef __APPLE__
-			QSize size = this->size();
-#endif
+	/* `this` is deliberately not captured. This task outlives the widget
+	 * whenever the widget is destroyed while the browser is still being
+	 * created, and it used to write the result straight into freed memory. */
+	CefRefPtr<QCefBrowserClient> client = browserClient;
+	const std::string initUrl = url;
+	CefRefPtr<CefRequestContext> initRqc = rqc;
+
+	bool success = QueueCEFTask([client, handle, size, initUrl, initRqc]() {
+		CefWindowInfo windowInfo;
 
 #if CHROME_VERSION_BUILD >= 6533
-			windowInfo.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
+		windowInfo.runtime_style = CEF_RUNTIME_STYLE_ALLOY;
 #endif
 
-			windowInfo.SetAsChild((CefWindowHandle)handle, CefRect(0, 0, size.width(), size.height()));
+		windowInfo.SetAsChild((CefWindowHandle)handle, CefRect(0, 0, size.width(), size.height()));
 
-			CefRefPtr<QCefBrowserClient> browserClient =
-				new QCefBrowserClient(this, script, allowAllPopups_);
-
-			CefBrowserSettings cefBrowserSettings;
-			cefBrowser = CefBrowserHost::CreateBrowserSync(windowInfo, browserClient, url,
-								       cefBrowserSettings,
-								       CefRefPtr<CefDictionaryValue>(), rqc);
+		CefBrowserSettings cefBrowserSettings;
+		client->attachBrowser(CefBrowserHost::CreateBrowserSync(windowInfo, client, initUrl, cefBrowserSettings,
+									CefRefPtr<CefDictionaryValue>(), initRqc));
 
 #ifdef __linux__
-			QueueCEFTask([this]() { unsetToplevelXdndProxy(); });
+		QueueCEFTask([client]() { client->unsetToplevelXdndProxy(); });
 #endif
-		});
+	});
 
-	if (success) {
-		timer.stop();
-#ifndef __APPLE__
-		if (!container) {
-			container = QWidget::createWindowContainer(window, this);
-			container->show();
-		}
-
-		Resize();
-#endif
+	if (!success) {
+		/* CEF is not up yet; the 500 ms timer will call this again. Drop the
+		 * client so that retry is not turned into a no-op by the guard at the
+		 * top of this function. */
+		browserClient = nullptr;
+		return;
 	}
+
+	timer.stop();
+#ifndef __APPLE__
+	if (!container) {
+		container = QWidget::createWindowContainer(window, this);
+		container->show();
+	}
+
+	Resize();
+#endif
 }
 
 void QCefWidgetInternal::resizeEvent(QResizeEvent *event)

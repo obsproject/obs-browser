@@ -3,6 +3,7 @@
 #include "cef-headers.hpp"
 #include "browser-panel-internal.hpp"
 
+#include <mutex>
 #include <string>
 
 class QCefBrowserClient : public CefClient,
@@ -22,6 +23,41 @@ public:
 		  allowAllPopups(allowAllPopups_)
 	{
 	}
+
+	/* Called by the widget while it is still alive. Blocks until any callback
+	 * currently holding the back-pointer has finished, so once it returns no
+	 * CEF thread can be inside one. */
+	void detachWidget()
+	{
+		std::lock_guard<std::recursive_mutex> lock(widgetMutex);
+		widget = nullptr;
+	}
+
+	/* Publish the browser created by the queued task in Init(). If the widget
+	 * went away while the browser was being created then nothing owns it, so
+	 * close it here rather than leak it. */
+	void attachBrowser(CefRefPtr<CefBrowser> browser)
+	{
+		{
+			std::lock_guard<std::recursive_mutex> lock(widgetMutex);
+			if (widget) {
+				widget->cefBrowser = browser;
+				return;
+			}
+		}
+
+		if (browser)
+			browser->GetHost()->CloseBrowser(true);
+	}
+
+#ifdef __linux__
+	void unsetToplevelXdndProxy()
+	{
+		std::lock_guard<std::recursive_mutex> lock(widgetMutex);
+		if (widget)
+			widget->unsetToplevelXdndProxy();
+	}
+#endif
 
 	/* CefClient */
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override;
@@ -96,9 +132,15 @@ public:
 				const CefString &default_prompt_text, CefRefPtr<CefJSDialogCallback> callback,
 				bool &suppress_message) override;
 
-	QCefWidgetInternal *widget = nullptr;
 	std::string script;
 	bool allowAllPopups;
+
+private:
+	/* Private on purpose. Every use has to go through widgetMutex, and making
+	 * the compiler enforce that is what guarantees no unguarded one is left
+	 * behind. */
+	std::recursive_mutex widgetMutex;
+	QCefWidgetInternal *widget = nullptr;
 
 	IMPLEMENT_REFCOUNTING(QCefBrowserClient);
 };
