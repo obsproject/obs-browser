@@ -146,5 +146,9 @@ public:
 	/* CefLoadHandler */
 	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode) override;
 
+	virtual void OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+				 CefLoadHandler::ErrorCode errorCode, const CefString &errorText,
+				 const CefString &failedUrl) override;
+
 	IMPLEMENT_REFCOUNTING(BrowserClient);
 };

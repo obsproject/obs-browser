@@ -25,6 +25,8 @@ target_sources(
           browser-app.hpp
           browser-client.cpp
           browser-client.hpp
+          browser-dummy-client.cpp
+          browser-dummy-client.hpp
           browser-scheme.cpp
           browser-scheme.hpp
           browser-version.h

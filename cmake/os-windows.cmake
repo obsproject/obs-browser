@@ -13,8 +13,8 @@ add_executable(OBS::browser-helper ALIAS obs-browser-helper)
 target_sources(
   obs-browser-helper
   PRIVATE # cmake-format: sortable
-          browser-app.cpp browser-app.hpp cef-headers.hpp obs-browser-page.manifest
-          obs-browser-page/obs-browser-page-main.cpp)
+          browser-app.cpp browser-app.hpp browser-dummy-client.cpp browser-dummy-client.hpp
+          cef-headers.hpp obs-browser-page.manifest obs-browser-page/obs-browser-page-main.cpp)
 
 configure_file(cmake/windows/obs-module-helper.rc.in obs-browser-page.rc)
 target_sources(obs-browser-helper PRIVATE obs-browser-page.rc)

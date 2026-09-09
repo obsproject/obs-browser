@@ -29,7 +29,8 @@ foreach(helper IN LISTS helper_suffixes)
 
   target_sources(
     ${target_name} PRIVATE # cmake-format: sortable
-                           browser-app.cpp browser-app.hpp cef-headers.hpp obs-browser-page/obs-browser-page-main.cpp)
+                           browser-app.cpp browser-app.hpp browser-dummy-client.cpp browser-dummy-client.hpp
+                           cef-headers.hpp obs-browser-page/obs-browser-page-main.cpp)
 
   target_compile_definitions(${target_name} PRIVATE ENABLE_BROWSER_SHARED_TEXTURE)
 

@@ -368,6 +368,10 @@ void QCefWidgetInternal::resizeEvent(QResizeEvent *event)
 
 void QCefWidgetInternal::Resize()
 {
+	if (os_event_try(cef_started_event) != 0) {
+		return;
+	}
+
 	QSize size = this->size() * devicePixelRatioF();
 
 	bool success = QueueCEFTask([this, size]() {
@@ -550,10 +554,31 @@ QCefWidget *QCefInternal::create_widget(QWidget *parent, const std::string &url,
 	return new QCefWidgetInternal(parent, url, cmi ? cmi->rc : nullptr);
 }
 
+namespace {
+std::string getUpdatedCookiePath(std::string storagePath)
+{
+	constexpr std::string_view searchToken{"obs_profile_cookies/"};
+	constexpr std::string_view replaceToken{"obs_profile_cookies_"};
+
+	size_t pos = storagePath.find(searchToken);
+	if (pos != std::string::npos) {
+		storagePath.replace(pos, searchToken.length(), replaceToken);
+	}
+
+	return storagePath;
+}
+} // namespace
+
 QCefCookieManager *QCefInternal::create_cookie_manager(const std::string &storage_path, bool persist_session_cookies)
 {
+	std::string path = storage_path;
+#if CHROME_VERSION_BUILD > 6533
+	// TODO: Update obs-studio to use the new path structure due to subdirectories not being supported by CEF
+	// https://github.com/obsproject/obs-studio/issues/13498
+	path = getUpdatedCookiePath(storage_path);
+#endif
 	try {
-		return new QCefCookieManagerInternal(storage_path, persist_session_cookies);
+		return new QCefCookieManagerInternal(path, persist_session_cookies);
 	} catch (const char *error) {
 		blog(LOG_ERROR, "Failed to create cookie manager: %s", error);
 		return nullptr;
@@ -562,7 +587,13 @@ QCefCookieManager *QCefInternal::create_cookie_manager(const std::string &storag
 
 BPtr<char> QCefInternal::get_cookie_path(const std::string &storage_path)
 {
-	BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
+	std::string path = storage_path;
+#if CHROME_VERSION_BUILD > 6533
+	// TODO: Update obs-studio to use the new path structure due to subdirectories not being supported by CEF
+	// https://github.com/obsproject/obs-studio/issues/13498
+	path = getUpdatedCookiePath(storage_path);
+#endif
+	BPtr<char> rpath = obs_module_config_path(path.c_str());
 	return os_get_abs_path_ptr(rpath.Get());
 }
 
