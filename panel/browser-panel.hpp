@@ -36,6 +36,9 @@ class QCefWidget : public QWidget {
 protected:
 	inline QCefWidget(QWidget *parent) : QWidget(parent) {}
 
+private:
+	virtual bool eventFilter(QObject *object, QEvent *event) = 0;
+
 public:
 	virtual void setURL(const std::string &url) = 0;
 	virtual void setStartupScript(const std::string &script) = 0;
