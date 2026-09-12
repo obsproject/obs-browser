@@ -134,7 +134,7 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 	// See https://github.com/chromiumembedded/cef/issues/3966 for 'StorageNotificationService' requirement.
 	constexpr std::string_view kDefaultDisabledFeatures{
 		"CalculateNativeWinOcclusion,GlobalShortcutsPortal,HardwareMediaKeyHandling,LiveCaption,"
-		"MediaRouter,StorageNotificationService,WebBluetooth,"
+		"LocalNetworkAccessChecksWebSockets,MediaRouter,StorageNotificationService,WebBluetooth,"
 		"EnableWindowsGamingInputDataFetcher"};
 
 	std::string disableFeatures{};
