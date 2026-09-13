@@ -597,33 +597,25 @@ void BrowserSource::Render()
 		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 #endif
 
-		bool linear_sample = extra_texture == NULL;
 		gs_texture_t *draw_texture = texture;
-		if (!linear_sample && !obs_source_get_texcoords_centered(source)) {
+		if (extra_texture && !obs_source_get_texcoords_centered(source)) {
 			gs_copy_texture(extra_texture, texture);
 			draw_texture = extra_texture;
-
-			linear_sample = true;
 		}
 
+		const bool linear_srgb = gs_get_linear_srgb();
 		const bool previous = gs_framebuffer_srgb_enabled();
-		gs_enable_framebuffer_srgb(true);
+		gs_enable_framebuffer_srgb(linear_srgb);
 
 		gs_blend_state_push();
 		gs_blend_function(GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
 
 		gs_eparam_t *const image = gs_effect_get_param_by_name(effect, "image");
 
-		const char *tech;
-		if (linear_sample) {
-			gs_effect_set_texture_srgb(image, draw_texture);
-			tech = "Draw";
-		} else {
-			gs_effect_set_texture(image, draw_texture);
-			tech = "DrawSrgbDecompress";
-		}
+		gs_effect_set_texture(image, draw_texture);
 
 		const uint32_t flip_flag = flip ? GS_FLIP_V : 0;
+		const char *tech = linear_srgb ? "DrawSrgbDecompressPremultiplied" : "Draw";
 		while (gs_effect_loop(effect, tech))
 			gs_draw_sprite(draw_texture, flip_flag, 0, 0);
 
