@@ -427,6 +427,19 @@ void BrowserSource::Refresh()
 	ExecuteOnBrowser([](CefRefPtr<CefBrowser> cefBrowser) { cefBrowser->ReloadIgnoreCache(); }, true);
 }
 
+void BrowserSource::Inspect()
+{
+	ExecuteOnBrowser(
+		[](CefRefPtr<CefBrowser> cefBrowser) {
+			CefWindowInfo windowInfo;
+			windowInfo.bounds.width = 900;
+			windowInfo.bounds.height = 700;
+			CefRefPtr<CefBrowserHost> host = cefBrowser->GetHost();
+			host->ShowDevTools(windowInfo, host->GetClient(), CefBrowserSettings(), {});
+		},
+		true);
+}
+
 void BrowserSource::SetBrowser(CefRefPtr<CefBrowser> b)
 {
 	std::lock_guard<std::recursive_mutex> auto_lock(lockBrowser);
