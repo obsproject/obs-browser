@@ -606,6 +606,17 @@ bool BrowserClient::GetAudioParameters(CefRefPtr<CefBrowser> browser, CefAudioPa
 	return true;
 }
 
+void BrowserClient::OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, TransitionType)
+{
+	if (!valid()) {
+		return;
+	}
+
+	if (reroute_audio && frame->IsMain()) {
+		browser->GetHost()->SetAudioMuted(true);
+	}
+}
+
 void BrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame, int)
 {
 	if (!valid()) {
