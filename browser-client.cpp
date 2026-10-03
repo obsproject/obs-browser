@@ -637,7 +637,7 @@ void BrowserClient::OnLoadError(CefRefPtr<CefBrowser>, [[maybe_unused]] CefRefPt
 	// CEF doesn't currently provide a way to properly disable/override the default Chrome error page.
 	// https://github.com/obsproject/obs-studio/issues/13499
 	// FIXME: https://github.com/chromiumembedded/cef/issues/3852
-	frame->LoadURL("about:blank");
+	frame->ExecuteJavaScript("document.querySelector('html').innerText = '';", "", 0);
 #endif
 }
 
