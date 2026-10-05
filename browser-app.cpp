@@ -217,8 +217,9 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser, const char *fu
 		CefRefPtr<CefV8Value> obsStudioObj = globalObj->GetValue("obsstudio");
 		CefRefPtr<CefV8Value> jsFunction = obsStudioObj->GetValue(functionName);
 
-		if (jsFunction && jsFunction->IsFunction())
+		if (jsFunction && jsFunction->IsFunction()) {
 			jsFunction->ExecuteFunction(nullptr, arguments);
+		}
 
 		context->Exit();
 	}
@@ -300,8 +301,9 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefP
 		nlohmann::json payloadJson = nlohmann::json::parse(args->GetString(1).ToString(), nullptr, false);
 
 		nlohmann::json wrapperJson;
-		if (args->GetSize() > 1)
+		if (args->GetSize() > 1) {
 			wrapperJson["detail"] = payloadJson;
+		}
 		std::string wrapperJsonString = wrapperJson.dump();
 		std::string script;
 
@@ -360,8 +362,9 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefP
 
 		args.push_back(retval);
 
-		if (callback)
+		if (callback) {
 			callback->ExecuteFunction(nullptr, args);
+		}
 
 		context->Exit();
 
@@ -397,19 +400,21 @@ bool BrowserApp::Execute(const CefString &name, CefRefPtr<CefV8Value>, const Cef
 		/* Pass on arguments */
 		for (u_long l = 0; l < arguments.size(); l++) {
 			u_long pos;
-			if (arguments[0]->IsFunction())
+			if (arguments[0]->IsFunction()) {
 				pos = l;
-			else
+			} else {
 				pos = l + 1;
+			}
 
-			if (arguments[l]->IsString())
+			if (arguments[l]->IsString()) {
 				args->SetString(pos, arguments[l]->GetStringValue());
-			else if (arguments[l]->IsInt())
+			} else if (arguments[l]->IsInt()) {
 				args->SetInt(pos, arguments[l]->GetIntValue());
-			else if (arguments[l]->IsBool())
+			} else if (arguments[l]->IsBool()) {
 				args->SetBool(pos, arguments[l]->GetBoolValue());
-			else if (arguments[l]->IsDouble())
+			} else if (arguments[l]->IsDouble()) {
 				args->SetDouble(pos, arguments[l]->GetDoubleValue());
+			}
 		}
 
 		CefRefPtr<CefBrowser> browser = CefV8Context::GetCurrentContext()->GetBrowser();
@@ -440,8 +445,9 @@ bool MessageObject::ExecuteNextBrowserTask()
 	Task nextTask;
 	{
 		std::lock_guard<std::mutex> lock(browserTaskMutex);
-		if (!browserTasks.size())
+		if (!browserTasks.size()) {
 			return false;
+		}
 
 		nextTask = browserTasks[0];
 		browserTasks.pop_front();
@@ -458,10 +464,11 @@ void MessageObject::ExecuteTask(MessageTask task)
 
 void MessageObject::DoCefMessageLoop(int ms)
 {
-	if (ms)
+	if (ms) {
 		QTimer::singleShot((int)ms + 2, []() { CefDoMessageLoopWork(); });
-	else
+	} else {
 		CefDoMessageLoopWork();
+	}
 }
 
 void MessageObject::Process()
@@ -482,10 +489,11 @@ void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
 void BrowserApp::OnScheduleMessagePumpWork(int64_t delay_ms)
 #endif
 {
-	if (delay_ms < 0)
+	if (delay_ms < 0) {
 		delay_ms = 0;
-	else if (delay_ms > MAX_DELAY)
+	} else if (delay_ms > MAX_DELAY) {
 		delay_ms = MAX_DELAY;
+	}
 
 	if (!frameTimer.isActive()) {
 		QObject::connect(&frameTimer, &QTimer::timeout, &messageObject, &MessageObject::Process);

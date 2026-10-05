@@ -24,8 +24,9 @@
 CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
 								  const CefString &, CefRefPtr<CefRequest> request)
 {
-	if (!browser || !request)
+	if (!browser || !request) {
 		return nullptr;
+	}
 
 	CefURLParts parts;
 	CefParseURL(request->GetURL(), parts);
@@ -37,10 +38,12 @@ CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(CefRefPtr<CefB
 
 	std::string fileExtension = path.substr(path.find_last_of(".") + 1);
 
-	for (char &ch : fileExtension)
+	for (char &ch : fileExtension) {
 		ch = (char)tolower(ch);
-	if (fileExtension.compare("woff2") == 0)
+	}
+	if (fileExtension.compare("woff2") == 0) {
 		fileExtension = "woff";
+	}
 
 	std::string filePath = path.substr(1);
 

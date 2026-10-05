@@ -92,11 +92,12 @@ void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefSt
 		QMetaObject::invokeMethod(widget, "titleChanged", Q_ARG(QString, qt_title));
 	} else { /* handle popup title */
 		CefString newTitle = title;
-		if (title.compare("DevTools") == 0 && widget)
+		if (title.compare("DevTools") == 0 && widget) {
 			newTitle = QString(obs_module_text("DevTools"))
 					   .arg(widget->parentWidget()->windowTitle())
 					   .toUtf8()
 					   .constData();
+		}
 
 #if defined(_WIN32)
 		CefWindowHandle handl = browser->GetHost()->GetWindowHandle();
@@ -156,8 +157,9 @@ void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<Cef
 				    const CefString &failedUrl)
 {
 	UNUSED_PARAMETER(browser);
-	if (errorCode == ERR_ABORTED)
+	if (errorCode == ERR_ABORTED) {
 		return;
+	}
 
 	struct dstr html;
 	char *path = obs_module_file("error.html");
@@ -342,8 +344,9 @@ bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser, CefR
 					     CefRefPtr<CefContextMenuParams> params, int command_id,
 					     CefContextMenuHandler::EventFlags)
 {
-	if (command_id < MENU_ID_CUSTOM_FIRST)
+	if (command_id < MENU_ID_CUSTOM_FIRST) {
 		return false;
+	}
 	CefRefPtr<CefBrowserHost> host = browser->GetHost();
 	CefWindowInfo windowInfo;
 	QPoint pos;
@@ -392,8 +395,9 @@ bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser, CefR
 
 void QCefBrowserClient::OnLoadStart(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame, TransitionType)
 {
-	if (!frame->IsMain())
+	if (!frame->IsMain()) {
 		return;
+	}
 
 	std::string script = "window.close = () => ";
 	script += "console.log(";
@@ -404,13 +408,15 @@ void QCefBrowserClient::OnLoadStart(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> f
 
 void QCefBrowserClient::OnLoadEnd(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame, int)
 {
-	if (!frame->IsMain())
+	if (!frame->IsMain()) {
 		return;
+	}
 
-	if (widget && !widget->script.empty())
+	if (widget && !widget->script.empty()) {
 		frame->ExecuteJavaScript(widget->script, CefString(), 0);
-	else if (!script.empty())
+	} else if (!script.empty()) {
 		frame->ExecuteJavaScript(script, CefString(), 0);
+	}
 }
 
 bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
@@ -434,8 +440,9 @@ bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
 			std::stringstream title;
 			title << obs_module_text("Dialog.Prompt") << ": " << obs_module_text("Dialog.BrowserDock");
 			dlg->setWindowTitle(title.str().c_str());
-			if (!default_value.empty())
+			if (!default_value.empty()) {
 				dlg->setTextValue(default_value.c_str());
+			}
 
 			auto finished = [callback, dlg](int result) {
 				callback.get()->Continue(result == QDialog::Accepted,
@@ -489,8 +496,9 @@ bool QCefBrowserClient::OnJSDialog(CefRefPtr<CefBrowser>, const CefString &,
 
 bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent &event, CefEventHandle, bool *)
 {
-	if (event.type != KEYEVENT_RAWKEYDOWN)
+	if (event.type != KEYEVENT_RAWKEYDOWN) {
 		return false;
+	}
 
 	if (event.windows_key_code == 'R' &&
 #ifdef __APPLE__

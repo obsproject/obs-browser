@@ -95,8 +95,9 @@ void BrowserClient::OnRenderProcessTerminated(CefRefPtr<CefBrowser>, Termination
 #endif
 )
 {
-	if (!valid())
+	if (!valid()) {
 		return;
+	}
 
 #if CHROME_VERSION_BUILD >= 6367
 	std::string str_text = error_string;
@@ -106,8 +107,9 @@ void BrowserClient::OnRenderProcessTerminated(CefRefPtr<CefBrowser>, Termination
 
 	const char *sourceName = "<unknown>";
 
-	if (bs && bs->source)
+	if (bs && bs->source) {
 		sourceName = obs_source_get_name(bs->source);
+	}
 
 	blog(LOG_ERROR, "[obs-browser: '%s'] Webpage has crashed unexpectedly! Reason: '%s'", sourceName,
 	     str_text.c_str());
@@ -205,12 +207,13 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 
 			obs_frontend_source_list_free(&transitions);
 
-			if (transition)
+			if (transition) {
 				obs_frontend_set_current_transition(transition);
-			else
+			} else {
 				blog(LOG_WARNING,
 				     "Browser source '%s' tried to change the current transition to '%s' which doesn't exist",
 				     obs_source_get_name(bs->source), transition_name.c_str());
+			}
 		}
 		[[fallthrough]];
 	case ControlLevel::Basic:
@@ -232,12 +235,14 @@ bool BrowserClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefR
 		} else if (name == "getCurrentScene") {
 			OBSSourceAutoRelease current_scene = obs_frontend_get_current_scene();
 
-			if (!current_scene)
+			if (!current_scene) {
 				return false;
+			}
 
 			const char *name = obs_source_get_name(current_scene);
-			if (!name)
+			if (!name) {
 				return false;
+			}
 
 			json = {{"name", name},
 				{"width", obs_source_get_width(current_scene)},
@@ -386,14 +391,16 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 	}
 
 #if !defined(_WIN32) && !defined(__APPLE__)
-	if (info.plane_count == 0)
+	if (info.plane_count == 0) {
 		return;
+	}
 
 	struct obs_cef_video_format format = obs_cef_format_from_cef_type(info.format);
 	uint64_t modifier = info.modifier;
 
-	if (format.gs_format == GS_UNKNOWN)
+	if (format.gs_format == GS_UNKNOWN) {
 		return;
+	}
 
 	uint32_t *strides = (uint32_t *)alloca(info.plane_count * sizeof(uint32_t));
 	uint32_t *offsets = (uint32_t *)alloca(info.plane_count * sizeof(uint32_t));
@@ -402,8 +409,9 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 
 	/* NOTE: This a workaround under X11 where the modifier is always invalid where it can mean "no modifier" in
 	 * Chromium's code. */
-	if (obs_get_nix_platform() == OBS_NIX_PLATFORM_X11_EGL && modifier == DRM_FORMAT_MOD_INVALID)
+	if (obs_get_nix_platform() == OBS_NIX_PLATFORM_X11_EGL && modifier == DRM_FORMAT_MOD_INVALID) {
 		modifier = DRM_FORMAT_MOD_LINEAR;
+	}
 
 	for (size_t i = 0; i < kAcceleratedPaintMaxPlanes; i++) {
 		auto *plane = &info.planes[i];
@@ -417,8 +425,9 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 #endif
 
 #if !defined(_WIN32) && CHROME_VERSION_BUILD < 6367
-	if (shared_handle == bs->last_handle)
+	if (shared_handle == bs->last_handle) {
 		return;
+	}
 #endif
 
 	obs_enter_graphics();
@@ -553,8 +562,9 @@ void BrowserClient::OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, const flo
 	const uint8_t **pcm = (const uint8_t **)data;
 	speaker_layout speakers = GetSpeakerLayout(channel_layout);
 	int speaker_count = get_audio_channels(speakers);
-	for (int i = 0; i < speaker_count; i++)
+	for (int i = 0; i < speaker_count; i++) {
 		audio.data[i] = pcm[i];
+	}
 	audio.samples_per_sec = sample_rate;
 	audio.frames = frames;
 	audio.format = AUDIO_FORMAT_FLOAT_PLANAR;
@@ -642,8 +652,9 @@ void BrowserClient::OnLoadError(CefRefPtr<CefBrowser>, [[maybe_unused]] CefRefPt
 				const CefString &)
 {
 #if CHROME_VERSION_BUILD > 6533
-	if (errorCode == ERR_ABORTED)
+	if (errorCode == ERR_ABORTED) {
 		return;
+	}
 
 	// CEF doesn't currently provide a way to properly disable/override the default Chrome error page.
 	// https://github.com/obsproject/obs-studio/issues/13499
@@ -672,8 +683,9 @@ bool BrowserClient::OnConsoleMessage(CefRefPtr<CefBrowser>, cef_log_severity_t l
 
 	const char *sourceName = "<unknown>";
 
-	if (bs && bs->source)
+	if (bs && bs->source) {
 		sourceName = obs_source_get_name(bs->source);
+	}
 
 	blog(errorLevel, "[obs-browser: '%s'] %s: %s (%s:%d)", sourceName, code, message.ToString().c_str(),
 	     source.ToString().c_str(), line);
