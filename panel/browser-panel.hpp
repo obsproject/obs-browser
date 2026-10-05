@@ -78,13 +78,15 @@ static inline void *get_browser_lib()
 #ifdef ENABLE_WAYLAND
 	isWayland = obs_get_nix_platform() == OBS_NIX_PLATFORM_WAYLAND;
 #endif
-	if (isWayland)
+	if (isWayland) {
 		return nullptr;
+	}
 
 	obs_module_t *browserModule = obs_get_module("obs-browser");
 
-	if (!browserModule)
+	if (!browserModule) {
 		return nullptr;
+	}
 
 	return obs_get_module_lib(browserModule);
 }
@@ -94,13 +96,15 @@ static inline QCef *obs_browser_init_panel(void)
 	void *lib = get_browser_lib();
 	QCef *(*create_qcef)(void) = nullptr;
 
-	if (!lib)
+	if (!lib) {
 		return nullptr;
+	}
 
 	create_qcef = (decltype(create_qcef))os_dlsym(lib, "obs_browser_create_qcef");
 
-	if (!create_qcef)
+	if (!create_qcef) {
 		return nullptr;
+	}
 
 	return create_qcef();
 }
@@ -110,13 +114,15 @@ static inline int obs_browser_qcef_version(void)
 	void *lib = get_browser_lib();
 	int (*qcef_version)(void) = nullptr;
 
-	if (!lib)
+	if (!lib) {
 		return 0;
+	}
 
 	qcef_version = (decltype(qcef_version))os_dlsym(lib, "obs_browser_qcef_version_export");
 
-	if (!qcef_version)
+	if (!qcef_version) {
 		return 0;
+	}
 
 	return qcef_version();
 }

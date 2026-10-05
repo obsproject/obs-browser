@@ -28,13 +28,15 @@ bool obs_cef_all_drm_formats_supported(void)
 	enum gs_dmabuf_flags dmabuf_flags;
 	BPtr<uint32_t> drm_formats;
 
-	if (!gs_query_dmabuf_capabilities(&dmabuf_flags, &drm_formats, &n_formats))
+	if (!gs_query_dmabuf_capabilities(&dmabuf_flags, &drm_formats, &n_formats)) {
 		return false;
+	}
 
 	for (size_t i = 0; i < n_formats; i++) {
 		for (size_t j = 0; j < N_SUPPORTED_FORMATS; j++) {
-			if (drm_formats[i] != supported_formats[j].drm_format)
+			if (drm_formats[i] != supported_formats[j].drm_format) {
 				continue;
+			}
 
 			blog(LOG_DEBUG, "[obs-browser]: CEF color type %s supported", supported_formats[j].pretty_name);
 			n_supported++;
@@ -47,8 +49,9 @@ bool obs_cef_all_drm_formats_supported(void)
 struct obs_cef_video_format obs_cef_format_from_cef_type(cef_color_type_t cef_type)
 {
 	for (size_t i = 0; i < N_SUPPORTED_FORMATS; i++) {
-		if (supported_formats[i].cef_type == cef_type)
+		if (supported_formats[i].cef_type == cef_type) {
 			return supported_formats[i];
+		}
 	}
 
 	blog(LOG_ERROR, "[obs-browser]: Unsupported CEF color format (%d)", cef_type);

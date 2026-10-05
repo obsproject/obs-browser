@@ -173,8 +173,9 @@ static obs_properties_t *browser_source_get_properties(void *data)
 		dstr_copy(path, bs->url.c_str());
 		dstr_replace(path, "\\", "/");
 		slash = strrchr(path->array, '/');
-		if (slash)
+		if (slash) {
 			dstr_resize(path, slash - path->array + 1);
+		}
 	}
 
 	obs_property_set_modified_callback(prop, is_local_file_modified);
@@ -494,8 +495,9 @@ void RegisterBrowserSource()
 	};
 	info.activate = [](void *data) {
 		BrowserSource *bs = static_cast<BrowserSource *>(data);
-		if (bs->restart)
+		if (bs->restart) {
 			bs->Refresh();
+		}
 		bs->SetActive(true);
 	};
 	info.deactivate = [](void *data) {
@@ -566,12 +568,14 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_SCENE_CHANGED: {
 		OBSSourceAutoRelease source = obs_frontend_get_current_scene();
 
-		if (!source)
+		if (!source) {
 			break;
+		}
 
 		const char *name = obs_source_get_name(source);
-		if (!name)
+		if (!name) {
 			break;
+		}
 
 		nlohmann::json json = {{"name", name},
 				       {"width", obs_source_get_width(source)},
@@ -597,12 +601,14 @@ static void handle_obs_frontend_event(enum obs_frontend_event event, void *)
 	case OBS_FRONTEND_EVENT_TRANSITION_CHANGED: {
 		OBSSourceAutoRelease source = obs_frontend_get_current_transition();
 
-		if (!source)
+		if (!source) {
 			break;
+		}
 
 		const char *name = obs_source_get_name(source);
-		if (!name)
+		if (!name) {
 			break;
+		}
 
 		nlohmann::json json = {{"name", name}};
 
@@ -639,22 +645,26 @@ static inline void EnumAdapterCount()
 	UINT i = 0;
 
 	hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void **)&factory);
-	if (FAILED(hr))
+	if (FAILED(hr)) {
 		return;
+	}
 
 	while (factory->EnumAdapters1(i++, &adapter) == S_OK) {
 		DXGI_ADAPTER_DESC desc;
 
 		hr = adapter->GetDesc(&desc);
-		if (FAILED(hr))
+		if (FAILED(hr)) {
 			continue;
+		}
 
-		if (i == 1)
+		if (i == 1) {
 			deviceId = desc.Description;
+		}
 
 		/* ignore Microsoft's 'basic' renderer' */
-		if (desc.VendorId == 0x1414 && desc.DeviceId == 0x8c)
+		if (desc.VendorId == 0x1414 && desc.DeviceId == 0x8c) {
 			continue;
+		}
 
 		adapterCount++;
 	}
@@ -702,8 +712,9 @@ static void check_hwaccel_support(void)
 	glVersion = gs_get_driver_version();
 	obs_leave_graphics();
 
-	if (!glVersion)
+	if (!glVersion) {
 		return;
+	}
 
 	if (strstr(glVersion, "NVIDIA") != NULL) {
 		hwaccel = false;
@@ -853,8 +864,9 @@ bool obs_module_load(void)
 #if defined(__APPLE__) && !defined(ENABLE_BROWSER_LEGACY)
 	/* Load CEF at runtime as required on macOS */
 	CefScopedLibraryLoader library_loader;
-	if (!library_loader.LoadInMain())
+	if (!library_loader.LoadInMain()) {
 		return false;
+	}
 #endif
 #endif
 	blog(LOG_INFO, "[obs-browser]: Version %s", OBS_BROWSER_VERSION_STRING);
@@ -879,13 +891,15 @@ bool obs_module_load(void)
 void obs_module_post_load(void)
 {
 	auto vendor = obs_websocket_register_vendor("obs-browser");
-	if (!vendor)
+	if (!vendor) {
 		return;
+	}
 
 	auto emit_event_request_cb = [](obs_data_t *request_data, obs_data_t *, void *) {
 		const char *event_name = obs_data_get_string(request_data, "event_name");
-		if (!event_name)
+		if (!event_name) {
 			return;
+		}
 
 		OBSDataAutoRelease event_data = obs_data_get_obj(request_data, "event_data");
 		const char *event_data_string = event_data ? obs_data_get_json(event_data) : "{}";
@@ -893,8 +907,9 @@ void obs_module_post_load(void)
 		DispatchJSEvent(event_name, event_data_string, nullptr);
 	};
 
-	if (!obs_websocket_vendor_register_request(vendor, "emit_event", emit_event_request_cb, nullptr))
+	if (!obs_websocket_vendor_register_request(vendor, "emit_event", emit_event_request_cb, nullptr)) {
 		blog(LOG_WARNING, "[obs-browser]: Failed to register obs-websocket request emit_event");
+	}
 }
 
 void obs_module_unload(void)
@@ -903,8 +918,9 @@ void obs_module_unload(void)
 	BrowserShutdown();
 #else
 	if (manager_thread.joinable()) {
-		if (!QueueCEFTask([]() { CefQuitMessageLoop(); }))
+		if (!QueueCEFTask([]() { CefQuitMessageLoop(); })) {
 			blog(LOG_DEBUG, "[obs-browser]: Failed to post CefQuit task to loop");
+		}
 
 		manager_thread.join();
 	}
