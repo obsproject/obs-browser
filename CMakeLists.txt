@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...3.25)
+cmake_minimum_required(VERSION 3.28...3.30)
 
 option(ENABLE_BROWSER "Enable browser source plugin (required Chromium Embedded Framework)" OFF)
 
