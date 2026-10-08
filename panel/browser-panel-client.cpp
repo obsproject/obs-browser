@@ -88,7 +88,7 @@ bool QCefBrowserClient::OnChromeCommand(CefRefPtr<CefBrowser>, int, cef_window_o
 }
 
 /* CefPermissionHandler */
-bool QCefBrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser> browser, uint64_t, const CefString &,
+bool QCefBrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser>, uint64_t, const CefString &,
 					       uint32_t requested_permissions,
 					       CefRefPtr<CefPermissionPromptCallback> callback)
 {
