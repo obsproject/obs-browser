@@ -1,0 +1,387 @@
+diff --git a/frontend/dialogs/OBSBasicInteraction.cpp b/frontend/dialogs/OBSBasicInteraction.cpp
+index 2443fb84397a91dc9280365c075048603c33dc0a..60f8a9475f7078aa18ae5b5b624ebf04b3f383fa 100644
+--- a/frontend/dialogs/OBSBasicInteraction.cpp
++++ b/frontend/dialogs/OBSBasicInteraction.cpp
+@@ -25,6 +25,11 @@
+ #include <qt-wrappers.hpp>
+ 
+ #include <QInputEvent>
++#include <QInputMethod>
++#include <QTextCharFormat>
++#include <QTimer>
++#include <algorithm>
++#include <vector>
+ 
+ #ifdef _WIN32
+ #ifndef WIN32_LEAN_AND_MEAN
+@@ -58,6 +63,23 @@
+ 	ui->preview->setMouseTracking(true);
+ 	ui->preview->setFocusPolicy(Qt::StrongFocus);
+ 	ui->preview->installEventFilter(eventFilter.get());
++#ifdef _WIN32
++	// Only opt in sources implementing the new composition-aware interface.
++	imeEnabled = obs_source_supports_ime(source);
++	ui->preview->setAttribute(Qt::WA_InputMethodEnabled, imeEnabled);
++	if (imeEnabled) {
++		auto *imeTimer = new QTimer(this);
++		connect(imeTimer, &QTimer::timeout, this, [this]() {
++			if (composing && imeGeneration != obs_source_get_ime_generation(source)) {
++				CancelComposition();
++			}
++			if (composing && ui->preview->hasFocus()) {
++				QGuiApplication::inputMethod()->update(Qt::ImCursorRectangle);
++			}
++		});
++		imeTimer->start(50);
++	}
++#endif
+ 
+ 	if (cx > 400 && cy > 400) {
+ 		resize(cx, cy);
+@@ -75,6 +97,7 @@
+ 
+ OBSBasicInteraction::~OBSBasicInteraction()
+ {
++	CancelComposition();
+ 	// since QT fakes a mouse movement while destructing a widget
+ 	// remove our event filter
+ 	ui->preview->removeEventFilter(eventFilter.get());
+@@ -98,6 +121,10 @@
+ 		case QEvent::FocusIn:
+ 		case QEvent::FocusOut:
+ 			return this->HandleFocusEvent(static_cast<QFocusEvent *>(event));
++		case QEvent::InputMethod:
++			return HandleInputMethodEvent(static_cast<QInputMethodEvent *>(event));
++		case QEvent::InputMethodQuery:
++			return HandleInputMethodQuery(static_cast<QInputMethodQueryEvent *>(event));
+ 		case QEvent::KeyPress:
+ 		case QEvent::KeyRelease:
+ 			return this->HandleKeyEvent(static_cast<QKeyEvent *>(event));
+@@ -160,6 +187,7 @@
+ 		return;
+ 	}
+ 
++	CancelComposition();
+ 	config_set_int(App()->GetAppConfig(), "InteractionWindow", "cx", width());
+ 	config_set_int(App()->GetAppConfig(), "InteractionWindow", "cy", height());
+ 
+@@ -310,6 +338,16 @@
+ 	QPoint pos = event->pos();
+ 	bool insideSource = GetSourceRelativeXY(pos.x(), pos.y(), mouseEvent.x, mouseEvent.y);
+ 
++	if (!mouseUp && insideSource) {
++		if (imeEnabled && composing && event->button() == Qt::LeftButton) {
++			// Windows Qt reset commits synchronously to the current editor.
++			// Finish it before CEF can move focus; a later commit must not
++			// insert the old composition into the clicked input field.
++			QGuiApplication::inputMethod()->reset();
++			CancelComposition();
++		}
++		imeFallback = pos;
++	}
+ 	if (mouseUp || insideSource) {
+ 		obs_source_send_mouse_click(source, &mouseEvent, button, mouseUp, clickCount);
+ 	}
+@@ -373,6 +411,9 @@
+ {
+ 	bool focus = event->type() == QEvent::FocusIn;
+ 
++	if (!focus) {
++		CancelComposition();
++	}
+ 	obs_source_send_focus(source, focus);
+ 
+ 	return true;
+@@ -396,6 +437,142 @@
+ 	return true;
+ }
+ 
++void OBSBasicInteraction::CancelComposition()
++{
++	if (!imeEnabled) {
++		return;
++	}
++	const bool hadComposition = composing;
++	composing = false;
++	// Windows Qt reset may synchronously deliver a commit. Cancellation must
++	// discard that reentrant event rather than insert the preedit into the page.
++	resettingIme = true;
++	if (hadComposition && ui->preview->hasFocus()) {
++		QGuiApplication::inputMethod()->reset();
++	}
++	resettingIme = false;
++	obs_ime_event event = {};
++	event.type = OBS_IME_CANCEL;
++	event.generation = obs_source_get_ime_generation(source);
++	obs_source_send_ime_event(source, &event);
++}
++
++bool OBSBasicInteraction::HandleInputMethodEvent(QInputMethodEvent *event)
++{
++	if (!imeEnabled) {
++		return false;
++	}
++	if (resettingIme) {
++		event->accept();
++		return true;
++	}
++	const auto generation = obs_source_get_ime_generation(source);
++	if (composing && generation != imeGeneration) {
++		CancelComposition();
++		event->accept();
++		return true;
++	}
++	// CEF does not implement replacement_range for Windows OSR. Do not silently
++	// apply a reconversion/replacement request at the wrong insertion point.
++	if (event->replacementStart() || event->replacementLength()) {
++		event->ignore();
++		return false;
++	}
++
++	for (const auto &attribute : event->attributes()) {
++		if (attribute.type == QInputMethodEvent::Selection) {
++			event->ignore();
++			return false;
++		}
++	}
++	imeGeneration = generation;
++	const QByteArray commit = event->commitString().toUtf8();
++	const QByteArray preedit = event->preeditString().toUtf8();
++	if (!commit.isEmpty()) {
++		obs_ime_event input = {};
++		input.type = OBS_IME_COMMIT;
++		input.generation = generation;
++		input.text = commit.constData();
++		obs_source_send_ime_event(source, &input);
++	}
++
++	// A single Qt event can commit the old composition and start a new one.
++	if (!preedit.isEmpty()) {
++		const auto length = static_cast<uint32_t>(event->preeditString().size());
++		uint32_t cursor = length;
++		vector<obs_ime_underline> underlines;
++		for (const auto &attribute : event->attributes()) {
++			const auto start = static_cast<uint32_t>(std::clamp(attribute.start, 0, int(length)));
++			if (attribute.type == QInputMethodEvent::Cursor) {
++				cursor = start;
++			} else if (attribute.type == QInputMethodEvent::TextFormat) {
++				const auto format = qvariant_cast<QTextFormat>(attribute.value).toCharFormat();
++				const auto end = static_cast<uint32_t>(std::clamp(
++					int64_t(attribute.start) + attribute.length, int64_t(start), int64_t(length)));
++				const uint32_t background = format.background().style() == Qt::NoBrush
++								    ? 0u
++								    : format.background().color().rgba();
++				underlines.push_back({start, end, format.foreground().color().rgba(), background,
++						      format.fontWeight() > QFont::Normal});
++			}
++		}
++		obs_ime_event input = {};
++		input.type = OBS_IME_COMPOSITION;
++		input.generation = generation;
++		input.text = preedit.constData();
++		input.underlines = underlines.data();
++		input.underline_count = underlines.size();
++		input.selection_start = input.selection_end = cursor;
++		obs_source_send_ime_event(source, &input);
++		composing = true;
++	} else {
++		if (commit.isEmpty()) {
++			obs_ime_event input = {};
++			input.type = OBS_IME_CANCEL;
++			input.generation = generation;
++			obs_source_send_ime_event(source, &input);
++		}
++		composing = false;
++	}
++	event->accept();
++	return true;
++}
++
++QRectF OBSBasicInteraction::GetImeCursorRect()
++{
++	obs_ime_rect rect = {};
++	if (!obs_source_get_ime_rect(source, &rect)) {
++		return QRectF(imeFallback, QSizeF(1, 20));
++	}
++	const QSize size = GetPixelSize(ui->preview);
++	int x, y;
++	float scale;
++	GetScaleAndCenterPos(max(obs_source_get_width(source), 1u), max(obs_source_get_height(source), 1u),
++			     size.width(), size.height(), x, y, scale);
++	const qreal ratio = ui->preview->devicePixelRatioF();
++	return QRectF((x + scale * rect.x) / ratio, (y + scale * rect.y) / ratio,
++		      max(qreal(1), scale * rect.width / ratio), max(qreal(1), scale * rect.height / ratio));
++}
++
++bool OBSBasicInteraction::HandleInputMethodQuery(QInputMethodQueryEvent *event)
++{
++	if (!imeEnabled) {
++		return false;
++	}
++	// queries() is a bit set: Qt may ask for several values in one event.
++	if (event->queries().testFlag(Qt::ImEnabled)) {
++		event->setValue(Qt::ImEnabled, true);
++	}
++	if (event->queries().testFlag(Qt::ImCursorRectangle)) {
++		event->setValue(Qt::ImCursorRectangle, GetImeCursorRect());
++	}
++	if (event->queries().testFlag(Qt::ImHints)) {
++		event->setValue(Qt::ImHints, int(Qt::ImhNone));
++	}
++	event->accept();
++	return true;
++}
++
+ void OBSBasicInteraction::Init()
+ {
+ 	show();
+diff --git a/frontend/dialogs/OBSBasicInteraction.hpp b/frontend/dialogs/OBSBasicInteraction.hpp
+index 01e288b6b53b78c593509eb92f004f154cbc03ed..36da3c2018f5ef7ed28c9bb0e57450984e8d968e 100644
+--- a/frontend/dialogs/OBSBasicInteraction.hpp
++++ b/frontend/dialogs/OBSBasicInteraction.hpp
+@@ -22,6 +22,8 @@
+ #include <obs.hpp>
+ 
+ #include <QDialog>
++#include <QInputMethodEvent>
++#include <QInputMethodQueryEvent>
+ 
+ class OBSBasic;
+ class OBSEventFilter;
+@@ -49,6 +51,15 @@
+ 	bool HandleMouseWheelEvent(QWheelEvent *event);
+ 	bool HandleFocusEvent(QFocusEvent *event);
+ 	bool HandleKeyEvent(QKeyEvent *event);
++	bool HandleInputMethodEvent(QInputMethodEvent *event);
++	bool HandleInputMethodQuery(QInputMethodQueryEvent *event);
++	QRectF GetImeCursorRect();
++	void CancelComposition();
++	bool imeEnabled = false;
++	bool composing = false;
++	bool resettingIme = false;
++	uint64_t imeGeneration = 0;
++	QPointF imeFallback;
+ 
+ 	OBSEventFilter *BuildEventFilter();
+ 
+diff --git a/libobs/obs-interaction.h b/libobs/obs-interaction.h
+index d0438ed922e707c2277141d0f3b5b249cc8332ca..2e5f9fc09f8022db4eef857735fc14eef5b77e63 100644
+--- a/libobs/obs-interaction.h
++++ b/libobs/obs-interaction.h
+@@ -54,3 +54,35 @@
+ 	uint32_t native_scancode;
+ 	uint32_t native_vkey;
+ };
++
++/* IME ranges use UTF-16 code units, independently of the UTF-8 text encoding. */
++enum obs_ime_event_type {
++	OBS_IME_COMPOSITION = 1,
++	OBS_IME_COMMIT,
++	OBS_IME_CANCEL,
++};
++
++struct obs_ime_underline {
++	uint32_t start;
++	uint32_t end;
++	uint32_t color;            /* ARGB */
++	uint32_t background_color; /* ARGB */
++	bool thick;
++};
++
++struct obs_ime_event {
++	enum obs_ime_event_type type;
++	uint64_t generation; /* Snapshot from obs_source_get_ime_generation. */
++	const char *text;    /* UTF-8, borrowed for the duration of the callback. */
++	const struct obs_ime_underline *underlines;
++	size_t underline_count;
++	uint32_t selection_start;
++	uint32_t selection_end;
++};
++
++struct obs_ime_rect {
++	int32_t x;
++	int32_t y;
++	int32_t width;
++	int32_t height;
++};
+diff --git a/libobs/obs-source.c b/libobs/obs-source.c
+index 6785d68017c6408c8715ca22b232a168947b47df..143b9f521efb108b80302d7931ca37026c6a470f 100644
+--- a/libobs/obs-source.c
++++ b/libobs/obs-source.c
+@@ -1132,6 +1132,39 @@
+ 		return;
+ 
+ 	obs_source_dosignal(source, NULL, "update_properties");
++}
++
++bool obs_source_supports_ime(obs_source_t *source)
++{
++	return obs_source_valid(source, "obs_source_supports_ime") && source->context.data &&
++	       (source->info.output_flags & OBS_SOURCE_INTERACTION) && source->info.ime_event;
++}
++
++void obs_source_send_ime_event(obs_source_t *source, const struct obs_ime_event *event)
++{
++	if (!event || !obs_source_supports_ime(source))
++		return;
++	if (event->type < OBS_IME_COMPOSITION || event->type > OBS_IME_CANCEL)
++		return;
++	if (event->type != OBS_IME_CANCEL && !event->text)
++		return;
++	if (event->underline_count && !event->underlines)
++		return;
++	source->info.ime_event(source->context.data, event);
++}
++
++uint64_t obs_source_get_ime_generation(obs_source_t *source)
++{
++	if (!obs_source_supports_ime(source) || !source->info.ime_generation)
++		return 0;
++	return source->info.ime_generation(source->context.data);
++}
++
++bool obs_source_get_ime_rect(obs_source_t *source, struct obs_ime_rect *rect)
++{
++	if (!rect || !obs_source_supports_ime(source) || !source->info.ime_rect)
++		return false;
++	return source->info.ime_rect(source->context.data, rect);
+ }
+ 
+ void obs_source_send_mouse_click(obs_source_t *source, const struct obs_mouse_event *event, int32_t type, bool mouse_up,
+diff --git a/libobs/obs-source.h b/libobs/obs-source.h
+index fcfdc1bc2b32d3aa551467dc8469512f10e9c65c..a8ff8525e22c0c7f305398696a69352c337e42a3 100644
+--- a/libobs/obs-source.h
++++ b/libobs/obs-source.h
+@@ -555,6 +555,13 @@
+ 	/** Gets custom icons for dark and light themes */
+ 	const char *(*get_dark_icon)(void *type_data);
+ 	const char *(*get_light_icon)(void *type_data);
++
++	/* Appended to preserve offsets of all previously registered callbacks.
++	 * ime_event must copy borrowed event data before asynchronous dispatch.
++	 * ime_rect returns a thread-safe snapshot in source coordinates. */
++	void (*ime_event)(void *data, const struct obs_ime_event *event);
++	bool (*ime_rect)(void *data, struct obs_ime_rect *rect);
++	uint64_t (*ime_generation)(void *data);
+ };
+ 
+ EXPORT void obs_register_source_s(const struct obs_source_info *info, size_t size);
+diff --git a/libobs/obs.h b/libobs/obs.h
+index eea431f1ca1a4db98ce5be33d0572a567d54f7c8..56d7e2989ead6aa65cc82f90e2c53e29612202b6 100644
+--- a/libobs/obs.h
++++ b/libobs/obs.h
+@@ -1545,6 +1545,14 @@
+  */
+ EXPORT void obs_source_remove_active_child(obs_source_t *parent, obs_source_t *child);
+ 
++/** Whether the source supports composition-aware input method events. */
++EXPORT bool obs_source_supports_ime(obs_source_t *source);
++/** Sends an IME event. Pointers need only remain valid until this call returns. */
++EXPORT void obs_source_send_ime_event(obs_source_t *source, const struct obs_ime_event *event);
++EXPORT uint64_t obs_source_get_ime_generation(obs_source_t *source);
++/** Gets the current composition caret in source coordinates, if available. */
++EXPORT bool obs_source_get_ime_rect(obs_source_t *source, struct obs_ime_rect *rect);
++
+ /** Sends a mouse down/up event to a source */
+ EXPORT void obs_source_send_mouse_click(obs_source_t *source, const struct obs_mouse_event *event, int32_t type,
+ 					bool mouse_up, uint32_t click_count);
