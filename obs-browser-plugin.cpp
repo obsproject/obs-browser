@@ -481,6 +481,15 @@ void RegisterBrowserSource()
 	info.mouse_wheel = [](void *data, const struct obs_mouse_event *event, int x_delta, int y_delta) {
 		static_cast<BrowserSource *>(data)->SendMouseWheel(event, x_delta, y_delta);
 	};
+	info.ime_event = [](void *data, const struct obs_ime_event *event) {
+		static_cast<BrowserSource *>(data)->SendImeEvent(event);
+	};
+	info.ime_generation = [](void *data) {
+		return static_cast<BrowserSource *>(data)->imeState->generation.load();
+	};
+	info.ime_rect = [](void *data, struct obs_ime_rect *rect) {
+		return static_cast<BrowserSource *>(data)->GetImeRect(rect);
+	};
 	info.focus = [](void *data, bool focus) {
 		static_cast<BrowserSource *>(data)->SendFocus(focus);
 	};

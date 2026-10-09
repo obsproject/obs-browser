@@ -26,6 +26,7 @@
 #include <functional>
 #include <string>
 #include <mutex>
+#include <memory>
 
 enum class ControlLevel : int {
 	None,
@@ -120,6 +121,21 @@ struct BrowserSource {
 	void SendMouseClick(const struct obs_mouse_event *event, int32_t type, bool mouse_up, uint32_t click_count);
 	void SendMouseMove(const struct obs_mouse_event *event, bool mouse_leave);
 	void SendMouseWheel(const struct obs_mouse_event *event, int x_delta, int y_delta);
+	struct ImeState {
+		std::atomic<uint64_t> generation{1};
+		std::atomic<uint32_t> cursor{0};
+		std::atomic<bool> active{false};
+	};
+	std::shared_ptr<ImeState> imeState = std::make_shared<ImeState>();
+	void ResetImeSession();
+	void SendImeEvent(const struct obs_ime_event *event);
+	bool GetImeRect(struct obs_ime_rect *rect);
+	void SetImeRect(const struct obs_ime_rect *rect, uint64_t generation);
+	std::mutex imeMutex;
+	struct obs_ime_rect imeRect = {};
+	bool imeRectValid = false;
+	uint64_t imeRectGeneration = 0;
+
 	void SendFocus(bool focus);
 	void SendKeyClick(const struct obs_key_event *event, bool key_up);
 	void SetShowing(bool showing);

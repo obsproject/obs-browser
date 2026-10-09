@@ -128,6 +128,8 @@ public:
 					 CefRefPtr<CefMenuModel> model) override;
 
 	/* CefRenderHandler */
+	void OnImeCompositionRangeChanged(CefRefPtr<CefBrowser> browser, const CefRange &selected_range,
+					  const RectList &character_bounds) override;
 	virtual void GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect) override;
 	virtual void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList &dirtyRects,
 			     const void *buffer, int width, int height) override;

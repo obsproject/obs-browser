@@ -26,6 +26,7 @@
 #include <QApplication>
 #include <QThread>
 #include <QToolTip>
+#include <algorithm>
 #if defined(__APPLE__) && CHROME_VERSION_BUILD > 4430
 #include <IOSurface/IOSurface.h>
 #endif
@@ -327,6 +328,32 @@ bool BrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser>, uint64_t, cons
 	return false;
 }
 #endif
+
+void BrowserClient::OnImeCompositionRangeChanged(CefRefPtr<CefBrowser> browser, const CefRange &,
+						 const RectList &character_bounds)
+{
+	if (!valid()) {
+		return;
+	}
+	const auto generation = bs->imeState->generation.load();
+	const auto current = bs->GetBrowser();
+	if (!current || !browser->IsSame(current) || !bs->imeState->active.load()) {
+		return;
+	}
+	if (character_bounds.empty()) {
+		bs->SetImeRect(nullptr, generation);
+		return;
+	}
+
+	// CEF reports the composition range, not the caret. Qt supplies the caret
+	// relative to that composition; do not use CEF's absolute range end here.
+	const size_t end = bs->imeState->cursor.load();
+	const bool atEnd = end >= character_bounds.size();
+	const size_t index = atEnd ? character_bounds.size() - 1 : end;
+	const auto &bounds = character_bounds[index];
+	const obs_ime_rect rect = {bounds.x + (atEnd ? bounds.width : 0), bounds.y, 1, bounds.height};
+	bs->SetImeRect(&rect, generation);
+}
 
 void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type, const RectList &, const void *buffer,
 			    int width, int height)
@@ -642,6 +669,10 @@ void BrowserClient::OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFram
 {
 	if (!valid()) {
 		return;
+	}
+
+	if (frame->IsMain()) {
+		bs->ResetImeSession();
 	}
 
 	if (reroute_audio && frame->IsMain()) {

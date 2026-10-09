@@ -25,6 +25,7 @@
 #include <QApplication>
 #include <util/dstr.h>
 #include <functional>
+#include <algorithm>
 #include <thread>
 #include <mutex>
 
@@ -140,6 +141,7 @@ BrowserSource::~BrowserSource()
 void BrowserSource::Destroy()
 {
 	destroying = true;
+	ResetImeSession();
 	DestroyTextures();
 
 	lock_guard<mutex> lock(browser_list_mutex);
@@ -254,6 +256,7 @@ bool BrowserSource::CreateBrowser()
 
 void BrowserSource::DestroyBrowser()
 {
+	ResetImeSession();
 	ExecuteOnBrowser(ActuallyCloseBrowser, true);
 	SetBrowser(nullptr);
 }
@@ -311,8 +314,105 @@ void BrowserSource::SendMouseWheel(const struct obs_mouse_event *event, int x_de
 		true);
 }
 
+void BrowserSource::ResetImeSession()
+{
+	++imeState->generation;
+	imeState->active = false;
+	SetImeRect(nullptr, imeState->generation.load());
+}
+
+void BrowserSource::SetImeRect(const struct obs_ime_rect *rect, uint64_t generation)
+{
+	lock_guard<mutex> lock(imeMutex);
+	if (generation != imeState->generation.load()) {
+		return;
+	}
+	imeRectGeneration = generation;
+	imeRectValid = rect != nullptr;
+	if (rect) {
+		imeRect = *rect;
+	}
+}
+
+bool BrowserSource::GetImeRect(struct obs_ime_rect *rect)
+{
+	lock_guard<mutex> lock(imeMutex);
+	if (destroying || !imeRectValid || imeRectGeneration != imeState->generation.load()) {
+		return false;
+	}
+	*rect = imeRect;
+	return true;
+}
+
+void BrowserSource::SendImeEvent(const struct obs_ime_event *event)
+{
+	if (destroying || event->generation != imeState->generation.load()) {
+		return;
+	}
+
+	// Own every byte before crossing to the CEF thread. CefString uses UTF-16.
+	const CefString text(event->text ? event->text : "");
+	const auto length = static_cast<uint32_t>(text.length());
+	const CefRange selection(min(event->selection_start, length), min(event->selection_end, length));
+	vector<CefCompositionUnderline> underlines;
+	for (size_t i = 0; i < event->underline_count; ++i) {
+		const auto &input = event->underlines[i];
+		CefCompositionUnderline underline;
+		underline.range = CefRange(min(input.start, length), min(input.end, length));
+		if (underline.range.from >= underline.range.to) {
+			continue;
+		}
+		underline.color = input.color;
+		underline.background_color = input.background_color;
+		underline.thick = input.thick;
+		underlines.push_back(underline);
+	}
+	if (underlines.empty() && length) {
+		CefCompositionUnderline underline;
+		underline.range = CefRange(0, length);
+		underline.color = 0xff000000;
+		underlines.push_back(underline);
+	}
+	const auto type = event->type;
+	const auto generation = event->generation;
+	const auto state = imeState;
+	if (type != OBS_IME_COMPOSITION) {
+		SetImeRect(nullptr, imeState->generation.load());
+	}
+
+	// ExecuteOnBrowser takes a reference to the current browser before queuing;
+	// delayed input therefore cannot target a replacement browser instance.
+	ExecuteOnBrowser(
+		[type, text, selection, underlines, state, generation](CefRefPtr<CefBrowser> browser) {
+			if (generation != state->generation.load()) {
+				return;
+			}
+			state->active = type == OBS_IME_COMPOSITION;
+			state->cursor = selection.to;
+			const CefRange noReplacement(UINT32_MAX, UINT32_MAX);
+			switch (type) {
+			case OBS_IME_COMPOSITION:
+				browser->GetHost()->ImeSetComposition(text, underlines, noReplacement, selection);
+				break;
+			case OBS_IME_COMMIT:
+				browser->GetHost()->ImeCommitText(text, noReplacement, 0);
+				break;
+			case OBS_IME_CANCEL:
+				browser->GetHost()->ImeCancelComposition();
+				break;
+			}
+		},
+		true);
+}
+
 void BrowserSource::SendFocus(bool focus)
 {
+	if (!focus) {
+		obs_ime_event event = {};
+		event.type = OBS_IME_CANCEL;
+		event.generation = imeState->generation.load();
+		SendImeEvent(&event);
+	}
 	ExecuteOnBrowser([focus](CefRefPtr<CefBrowser> cefBrowser) { cefBrowser->GetHost()->SetFocus(focus); }, true);
 }
 
@@ -441,6 +541,9 @@ void BrowserSource::Refresh()
 void BrowserSource::SetBrowser(CefRefPtr<CefBrowser> b)
 {
 	std::lock_guard<std::recursive_mutex> auto_lock(lockBrowser);
+	if (cefBrowser != b) {
+		ResetImeSession();
+	}
 	cefBrowser = b;
 }
 
