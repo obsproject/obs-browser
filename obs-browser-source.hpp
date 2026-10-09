@@ -125,6 +125,7 @@ struct BrowserSource {
 	void SetShowing(bool showing);
 	void SetActive(bool active);
 	void Refresh();
+	void Inspect();
 
 #if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
 	inline void SignalBeginFrame();
