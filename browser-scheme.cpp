@@ -28,6 +28,16 @@ CefRefPtr<CefResourceHandler> BrowserSchemeHandlerFactory::Create(CefRefPtr<CefB
 		return nullptr;
 	}
 
+	CefString frameURL = browser->GetMainFrame()->GetURL();
+	if (!frameURL.empty()) {
+		CefURLParts frameParts;
+		CefParseURL(frameURL, frameParts);
+		std::string frameOrigin = CefString(&frameParts.origin);
+		if (frameOrigin != "http://absolute/") {
+			return nullptr;
+		}
+	}
+
 	CefURLParts parts;
 	CefParseURL(request->GetURL(), parts);
 
