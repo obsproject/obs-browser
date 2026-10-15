@@ -79,6 +79,20 @@ static std::wstring deviceId;
 
 bool hwaccel = false;
 
+namespace {
+// Naive conversions between char* (Ex. from libobs) and filesystem::path using the platform codepage.
+std::filesystem::path pathFromUtf8(const char *path)
+{
+	return std::filesystem::path{reinterpret_cast<const char8_t *>(path)};
+}
+
+std::string utf8BytesFromPath(std::filesystem::path path)
+{
+	const std::u8string u8 = path.u8string();
+	return std::string{u8.begin(), u8.end()};
+}
+} // namespace
+
 /* ========================================================================= */
 
 #ifdef ENABLE_BROWSER_QT_LOOP
@@ -732,15 +746,15 @@ static void check_hwaccel_support(void)
 #endif
 
 #if CHROME_VERSION_BUILD > 6533
-static void MigrateProfileConfigDir(std::string oldDir, std::string newDir, bool makeDirs)
+static void MigrateProfileConfigDir(filesystem::path oldDir, filesystem::path newDir, bool makeDirs)
 {
 	namespace fs = std::filesystem;
 
 	BPtr<char> configPath = obs_module_config_path(".");
-	fs::path rootPath{configPath.Get()};
+	fs::path rootPath{pathFromUtf8(configPath.Get())};
 
-	fs::path oldPath = rootPath / fs::path(oldDir);
-	fs::path newPath = rootPath / fs::path(newDir);
+	fs::path oldPath = rootPath / oldDir;
+	fs::path newPath = rootPath / newDir;
 
 	if (!fs::exists(oldPath)) {
 		return;
@@ -757,21 +771,20 @@ static void MigrateProfileConfigDir(std::string oldDir, std::string newDir, bool
 	}
 }
 
-static void MigrateDefaultProfileSubdirs(std::string parent, bool makeDirs)
+static void MigrateDefaultProfileSubdirs(filesystem::path parent, bool makeDirs)
 {
-	constexpr std::array<std::string_view, 3> kMigrationDirectories{
-		"Local Storage",
-		"Session Storage",
-		"Network",
-	};
-	constexpr std::string_view kDefaultDirectoryPrefix{"Default/"};
+	namespace fs = std::filesystem;
 
-	for (std::string_view directory : kMigrationDirectories) {
-		std::string oldDirectory{parent};
-		oldDirectory.append(directory);
-		std::string newDirectory{parent};
-		newDirectory.append(kDefaultDirectoryPrefix);
-		newDirectory.append(directory);
+	constexpr std::array<std::u8string_view, 3> kMigrationDirectories{
+		u8"Local Storage",
+		u8"Session Storage",
+		u8"Network",
+	};
+	constexpr std::u8string_view kDefaultDirectoryPrefix{u8"Default"};
+
+	for (std::u8string_view directory : kMigrationDirectories) {
+		fs::path oldDirectory = parent / directory;
+		fs::path newDirectory = parent / kDefaultDirectoryPrefix / directory;
 
 		MigrateProfileConfigDir(oldDirectory, newDirectory, makeDirs);
 	}
@@ -781,7 +794,7 @@ static void MigrateToChromeRuntime()
 {
 	namespace fs = std::filesystem;
 	BPtr<char> defaultConfigPath = obs_module_config_path("Default");
-	fs::path defaultPath{defaultConfigPath.Get()};
+	fs::path defaultPath{pathFromUtf8(defaultConfigPath.Get())};
 	// User has already previously launched with Chrome Runtime
 	if (fs::exists(defaultPath)) {
 		blog(LOG_INFO, "[obs-browser]: Chrome Runtime Default profile detected. No migration necessary.");
@@ -789,7 +802,7 @@ static void MigrateToChromeRuntime()
 	}
 
 	BPtr<char> localPrefsConfigPath = obs_module_config_path("LocalPrefs.json");
-	fs::path localPrefs{localPrefsConfigPath.Get()};
+	fs::path localPrefs{pathFromUtf8(localPrefsConfigPath.Get())};
 	// User has never launched old OBS Browser before
 	if (!fs::exists(localPrefs)) {
 		blog(LOG_DEBUG, "[obs-browser]: Alloy Runtime preferences not found. No migration necessary.");
@@ -807,7 +820,7 @@ static void MigrateToChromeRuntime()
 	MigrateDefaultProfileSubdirs("", false);
 
 	BPtr<char> newLocalPrefsConfigPath = obs_module_config_path("Local State");
-	fs::path newLocalPrefs{newLocalPrefsConfigPath.Get()};
+	fs::path newLocalPrefs{pathFromUtf8(newLocalPrefsConfigPath.Get())};
 	try {
 		fs::copy(localPrefs, newLocalPrefs);
 	} catch (const fs::filesystem_error &error) {
@@ -817,24 +830,24 @@ static void MigrateToChromeRuntime()
 	constexpr std::string_view prefix = "obs_profile_cookies";
 
 	BPtr<char> serviceProfilesPath = obs_module_config_path(prefix.data());
-	fs::path serviceProfiles{serviceProfilesPath.Get()};
+	fs::path serviceProfiles{pathFromUtf8(serviceProfilesPath.Get())};
 	if (fs::exists(serviceProfiles)) {
 		// User has service integration cookies that also must be copied
 		for (auto const &dir_entry : std::filesystem::directory_iterator{serviceProfiles}) {
 			if (!dir_entry.is_directory()) {
 				continue;
 			}
-			std::string name{dir_entry.path().filename().string()};
-			std::string oldDir{prefix};
-			oldDir.append("/");
-			oldDir.append(name);
+			fs::path name{dir_entry.path().filename()};
 
-			std::string newDir{prefix};
-			newDir.append("_");
-			newDir.append(name);
+			fs::path oldDir = fs::path{prefix} / name;
+
+			fs::path newDir{prefix};
+			newDir += "_";
+			newDir += name;
+
 			MigrateProfileConfigDir(oldDir, newDir, true);
 
-			blog(LOG_INFO, "[obs-browser]: Migrated cookies for %s.", name.c_str());
+			blog(LOG_INFO, "[obs-browser]: Migrated cookies for %s.", utf8BytesFromPath(name).c_str());
 		}
 	}
 
