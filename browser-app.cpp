@@ -141,6 +141,7 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 
 	if constexpr (kIsPlatformWindows) {
 		disableFeatures.append(kDefaultDisabledFeatures);
+		command_line->AppendSwitch("do-not-de-elevate");
 	} else {
 		constexpr std::string_view kWindowsFeature{",EnableWindowsGamingInputDataFetcher"};
 		constexpr size_t kNonWindowsLength = kDefaultDisabledFeatures.size() - kWindowsFeature.size();
