@@ -154,7 +154,7 @@ bool QCefBrowserClient::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<
 
 	if (widget) {
 		QString qt_url = QString::fromUtf8(str_url.c_str());
-		QMetaObject::invokeMethod(widget, "urlChanged", Q_ARG(QString, qt_url));
+		QMetaObject::invokeMethod(widget, "urlChanged", Qt::QueuedConnection, Q_ARG(QString, qt_url));
 	}
 	return false;
 }
