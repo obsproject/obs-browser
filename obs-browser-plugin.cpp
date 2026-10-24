@@ -304,7 +304,7 @@ static void BrowserInit(void)
 	CefSettings settings;
 	settings.log_severity = LOGSEVERITY_FATAL;
 	BPtr<char> log_path = obs_module_config_path("debug.log");
-	BPtr<char> log_path_abs = os_get_abs_path_ptr(log_path);
+	BPtr<char> log_path_abs = os_get_abs_path_ptr(log_path.Get());
 	CefString(&settings.log_file) = log_path_abs;
 	settings.windowless_rendering_enabled = true;
 	settings.no_sandbox = true;
