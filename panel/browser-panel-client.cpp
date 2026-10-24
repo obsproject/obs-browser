@@ -539,5 +539,41 @@ bool QCefBrowserClient::OnPreKeyEvent(CefRefPtr<CefBrowser> browser, const CefKe
 		// Reset zoom
 		return widget->zoomPage(0);
 	}
+#ifdef __APPLE__
+	/* On macOS, CEF expects the application's Edit menu to send the
+	 * standard editing selectors (paste:, copy:, ...). OBS's Edit menu has
+	 * its own actions instead, so handle the editing shortcuts here. */
+	const uint32_t mods = event.modifiers & (EVENTFLAG_COMMAND_DOWN | EVENTFLAG_CONTROL_DOWN | EVENTFLAG_ALT_DOWN |
+						 EVENTFLAG_SHIFT_DOWN);
+	if (mods == EVENTFLAG_COMMAND_DOWN ||
+	    (mods == (EVENTFLAG_COMMAND_DOWN | EVENTFLAG_SHIFT_DOWN) && event.windows_key_code == 'Z')) {
+		CefRefPtr<CefFrame> frame = browser->GetFocusedFrame();
+		if (!frame) {
+			frame = browser->GetMainFrame();
+		}
+
+		switch (event.windows_key_code) {
+		case 'X':
+			frame->Cut();
+			return true;
+		case 'C':
+			frame->Copy();
+			return true;
+		case 'V':
+			frame->Paste();
+			return true;
+		case 'A':
+			frame->SelectAll();
+			return true;
+		case 'Z':
+			if (mods & EVENTFLAG_SHIFT_DOWN) {
+				frame->Redo();
+			} else {
+				frame->Undo();
+			}
+			return true;
+		}
+	}
+#endif
 	return false;
 }
