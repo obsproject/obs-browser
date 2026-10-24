@@ -438,7 +438,7 @@ void QCefWidgetInternal::showEvent(QShowEvent *event)
 		obs_browser_initialize();
 		connect(&timer, &QTimer::timeout, this, &QCefWidgetInternal::Init);
 		timer.start(500);
-		Init();
+		QTimer::singleShot(0, [this]() { Init(); });
 	}
 }
 
