@@ -207,6 +207,15 @@ void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<Cef
 }
 
 /* CefLifeSpanHandler */
+#ifndef __APPLE__
+void QCefBrowserClient::OnAfterCreated(CefRefPtr<CefBrowser>)
+{
+	if (widget) {
+		widget->Resize();
+	}
+}
+#endif
+
 bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>,
 #if CHROME_VERSION_BUILD >= 6834
 				      int,

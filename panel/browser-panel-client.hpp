@@ -70,6 +70,9 @@ public:
 				      bool user_gesture) override;
 
 	/* CefLifeSpanHandler */
+#ifndef __APPLE__
+	virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
+#endif
 	virtual bool OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 #if CHROME_VERSION_BUILD >= 6834
 				   int popup_id,
