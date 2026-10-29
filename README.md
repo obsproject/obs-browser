@@ -315,6 +315,14 @@ Permissions required: ALL
 window.obsstudio.stopVirtualcam()
 ```
 
+#### Signal the browser source
+Permissions required: BASIC
+```js
+/**
+ * @param {string} signal - signal name
+ */
+window.obsstudio.signal(signal)
+```
 
 ### Register for visibility callbacks
 
