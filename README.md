@@ -198,6 +198,24 @@ window.obsstudio.getCurrentTransition(function (transition) {
 })
 ```
 
+#### Get source visibility
+Permissions required: READ_USER
+```js
+/**
+ * @callback VisibilityCallback
+ * @param {boolean} visibility - True -> visible, False -> hidden
+ */
+
+/**
+ * @param {string} scene - Name of the scene
+ * @param {string} source - Name of the source
+ * @param {VisibilityCallback} cb - The callback that receives the current visibility.
+ */
+window.obsstudio.getSourceVisible(scene, source, function (visibility) {
+    console.log(visibility)
+})
+```
+
 #### Save the Replay Buffer
 Permissions required: BASIC
 ```js
@@ -241,6 +259,17 @@ Permissions required: ADVANCED
  * @param {string} name - Name of the transition
  */
 window.obsstudio.setCurrentTransition(name)
+```
+
+#### Set source visibility
+Permissions required: ADVANCED
+```js
+/**
+ * @param {string} scene - Name of the scene
+ * @param {string} source - Name of the source
+ * @param {boolean} visibility - True -> visible, False -> hidden
+ */
+window.obsstudio.setSourceVisible(scene, source, visibility)
 ```
 
 #### Start streaming
