@@ -694,8 +694,16 @@ static inline bool is_intel(const std::wstring &str)
 	return wstrstri(str.c_str(), L"Intel") != 0;
 }
 
+static inline bool is_intel_arc(const std::wstring &str)
+{
+	return wstrstri(str.c_str(), L"Intel(R) Arc") != 0;
+}
+
 static inline bool is_blacklisted_device(const std::wstring &deviceId)
 {
+	if (is_intel_arc(deviceId)) {
+		return false;
+	}
 	for (const wchar_t **device = blacklisted_devices; *device; ++device) {
 		if (wstrstri(deviceId.c_str(), *device)) {
 			return true;
