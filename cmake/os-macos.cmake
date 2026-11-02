@@ -51,6 +51,7 @@ foreach(helper IN LISTS helper_suffixes)
     PROPERTIES
       OUTPUT_NAME "${target_output_name}"
       FOLDER plugins/obs-browser/Helpers
+      MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos/Helper.plist.in"
       XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER com.obsproject.obs-studio.helper${helper_plist}
       XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION ${OBS_BUILD_NUMBER}
       XCODE_ATTRIBUTE_MARKETING_VERSION ${OBS_VERSION_CANONICAL}
@@ -58,6 +59,7 @@ foreach(helper IN LISTS helper_suffixes)
       XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName "${target_output_name}"
       XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.video"
       XCODE_ATTRIBUTE_INFOPLIST_KEY_NSHumanReadableCopyright "(c) 2012-${CURRENT_YEAR} Lain Bailey"
+      XCODE_ATTRIBUTE_INFOPLIST_KEY_LSUIElement YES
       XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos/entitlements-helper${helper_plist}.plist"
   )
 endforeach()
