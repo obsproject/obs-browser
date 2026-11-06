@@ -87,7 +87,7 @@ public:
 	virtual bool OnTooltip(CefRefPtr<CefBrowser> browser, CefString &text) override;
 
 	/* CefPermissionHandler */
-#if CHROME_VERSION_BUILD >= 6533
+#if CHROME_VERSION_BUILD >= 7632
 	virtual bool OnShowPermissionPrompt(CefRefPtr<CefBrowser> browser, uint64_t prompt_id,
 					    const CefString &requesting_origin, uint32_t requested_permissions,
 					    CefRefPtr<CefPermissionPromptCallback> callback) override;

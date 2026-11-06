@@ -313,7 +313,7 @@ bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
 	return true;
 }
 
-#if CHROME_VERSION_BUILD >= 6533
+#if CHROME_VERSION_BUILD >= 7632
 /* CefPermissionHandler */
 bool BrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser>, uint64_t, const CefString &,
 					   uint32_t requested_permissions,
