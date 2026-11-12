@@ -74,7 +74,7 @@ void BrowserApp::OnContextInitialized()
 	CefString errorMessage;
 	CefRefPtr<CefValue> optionValue = CefValue::Create();
 
-	constexpr std::array<std::string_view, 20> kBrowserFeaturesToDisable{
+	constexpr std::array<std::string_view, 18> kBrowserFeaturesToDisable{
 		"autofill.credit_card_enabled",
 		"autofill.enabled",
 		"autofill.iban_enabled",
@@ -91,8 +91,6 @@ void BrowserApp::OnContextInitialized()
 		"shopping_list_enabled",
 		"side_panel.google_search_side_panel_enabled",
 		"side_search.enabled",
-		"signin.allowed",
-		"signin.allowed_on_next_startup",
 		"translate",
 		"url_keyed_anonymized_data_collection.enabled"};
 
@@ -163,6 +161,7 @@ void BrowserApp::OnBeforeCommandLineProcessing(const CefString &, CefRefPtr<CefC
 	}
 
 	command_line->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
+	command_line->AppendSwitchWithValue("allow-browser-signin", "false");
 	command_line->AppendSwitch("disable-extensions");
 	command_line->AppendSwitchWithValue("disable-features", disableFeatures);
 	command_line->AppendSwitch("hide-crash-restore-bubble");
