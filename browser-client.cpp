@@ -464,9 +464,9 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 
 #if defined(__APPLE__) && CHROME_VERSION_BUILD > 6367
 	bs->texture = gs_texture_create_from_iosurface((IOSurfaceRef)(uintptr_t)info.shared_texture_io_surface);
-#elif defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
+#elif defined(__APPLE__)
 	bs->texture = gs_texture_create_from_iosurface((IOSurfaceRef)(uintptr_t)shared_handle);
-#elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
+#elif defined(_WIN32)
 	bs->texture =
 #if CHROME_VERSION_BUILD >= 6367
 		gs_texture_open_nt_shared((uint32_t)(uintptr_t)info.shared_texture_handle);
@@ -476,8 +476,6 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 	//if (bs->texture)
 	//	gs_texture_acquire_sync(bs->texture, 1, INFINITE);
 
-#elif defined(_WIN32)
-	bs->texture = gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
 #else
 	bs->texture = gs_texture_create_from_dmabuf(info.extra.coded_size.width, info.extra.coded_size.height,
 						    format.drm_format, format.gs_format, info.plane_count, fds, strides,
