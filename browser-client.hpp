@@ -139,10 +139,6 @@ public:
 #else
 					void *shared_handle) override;
 #endif
-#ifdef CEF_ON_ACCELERATED_PAINT2
-	virtual void OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser, PaintElementType type,
-					 const RectList &dirtyRects, void *shared_handle, bool new_texture) override;
-#endif
 #endif
 
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, const float **data, int frames,

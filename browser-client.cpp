@@ -495,42 +495,6 @@ void BrowserClient::OnAcceleratedPaint(CefRefPtr<CefBrowser>, PaintElementType t
 #endif
 }
 
-#ifdef CEF_ON_ACCELERATED_PAINT2
-void BrowserClient::OnAcceleratedPaint2(CefRefPtr<CefBrowser>, PaintElementType type, const RectList &,
-					void *shared_handle, bool new_texture)
-{
-	if (type != PET_VIEW) {
-		// TODO Overlay texture on top of bs->texture
-		return;
-	}
-
-	if (!valid()) {
-		return;
-	}
-
-	if (!new_texture) {
-		return;
-	}
-
-	obs_enter_graphics();
-
-	if (bs->texture) {
-		gs_texture_destroy(bs->texture);
-		bs->texture = nullptr;
-	}
-
-#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4183
-	bs->texture = gs_texture_create_from_iosurface((IOSurfaceRef)(uintptr_t)shared_handle);
-#elif defined(_WIN32) && CHROME_VERSION_BUILD > 4183
-	bs->texture = gs_texture_open_nt_shared((uint32_t)(uintptr_t)shared_handle);
-
-#else
-	bs->texture = gs_texture_open_shared((uint32_t)(uintptr_t)shared_handle);
-#endif
-	UpdateExtraTexture();
-	obs_leave_graphics();
-}
-#endif
 #endif
 
 static speaker_layout GetSpeakerLayout(CefAudioHandler::ChannelLayout cefLayout)
