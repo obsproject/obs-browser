@@ -413,9 +413,7 @@ void QCefWidgetInternal::Resize()
 		changes.width = size.width();
 		changes.height = size.height();
 		XConfigureWindow(xDisplay, (Window)handle, CWX | CWY | CWHeight | CWWidth, &changes);
-#if CHROME_VERSION_BUILD >= 4638
 		XSync(xDisplay, false);
-#endif
 #endif
 	});
 
