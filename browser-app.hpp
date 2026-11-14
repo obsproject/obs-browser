@@ -101,11 +101,7 @@ public:
 			     CefRefPtr<CefV8Value> &retval, CefString &exception) override;
 
 #ifdef ENABLE_BROWSER_QT_LOOP
-#if CHROME_VERSION_BUILD < 5938
-	virtual void OnScheduleMessagePumpWork(int64 delay_ms) override;
-#else
 	virtual void OnScheduleMessagePumpWork(int64_t delay_ms) override;
-#endif
 	QTimer frameTimer;
 #endif
 
