@@ -38,7 +38,6 @@ CefRefPtr<CefDisplayHandler> QCefBrowserClient::GetDisplayHandler()
 	return this;
 }
 
-#if CHROME_VERSION_BUILD >= 6533
 CefRefPtr<CefCommandHandler> QCefBrowserClient::GetCommandHandler()
 {
 	return this;
@@ -48,7 +47,6 @@ CefRefPtr<CefPermissionHandler> QCefBrowserClient::GetPermissionHandler()
 {
 	return this;
 }
-#endif
 
 CefRefPtr<CefRequestHandler> QCefBrowserClient::GetRequestHandler()
 {
@@ -81,7 +79,6 @@ CefRefPtr<CefJSDialogHandler> QCefBrowserClient::GetJSDialogHandler()
 }
 
 /* CefCommandHandler */
-#if CHROME_VERSION_BUILD >= 6533
 bool QCefBrowserClient::OnChromeCommand(CefRefPtr<CefBrowser>, int, cef_window_open_disposition_t)
 {
 	return true;
@@ -99,7 +96,6 @@ bool QCefBrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser>, uint64_t, 
 	}
 	return false;
 }
-#endif
 
 /* CefDisplayHandler */
 void QCefBrowserClient::OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString &title)
@@ -379,9 +375,6 @@ bool QCefBrowserClient::OnContextMenuCommand(CefRefPtr<CefBrowser> browser, CefR
 	QPoint pos;
 	switch (command_id) {
 	case MENU_ITEM_DEVTOOLS:
-#if defined(_WIN32) && CHROME_VERSION_BUILD < 6533
-		windowInfo.SetAsPopup(host->GetWindowHandle(), "");
-#endif
 		pos = widget->mapToGlobal(QPoint(0, 0));
 		windowInfo.bounds.x = pos.x();
 		windowInfo.bounds.y = pos.y() + 30;

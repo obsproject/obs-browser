@@ -56,12 +56,10 @@ CefRefPtr<CefDisplayHandler> BrowserClient::GetDisplayHandler()
 	return this;
 }
 
-#if CHROME_VERSION_BUILD >= 6533
 CefRefPtr<CefPermissionHandler> BrowserClient::GetPermissionHandler()
 {
 	return this;
 }
-#endif
 
 CefRefPtr<CefLifeSpanHandler> BrowserClient::GetLifeSpanHandler()
 {
@@ -305,7 +303,6 @@ bool BrowserClient::OnTooltip(CefRefPtr<CefBrowser>, CefString &text)
 	return true;
 }
 
-#if CHROME_VERSION_BUILD >= 6533
 /* CefPermissionHandler */
 bool BrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser>, uint64_t, const CefString &,
 					   uint32_t requested_permissions,
@@ -318,7 +315,6 @@ bool BrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser>, uint64_t, cons
 	}
 	return false;
 }
-#endif
 
 void BrowserClient::OnPaint(CefRefPtr<CefBrowser>, PaintElementType type, const RectList &, const void *buffer,
 			    int width, int height)
