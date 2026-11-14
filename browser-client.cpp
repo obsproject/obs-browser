@@ -26,7 +26,7 @@
 #include <QApplication>
 #include <QThread>
 #include <QToolTip>
-#if defined(__APPLE__) && CHROME_VERSION_BUILD > 4430
+#if defined(__APPLE__)
 #include <IOSurface/IOSurface.h>
 #endif
 
