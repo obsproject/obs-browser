@@ -866,11 +866,6 @@ bool obs_module_load(void)
 
 	os_event_init(&cef_started_event, OS_EVENT_TYPE_MANUAL);
 
-#if defined(_WIN32) && CHROME_VERSION_BUILD < 5615
-	/* CefEnableHighDPISupport doesn't do anything on OS other than Windows. Would also crash macOS at this point as CEF is not directly linked */
-	CefEnableHighDPISupport();
-#endif
-
 #ifdef _WIN32
 	EnumAdapterCount();
 #else

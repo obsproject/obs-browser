@@ -33,24 +33,6 @@ extern "C" __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 static HANDLE shutdown_event = nullptr;
 static bool thread_initialized = false;
 
-DECLARE_HANDLE(OBS_DPI_AWARENESS_CONTEXT);
-#define OBS_DPI_AWARENESS_CONTEXT_UNAWARE ((OBS_DPI_AWARENESS_CONTEXT)-1)
-#define OBS_DPI_AWARENESS_CONTEXT_SYSTEM_AWARE ((OBS_DPI_AWARENESS_CONTEXT)-2)
-#define OBS_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ((OBS_DPI_AWARENESS_CONTEXT)-3)
-#define OBS_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((OBS_DPI_AWARENESS_CONTEXT)-4)
-
-static bool SetHighDPIv2Scaling()
-{
-	static BOOL(WINAPI * func)(OBS_DPI_AWARENESS_CONTEXT) = nullptr;
-	func = reinterpret_cast<decltype(func)>(
-		GetProcAddress(GetModuleHandleW(L"USER32"), "SetProcessDpiAwarenessContext"));
-	if (!func) {
-		return false;
-	}
-
-	return !!func(OBS_DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-}
-
 static void shutdown_check_thread(DWORD parent_pid, DWORD main_thread_id)
 {
 	HANDLE parent = OpenProcess(SYNCHRONIZE, false, parent_pid);
@@ -84,11 +66,6 @@ int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	std::thread shutdown_check;
 
 	CefMainArgs mainArgs(nullptr);
-#if CHROME_VERSION_BUILD < 5615
-	if (!SetHighDPIv2Scaling()) {
-		CefEnableHighDPISupport();
-	}
-#endif
 
 	CefRefPtr<CefCommandLine> command_line = CefCommandLine::CreateCommandLine();
 	command_line->InitFromString(::GetCommandLineW());
