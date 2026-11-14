@@ -109,12 +109,8 @@ public:
 	GetResourceRequestHandler(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 				  CefRefPtr<CefRequest> request, bool is_navigation, bool is_download,
 				  const CefString &request_initiator, bool &disable_default_handling) override;
-	virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status
-#if CHROME_VERSION_BUILD >= 6367
-					       ,
-					       int error_code, const CefString &error_string
-#endif
-					       ) override;
+	virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status, int error_code,
+					       const CefString &error_string) override;
 
 	/* CefResourceRequestHandler */
 	virtual CefResourceRequestHandler::ReturnValue OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
@@ -133,12 +129,7 @@ public:
 			     const void *buffer, int width, int height) override;
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
-					const RectList &dirtyRects,
-#if CHROME_VERSION_BUILD >= 6367
-					const CefAcceleratedPaintInfo &info) override;
-#else
-					void *shared_handle) override;
-#endif
+					const RectList &dirtyRects, const CefAcceleratedPaintInfo &info) override;
 #endif
 
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, const float **data, int frames,

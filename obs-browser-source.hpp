@@ -58,14 +58,6 @@ struct BrowserSource {
 	uint32_t last_cy = 0;
 	gs_color_format last_format = GS_UNKNOWN;
 
-#ifdef ENABLE_BROWSER_SHARED_TEXTURE
-#ifdef _WIN32
-	void *last_handle = INVALID_HANDLE_VALUE;
-#elif defined(__APPLE__)
-	void *last_handle = nullptr;
-#endif
-#endif
-
 	int width = 0;
 	int height = 0;
 	bool fps_custom = false;

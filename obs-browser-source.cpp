@@ -597,11 +597,6 @@ extern void ProcessCef();
 
 void BrowserSource::Render()
 {
-	bool flip = false;
-#if defined(ENABLE_BROWSER_SHARED_TEXTURE) && CHROME_VERSION_BUILD < 6367
-	flip = hwaccel;
-#endif
-
 	if (texture) {
 #ifdef __APPLE__
 		int type = gs_get_device_type();
@@ -642,9 +637,8 @@ void BrowserSource::Render()
 			tech = "DrawSrgbDecompress";
 		}
 
-		const uint32_t flip_flag = flip ? GS_FLIP_V : 0;
 		while (gs_effect_loop(effect, tech)) {
-			gs_draw_sprite(draw_texture, flip_flag, 0, 0);
+			gs_draw_sprite(draw_texture, 0, 0, 0);
 		}
 
 		gs_blend_state_pop();
