@@ -694,26 +694,33 @@ static inline bool is_intel(const std::wstring &str)
 	return wstrstri(str.c_str(), L"Intel") != 0;
 }
 
+static inline bool is_intel_arc(const std::wstring &str)
+{
+	return wstrstri(str.c_str(), L"Intel(R) Arc") != 0;
+}
+
+static inline bool is_blacklisted_device(const std::wstring &deviceId)
+{
+	if (is_intel_arc(deviceId)) {
+		return false;
+	}
+	for (const wchar_t **device = blacklisted_devices; *device; ++device) {
+		if (wstrstri(deviceId.c_str(), *device)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static void check_hwaccel_support(void)
 {
 	/* do not use hardware acceleration if a blacklisted device is the
 	 * default and on 2 or more adapters */
-	const wchar_t **device = blacklisted_devices;
-
-	if (adapterCount >= 2 || !is_intel(deviceId)) {
-		while (*device) {
-			if (!!wstrstri(deviceId.c_str(), *device)) {
-				hwaccel = false;
-				blog(LOG_INFO, "[obs-browser]: "
-					       "Blacklisted device "
-					       "detected, "
-					       "disabling browser "
-					       "source hardware "
-					       "acceleration.");
-				break;
-			}
-			device++;
-		}
+	const bool shouldCheckBlacklist = adapterCount >= 2 || !is_intel(deviceId);
+	if (shouldCheckBlacklist && is_blacklisted_device(deviceId)) {
+		hwaccel = false;
+		blog(LOG_INFO,
+		     "[obs-browser]: Blacklisted device detected, disabling browser source hardware acceleration.");
 	}
 }
 #elif __linux__
