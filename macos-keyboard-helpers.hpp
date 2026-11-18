@@ -1,11 +1,14 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <utility>
 
 namespace macos_keyboard {
 
 enum VirtualKey : uint32_t {
 	kVK_F17 = 0x40,
+	kVK_ANSI_KeypadClear = 0x47,
 	kVK_F18 = 0x4F,
 	kVK_F19 = 0x50,
 	kVK_F20 = 0x5A,
@@ -43,82 +46,78 @@ enum FunctionKeyCharacter : char16_t {
 	NSLeftArrowFunctionKey = 0xF702,
 	NSRightArrowFunctionKey = 0xF703,
 	NSF1FunctionKey = 0xF704,
+	NSF2FunctionKey = 0xF705,
+	NSF3FunctionKey = 0xF706,
+	NSF4FunctionKey = 0xF707,
+	NSF5FunctionKey = 0xF708,
+	NSF6FunctionKey = 0xF709,
+	NSF7FunctionKey = 0xF70A,
+	NSF8FunctionKey = 0xF70B,
+	NSF9FunctionKey = 0xF70C,
+	NSF10FunctionKey = 0xF70D,
+	NSF11FunctionKey = 0xF70E,
+	NSF12FunctionKey = 0xF70F,
+	NSF13FunctionKey = 0xF710,
+	NSF14FunctionKey = 0xF711,
+	NSF15FunctionKey = 0xF712,
+	NSF16FunctionKey = 0xF713,
+	NSF17FunctionKey = 0xF714,
+	NSF18FunctionKey = 0xF715,
+	NSF19FunctionKey = 0xF716,
+	NSF20FunctionKey = 0xF717,
 	NSDeleteFunctionKey = 0xF728,
 	NSHomeFunctionKey = 0xF729,
 	NSEndFunctionKey = 0xF72B,
 	NSPageUpFunctionKey = 0xF72C,
 	NSPageDownFunctionKey = 0xF72D,
+	NSClearLineFunctionKey = 0xF739,
 	NSHelpFunctionKey = 0xF746,
 };
 
+constexpr std::array<std::pair<uint32_t, char16_t>, 31> function_keys{{
+	{kVK_UpArrow, NSUpArrowFunctionKey},
+	{kVK_DownArrow, NSDownArrowFunctionKey},
+	{kVK_LeftArrow, NSLeftArrowFunctionKey},
+	{kVK_RightArrow, NSRightArrowFunctionKey},
+	{kVK_F1, NSF1FunctionKey},
+	{kVK_F2, NSF2FunctionKey},
+	{kVK_F3, NSF3FunctionKey},
+	{kVK_F4, NSF4FunctionKey},
+	{kVK_F5, NSF5FunctionKey},
+	{kVK_F6, NSF6FunctionKey},
+	{kVK_F7, NSF7FunctionKey},
+	{kVK_F8, NSF8FunctionKey},
+	{kVK_F9, NSF9FunctionKey},
+	{kVK_F10, NSF10FunctionKey},
+	{kVK_F11, NSF11FunctionKey},
+	{kVK_F12, NSF12FunctionKey},
+	{kVK_F13, NSF13FunctionKey},
+	{kVK_F14, NSF14FunctionKey},
+	{kVK_F15, NSF15FunctionKey},
+	{kVK_F16, NSF16FunctionKey},
+	{kVK_F17, NSF17FunctionKey},
+	{kVK_F18, NSF18FunctionKey},
+	{kVK_F19, NSF19FunctionKey},
+	{kVK_F20, NSF20FunctionKey},
+	{kVK_ForwardDelete, NSDeleteFunctionKey},
+	{kVK_Home, NSHomeFunctionKey},
+	{kVK_End, NSEndFunctionKey},
+	{kVK_PageUp, NSPageUpFunctionKey},
+	{kVK_PageDown, NSPageDownFunctionKey},
+	{kVK_ANSI_KeypadClear, NSClearLineFunctionKey},
+	{kVK_Help, NSHelpFunctionKey},
+}};
+
 /* Qt reports no text for these keys, and CEF treats a key event without a
  * character as a modifier change, which turns key releases into presses. */
-inline char16_t FunctionKeyCharacterFromVirtualKey(uint32_t native_vkey)
+constexpr char16_t FunctionKeyCharacterFromVirtualKey(uint32_t native_vkey)
 {
-	switch (native_vkey) {
-	case kVK_UpArrow:
-		return NSUpArrowFunctionKey;
-	case kVK_DownArrow:
-		return NSDownArrowFunctionKey;
-	case kVK_LeftArrow:
-		return NSLeftArrowFunctionKey;
-	case kVK_RightArrow:
-		return NSRightArrowFunctionKey;
-	case kVK_ForwardDelete:
-		return NSDeleteFunctionKey;
-	case kVK_Home:
-		return NSHomeFunctionKey;
-	case kVK_End:
-		return NSEndFunctionKey;
-	case kVK_PageUp:
-		return NSPageUpFunctionKey;
-	case kVK_PageDown:
-		return NSPageDownFunctionKey;
-	case kVK_Help:
-		return NSHelpFunctionKey;
-	case kVK_F1:
-		return NSF1FunctionKey;
-	case kVK_F2:
-		return NSF1FunctionKey + 1;
-	case kVK_F3:
-		return NSF1FunctionKey + 2;
-	case kVK_F4:
-		return NSF1FunctionKey + 3;
-	case kVK_F5:
-		return NSF1FunctionKey + 4;
-	case kVK_F6:
-		return NSF1FunctionKey + 5;
-	case kVK_F7:
-		return NSF1FunctionKey + 6;
-	case kVK_F8:
-		return NSF1FunctionKey + 7;
-	case kVK_F9:
-		return NSF1FunctionKey + 8;
-	case kVK_F10:
-		return NSF1FunctionKey + 9;
-	case kVK_F11:
-		return NSF1FunctionKey + 10;
-	case kVK_F12:
-		return NSF1FunctionKey + 11;
-	case kVK_F13:
-		return NSF1FunctionKey + 12;
-	case kVK_F14:
-		return NSF1FunctionKey + 13;
-	case kVK_F15:
-		return NSF1FunctionKey + 14;
-	case kVK_F16:
-		return NSF1FunctionKey + 15;
-	case kVK_F17:
-		return NSF1FunctionKey + 16;
-	case kVK_F18:
-		return NSF1FunctionKey + 17;
-	case kVK_F19:
-		return NSF1FunctionKey + 18;
-	case kVK_F20:
-		return NSF1FunctionKey + 19;
-	default:
-		return 0;
+	for (const auto &[vkey, character] : function_keys) {
+		if (vkey == native_vkey) {
+			return character;
+		}
 	}
+	return 0;
 }
 
 } // namespace macos_keyboard
