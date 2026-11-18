@@ -45,8 +45,10 @@ public:
 #if CHROME_VERSION_BUILD >= 6533
 	virtual bool OnChromeCommand(CefRefPtr<CefBrowser> browser, int command_id,
 				     cef_window_open_disposition_t disposition) override;
+#endif
 
 	/* CefPermissionHandler */
+#if CHROME_VERSION_BUILD >= 7632
 	virtual bool OnShowPermissionPrompt(CefRefPtr<CefBrowser> browser, uint64_t prompt_id,
 					    const CefString &requesting_origin, uint32_t requested_permissions,
 					    CefRefPtr<CefPermissionPromptCallback> callback) override;

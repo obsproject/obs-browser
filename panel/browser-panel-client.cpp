@@ -86,8 +86,10 @@ bool QCefBrowserClient::OnChromeCommand(CefRefPtr<CefBrowser>, int, cef_window_o
 {
 	return true;
 }
+#endif
 
 /* CefPermissionHandler */
+#if CHROME_VERSION_BUILD >= 7632
 bool QCefBrowserClient::OnShowPermissionPrompt(CefRefPtr<CefBrowser>, uint64_t, const CefString &,
 					       uint32_t requested_permissions,
 					       CefRefPtr<CefPermissionPromptCallback> callback)
