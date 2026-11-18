@@ -30,6 +30,8 @@
 
 #ifdef __linux__
 #include "linux-keyboard-helpers.hpp"
+#elif defined(__APPLE__)
+#include "macos-keyboard-helpers.hpp"
 #endif
 
 #ifdef ENABLE_BROWSER_QT_LOOP
@@ -350,6 +352,12 @@ void BrowserSource::SendKeyClick(const struct obs_key_event *event, bool key_up)
 				if (wide.size())
 					e.character = wide[0];
 			}
+#ifdef __APPLE__
+			if (!e.character) {
+				e.character = macos_keyboard::FunctionKeyCharacterFromVirtualKey(native_vkey);
+				e.unmodified_character = e.character;
+			}
+#endif
 
 			//e.native_key_code = native_vkey;
 			e.modifiers = modifiers;
