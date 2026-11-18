@@ -9,7 +9,7 @@ if(NOT ENABLE_BROWSER)
   return()
 endif()
 
-find_package(CEF 95 REQUIRED)
+find_package(CEF 127 REQUIRED)
 find_package(nlohmann_json 3.11 REQUIRED)
 
 add_library(obs-browser MODULE)

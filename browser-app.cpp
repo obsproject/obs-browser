@@ -203,12 +203,7 @@ void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser, const char *fu
 	std::vector<CefString> names;
 	browser->GetFrameNames(names);
 	for (auto &name : names) {
-		CefRefPtr<CefFrame> frame =
-#if CHROME_VERSION_BUILD >= 6261
-			browser->GetFrameByName(name);
-#else
-			browser->GetFrame(name);
-#endif
+		CefRefPtr<CefFrame> frame = browser->GetFrameByName(name);
 		CefRefPtr<CefV8Context> context = frame->GetV8Context();
 
 		context->Enter();
@@ -316,12 +311,7 @@ bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefP
 		std::vector<CefString> names;
 		browser->GetFrameNames(names);
 		for (auto &name : names) {
-			CefRefPtr<CefFrame> frame =
-#if CHROME_VERSION_BUILD >= 6261
-				browser->GetFrameByName(name);
-#else
-				browser->GetFrame(name);
-#endif
+			CefRefPtr<CefFrame> frame = browser->GetFrameByName(name);
 			CefRefPtr<CefV8Context> context = frame->GetV8Context();
 
 			context->Enter();
@@ -483,11 +473,7 @@ void ProcessCef()
 
 #define MAX_DELAY (1000 / 30)
 
-#if CHROME_VERSION_BUILD < 5938
-void BrowserApp::OnScheduleMessagePumpWork(int64 delay_ms)
-#else
 void BrowserApp::OnScheduleMessagePumpWork(int64_t delay_ms)
-#endif
 {
 	if (delay_ms < 0) {
 		delay_ms = 0;

@@ -45,7 +45,7 @@
 #endif
 
 #if !defined(_WIN32) && !defined(__APPLE__) && \
-	(CHROME_VERSION_BUILD >= 6943 || (CHROME_VERSION_BUILD > 6337 && defined(CEF_OSR_EXTRA_INFO)))
+	(CHROME_VERSION_BUILD >= 6943 || (CHROME_VERSION_BUILD >= 6533 && defined(CEF_OSR_EXTRA_INFO)))
 #define ENABLE_BROWSER_SHARED_TEXTURE
 #endif
 

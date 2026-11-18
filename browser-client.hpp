@@ -27,9 +27,7 @@ struct BrowserSource;
 
 class BrowserClient : public CefClient,
 		      public CefDisplayHandler,
-#if CHROME_VERSION_BUILD >= 6533
 		      public CefPermissionHandler,
-#endif
 		      public CefLifeSpanHandler,
 		      public CefRequestHandler,
 		      public CefResourceRequestHandler,
@@ -69,9 +67,7 @@ public:
 	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override;
 	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override;
 	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
-#if CHROME_VERSION_BUILD >= 6533
 	virtual CefRefPtr<CefPermissionHandler> GetPermissionHandler() override;
-#endif
 	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
 	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
 	virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override;
@@ -87,11 +83,9 @@ public:
 	virtual bool OnTooltip(CefRefPtr<CefBrowser> browser, CefString &text) override;
 
 	/* CefPermissionHandler */
-#if CHROME_VERSION_BUILD >= 6533
 	virtual bool OnShowPermissionPrompt(CefRefPtr<CefBrowser> browser, uint64_t prompt_id,
 					    const CefString &requesting_origin, uint32_t requested_permissions,
 					    CefRefPtr<CefPermissionPromptCallback> callback) override;
-#endif
 
 	/* CefLifeSpanHandler */
 	virtual bool OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
@@ -109,12 +103,8 @@ public:
 	GetResourceRequestHandler(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
 				  CefRefPtr<CefRequest> request, bool is_navigation, bool is_download,
 				  const CefString &request_initiator, bool &disable_default_handling) override;
-	virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status
-#if CHROME_VERSION_BUILD >= 6367
-					       ,
-					       int error_code, const CefString &error_string
-#endif
-					       ) override;
+	virtual void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status, int error_code,
+					       const CefString &error_string) override;
 
 	/* CefResourceRequestHandler */
 	virtual CefResourceRequestHandler::ReturnValue OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
@@ -133,16 +123,7 @@ public:
 			     const void *buffer, int width, int height) override;
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
 	virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
-					const RectList &dirtyRects,
-#if CHROME_VERSION_BUILD >= 6367
-					const CefAcceleratedPaintInfo &info) override;
-#else
-					void *shared_handle) override;
-#endif
-#ifdef CEF_ON_ACCELERATED_PAINT2
-	virtual void OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser, PaintElementType type,
-					 const RectList &dirtyRects, void *shared_handle, bool new_texture) override;
-#endif
+					const RectList &dirtyRects, const CefAcceleratedPaintInfo &info) override;
 #endif
 
 	virtual void OnAudioStreamPacket(CefRefPtr<CefBrowser> browser, const float **data, int frames,
