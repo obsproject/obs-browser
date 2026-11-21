@@ -218,19 +218,10 @@ bool BrowserSource::CreateBrowser()
 		CefBrowserSettings cefBrowserSettings;
 
 #ifdef ENABLE_BROWSER_SHARED_TEXTURE
-#ifdef BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED
-		if (!fps_custom) {
-			windowInfo.external_begin_frame_enabled = true;
-			cefBrowserSettings.windowless_frame_rate = 0;
-		} else {
-			cefBrowserSettings.windowless_frame_rate = fps;
-		}
-#else
 		struct obs_video_info ovi;
 		obs_get_video_info(&ovi);
 		canvas_fps = (double)ovi.fps_num / (double)ovi.fps_den;
 		cefBrowserSettings.windowless_frame_rate = (fps_custom) ? fps : canvas_fps;
-#endif
 #else
 		cefBrowserSettings.windowless_frame_rate = fps;
 #endif
@@ -396,11 +387,6 @@ void BrowserSource::SetShowing(bool showing)
 		nlohmann::json json;
 		json["visible"] = showing;
 		DispatchJSEvent("obsSourceVisibleChanged", json.dump(), this);
-#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
-		if (showing && !fps_custom) {
-			reset_frame = false;
-		}
-#endif
 
 		SendBrowserVisibility(cefBrowser, showing);
 
@@ -449,21 +435,6 @@ CefRefPtr<CefBrowser> BrowserSource::GetBrowser()
 	std::lock_guard<std::recursive_mutex> auto_lock(lockBrowser);
 	return cefBrowser;
 }
-
-#ifdef ENABLE_BROWSER_SHARED_TEXTURE
-#ifdef BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED
-inline void BrowserSource::SignalBeginFrame()
-{
-	if (reset_frame) {
-		ExecuteOnBrowser(
-			[](CefRefPtr<CefBrowser> cefBrowser) { cefBrowser->GetHost()->SendExternalBeginFrame(); },
-			true);
-
-		reset_frame = false;
-	}
-}
-#endif
-#endif
 
 void BrowserSource::Update(obs_data_t *settings)
 {
@@ -574,11 +545,6 @@ void BrowserSource::Tick()
 		create_browser = false;
 	}
 #if defined(ENABLE_BROWSER_SHARED_TEXTURE)
-#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED)
-	if (!fps_custom) {
-		reset_frame = true;
-	}
-#else
 	struct obs_video_info ovi;
 	obs_get_video_info(&ovi);
 	double video_fps = (double)ovi.fps_num / (double)ovi.fps_den;
@@ -589,7 +555,6 @@ void BrowserSource::Tick()
 			canvas_fps = video_fps;
 		}
 	}
-#endif
 #endif
 }
 
@@ -652,9 +617,7 @@ void BrowserSource::Render()
 		gs_enable_framebuffer_srgb(previous);
 	}
 
-#if defined(BROWSER_EXTERNAL_BEGIN_FRAME_ENABLED) && defined(ENABLE_BROWSER_SHARED_TEXTURE)
-	SignalBeginFrame();
-#elif defined(ENABLE_BROWSER_QT_LOOP)
+#if defined(ENABLE_BROWSER_QT_LOOP)
 	ProcessCef();
 #endif
 }
