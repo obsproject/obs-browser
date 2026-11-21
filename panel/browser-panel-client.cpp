@@ -170,11 +170,10 @@ bool QCefBrowserClient::OnOpenURLFromTab(CefRefPtr<CefBrowser>, CefRefPtr<CefFra
 	return true;
 }
 
-void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+void QCefBrowserClient::OnLoadError(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame> frame,
 				    CefLoadHandler::ErrorCode errorCode, const CefString &errorText,
 				    const CefString &failedUrl)
 {
-	UNUSED_PARAMETER(browser);
 	if (errorCode == ERR_ABORTED) {
 		return;
 	}
@@ -222,15 +221,13 @@ bool QCefBrowserClient::OnBeforePopup(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>
 #endif
 				      const CefString &target_url, const CefString &,
 				      CefLifeSpanHandler::WindowOpenDisposition, bool, const CefPopupFeatures &,
-				      CefWindowInfo &windowInfo, CefRefPtr<CefClient> &, CefBrowserSettings &,
-				      CefRefPtr<CefDictionaryValue> &, bool *)
+				      [[maybe_unused]] CefWindowInfo &windowInfo, CefRefPtr<CefClient> &,
+				      CefBrowserSettings &, CefRefPtr<CefDictionaryValue> &, bool *)
 {
 	if (allowAllPopups) {
 #ifdef _WIN32
 		HWND hwnd = (HWND)widget->effectiveWinId();
 		windowInfo.parent_window = hwnd;
-#else
-		UNUSED_PARAMETER(windowInfo);
 #endif
 		return false;
 	}
@@ -268,14 +265,13 @@ void QCefBrowserClient::OnBeforeClose(CefRefPtr<CefBrowser>)
 	}
 }
 
-bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>, CefFocusHandler::FocusSource source)
+bool QCefBrowserClient::OnSetFocus(CefRefPtr<CefBrowser>, [[maybe_unused]] CefFocusHandler::FocusSource source)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0) && QT_VERSION < QT_VERSION_CHECK(6, 11, 1)
 	/* Workaround for browser docks flashing/hanging at startup with Qt 6.8.x, introduced
 	 * by commit https://code.qt.io/cgit/qt/qt5.git/commit/?id=bab1fecd556ea561c4a89686293116741acfa1b4.
 	 * Refer to https://bugreports.qt.io/browse/QTBUG-136165.
 	 */
-	UNUSED_PARAMETER(source);
 	return false;
 #else
 	/* Don't steal focus when the webpage navigates. This is especially

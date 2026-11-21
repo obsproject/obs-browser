@@ -36,7 +36,7 @@ std::vector<PopupWhitelistInfo> forced_popups;
 static int zoomLvls[] = {25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400};
 
 namespace {
-void detachBrowserWindow(CefRefPtr<CefBrowserHost> host)
+void detachBrowserWindow([[maybe_unused]] CefRefPtr<CefBrowserHost> host)
 {
 #ifdef _WIN32
 	HWND hwnd = (HWND)host->GetWindowHandle();
@@ -59,8 +59,6 @@ void detachBrowserWindow(CefRefPtr<CefBrowserHost> host)
 		msgSend(view, release);
 	}
 #pragma clang diagnostic pop
-#else
-	UNUSED_PARAMETER(host);
 #endif
 }
 } // namespace
@@ -100,7 +98,7 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 	CefRefPtr<CefCookieManager> cm;
 	CefRefPtr<CefRequestContext> rc;
 
-	QCefCookieManagerInternal(const std::string &storage_path, bool persist_session_cookies)
+	QCefCookieManagerInternal(const std::string &storage_path, [[maybe_unused]] bool persist_session_cookies)
 	{
 		if (os_event_try(cef_started_event) != 0) {
 			throw "Browser thread not initialized";
@@ -122,8 +120,6 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		if (rc) {
 			cm = rc->GetCookieManager(nullptr);
 		}
-
-		UNUSED_PARAMETER(persist_session_cookies);
 	}
 
 	virtual bool DeleteCookies(const std::string &url, const std::string &name) override
@@ -131,7 +127,8 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		return !!cm ? cm->DeleteCookies(url, name, nullptr) : false;
 	}
 
-	virtual bool SetStoragePath(const std::string &storage_path, bool persist_session_cookies) override
+	virtual bool SetStoragePath(const std::string &storage_path,
+				    [[maybe_unused]] bool persist_session_cookies) override
 	{
 		BPtr<char> rpath = obs_module_config_path(storage_path.c_str());
 		BPtr<char> path = os_get_abs_path_ptr(rpath.Get());
@@ -145,8 +142,6 @@ struct QCefCookieManagerInternal : QCefCookieManager {
 		if (rc) {
 			cm = rc->GetCookieManager(nullptr);
 		}
-
-		UNUSED_PARAMETER(persist_session_cookies);
 		return true;
 	}
 
