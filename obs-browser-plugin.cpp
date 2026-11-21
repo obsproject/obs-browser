@@ -242,7 +242,7 @@ static obs_properties_t *browser_source_get_properties(void *data)
 	return props;
 }
 
-static void missing_file_callback(void *src, const char *new_path, void *data)
+static void missing_file_callback(void *src, const char *new_path, void *)
 {
 	BrowserSource *bs = static_cast<BrowserSource *>(src);
 
@@ -252,8 +252,6 @@ static void missing_file_callback(void *src, const char *new_path, void *data)
 		obs_data_set_string(settings, "local_file", new_path);
 		obs_source_update(source, settings);
 	}
-
-	UNUSED_PARAMETER(data);
 }
 
 static obs_missing_files_t *browser_source_missingfiles(void *data)

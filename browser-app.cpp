@@ -31,13 +31,6 @@
 #include <QTimer>
 #endif
 
-#ifndef UNUSED_PARAMETER
-#define UNUSED_PARAMETER(x) \
-	{                   \
-		(void)x;    \
-	}
-#endif
-
 #ifdef _WIN32
 constexpr bool kIsPlatformWindows = true;
 #else
@@ -180,7 +173,7 @@ std::vector<std::string> exposedFunctions = {"getControlLevel",     "getCurrentS
 					     "setCurrentScene",     "getTransitions",   "getCurrentTransition",
 					     "setCurrentTransition"};
 
-void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>, CefRefPtr<CefV8Context> context)
+void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser>, CefRefPtr<CefFrame>, CefRefPtr<CefV8Context> context)
 {
 	CefRefPtr<CefV8Value> globalObj = context->GetGlobal();
 
@@ -194,8 +187,6 @@ void BrowserApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFr
 		CefRefPtr<CefV8Value> func = CefV8Value::CreateFunction(name, this);
 		obsStudioObj->SetValue(name, func, V8_PROPERTY_ATTRIBUTE_NONE);
 	}
-
-	UNUSED_PARAMETER(browser);
 }
 
 void BrowserApp::ExecuteJSFunction(CefRefPtr<CefBrowser> browser, const char *functionName, CefV8ValueList arguments)
@@ -277,10 +268,9 @@ CefRefPtr<CefV8Value> CefValueToCefV8Value(CefRefPtr<CefValue> value)
 	return result;
 }
 
-bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+bool BrowserApp::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>,
 					  CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
 {
-	UNUSED_PARAMETER(frame);
 	DCHECK(source_process == PID_BROWSER);
 
 	CefRefPtr<CefListValue> args = message->GetArgumentList();
